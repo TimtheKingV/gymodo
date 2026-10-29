@@ -15,7 +15,7 @@ struct PlanWarumTextTests {
         "fokus_beine", "fokus_bauch", "fokus_zweiter_entfallen",
         "abnehmen_cardio_zone", "abnehmen_cardio_gekuerzt", "abnehmen_kein_cardio_geraet",
         "abnehmen_alltag", "bauch_kein_fettabbau", "anfaenger_reserve",
-        "beschwerden_meiden", "beschwerden_vorsichtig",
+        "beschwerden_meiden", "beschwerden_vorsichtig", "kraft_tage_auf_eins",
     ]
 
     static func aufteilung(_ struktur: String, _ gruende: [String]) -> [String] {

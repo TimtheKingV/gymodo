@@ -6,7 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
 import { einheitZaehlt, naechsteEinheitKey, type PositionStatus } from "./trainingsplan-ablauf.js";
 import { filtereKandidaten, type Kandidat } from "./trainingsplan-auswahl.js";
-import type { PlanEinheit } from "./trainingsplan-generator.js";
+import type { PlanEinheit, RasterEintrag } from "./trainingsplan-generator.js";
 import { ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import {
   aktualisierePlanGewichte,
@@ -215,6 +215,8 @@ export type PlanFuerApp = {
   struktur: string;
   einheiten: PlanEinheit[];
   gruende: string[];
+  /** Wochenraster des Plans, beim Erzeugen festgehalten (F14); die App rechnet es nie neu. */
+  wochenraster: RasterEintrag[];
   naechsteEinheitKey: string;
   zuletztEinheitKey: string | null;
   einheitenErledigt: number;
@@ -288,6 +290,7 @@ export function planFuerApp(
     struktur: plan.struktur,
     einheiten: plan.einheiten,
     gruende: plan.gruende,
+    wochenraster: plan.wochenraster,
     naechsteEinheitKey: naechsteEinheitKey(plan.einheiten.map((e) => e.key), zuletzt),
     zuletztEinheitKey: zuletzt,
     einheitenErledigt: gezaehlt.length,

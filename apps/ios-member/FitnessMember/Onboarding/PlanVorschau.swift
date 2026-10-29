@@ -135,6 +135,15 @@ struct PlanVorschauSchritt: View {
     private func planInhalt(_ plan: Trainingsplan) -> some View {
         let einheit = plan.einheiten.first { $0.key == einheitKey } ?? plan.einheiten.first
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            // Das Raster dieses Vorschlags, wie der Server es legt (nach einem
+            // Tausch in "Deine Woche" mit dessen Krafttagen). Fehlt es (alte
+            // Server-Antwort), fehlt die Zeile.
+            if !plan.wochenraster.isEmpty {
+                OnboardingAbschnitt(label: "Deine Woche") {
+                    PlanWochenZeile(raster: plan.wochenraster)
+                }
+                .padding(.bottom, DesignSystem.Spacing.s4)
+            }
             if plan.einheiten.count > 1 {
                 einheitenTabs(plan)
             }

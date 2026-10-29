@@ -1,0 +1,4231 @@
+[
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 1,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_eine",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_eine_einheit",
+    "zeit_uebungen",
+    "zeit_ergaenzung_entfallen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 1,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_eine",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_eine_einheit",
+    "zeit_uebungen",
+    "zeit_saetze_reduziert",
+    "zeit_ergaenzung_entfallen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 2,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_ab",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "back_extension",
+       "modelId": "m_back_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lower_back"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_ab",
+    "zeit_uebungen",
+    "zeit_ergaenzung_entfallen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 2,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_ab",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_ab",
+    "zeit_uebungen",
+    "zeit_saetze_reduziert",
+    "zeit_ergaenzung_entfallen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 3,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_ab",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "back_extension",
+       "modelId": "m_back_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lower_back"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_ab",
+    "zeit_uebungen",
+    "zeit_ergaenzung_entfallen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 3,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_ab",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_ab",
+    "zeit_uebungen",
+    "zeit_saetze_reduziert",
+    "zeit_ergaenzung_entfallen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 4,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "ober_unter",
+   "einheiten": [
+    {
+     "key": "OK_A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "druecken",
+       "rolle": "auffuellung",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "ziehen",
+       "rolle": "auffuellung",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "UK_A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "beine_knie",
+       "rolle": "auffuellung",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "auffuellung",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "beine_ergaenzung",
+       "rolle": "auffuellung",
+       "exerciseId": "calf_raise",
+       "modelId": "m_calf_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "calves"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "beine_ergaenzung",
+       "rolle": "ergaenzung",
+       "exerciseId": "leg_extension",
+       "modelId": "m_leg_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 59.25
+    },
+    {
+     "key": "OK_B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "druecken",
+       "rolle": "auffuellung",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "ziehen",
+       "rolle": "auffuellung",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "UK_B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "beine_knie",
+       "rolle": "auffuellung",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "auffuellung",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "beine_ergaenzung",
+       "rolle": "auffuellung",
+       "exerciseId": "leg_extension",
+       "modelId": "m_leg_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "beine_ergaenzung",
+       "rolle": "ergaenzung",
+       "exerciseId": "calf_raise",
+       "modelId": "m_calf_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "calves"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "back_extension",
+       "modelId": "m_back_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lower_back"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 59.25
+    }
+   ],
+   "gruende": [
+    "struktur_ober_unter",
+    "zeit_uebungen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 4,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "ober_unter",
+   "einheiten": [
+    {
+     "key": "OK_A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59
+    },
+    {
+     "key": "UK_A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_ergaenzung",
+       "rolle": "ergaenzung",
+       "exerciseId": "leg_extension",
+       "modelId": "m_leg_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 55.5
+    },
+    {
+     "key": "OK_B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59
+    },
+    {
+     "key": "UK_B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_ergaenzung",
+       "rolle": "ergaenzung",
+       "exerciseId": "calf_raise",
+       "modelId": "m_calf_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "calves"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 55.5
+    }
+   ],
+   "gruende": [
+    "struktur_ober_unter",
+    "zeit_uebungen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 5,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_abc",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "back_extension",
+       "modelId": "m_back_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lower_back"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "C",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_abc",
+    "zeit_uebungen",
+    "zeit_ergaenzung_entfallen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 5,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_abc",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "C",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_abc",
+    "zeit_uebungen",
+    "zeit_saetze_reduziert",
+    "zeit_ergaenzung_entfallen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "muskelaufbau",
+   "tage": 6,
+   "minuten": 60,
+   "fokus": [],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_abc",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "back_extension",
+       "modelId": "m_back_extension",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lower_back"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "triceps_ext",
+       "modelId": "m_triceps_ext",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "triceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    },
+    {
+     "key": "C",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 3,
+       "typ": "mehrgelenk",
+       "wdhVon": 8,
+       "wdhBis": 12,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "rumpf",
+       "rolle": "ergaenzung",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "arme",
+       "rolle": "ergaenzung",
+       "exerciseId": "curl",
+       "modelId": "m_curl",
+       "saetze": 3,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 1,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "biceps"
+       ]
+      }
+     ],
+     "geschaetzteMinuten": 62.75
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_abc",
+    "zeit_uebungen",
+    "zeit_ergaenzung_entfallen"
+   ]
+  }
+ },
+ {
+  "eingabe": {
+   "ziel": "abnehmen",
+   "tage": 6,
+   "minuten": 60,
+   "fokus": [
+    "bauch"
+   ],
+   "erfahrung": "regelmaessig",
+   "beschwerden": {}
+  },
+  "erwartet": {
+   "struktur": "gk_abc",
+   "einheiten": [
+    {
+     "key": "A",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "B",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "leg_press",
+       "modelId": "m_leg_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "incline_press",
+       "modelId": "m_incline_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "lat_pulldown",
+       "modelId": "m_lat_pulldown",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "lats"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "hip_thrust",
+       "modelId": "m_hip_thrust",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "glutes"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "cable_lateral",
+       "modelId": "m_cable_lateral",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    },
+    {
+     "key": "C",
+     "positionen": [
+      {
+       "key": "0",
+       "baustein": "beine_knie",
+       "rolle": "pflicht",
+       "exerciseId": "belt_squat",
+       "modelId": "m_belt_squat",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "quads"
+       ]
+      },
+      {
+       "key": "1",
+       "baustein": "druecken",
+       "rolle": "pflicht",
+       "exerciseId": "chest_press",
+       "modelId": "m_chest_press",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "pectorals"
+       ]
+      },
+      {
+       "key": "2",
+       "baustein": "ziehen",
+       "rolle": "pflicht",
+       "exerciseId": "row",
+       "modelId": "m_row",
+       "saetze": 2,
+       "typ": "mehrgelenk",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 150,
+       "aufwaermsatz": true,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "upper_back"
+       ]
+      },
+      {
+       "key": "3",
+       "baustein": "beine_huefte",
+       "rolle": "pflicht",
+       "exerciseId": "leg_curl",
+       "modelId": "m_leg_curl",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "hamstrings"
+       ]
+      },
+      {
+       "key": "4",
+       "baustein": "rumpf",
+       "rolle": "fokus",
+       "exerciseId": "ab_crunch",
+       "modelId": "m_ab_crunch",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "abs"
+       ]
+      },
+      {
+       "key": "5",
+       "baustein": "schulter",
+       "rolle": "ergaenzung",
+       "exerciseId": "lateral_raise",
+       "modelId": "m_lateral_raise",
+       "saetze": 2,
+       "typ": "isolation",
+       "wdhVon": 10,
+       "wdhBis": 15,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 90,
+       "aufwaermsatz": false,
+       "dauerMin": null,
+       "hauptmuskeln": [
+        "deltoid_lateral"
+       ]
+      },
+      {
+       "key": "6",
+       "baustein": "cardio",
+       "rolle": "cardio",
+       "exerciseId": "bike",
+       "modelId": "m_bike",
+       "typ": "isolation",
+       "saetze": 1,
+       "wdhVon": null,
+       "wdhBis": null,
+       "reserveVon": 2,
+       "reserveBis": 3,
+       "pauseSek": 0,
+       "aufwaermsatz": false,
+       "dauerMin": 20,
+       "hauptmuskeln": []
+      }
+     ],
+     "geschaetzteMinuten": 59.5
+    }
+   ],
+   "gruende": [
+    "struktur_ganzkoerper_abc",
+    "zeit_uebungen",
+    "zeit_saetze_reduziert",
+    "zeit_ergaenzung_entfallen",
+    "fokus_bauch",
+    "abnehmen_cardio_zone",
+    "abnehmen_alltag",
+    "bauch_kein_fettabbau"
+   ]
+  }
+ }
+]

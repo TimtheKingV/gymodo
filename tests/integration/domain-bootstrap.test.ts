@@ -317,13 +317,16 @@ describe("getBootstrap -- Trainingsplan", () => {
       struktur: a.struktur,
       einheiten: a.einheiten,
       gruende: a.gruende,
+      wochenraster: [],
       naechsteEinheitKey: a.einheiten[0]!.key,
       zuletztEinheitKey: null,
       einheitenErledigt: 0,
       anfaengerUebergang: false,
       merkliste: { nichtVorhanden: {}, gefaelltNicht: [] },
     });
-    expect(b.member.trainingProfile).toEqual({ minutes: 60, experience: "regelmaessig", focus: [] });
+    expect(b.member.trainingProfile).toEqual({
+      minutes: 60, experience: "regelmaessig", focus: [], kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [],
+    });
   });
 
   it("alter Plan mit machineId-Positionen wird nicht geliefert, der Bootstrap wirft nicht", async () => {
@@ -427,8 +430,8 @@ describe("getBootstrap -- Trainingsplan", () => {
     // Die Beschwerden selbst stehen nirgends im Bootstrap (Gesundheitsdaten).
     expect(Object.keys(p).sort()).toEqual([
       "alternativen", "anfaengerUebergang", "einheiten", "einheitenErledigt", "gruende", "merkliste",
-      "naechsteEinheitKey", "planId", "regelVersion", "struktur", "studioId", "version", "zielgewichte",
-      "zuletztEinheitKey",
+      "naechsteEinheitKey", "planId", "regelVersion", "struktur", "studioId", "version", "wochenraster",
+      "zielgewichte", "zuletztEinheitKey",
     ]);
     const { gruende: _gruende, ...ohneGruende } = p;
     const roh = JSON.stringify({ ...b, member: { ...b.member, plans: [ohneGruende] } });

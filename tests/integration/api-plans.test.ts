@@ -118,6 +118,74 @@ describe("/me/plans", () => {
   });
 });
 
+describe("Wochenraster im Plan", () => {
+  type Raster = Array<{ tag: number; art: string; einheitKey?: string }>;
+  type PlanMitRaster = { id: string; einheiten: Array<{ key: string }>; wochenraster: Raster; gruende: string[] };
+
+  it("Vorschlag und aktiver Plan tragen das Raster, GET liest es unveraendert", async () => {
+    const m = await legeMitgliedAn("api-plan-raster", {
+      studios: [s.voll],
+      weeklyDays: 4,
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kurs_tage: [1], cardio_tage: [7] },
+    });
+    const token = await accessTokenFor(m.email);
+    const vorschlag = (await (await post(token, { studioId: s.voll })).json()) as PlanMitRaster;
+    const erwartet = [
+      { tag: 1, art: "kurs" },
+      { tag: 3, art: "kraft", einheitKey: "A" },
+      { tag: 5, art: "kraft", einheitKey: "B" },
+      { tag: 7, art: "cardio" },
+    ];
+    expect(vorschlag.wochenraster).toEqual(erwartet);
+    expect(vorschlag.einheiten.map((e) => e.key)).toEqual(["A", "B"]);
+
+    const aktiv = (await (await accept(token, vorschlag.id)).json()) as PlanMitRaster;
+    expect(aktiv.wochenraster).toEqual(erwartet);
+
+    // F14: ein spaeter geaendertes Profil aendert den gespeicherten Plan nicht.
+    const { error } = await admin
+      .from("training_profiles")
+      .update({ kurs_tage: [2], cardio_tage: [] })
+      .eq("user_id", m.userId);
+    if (error) throw error;
+    const liste = (await (await get(token)).json()) as PlanMitRaster[];
+    expect(liste.find((p) => p.id === aktiv.id)!.wochenraster).toEqual(erwartet);
+
+    // Ein Tausch legt eine neue Version an, die das Raster mitnimmt.
+    type Pos = { key: string; exerciseId: string; modelId: string };
+    type MitPositionen = { einheiten: Array<{ key: string; positionen: Pos[] }> };
+    const pos = (aktiv as unknown as MitPositionen).einheiten[0]!;
+    const tausch = await swap(token, aktiv.id, {
+      einheitKey: pos.key,
+      positionKey: pos.positionen[0]!.key,
+      exerciseId: pos.positionen[0]!.exerciseId,
+      modelId: pos.positionen[0]!.modelId,
+    });
+    expect(((await tausch.json()) as PlanMitRaster).wochenraster).toEqual(erwartet);
+  });
+
+  it("kraft_tage im Profil gelten statt des Vorschlags; der naechste Vorschlag folgt dem Profil", async () => {
+    const m = await legeMitgliedAn("api-plan-kraft", {
+      studios: [s.voll],
+      weeklyDays: 2,
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_tage: [2, 6] },
+    });
+    const token = await accessTokenFor(m.email);
+    const plan = (await (await post(token, { studioId: s.voll })).json()) as PlanMitRaster;
+    expect(plan.wochenraster).toEqual([
+      { tag: 2, art: "kraft", einheitKey: "A" },
+      { tag: 6, art: "kraft", einheitKey: "B" },
+    ]);
+  });
+
+  it("Bestandsprofil ohne Kurs und Cardio: Raster nur mit Kraft-Tagen, Grund kraft_tage_auf_eins fehlt", async () => {
+    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as PlanMitRaster;
+    expect(plan.wochenraster).toHaveLength(3);
+    expect(plan.wochenraster.every((e) => e.art === "kraft")).toBe(true);
+    expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
+  });
+});
+
 describe("fromDomainError", () => {
   it("laesst die Huelle ohne detail unveraendert", async () => {
     const antwort = fromDomainError(new DomainError("conflict", "Nein."));

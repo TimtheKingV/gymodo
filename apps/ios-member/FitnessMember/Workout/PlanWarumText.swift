@@ -12,7 +12,7 @@ import Foundation
 /// `packages/domain/src/trainingsplan-regeln.ts` und `GROBE_STUFE_EXTRA_WDH`
 /// in `plangewicht.ts`; bei Aenderung dort `version` erhoehen.
 enum PlanWarumText {
-    static let version = "1.2.0"
+    static let version = "1.3.0"
 
     struct Abschnitt: Equatable {
         let titel: String
@@ -39,6 +39,12 @@ enum PlanWarumText {
         return absaetze
     }
 
+    /// Der Satz zu einem Grund-Code, etwa fuer den Hinweis in "Deine Woche"
+    /// (`kraft_tage_auf_eins`); nil fuer einen unbekannten Code.
+    static func grundSatz(_ code: String) -> String? {
+        satz(fuer: code)
+    }
+
     private static func satz(fuer code: String) -> String? {
         if code.hasPrefix("fokus_"), code != "fokus_zweiter_entfallen" {
             guard let bereich = fokusBereiche[String(code.dropFirst("fokus_".count))] else { return nil }
@@ -53,6 +59,7 @@ enum PlanWarumText {
     ]
 
     private static let saetze = [
+        "kraft_tage_auf_eins": "Deine festen Termine mit Kursen und Cardio belegen schon alle Trainingstage, die du dir vorgenommen hast. Deshalb haben wir ein Krafttraining pro Woche eingeplant.",
         "zeit_uebungen": "Wie viele Übungen du pro Training machst, richtet sich nach der Zeit, die du angegeben hast.",
         "zeit_saetze_reduziert": "Damit es in deine Zeit passt, haben einige Übungen einen Satz weniger.",
         "zeit_ergaenzung_entfallen": "Ergänzungsübungen sind weggefallen, damit die Hauptübungen in deine Zeit passen.",

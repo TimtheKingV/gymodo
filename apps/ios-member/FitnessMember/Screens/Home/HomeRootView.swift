@@ -22,6 +22,9 @@ struct HomeRootView: View {
     /// Wechselt auf den Training-Tab -- derselbe Ort wie ein Tipp auf
     /// "Training" unten (Testnotiz 05.10., #8).
     var beiTrainingZeigen: () -> Void = {}
+    /// Wechselt auf den Plan-Tab (Leinwand 2d): "Diese Woche" auf die Woche,
+    /// "Als nächstes" auf die Einheit bzw. den Tag.
+    var beiPlanZeigen: (PlanSprung) -> Void = { _ in }
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(CatalogStore.self) private var katalog
@@ -29,6 +32,7 @@ struct HomeRootView: View {
     @Environment(WorkoutSessionStore.self) private var sessions
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(KurseStore.self) private var kurse
+    @Environment(CardioChecksStore.self) private var cardio
     @Environment(UebungsVideoVorrat.self) private var videos
     @Environment(\.scenePhase) private var scenePhase
     /// Reicht einen gescannten Geraete-Code an den Training-Tab weiter --
@@ -128,11 +132,15 @@ struct HomeRootView: View {
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) })
                     }
 
-                    // Entwurf 2: die Einheit von heute; Tippen fuehrt zur
-                    // Plankarte im Training-Tab. Schliesst Karte 1.5 aus
-                    // (die gibt es nur ohne Plan).
+                    // Leinwand 2d: die EINE Karte "Heute dran" (der Training-
+                    // Tab zeigt sie nicht mehr als Ueberschrift, E8), darunter
+                    // die Woche. Schliesst Karte 1.5 aus (die gibt es nur ohne
+                    // Plan).
                     if let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) {
                         HeuteDranZeile(heute: heute, beiTippen: beiTrainingZeigen)
+                    }
+                    if let plan = PlanAnzeige.plan(bootstrap: katalog.bootstrap) {
+                        woche(plan: plan, jetzt: Date())
                     }
 
                     // Entwurf 1.5: ueber den Zielen, weil sie der naechste
@@ -273,6 +281,7 @@ private extension HomeRootView {
             }
         }
         await kurseLaden()
+        await cardioLaden()
         // Die Videos der Fortschrittszeilen (Testnotiz 11.10., #2); laedt
         // sonst nur die Geraeteliste, und Home ist der erste Tab.
         await videos.laden(von: apiClient)
@@ -293,6 +302,57 @@ private extension HomeRootView {
             studioIds: studios,
             von: KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zone),
             bis: KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zone))
+    }
+
+    /// Die Woche braucht die Haken nur mit Plan; dieselben Daten wie im
+    /// Plan-Tab (`CardioChecksStore`), hier nur die laufende Woche.
+    func cardioLaden() async {
+        guard PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil else { return }
+        let kalender = planKalender
+        let montag = KurseWochenBerechnung.montag(enthaelt: Date(), zeitzone: planZeitzone)
+        guard let sonntag = kalender.date(byAdding: .day, value: 6, to: montag) else { return }
+        await cardio.laden(
+            von: PlanRootView.tagId(montag, kalender: kalender), bis: PlanRootView.tagId(sonntag, kalender: kalender),
+            apiClient: apiClient)
+    }
+
+    /// Wie der Plan-Tab: die Zeitzone der Kurswoche, sonst die des Studios.
+    /// So liegen Wochentage und Kurse auf Home und im Plan auf denselben Tagen.
+    var planZeitzone: String { kurse.woche?.timezone ?? zeitzone }
+
+    var planKalender: Calendar {
+        var k = Calendar(identifier: .gregorian)
+        k.timeZone = TimeZone(identifier: planZeitzone) ?? .current
+        k.locale = Locale(identifier: "de_DE")
+        return k
+    }
+
+    /// "Diese Woche" und "Als nächstes" (Leinwand 2d). Raster wie im Plan-Tab
+    /// (`anzeigeRaster`: Profiltage vor Plan-Raster), gebuchte Kurse immer.
+    @ViewBuilder
+    func woche(plan: Trainingsplan, jetzt: Date) -> some View {
+        let kalender = planKalender
+        let sitzungen = kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? [])
+        let raster = PlanTabZustand.anzeigeRaster(
+            planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
+            profil: katalog.bootstrap?.member.trainingProfile)
+        if PlanTabZustand.hatKrafttage(anzeigeRaster: raster) {
+            let ergaenzt = HomeWoche.mitGebuchtenKursen(raster: raster, kurse: sitzungen, heute: jetzt, kalender: kalender)
+            let erledigt = HomeWoche.erledigteTage(
+                raster: ergaenzt, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender)
+            HomeWocheKarte(
+                felder: HomeWoche.zeilen(raster: ergaenzt, erledigt: erledigt, heute: jetzt, kalender: kalender),
+                beiTippen: { beiPlanZeigen(.woche) })
+        } else {
+            // Bestandsplan ohne Wochenraster (I3): keine Woche mit "nichts
+            // geplant" neben "Heute dran", sondern der Weg zu den Tagen.
+            TrainingstageFestlegenZeile { beiPlanZeigen(.woche) }
+        }
+        if let naechster = HomeWoche.alsNaechstes(
+            raster: raster, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender,
+            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey) {
+            HomeNaechsterKarte(naechster: naechster) { beiPlanZeigen(naechster.ziel) }
+        }
     }
 
     @ViewBuilder var kopf: some View {

@@ -119,6 +119,14 @@ describe("direkte Schreibwege", () => {
 });
 
 describe("create_training_plan", () => {
+  it("alte API ohne p_wochenraster funktioniert und ergibt ein leeres Raster", async () => {
+    const m = await legeMitgliedAn("schreib-altapi", { studios: [] });
+    const { p_wochenraster: _weg, ...alt } = katalogPlanParameter(s);
+    const { data, error } = await m.client.rpc("create_training_plan", alt).single();
+    expect(error).toBeNull();
+    expect((data as { wochenraster: unknown }).wochenraster).toEqual([]);
+  });
+
   it("speichert einen Plan mit Cardio-Position", async () => {
     const m = await legeMitgliedAn("schreib-cardio", { studios: [] });
     const plan = await erzeugeKatalogPlan(m, s);
