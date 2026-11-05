@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { PlanNichtMoeglichError } from "./errors.js";
 import type { GeneratorEingabe, Kandidat, PlanEinheit } from "./trainingsplan-generator.js";
-import { generierePlan } from "./trainingsplan-generator.js";
+import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
+import { waehleFokus, waehleKandidat } from "./trainingsplan-auswahl.js";
 import type { Baustein, Bereich, PlanTyp } from "./trainingsplan-typen.js";
 import { PLAN_REGEL_VERSION } from "./trainingsplan-regeln.js";
+import { verteileKraft } from "./trainingsplan-woche.js";
 
 // Kleiner Testkatalog: je Baustein 2 Kandidaten, Typen wie in der Spec (beine_huefte hier
 // Isolation, damit die Zeitrechnung des 60-min-Falls exakt 62,75 ergibt), ein Cardiogeraet.
@@ -14,7 +17,7 @@ function k(
   hauptmuskeln: string[],
   bereiche: Bereich[] = [],
 ): Kandidat {
-  return { exerciseId, machineId: `m_${exerciseId}`, baustein, typ, bereiche, hauptmuskeln };
+  return { exerciseId, modelId: `m_${exerciseId}`, baustein, typ, bereiche, hauptmuskeln };
 }
 
 const KATALOG: Kandidat[] = [
@@ -64,7 +67,7 @@ describe("generierePlan: Zeit und Ziele", () => {
     for (const e of plan.einheiten) {
       expect(rollen(e)).toEqual(["pflicht", "pflicht", "pflicht", "pflicht", "ergaenzung", "ergaenzung", "ergaenzung"]);
       expect(e.positionen.map((p) => p.baustein)).toEqual([
-        "beine_knie", "beine_huefte", "druecken", "ziehen", "schulter", "rumpf", "arme",
+        "beine_knie", "druecken", "ziehen", "beine_huefte", "schulter", "rumpf", "arme",
       ]);
       expect(e.positionen.map((p) => p.key)).toEqual(["0", "1", "2", "3", "4", "5", "6"]);
       expect(e.positionen.every((p) => p.saetze === 3)).toBe(true);
@@ -77,7 +80,7 @@ describe("generierePlan: Zeit und Ziele", () => {
       typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3,
       pauseSek: 150, aufwaermsatz: true, dauerMin: null,
     });
-    const huefte = plan.einheiten[0]!.positionen[1]!;
+    const huefte = plan.einheiten[0]!.positionen.find((p) => p.baustein === "beine_huefte")!;
     expect(huefte).toMatchObject({ typ: "isolation", wdhVon: 10, wdhBis: 15, pauseSek: 90, aufwaermsatz: false });
     expect(plan.gruende).toContain("struktur_ganzkoerper_ab");
     expect(plan.gruende).toContain("zeit_uebungen");
@@ -113,7 +116,7 @@ describe("generierePlan: Zeit und Ziele", () => {
     for (const e of plan.einheiten) {
       const letzte = e.positionen.at(-1)!;
       expect(letzte).toMatchObject({
-        rolle: "cardio", baustein: "cardio", exerciseId: "bike", machineId: "m_bike",
+        rolle: "cardio", baustein: "cardio", exerciseId: "bike", modelId: "m_bike",
         saetze: 1, wdhVon: null, wdhBis: null, pauseSek: 0, aufwaermsatz: false, dauerMin: 20, hauptmuskeln: [],
         reserveVon: 2, reserveBis: 3,
       });
@@ -180,14 +183,14 @@ describe("generierePlan: Struktur und Variation", () => {
 
   it("Variation ueber Uebungen, nicht ueber Geraete: zwei Geraete derselben Uebung zaehlen einmal", () => {
     const zweiGeraete = [
-      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m1" },
-      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), machineId: "m2" },
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), modelId: "m1" },
+      { ...k("chest_press", "druecken", "mehrgelenk", ["pectorals"]), modelId: "m2" },
       k("incline_press", "druecken", "mehrgelenk", ["pectorals"]),
       ...ohne("chest_press", "incline_press"),
     ];
     const [a, b] = generierePlan(eingabe({ kandidaten: zweiGeraete })).einheiten;
     const druecken = (e: PlanEinheit) => e.positionen.find((p) => p.baustein === "druecken")!;
-    expect(druecken(a!)).toMatchObject({ exerciseId: "chest_press", machineId: "m1" });
+    expect(druecken(a!)).toMatchObject({ exerciseId: "chest_press", modelId: "m1" });
     expect(druecken(b!).exerciseId).toBe("incline_press");
 
     const eineUebung = zweiGeraete.filter((c) => c.exerciseId !== "incline_press");
@@ -265,7 +268,8 @@ describe("generierePlan: Fokus", () => {
     expect(beinErg).toHaveLength(1);
     expect(beinErg[0]).toMatchObject({ rolle: "fokus", exerciseId: "glute_kickback" });
     expect(b.positionen.map((p) => p.baustein).slice(0, 8)).toEqual([
-      "beine_knie", "beine_huefte", "druecken", "ziehen", "beine_ergaenzung", "schulter", "rumpf", "arme",
+      // Seit 1.2.0: Mehrgelenk zuerst; bei den Isolationen Pflicht, Fokus, Auffuellung, Ergaenzung.
+      "beine_knie", "druecken", "ziehen", "beine_huefte", "beine_ergaenzung", "beine_huefte", "schulter", "rumpf",
     ]);
   });
 
@@ -315,8 +319,8 @@ describe("generierePlan: Beschwerden", () => {
     const sortiert = generierePlan(eingabe({ beschwerden: { knie: "vorsichtig" } }));
     // Die A/B-Rotation laeuft nur ueber unbedenkliche Uebungen, solange es welche gibt:
     // sonst bekaeme B bei zwei Kandidaten immer die vorsichtige.
-    expect(sortiert.einheiten[0]!.positionen[1]!.exerciseId).toBe("hip_thrust");
-    expect(sortiert.einheiten[1]!.positionen[1]!.exerciseId).toBe("hip_thrust");
+    expect(sortiert.einheiten[0]!.positionen.find((p) => p.baustein === "beine_huefte")!.exerciseId).toBe("hip_thrust");
+    expect(sortiert.einheiten[1]!.positionen.find((p) => p.baustein === "beine_huefte")!.exerciseId).toBe("hip_thrust");
   });
 
   it("Pflichtbaustein ohne Kandidat wirft PlanNichtMoeglichError(kein_geraet)", () => {
@@ -335,7 +339,7 @@ describe("generierePlan: Beschwerden", () => {
   it("Pflichtbaustein ohne freie Uebung (dieselbe Uebung in zwei Pflichtbausteinen) wirft kein_geraet statt abzustuerzen", () => {
     const geteilt = [
       k("multi_press", "druecken", "mehrgelenk", ["pectorals"]),
-      { ...k("multi_press", "ziehen", "mehrgelenk", ["lats"]), machineId: "m_zug" },
+      { ...k("multi_press", "ziehen", "mehrgelenk", ["lats"]), modelId: "m_zug" },
       ...ohne("chest_press", "incline_press", "row", "lat_pulldown"),
     ];
     try {
@@ -377,7 +381,8 @@ describe("generierePlan: Determinismus und Eingabe", () => {
 
   it("Geschlecht/Alter sind kein Eingabefeld", () => {
     expectTypeOf<keyof GeneratorEingabe>().toEqualTypeOf<
-      "ziel" | "tage" | "minuten" | "fokus" | "erfahrung" | "beschwerden" | "kandidaten"
+      | "ziel" | "tage" | "minuten" | "fokus" | "erfahrung" | "anfaengerBeendet" | "beschwerden" | "kandidaten"
+      | "kursTage" | "cardioTage" | "kraftTage"
     >();
   });
 
@@ -433,7 +438,7 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
       }
     }
     expect(plan.gruende).not.toContain("zeit_budget_nicht_ausgeschoepft");
-    expect(plan.regelVersion).toBe("1.1.0");
+    expect(plan.regelVersion).toBe(PLAN_REGEL_VERSION);
   });
 
   it("zu wenig Uebungen fuer das Budget: Code zeit_budget_nicht_ausgeschoepft", () => {
@@ -467,5 +472,200 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
               expect(new Set(ids).size, fall).toBe(ids.length);
             }
           }
+  });
+});
+
+describe("generierePlan: Regelversion 1.3.0", () => {
+  it("Regelversion ist 1.3.0", () => {
+    expect(PLAN_REGEL_VERSION).toBe("1.3.0");
+    expect(generierePlan(eingabe()).regelVersion).toBe("1.3.0");
+  });
+
+  it("auffuellpositionen tragen die Rolle auffuellung", () => {
+    const plan = generierePlan(eingabe({ tage: 4, kandidaten: VOLL }));
+    for (const e of plan.einheiten) {
+      const r = rollen(e);
+      expect(r.filter((x) => x === "pflicht").length).toBe(2);
+      expect(r.filter((x) => x === "ergaenzung").length).toBe(2);
+      expect(r.filter((x) => x === "auffuellung").length).toBeGreaterThan(0);
+    }
+  });
+
+  it("Mehrgelenk steht vor Isolation, Cardio zuletzt, keys sind 0..n-1 in Anzeigereihenfolge", () => {
+    const plan = generierePlan(eingabe({ tage: 4, ziel: "abnehmen", kandidaten: [...VOLL, k("bike", "cardio", "isolation", [])] }));
+    const rang = { pflicht: 0, fokus: 1, auffuellung: 2, ergaenzung: 3, cardio: 4 } as const;
+    for (const e of plan.einheiten) {
+      expect(e.positionen.map((p) => p.key)).toEqual(e.positionen.map((_, i) => String(i)));
+      expect(e.positionen.at(-1)!.rolle).toBe("cardio");
+      const kr = kraft(e);
+      const erstesIso = kr.findIndex((p) => p.typ === "isolation");
+      if (erstesIso >= 0) expect(kr.slice(erstesIso).every((p) => p.typ === "isolation")).toBe(true);
+      for (const typ of ["mehrgelenk", "isolation"] as const) {
+        const r = kr.filter((p) => p.typ === typ).map((p) => rang[p.rolle]);
+        expect(r).toEqual([...r].sort((a, b) => a - b));
+      }
+    }
+  });
+
+  it("anfaengerBeendet bei Erfahrung neu plant 3 Saetze Reserve [1,3] bei Muskelaufbau", () => {
+    const plan = generierePlan(eingabe({ erfahrung: "neu", anfaengerBeendet: true }));
+    for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
+      expect(p.saetze).toBe(3);
+      expect([p.reserveVon, p.reserveBis]).toEqual([1, 3]);
+    }
+  });
+
+  it("ohne anfaengerBeendet bleibt neu bei 2 Saetzen, Reserve [3,4]", () => {
+    const plan = generierePlan(eingabe({ erfahrung: "neu" }));
+    for (const p of plan.einheiten.flatMap((e) => e.positionen)) {
+      expect(p.saetze).toBe(2);
+      expect([p.reserveVon, p.reserveBis]).toEqual([3, 4]);
+    }
+  });
+});
+
+// Uebergabe Etappe 3, Punkt 2: ein Tausch ueber die Typgrenze bekommt die Vorgaben des
+// neuen Typs. tauschVorgaben ist dieselbe Quelle wie der Generator (zielprofil).
+describe("tauschVorgaben", () => {
+  it("Muskelaufbau, regelmaessig: Werte je Typ", () => {
+    expect(tauschVorgaben({ ziel: "muskelaufbau", erfahrung: "regelmaessig" })).toEqual({
+      mehrgelenk: { typ: "mehrgelenk", wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 150, aufwaermsatz: true },
+      isolation: { typ: "isolation", wdhVon: 10, wdhBis: 15, reserveVon: 1, reserveBis: 3, pauseSek: 90, aufwaermsatz: false },
+    });
+  });
+
+  it.each([
+    ["muskelaufbau", "regelmaessig", false],
+    ["fitness", "neu", false],
+    ["abnehmen", "neu", true],
+    ["fitness", "unregelmaessig", false],
+  ] as const)("stimmt mit jeder Kraftposition des Generators ueberein (%s, %s, beendet %s)", (ziel, erfahrung, beendet) => {
+    const plan = generierePlan(eingabe({ ziel, erfahrung, anfaengerBeendet: beendet }));
+    const v = tauschVorgaben({ ziel, erfahrung, anfaengerBeendet: beendet });
+    const kraft = plan.einheiten.flatMap((e) => e.positionen).filter((p) => p.rolle !== "cardio");
+    expect(kraft.length).toBeGreaterThan(0);
+    for (const p of kraft) {
+      const { typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz } = p;
+      expect({ typ, wdhVon, wdhBis, reserveVon, reserveBis, pauseSek, aufwaermsatz }).toEqual(v[p.typ]);
+    }
+  });
+});
+
+describe("gefaelltNicht (Merkliste)", () => {
+  const gut = k("gut", "druecken", "mehrgelenk", ["pectorals"]);
+  const mag = { ...k("mag_ich_nicht", "druecken", "mehrgelenk", ["pectorals"]), gefaelltNicht: true };
+
+  it("waehleKandidat nimmt gefaelltNicht nur ohne Alternative", () => {
+    // Auch bei variation 1 (sonst die zweite Uebung) bleibt die ungeliebte hinten.
+    expect(waehleKandidat([mag, gut], 0, new Set())!.exerciseId).toBe("gut");
+    expect(waehleKandidat([mag, gut], 1, new Set())!.exerciseId).toBe("gut");
+    expect(waehleKandidat([mag, gut], 0, new Set(["gut"]))!.exerciseId).toBe("mag_ich_nicht");
+    expect(waehleKandidat([mag], 0, new Set())!.exerciseId).toBe("mag_ich_nicht");
+  });
+
+  it("waehleFokus ebenso", () => {
+    const fokus = (liste: Kandidat[], belegt: string[] = []) =>
+      waehleFokus(liste, "brust", ["druecken"], new Set(belegt))?.exerciseId;
+    expect(fokus([mag, gut])).toBe("gut");
+    expect(fokus([mag, gut], ["gut"])).toBe("mag_ich_nicht");
+    expect(fokus([mag])).toBe("mag_ich_nicht");
+  });
+
+  it("nur gefaelltNicht-Kandidaten gelten fuer einen Pflichtbaustein als vorhanden", () => {
+    const nurUngeliebt = KATALOG.map((c) => (c.baustein === "druecken" ? { ...c, gefaelltNicht: true } : c));
+    const plan = generierePlan(eingabe({ kandidaten: nurUngeliebt }));
+    expect(plan.einheiten[0]!.positionen.some((p) => p.baustein === "druecken")).toBe(true);
+  });
+
+  it("gefaelltNicht-Cardio wird nicht gewaehlt, wenn eine andere existiert, sonst schon", () => {
+    const cardioVon = (kandidaten: Kandidat[]) =>
+      generierePlan(eingabe({ ziel: "abnehmen", kandidaten })).einheiten[0]!.positionen.find((p) => p.rolle === "cardio")?.exerciseId;
+    const ungeliebt = { ...k("aaa_bike", "cardio", "isolation", []), gefaelltNicht: true };
+    expect(cardioVon([ungeliebt, ...KATALOG])).toBe("bike");
+    expect(cardioVon([ungeliebt, ...ohne("bike")])).toBe("aaa_bike");
+  });
+});
+
+describe("generierePlan: Wochenraster (1.3.0)", () => {
+  // Ausgabe von 1.2.0 fuer sechs Tagezahlen und zwei Ziele (ohne regelVersion). Ohne Kurs- und
+  // Cardio-Tage darf sich am Plan nichts aendern -- nur das Raster kommt hinzu.
+  const bestand = JSON.parse(
+    readFileSync(new URL("./trainingsplan-generator.bestand.json", import.meta.url), "utf8"),
+  ) as { eingabe: Partial<GeneratorEingabe>; erwartet: Record<string, unknown> }[];
+
+  it("Bestandseingaben ohne Kurs und Cardio: struktur, einheiten und gruende wie bisher", () => {
+    expect(bestand.length).toBe(12);
+    for (const fall of bestand) {
+      const plan = generierePlan(eingabe({ ...fall.eingabe, kandidaten: KATALOG }));
+      expect(plan.struktur).toEqual(fall.erwartet.struktur);
+      expect(plan.einheiten).toEqual(fall.erwartet.einheiten);
+      expect(plan.gruende).toEqual(fall.erwartet.gruende);
+    }
+  });
+
+  it("Bestandseingabe: das Raster hat nur Kraft-Tage nach verteileKraft([], tage)", () => {
+    const plan = generierePlan(eingabe({ tage: 3 }));
+    const tage = verteileKraft([], 3);
+    expect(plan.wochenraster.map((e) => e.tag)).toEqual(tage);
+    expect(plan.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "A"]);
+    expect(plan.wochenraster.every((e) => e.art === "kraft")).toBe(true);
+    expect(plan.wochenraster).toHaveLength(3);
+  });
+
+  it("4 Tage, Kurs Mo, Cardio So: zwei Krafttage, Struktur gk_ab, Raster nach Tag sortiert", () => {
+    const plan = generierePlan(eingabe({ tage: 4, kursTage: [1], cardioTage: [7] }));
+    expect(plan.struktur).toBe("gk_ab");
+    expect(plan.wochenraster).toEqual([
+      { tag: 1, art: "kurs" },
+      { tag: 3, art: "kraft", einheitKey: "A" },
+      { tag: 5, art: "kraft", einheitKey: "B" },
+      { tag: 7, art: "cardio" },
+    ]);
+    expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
+  });
+
+  it("2 Tage, Kurs Mo, Cardio So: ein Krafttag, gk_eine und Grund kraft_tage_auf_eins", () => {
+    const plan = generierePlan(eingabe({ tage: 2, kursTage: [1], cardioTage: [7] }));
+    expect(plan.struktur).toBe("gk_eine");
+    expect(plan.einheiten.map((e) => e.key)).toEqual(["A"]);
+    expect(plan.gruende).toContain("kraft_tage_auf_eins");
+    expect(plan.wochenraster.filter((e) => e.art === "kraft")).toHaveLength(1);
+    expect(plan.wochenraster.map((e) => e.tag)).toEqual([...plan.wochenraster.map((e) => e.tag)].sort((a, b) => a - b));
+  });
+
+  it("kraftTage im Profil gelten statt des Vorschlags, Einheiten der Reihe nach", () => {
+    const plan = generierePlan(eingabe({ tage: 3, kraftTage: [2, 4, 6] }));
+    expect(plan.wochenraster).toEqual([
+      { tag: 2, art: "kraft", einheitKey: "A" },
+      { tag: 4, art: "kraft", einheitKey: "B" },
+      { tag: 6, art: "kraft", einheitKey: "A" },
+    ]);
+  });
+
+  it("kraftTage in beliebiger Reihenfolge: Einheiten folgen dem Kalender, nicht der Eingabe", () => {
+    const plan = generierePlan(eingabe({ tage: 2, kraftTage: [5, 2] }));
+    expect(plan.wochenraster).toEqual([
+      { tag: 2, art: "kraft", einheitKey: "A" },
+      { tag: 5, art: "kraft", einheitKey: "B" },
+    ]);
+  });
+
+  it("5 und 6 Krafttage: Struktur gk_abc, Einheiten laufen zyklisch durch", () => {
+    const fuenf = generierePlan(eingabe({ tage: 5 }));
+    expect(fuenf.struktur).toBe("gk_abc");
+    expect(fuenf.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B"]);
+    const sechs = generierePlan(eingabe({ tage: 6 }));
+    expect(sechs.struktur).toBe("gk_abc");
+    expect(sechs.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B", "C"]);
+  });
+
+  it("Kurse und Cardio auf allen sieben Tagen: validation_failed statt Plan ohne Krafttag", () => {
+    expect(() => generierePlan(eingabe({ tage: 3, kursTage: [1, 2, 3, 4], cardioTage: [5, 6, 7] }))).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+
+  it("tage 0 loest kraft_tage_auf_eins nicht aus", () => {
+    expect(generierePlan(eingabe({ tage: 0 })).gruende).not.toContain("kraft_tage_auf_eins");
   });
 });

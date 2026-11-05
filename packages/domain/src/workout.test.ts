@@ -3,6 +3,7 @@ import {
   completeSessionInputSchema,
   recordSetInputSchema,
   REOPEN_FENSTER_MS,
+  sessionPlanSchema,
   wiederoeffnenEntscheidung,
 } from "./workout.js";
 
@@ -98,6 +99,41 @@ describe("recordSetInputSchema -- Station", () => {
   it("laesst ein Studio neben einem Geraet zu -- recordSet nimmt dann das des Geraets", () => {
     const ergebnis = recordSetInputSchema.safeParse({ ...basis, studioId: studio });
     expect(ergebnis.success).toBe(true);
+  });
+});
+
+describe("sessionPlanSchema (0063)", () => {
+  const plan = {
+    planId: "55555555-5555-4555-8555-555555555555",
+    einheitKey: "A",
+    stand: 1,
+    positionen: [
+      { key: "A1", status: "erledigt" },
+      { key: "A2", status: "getauscht", exerciseId: "44444444-4444-4444-8444-444444444444" },
+      { key: "A3", status: "offen", exerciseId: null },
+    ],
+  };
+
+  it("nimmt eine Momentaufnahme an", () => {
+    const r = sessionPlanSchema.safeParse(plan);
+    expect(r.success && r.data.positionen).toHaveLength(3);
+  });
+
+  it("weist stand 0, unbekannten Status, kaputte Ersatzuebung und Tausch ohne Uebung ab", () => {
+    const pos = (p: Record<string, unknown>) => ({ ...plan, positionen: [p] });
+    expect(sessionPlanSchema.safeParse({ ...plan, stand: 0 }).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "fertig" })).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "getauscht", exerciseId: "" })).success).toBe(false);
+    expect(sessionPlanSchema.safeParse(pos({ key: "A1", status: "getauscht" })).success).toBe(false);
+  });
+
+  // Ein kaputter Planteil darf den Satz nicht verwerfen; geprueft wird er erst
+  // nach dem Speichern (recordSet).
+  it("recordSetInputSchema laesst den Satz auch mit kaputtem Planteil durch", () => {
+    expect(recordSetInputSchema.safeParse({ ...basis, plan: { ...plan, stand: 0 } }).success).toBe(true);
+    expect(recordSetInputSchema.safeParse({ ...basis, plan: "unsinn" }).success).toBe(true);
+    const ohne = recordSetInputSchema.safeParse(basis);
+    expect(ohne.success && ohne.data.plan).toBeUndefined();
   });
 });
 

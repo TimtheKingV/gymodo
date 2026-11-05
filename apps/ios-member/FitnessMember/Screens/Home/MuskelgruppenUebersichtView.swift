@@ -232,9 +232,9 @@ struct FortschrittsText: View {
     nonisolated static let brauchtTrainingsText = "braucht noch Trainings"
 
     /// Strich mit Hinweis nur, wenn die Haeufigkeit schon auswertbar ist und
-    /// nur der Fortschritt fehlt; seltene Muskeln zeigen "kaum Übungen".
-    nonisolated static func brauchtTrainings(_ wert: FortschrittsWert, auswertbar: Bool, selten: Bool = false) -> Bool {
-        wert == .keinWert && auswertbar && !selten
+    /// nur der Fortschritt fehlt; Muskeln ohne Kraftuebung zeigen "keine Kraftübung im Katalog".
+    nonisolated static func brauchtTrainings(_ wert: FortschrittsWert, auswertbar: Bool, ohneKraftuebung: Bool = false) -> Bool {
+        wert == .keinWert && auswertbar && !ohneKraftuebung
     }
 
     /// Kleiner Hinweis unter bzw. neben dem Strich.
@@ -265,7 +265,7 @@ enum MuskelStatusText {
         case .ok: "Gut dabei"
         case .viel: "Eher viel"
         case .nachholbedarf: "Zu wenig"
-        case .kaumUebungen, .keineAuswertung: nil
+        case .keineKraftuebung, .keineAuswertung: nil
         }
     }
 
@@ -274,7 +274,7 @@ enum MuskelStatusText {
         case .ok: "gut dabei"
         case .viel: "eher viel"
         case .nachholbedarf: "zu wenig"
-        case .kaumUebungen: "kaum Übungen"
+        case .keineKraftuebung: "keine Kraftübung im Katalog"
         case .keineAuswertung: "noch keine Auswertung"
         }
     }

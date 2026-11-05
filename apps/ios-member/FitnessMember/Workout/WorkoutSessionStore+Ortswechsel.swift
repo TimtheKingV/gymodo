@@ -9,7 +9,11 @@ extension WorkoutSessionStore {
     /// Beendet die Einheit lokal, sofort und ohne Netz: der Ortswechsel darf
     /// nicht auf den Server warten. Ohne Satz wird verworfen wie in
     /// TrainingRootView.beenden (Entschieden 2) -- der Server kennt sie nie.
-    func beendenFuerOrtswechsel() -> Ortswechselende {
+    ///
+    /// `ablauf` zuerst: der Planablauf zaehlt die Einheit, solange sie noch
+    /// da ist -- wie in TrainingRootView.beenden.
+    func beendenFuerOrtswechsel(ablauf: TrainingsplanAblaufStore? = nil) -> Ortswechselende {
+        ablauf?.einheitBeendet()
         guard let session = aktiveSession(), session.hatSaetze else {
             beenden(ablegen: false)
             return .verworfen

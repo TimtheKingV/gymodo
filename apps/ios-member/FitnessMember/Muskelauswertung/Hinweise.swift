@@ -21,7 +21,7 @@ enum MuskelHinweise {
         }
     }
 
-    /// Nennt den schwaechsten nicht seltenen Muskel der Gruppe, falls er Nachholbedarf hat.
+    /// Nennt den schwaechsten auswertbaren Muskel der Gruppe, falls er Nachholbedarf hat.
     static func gruppenhinweis(gruppe: MuskelHauptgruppe, in h: Haeufigkeit, namen: [String: String]) -> String? {
         let schwaechster = gruppe.muskelSchluessel
             .filter { Ausgewogenheit.status(muskel: $0, gruppe: gruppe, in: h) == .nachholbedarf }

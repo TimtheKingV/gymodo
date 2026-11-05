@@ -231,12 +231,14 @@ struct WorkoutSessionStoreTests {
         """
         let datei = verzeichnis.appendingPathComponent("laufende-session.json")
         try Data(alt.utf8).write(to: datei)
-        let sut = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let dateiStore = SessionFileStore(directory: verzeichnis)
+        let sut = WorkoutSessionStore(fileStore: dateiStore)
 
         _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",
                             einheiten: .kilogrammWiederholungen, load: 80, volume: 10,
                             problemFlag: false, problemReason: nil, jetzt: start.addingTimeInterval(120))
 
+        dateiStore.abwarten()
         let geschrieben = try String(contentsOf: datei, encoding: .utf8)
         #expect(!geschrieben.contains("weightKg"))
         // Als Schluessel: "reps" als WERT von volumeKind steht zu Recht da.

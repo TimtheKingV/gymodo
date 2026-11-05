@@ -7,7 +7,7 @@ enum MuskelFarben {
         case .nachholbedarf: DesignSystem.Color.warn
         case .ok: DesignSystem.Color.accentPressed
         case .viel: DesignSystem.Color.accent
-        case .kaumUebungen, .keineAuswertung: DesignSystem.Color.muskelInaktiv
+        case .keineKraftuebung, .keineAuswertung: DesignSystem.Color.muskelInaktiv
         }
     }
 
@@ -40,14 +40,14 @@ enum MuskelFarben {
     }
 
     /// Startansicht: jeder Muskel im Status seiner Gruppe gegenueber allen
-    /// sechs -- dieselbe Aussage wie Liste und Satz. Seltene Muskeln grau.
+    /// sechs -- dieselbe Aussage wie Liste und Satz. Muskeln ohne Kraftuebung grau.
     /// Der Vergleich der Muskeln innerhalb der Gruppe bleibt dem Detail.
     static func farbenAlle(_ h: Haeufigkeit) -> [String: Color] {
         var farben: [String: Color] = [:]
         for gruppe in MuskelHauptgruppe.angezeigt {
             let gruppenfarbe = farbe(Ausgewogenheit.status(gruppe: gruppe, in: h))
             for muskel in gruppe.muskelSchluessel {
-                farben[muskel] = Ausgewogenheit.seltene.contains(muskel) ? DesignSystem.Color.muskelInaktiv : gruppenfarbe
+                farben[muskel] = Ausgewogenheit.ohneKraftuebung.contains(muskel) ? DesignSystem.Color.muskelInaktiv : gruppenfarbe
             }
         }
         return farben

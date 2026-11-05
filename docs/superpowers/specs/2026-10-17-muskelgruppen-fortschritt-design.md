@@ -53,7 +53,7 @@ Tim hat „ausgewogen“ so festgelegt: **Muskelgruppen werden ähnlich oft trai
 - Eine Gruppe zählt eine Einheit, wenn irgendein Muskel der Gruppe sie bekommt. Zuordnung der Schlüssel zu Gruppen wie in `UebungsGruppierung`. Unbekannte Schlüssel wie `deep_core` zählen nicht.
 - **Ausgewogenheit** = wie ähnlich die sechs Gruppen in ihrer Häufigkeit untereinander sind (Abstand zum Mittel). Gleiche Gewichtung für alle sechs, keine Richtgrößen. Formel: Builder, erklärbar und mit festgeschriebenen Testbeispielen.
 - **Zu wenig** = deutlich unter dem Mittel der Gruppen (Startwert: unter der Hälfte). Teilmuskeln vergleicht man mit dem Mittel ihrer eigenen Gruppe. **Auch null Einheiten gelten als Nachholbedarf (orange), sobald genug Daten für eine Auswertung da sind.**
-- **Seltene Muskeln** (als Hauptmuskel in höchstens zwei Katalogübungen: Rückenstrecker, Adduktoren, Abduktoren, Rotatorenmanschette, vorderer Sägemuskel, Schienbeinmuskel, Fibularis; kein Hauptmuskel einer Katalogübung bzw. höchstens zwei) werden grau mit „kaum Übungen“ angezeigt und lösen nie Hinweissatz oder Hinweiskarte aus. Sie zählen weiter zur Gruppe.
+- **Katalogabdeckung (Korrektur 26.10.2026):** Schon eine Kraftübung mit Haupt- oder Nebenmuskelzuordnung reicht für die Häufigkeitsauswertung. Rückenstrecker, Adduktoren, Abduktoren, Rotatorenmanschette und Serratus werden regulär bewertet. Nur dargestellte Muskeln ohne Kraftübung (aktuell Tibialis und Fibularis, nur Cardio-Zuordnungen) bleiben grau mit „keine Kraftübung im Katalog“ und lösen keine Hinweise aus. Ein automatischer Vertragstest gleicht diese Ausnahme mit Katalog und Grafik ab.
 - Cardio-Sätze zählen nicht.
 - Legende der Figur: Nachholbedarf (orange) · ok · viel (Lime-Skala, mehr = heller) · keine Auswertung (grau).
 
@@ -62,6 +62,7 @@ Tim hat „ausgewogen“ so festgelegt: **Muskelgruppen werden ähnlich oft trai
 - Bezug: Entwicklung der **Höchstlast** je Übung im Zeitraum von **3 Monaten** *(Annahme)*, bezogen auf die Übungen, die den Muskel als **Hauptmuskel** haben. Gruppenfortschritt = Mittel über ihre Muskeln. Quelle ist der bestehende Übungsfortschritt (`ExerciseProgress`, `points`).
 - Je Übung: beste Last der letzten 30 Tage gegenüber der besten Last der ersten 30 Tage des Zeitraums (bzw. ab dem ersten Messpunkt, wenn die Übung jünger ist). Jede Übung zählt gleich. *(Claude-Entscheidung.)*
 - **Rückgang wird ehrlich gezeigt**, aber neutral: grau statt rot, kein Alarmton. Alles zwischen −3 % und +3 % steht als „stabil“. *(Claude-Entscheidung.)*
+- Reine Nebenmuskeln haben nach dieser Fortschrittslogik keinen eigenen Lastfortschritt. Für sie wird kein „braucht noch Trainings“ versprochen; ihre Trainingshäufigkeit wird trotzdem ausgewertet.
 - Prozent relativ zur Last am Anfang des Zeitraums, damit unterschiedliche Einheiten keine Rolle spielen. Übungen ohne Last (Körpergewicht, Zeit) fallen heraus; dann ist „kein Wert“ ehrlicher als eine erfundene Zahl.
 - Ist nichts Auswertbares da, zeigt die Zeile statt einer Zahl einen Strich und den Hinweis „braucht noch Trainings“.
 
@@ -87,7 +88,7 @@ Aus dem Designsystem (§13.1 Muskelkarte) und `MuskelFigur`:
 - Muskeln je Übung: `HomeZeilen.muskelnJeUebung(katalog.bootstrap)`.
 - Verlauf: `VerlaufStore` hält `sessions` (mit Sätzen je Block und `exerciseId`) und `fortschritt`. Der Verlauf reicht laut Kommentar im DTO weiter zurück als der Prefetch; Builder prüft, ob die 28 Tage vollständig im Speicher liegen.
 - Einbau: `Screens/Home/HomeRootView.swift`, Bereich `fortschritt` (Überschrift ÜBUNGSFORTSCHRITT). Der Toggle sitzt dort oben.
-- Katalogdaten: im Katalog (`catalog/gymtavo.json`) haben alle 162 Übungen Muskeln. Einige Muskeln kommen als Hauptmuskel selten vor (Rückenstrecker 1, Abduktoren 2, Adduktoren 2, Rotatorenmanschette 2, Bauch 4). Dort ist die Datenlage dünn, und die Auswertung muss damit ruhig umgehen.
+- Katalogdaten: im Katalog (`catalog/gymtavo.json`) haben alle 162 Übungen Muskeln. Einige Muskeln kommen als Hauptmuskel selten vor (Rückenstrecker 1, Abduktoren 2, Adduktoren 2, Rotatorenmanschette 2, Bauch 4). Die geringe Zahl angebotener Übungen ist kein Grund, vorhandene Trainingsdaten auszublenden (Korrektur 26.10.2026).
 
 ## Dem Builder überlassen
 

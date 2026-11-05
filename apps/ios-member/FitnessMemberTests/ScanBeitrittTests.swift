@@ -28,6 +28,30 @@ struct ScanBeitrittTests {
         LokaleSession(id: UUID(), startedAt: jetzt, bloecke: [], ort: ort)
     }
 
+    // MARK: - Planposition (Spec 5)
+
+    @Test func scanEinesStudiogeraetsDasDieUebungAnbietetStartetDiePosition() {
+        // Die Position meint die Uebung e1: jedes Geraet, das sie anbietet,
+        // oeffnet sich wie sonst, und der Satz darauf hakt die Position ab.
+        let m = maschine(studioId: "s1")
+        let entscheidung = ScanEntscheidung.fuer(
+            token: token, bootstrap: bootstrap([m]), ort: .studio("s1"), offeneEinheit: nil)
+        guard case .oeffnen(let station) = entscheidung else { Issue.record("kein Oeffnen"); return }
+        #expect(station.exercises.contains { $0.id == "e1" })
+        #expect(PlanStart.bietetAn(station, uebungId: "e1"))
+    }
+
+    @Test func scanEinesGeraetsOhneDieUebungBietetDieAlternativeAusDerPlaneinheitAn() {
+        // Das Geraet oeffnet sich trotzdem (kein Zwang); es bietet e1 nicht an,
+        // also zaehlt es nicht fuer die Position -- die Alternative der Einheit
+        // steht weiter im Tausch-Sheet (PlanTausch.kandidaten).
+        let m = maschine(studioId: "s1")
+        let entscheidung = ScanEntscheidung.fuer(
+            token: token, bootstrap: bootstrap([m]), ort: .studio("s1"), offeneEinheit: nil)
+        guard case .oeffnen(let station) = entscheidung else { Issue.record("kein Oeffnen"); return }
+        #expect(!PlanStart.bietetAn(station, uebungId: "e2"))
+    }
+
     // MARK: - fuer(token:bootstrap:ort:offeneEinheit:)
 
     @Test func einGeraetAmAktuellenOrtOeffnetSich() {

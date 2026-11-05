@@ -78,6 +78,10 @@ targets:
       - path: FitnessMemberTests/Fixtures/sensoraufnahme-beispiel
         type: folder
         buildPhase: resources
+      # Die eine kanonische Fixture des TypeScript-Tests (Spec F17), nicht kopiert:
+      # so laufen Server und Geraet garantiert gegen dieselben Faelle.
+      - path: ../../packages/domain/fixtures/plan-ablauf.json
+        buildPhase: resources
     settings:
       base:
         SWIFT_VERSION: "6.0"

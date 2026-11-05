@@ -35,6 +35,13 @@ export type PlanStudios = {
   ohneDruck: string;
   /** exerciseIds mit Bereich knie -- fuer die Beschwerden-Pruefung. */
   knieUebungen: string[];
+  /** exerciseId je Name ohne Kennung ("Beinpresse", "Hackenschmidt", ...). */
+  uebungen: Record<string, string>;
+  /** Katalogmodell (unter GYMTAVO) mit allen zehn Uebungen / ohne die Druckuebung. */
+  katalogModell: string;
+  katalogModellOhneDruck: string;
+  /** Die Studiomodelle von voll, voll2, ohneDruck (equipment_models eines normalen Studios). */
+  studioModelle: { voll: string; voll2: string; ohneDruck: string };
 };
 
 /** Drei Studios: zwei mit allen Bausteinen, eins ohne Druckmaschine. */
@@ -108,14 +115,159 @@ export async function legePlanStudiosAn(kennung: string): Promise<PlanStudios> {
     voll2,
     ohneDruck,
     knieUebungen: ids.filter((_, i) => ALLE[i]!.bereiche.includes("knie")),
+    uebungen: Object.fromEntries(ALLE.map((u, i) => [u.name, ids[i]!])),
+    katalogModell: typVoll,
+    katalogModellOhneDruck: typOhne,
+    studioModelle: { voll: modelle[0]!.id, voll2: modelle[1]!.id, ohneDruck: modelle[2]!.id },
   };
+}
+
+// --- Plan aus dem Katalog (0066) -------------------------------------------------
+// Der Plan gehoert dem Katalog-Studio (GYMTAVO); Positionen nennen exerciseId und
+// modelId eines Katalogmodells. Der Generator der Fachschicht kennt das noch nicht
+// (spaetere Tasks), darum bauen die Tests den Plan hier von Hand und schreiben ihn
+// ueber die echten Funktionen.
+
+export type KatalogPosition = {
+  key: string;
+  exerciseId: string;
+  modelId: string;
+  baustein: string;
+  typ: "mehrgelenk" | "isolation";
+  rolle: string;
+  hauptmuskeln: string[];
+  saetze: number;
+  wdhVon: number | null;
+  wdhBis: number | null;
+  reserveVon: number | null;
+  reserveBis: number | null;
+  pauseSek: number;
+  aufwaermsatz: boolean;
+  dauerMin: number | null;
+};
+export type KatalogEinheit = { key: string; name: string; positionen: KatalogPosition[] };
+export type KatalogPlan = {
+  id: string;
+  studioId: string;
+  version: number;
+  status: string;
+  regelVersion: string;
+  eingabe: Record<string, unknown> & { ziel: string; erfahrung: string; beschwerdenBeruecksichtigt: boolean };
+  struktur: string;
+  einheiten: KatalogEinheit[];
+  gruende: string[];
+};
+
+const TYP_VON = Object.fromEntries(ALLE.map((u) => [u.name, u]));
+
+function position(s: PlanStudios, key: string, name: string): KatalogPosition {
+  const u = TYP_VON[name]!;
+  const cardio = u.baustein === "cardio";
+  const mg = u.typ === "mehrgelenk";
+  return {
+    key,
+    exerciseId: s.uebungen[name]!,
+    modelId: s.katalogModell,
+    baustein: u.baustein,
+    typ: u.typ,
+    rolle: cardio ? "cardio" : mg ? "haupt" : "ergaenzung",
+    hauptmuskeln: [],
+    saetze: cardio ? 1 : 3,
+    wdhVon: cardio ? null : mg ? 8 : 10,
+    wdhBis: cardio ? null : mg ? 12 : 15,
+    reserveVon: cardio ? null : 1,
+    reserveBis: cardio ? null : 3,
+    pauseSek: cardio ? 0 : mg ? 150 : 90,
+    aufwaermsatz: !cardio && mg,
+    dauerMin: cardio ? 10 : null,
+  };
+}
+
+/** Zwei Einheiten; die erste hat Mehrgelenk, Isolation und Cardio. */
+export function katalogEinheiten(s: PlanStudios): KatalogEinheit[] {
+  return [
+    {
+      key: "A",
+      name: "Einheit A",
+      positionen: ["Beinpresse", "Latzug", "Seitheben", "Bizepscurl", "Crosstrainer"].map((n, i) => position(s, `p${i}`, n)),
+    },
+    {
+      key: "B",
+      name: "Einheit B",
+      positionen: ["Brustpresse", "Hackenschmidt", "Bauchmaschine"].map((n, i) => position(s, `p${i}`, n)),
+    },
+  ];
+}
+
+type PlanZeileRoh = {
+  id: string; studio_id: string; version: number; status: string; regel_version: string;
+  eingabe: KatalogPlan["eingabe"]; struktur: string; einheiten: KatalogEinheit[]; gruende: string[];
+};
+export function zuKatalogPlan(z: PlanZeileRoh): KatalogPlan {
+  return {
+    id: z.id, studioId: z.studio_id, version: z.version, status: z.status, regelVersion: z.regel_version,
+    eingabe: z.eingabe, struktur: z.struktur, einheiten: z.einheiten, gruende: z.gruende,
+  };
+}
+
+/** Parameter von create_training_plan; Teile lassen sich fuer Negativtests ersetzen. */
+export function katalogPlanParameter(s: PlanStudios, o: { limits?: boolean; einheiten?: unknown; studioId?: string | undefined } = {}) {
+  return {
+    p_studio_id: o.studioId ?? GYMTAVO,
+    p_regel_version: "1.3.0",
+    p_eingabe: { ziel: "muskelaufbau", erfahrung: "regelmaessig", beschwerdenBeruecksichtigt: o.limits ?? false },
+    p_struktur: "gk_ab",
+    p_einheiten: o.einheiten ?? katalogEinheiten(s),
+    p_gruende: o.limits ? ["beschwerden_meiden", "beschwerden_vorsichtig", "ziel_muskelaufbau"] : ["ziel_muskelaufbau"],
+    p_wochenraster: [],
+  };
+}
+
+/** create_training_plan fuer das Katalog-Studio (Vorschlag). */
+export async function erzeugeKatalogPlan(m: Mitglied, s: PlanStudios, o: { limits?: boolean } = {}): Promise<KatalogPlan> {
+  const { data, error } = await m.client.rpc("create_training_plan", katalogPlanParameter(s, o)).single();
+  if (error) throw error;
+  return zuKatalogPlan(data as PlanZeileRoh);
+}
+
+export async function nimmKatalogPlanAn(m: Mitglied, planId: string): Promise<KatalogPlan> {
+  const { data, error } = await m.client.rpc("accept_training_plan", { p_plan_id: planId }).single();
+  if (error) throw error;
+  return zuKatalogPlan(data as PlanZeileRoh);
+}
+
+/** Vorschlag erzeugen und annehmen. */
+export async function aktiverKatalogPlan(m: Mitglied, s: PlanStudios): Promise<KatalogPlan> {
+  return nimmKatalogPlanAn(m, (await erzeugeKatalogPlan(m, s)).id);
+}
+
+/** Ein aktives Geraet des Studios (fuer Saetze und Negativtests). */
+export async function machineVon(studioId: string): Promise<{ id: string; equipment_model_id: string }> {
+  const { data, error } = await admin
+    .from("machines")
+    .select("id, equipment_model_id")
+    .eq("studio_id", studioId)
+    .eq("status", "active")
+    .limit(1)
+    .single();
+  if (error) throw error;
+  return data as { id: string; equipment_model_id: string };
 }
 
 export type MitgliedOptionen = {
   studios: string[];
   trainingGoal?: string | null;
   weeklyDays?: number | null;
-  profil?: { minutes: number; experience: string; focus: string[] } | null;
+  profil?: {
+    minutes: number;
+    experience: string;
+    focus: string[];
+    // Wochenraster (0069): ISO-Wochentage und Cardio-Arten, Default leer.
+    kurs_tage?: number[];
+    cardio_tage?: number[];
+    cardio_arten?: string[];
+    kraft_tage?: number[];
+  } | null;
   limits?: Record<string, "meiden" | "vorsichtig"> | null;
 };
 
@@ -148,4 +300,65 @@ export async function legeMitgliedAn(prefix: string, o: MitgliedOptionen): Promi
     if (e) throw e;
   }
   return { email, userId, client: await userClient(email) };
+}
+
+export type EinheitOptionen = {
+  planId: string;
+  einheitKey: string;
+  startedAt: Date;
+  /** null: nie beendet (dann entscheidet der letzte Satz). */
+  completedAt?: Date | null;
+  /** Status je Position; Default eine erledigte Position. */
+  status?: string[];
+  /** Saetze an einer Planposition, je Zeitpunkt einer. */
+  saetzeAm?: Date[];
+  satzAn?: { machineId: string; exerciseId: string };
+};
+
+/**
+ * Legt eine Planeinheit direkt an (Etappe 3, Task 6). Ueber den Service-Client,
+ * weil Startzeit und Abschluss in der Vergangenheit liegen muessen -- die Route
+ * stempelt immer "jetzt". Der Schutz-Trigger aus 0063 greift nur fuer authenticated.
+ */
+export async function legeEinheitAn(userId: string, studioId: string, o: EinheitOptionen): Promise<string> {
+  const id = crypto.randomUUID();
+  const completedAt = o.completedAt === undefined ? new Date(o.startedAt.getTime() + 3_600_000) : o.completedAt;
+  const { error } = await admin.from("workout_sessions").insert({
+    id,
+    studio_id: studioId,
+    user_id: userId,
+    started_at: o.startedAt.toISOString(),
+    completed_at: completedAt?.toISOString() ?? null,
+    completed_reason: completedAt ? "manual" : null,
+    plan_id: o.planId,
+    plan_einheit_key: o.einheitKey,
+    plan_stand: 1,
+  });
+  if (error) throw error;
+  const status = o.status ?? ["erledigt"];
+  if (status.length > 0) {
+    const { error: e } = await admin.from("session_plan_status").insert(
+      status.map((s, i) => ({ session_id: id, position_key: `p${i}`, user_id: userId, status: s })),
+    );
+    if (e) throw e;
+  }
+  if (o.saetzeAm?.length) {
+    if (!o.satzAn) throw new Error("satzAn fehlt");
+    const { error: e } = await admin.from("workout_sets").insert(
+      o.saetzeAm.map((am, i) => ({
+        id: crypto.randomUUID(),
+        studio_id: studioId,
+        user_id: userId,
+        session_id: id,
+        machine_id: o.satzAn!.machineId,
+        exercise_id: o.satzAn!.exerciseId,
+        set_index: i + 1,
+        load: 50,
+        volume: 10,
+        performed_at: am.toISOString(),
+      })),
+    );
+    if (e) throw e;
+  }
+  return id;
 }

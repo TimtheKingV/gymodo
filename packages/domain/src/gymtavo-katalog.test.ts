@@ -55,6 +55,37 @@ describe("catalog/gymtavo.json", () => {
   });
 });
 
+describe("Katalog und iOS-Muskelmodell", () => {
+  const ios = new URL("../../../apps/ios-member/", import.meta.url);
+  const geometrie = JSON.parse(readFileSync(new URL("FitnessMember/Resources/muskelmodell.json", ios), "utf8"));
+  const dargestellt = new Set<string>(["maennlich", "weiblich"].flatMap((geschlecht) =>
+    ["vorne", "hinten"].flatMap((ansicht) =>
+      geometrie[geschlecht][ansicht].muscles.map((m: { muscle: string }) => m.muscle))));
+
+  it("fuehrt jeden darstellbaren Muskel im Katalog", () => {
+    const bekannt = new Set(katalog().muscles.map((m) => m.key));
+    expect([...dargestellt].filter((key) => !bekannt.has(key))).toEqual([]);
+  });
+
+  it("schliesst nur Muskeln ohne jede Kraftuebung aus, auch Nebenmuskeln zaehlen", () => {
+    const k = katalog();
+    // Aus der Geraetezuordnung statt aus Namenskonventionen oder volume_kind:
+    // auch Farmer's Walk ist zeitbasiert, aber keine Cardio-Uebung.
+    const kraftuebungen = new Set(k.equipment.filter((g) => g.category !== "cardio")
+      .flatMap((g) => g.exercises));
+    const kraftmuskeln = new Set(k.exercises.filter((u) => kraftuebungen.has(u.key))
+      .flatMap((u) => u.muscles.map((m) => m.muscle)));
+    const ohne = [...dargestellt].filter((key) => !kraftmuskeln.has(key)).sort();
+    // Vertragspruefung zwischen gepflegter Katalogdatei und iOS-Ausnahme:
+    // neue Zuordnungen duerfen nie unbemerkt weiter grau bleiben.
+    const swift = readFileSync(new URL("FitnessMember/Muskelauswertung/Ausgewogenheit.swift", ios), "utf8");
+    const liste = swift.match(/static let ohneKraftuebung: Set<String> = \[([\s\S]*?)\]/);
+    expect(liste, "iOS-Ausnahmeliste muss pruefbar bleiben").not.toBeNull();
+    const ausgeschlossen = [...liste![1]!.matchAll(/"([a-z_]+)"/g)].map((m) => m[1]!).sort();
+    expect(ausgeschlossen).toEqual(ohne);
+  });
+});
+
 // Testnotiz 12.10. abends, #3: kein aktiver Typ startet bei 0.
 describe("catalog/gymtavo.json Startwerte", () => {
   it("gibt jedem aktiven Typ einen Startwert ueber dem Minimum", () => {

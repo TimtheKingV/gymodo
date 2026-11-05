@@ -56,6 +56,16 @@ enum ProfilZeilen {
         return "\(Zahlformat.gewichtMitEinheit(letzterMesswert.weightKg)) · \(HomeZeilen.tageHerText(tage))"
     }
 
+    // MARK: - Beschwerden (Trainingsplan, Etappe 3)
+
+    /// Die Zeile, ueber die sich die Einwilligung zu Beschwerden jederzeit
+    /// widerrufen laesst (Einwilligungstext in Schritt 1.3). Fuer jedes
+    /// Mitglied sichtbar: ob Beschwerden gespeichert sind, wuesste nur ein
+    /// eigener Abruf von Gesundheitsdaten, und der laeuft erst im Sheet.
+    static let beschwerdenLabel = "Beschwerden"
+    static let beschwerdenWert = "Einwilligung verwalten"
+    static let beschwerdenUmfang: OnboardingUmfang = .nurBeschwerden
+
     // MARK: - Vorgaben fuer ZielSheet (Ruling: Tage 3, Zielgewicht aktiv > letzter Messwert > 75,0)
 
     /// Die Vorgabe fuer `ZielSheet(.tageProWoche)`: der Wert des aktiven

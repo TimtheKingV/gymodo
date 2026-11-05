@@ -12,6 +12,12 @@ struct ProfilZeilenTests {
 
     // MARK: - geschlechtText
 
+    @Test func beschwerdenZeileOeffnetNurDenBeschwerdenSchritt() {
+        #expect(ProfilZeilen.beschwerdenLabel == "Beschwerden")
+        #expect(ProfilZeilen.beschwerdenWert == "Einwilligung verwalten")
+        #expect(ProfilZeilen.beschwerdenUmfang == .nurBeschwerden)
+    }
+
     @Test func geschlechtTextZeigtDasDeutscheWort() {
         #expect(ProfilZeilen.geschlechtText("female") == "Weiblich")
     }

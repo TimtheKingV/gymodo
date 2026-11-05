@@ -78,6 +78,10 @@
       "name": "Schienbeinmuskel"
     },
     {
+      "key": "fibularis",
+      "name": "Wadenbeinmuskulatur (Fibularis)"
+    },
+    {
       "key": "hip_flexors",
       "name": "Hüftbeuger"
     },
@@ -288,6 +292,36 @@
       "title": "Concept2 · SkiErg Doppelstocktechnik",
       "url": "https://www.concept2.com/training/skierg-technique",
       "accessed_at": "2026-09-27"
+    },
+    {
+      "key": "emg_overhead_press_2022",
+      "title": "Błażkiewicz et al. (2022) – EMG beim sitzenden Kurzhantel-Schulterdrücken",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36560129/",
+      "accessed_at": "2026-10-26"
+    },
+    {
+      "key": "emg_military_press_2001",
+      "title": "Büll et al. (2001) – Trapezius und Serratus beim Schulterdrücken",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/11572186/",
+      "accessed_at": "2026-10-26"
+    },
+    {
+      "key": "emg_treadmill_tibialis_2016",
+      "title": "Tibial impacts and muscle activation during walking, jogging and running (2016)",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/27400020/",
+      "accessed_at": "2026-10-26"
+    },
+    {
+      "key": "emg_treadmill_hip_flexors_1997",
+      "title": "Andersson et al. (1997) – Hüftbeuger beim Gehen und Laufen",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9401589/",
+      "accessed_at": "2026-10-26"
+    },
+    {
+      "key": "emg_treadmill_fibularis_2015",
+      "title": "Kim et al. (2015) – Unterschenkelmuskulatur beim Gehen auf dem Laufband",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/26834363/",
+      "accessed_at": "2026-10-26"
     }
   ],
   "equipment": [
@@ -4732,11 +4766,16 @@
         {
           "muscle": "triceps",
           "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
         }
       ],
       "review": "draft",
       "sources": [
-        "github_dataset"
+        "github_dataset",
+        "emg_overhead_press_2022"
       ]
     },
     {
@@ -5903,11 +5942,17 @@
         {
           "muscle": "triceps",
           "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
         }
       ],
       "review": "draft",
       "sources": [
-        "github_dataset"
+        "github_dataset",
+        "emg_overhead_press_2022",
+        "emg_military_press_2001"
       ]
     },
     {
@@ -6655,11 +6700,16 @@
         {
           "muscle": "triceps",
           "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
         }
       ],
       "review": "draft",
       "sources": [
-        "github_dataset"
+        "github_dataset",
+        "emg_military_press_2001"
       ]
     },
     {
@@ -6937,6 +6987,18 @@
         {
           "muscle": "deep_core",
           "role": "secondary"
+        },
+        {
+          "muscle": "tibialis",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "fibularis",
+          "role": "secondary"
         }
       ],
       "plan": {
@@ -6946,7 +7008,10 @@
       },
       "review": "draft",
       "sources": [
-        "cardio_treadmill_ref"
+        "cardio_treadmill_ref",
+        "emg_treadmill_tibialis_2016",
+        "emg_treadmill_hip_flexors_1997",
+        "emg_treadmill_fibularis_2015"
       ]
     },
     {
@@ -6981,6 +7046,14 @@
         {
           "muscle": "deep_core",
           "role": "secondary"
+        },
+        {
+          "muscle": "tibialis",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
         }
       ],
       "plan": {
@@ -6990,7 +7063,9 @@
       },
       "review": "draft",
       "sources": [
-        "cardio_treadmill_ref"
+        "cardio_treadmill_ref",
+        "emg_treadmill_tibialis_2016",
+        "emg_treadmill_hip_flexors_1997"
       ]
     },
     {

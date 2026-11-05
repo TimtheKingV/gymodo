@@ -26,6 +26,7 @@ struct TrainingAbschlussView: View {
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(VerlaufStore.self) private var verlauf
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
 
     @State private var vorschlaege: [Blockvorschlag]?
     @State private var ausfall: Vorschlagsausfall?
@@ -72,6 +73,8 @@ struct TrainingAbschlussView: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf
                 zahlen
+                // Entwurf 2.3: was vom Plan erledigt ist; ohne Plan nichts.
+                PlanAbschlussBereich(sessionId: sessionId, apiClient: apiClient)
                 // Nur Cardio trainiert: nichts vorzuschlagen, also auch keine
                 // Ueberschrift ueber leerem Raum.
                 if !zusammenfassung.vorschlagsbloecke.isEmpty {
@@ -128,6 +131,10 @@ struct TrainingAbschlussView: View {
             do throws(APIError) {
                 vorschlaege = try await apiClient.completeSession(
                     sessionId: sessionId, pausedSeconds: zusammenfassung.pausedSeconds).vorschlaege
+                // Erst jetzt zaehlt der Server die Einheit: der frische
+                // Bootstrap bringt naechste Einheit und Anfaengerangebot
+                // (Entwurf 2.3, "nach der achten Einheit") noch auf diesem Screen.
+                await katalog.load()
             } catch {
                 // Kein Fehlerzustand: die Zahlen stehen bereits, nur der
                 // Blick nach vorn fehlt. Welcher Satz das sagt, haengt am
@@ -353,12 +360,18 @@ extension TrainingAbschlussView {
             }
         }
         katalog.schreibvorgaengeVerwerfen(sessionId: sessionId)
+        // Ein verworfenes Training zaehlt nicht fuer die Planfolge (Review
+        // Focus 5); beenden() hatte es lokal schon gezaehlt.
+        planAblauf.einheitVerworfen(sessionId: sessionId)
         verlauf.einheitEntfernen(id: sessionId.uuidString)
         // Wie im Session-Detail: einheitEntfernen raeumt nur die Liste, Gesamtzahl,
         // Woche und Serie kommen erst mit dem naechsten Abruf. Home laedt beim
         // Tab-Wechsel nicht neu (HomeRootView), deshalb hier anstossen -- sonst
         // zeigt die Kopfzeile eine gerade verworfene Einheit noch mit.
         Task { await verlauf.laden(studioId: katalog.activeStudioId) }
+        // Die naechste Einheit des Servers kann die verworfene schon mitzaehlen
+        // (completeSession lief): erst ein frischer Bootstrap stimmt wieder.
+        Task { await katalog.load() }
         beiFertig()
     }
 }
@@ -453,6 +466,47 @@ struct Vorschlagsdelta: Equatable {
     }
 }
 
+/// Der Hinweis am Geraet, wenn sich das Zielgewicht einer Planposition
+/// gegenueber dem zuletzt benutzten Gewicht geaendert hat (Trainingsplan
+/// Etappe 4, G7/G17): die Aenderung und ein knapper Grund, zusammen ein
+/// Halbsatz -- "+2,5 kg, Bereich oben erreicht". Feste Textbausteine, keine
+/// KI (F10). Die Zahlen kommen fertig vom Server (`aenderung`); die App
+/// rechnet nichts (F15), sie formatiert nur.
+struct Gewichtshinweis: Equatable {
+    /// "+2,5 kg", "−2,5 kg" -- ueber Zahlformat.belastungDelta, wie am Abschluss.
+    let zahl: String
+    let grund: String?
+
+    var text: String { grund.map { "\(zahl), \($0)" } ?? zahl }
+
+    /// nil nur ohne Aenderung (G7: "ist es gleich, steht kein Hinweis").
+    /// Ob ein Hinweis steht, haengt an der Zahl, nie am Grund: auch
+    /// im_korridor oder letztes_gewicht koennen abweichen, wenn das Ziel an
+    /// die Geraetegrenzen gerastet wurde -- dann steht die Zahl allein.
+    init?(grund code: String?, aenderung: Double?, einheit: LoadUnit) {
+        guard let aenderung, aenderung != 0 else { return nil }
+        zahl = Zahlformat.belastungDelta(aenderung, einheit)
+        grund = code.flatMap(Self.grundText)
+    }
+
+    /// Ein Grund ohne Text (im_korridor, letztes_gewicht, kein_verlauf,
+    /// daten_uneindeutig, unbekannt)
+    /// laesst nur die Zahl stehen: lieber keine Erklaerung als eine falsche,
+    /// aber nie eine stille Aenderung (Anti-Ziel).
+    private static func grundText(_ code: String) -> String? {
+        switch code {
+        case "korridor_oben_erreicht": "Bereich oben erreicht"
+        case "korridor_unten_verfehlt": "Bereich unten verfehlt"
+        case "wiedereinstieg": "nach längerer Pause"
+        case "uebertragung": "von ähnlicher Übung"
+        case "startschaetzung": "erste Schätzung"
+        case "problem_gemeldet": "nach deiner Meldung"
+        case "geraetegrenze_erreicht": "Grenze des Geräts"
+        default: nil
+        }
+    }
+}
+
 /// Die drei sichtbaren Faelle aus dem Aufgabenbrief. Vorschlaege sind eine
 /// Rechnung, keine Empfehlung -- der Wortlaut bleibt entsprechend nuechtern
 /// ("+2,5 kg", nie "Du solltest").
@@ -484,11 +538,28 @@ enum VorschlagsAnzeige: Equatable {
 
     init(reasonCode: String?, deltaLoad: Double?, loadUnit: LoadUnit,
          secondaryLoad: Double? = nil, secondaryUnit: LoadUnit? = nil) {
+        // Eine Aenderung haengt an der Zahl, nicht am Grund (Final-Fix I3, wie
+        // der Hinweis am Geraet): ein Ziel im Korridor, nach einer Meldung oder
+        // an der Geraetegrenze kann trotzdem vom letzten Gewicht abweichen --
+        // "halten" oder "Kein Vorschlag" waere dann eine stille Aenderung.
+        if let deltaLoad, deltaLoad != 0 {
+            self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
+                                          nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            return
+        }
         switch reasonCode {
         case "korridor_oben_erreicht", "korridor_unten_verfehlt":
             if let deltaLoad {
                 self = .delta(Vorschlagsdelta(wert: deltaLoad, einheit: loadUnit,
                                               nebenbelastung: secondaryLoad, nebeneinheit: secondaryUnit))
+            } else {
+                self = .keiner
+            }
+        // Plangewichte (Etappe 4, G19): das Ziel der naechsten Planeinheit,
+        // ohne Plan das letzte Gewicht. Gleich wie zuletzt heisst halten.
+        case "letztes_gewicht", "startschaetzung", "uebertragung", "wiedereinstieg":
+            if deltaLoad == 0 {
+                self = .halten(loadUnit)
             } else {
                 self = .keiner
             }

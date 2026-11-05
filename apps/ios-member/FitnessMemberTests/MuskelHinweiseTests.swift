@@ -38,26 +38,28 @@ struct MuskelHinweiseTests {
         #expect(MuskelHinweise.startsatz(h) == "Für die Analyse braucht es noch ein paar Trainings.")
     }
 
-    @Test func gruppenhinweisNenntSchwaechstenNichtSeltenenMuskel() {
+    @Test func gruppenhinweisNenntSchwaechstenAuswertbarenMuskel() {
         let namen = ["upper_back": "Oberer Rücken"]
-        let zwei = mit([.ruecken: 3]).mitMuskeln(["lats": 8, "upper_back": 2, "erectors": 0])
+        let zwei = mit([.ruecken: 3]).mitMuskeln(["lats": 8, "upper_back": 2, "erectors": 6])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: zwei, namen: namen)
             == "Oberer Rücken kam in 28 Tagen 2× dran. Eine Übung dafür würde dein Training abrunden.")
-        let null = mit([.ruecken: 3]).mitMuskeln(["lats": 6])
+        let null = mit([.ruecken: 3]).mitMuskeln(["lats": 6, "erectors": 6])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: null, namen: namen)
             == "Oberer Rücken kam in 28 Tagen nicht dran. Eine Übung dafür würde dein Training abrunden.")
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: null, namen: [:])
             == "upper_back kam in 28 Tagen nicht dran. Eine Übung dafür würde dein Training abrunden.")
     }
 
-    @Test func gruppenhinweisNilWennNurSelteneMuskelFehlen() {
+    @Test func gruppenhinweisNenntAuchRueckenstreckerMitNurEinerKataloguebung() {
         let h = mit([:]).mitMuskeln(["lats": 6, "upper_back": 6, "erectors": 0])
-        #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: h, namen: [:]) == nil)
+        #expect(MuskelHinweise.gruppenhinweis(gruppe: .ruecken, in: h, namen: ["erectors": "Rückenstrecker"])
+            == "Rückenstrecker kam in 28 Tagen nicht dran. Eine Übung dafür würde dein Training abrunden.")
     }
 
     @Test func gruppenhinweisNilWennNurTibialisUndFibularisFehlen() {
         let h = mit([:]).mitMuskeln([
-            "quads": 6, "hamstrings": 6, "glutes": 6, "calves": 6, "tibialis": 0, "fibularis": 0
+            "quads": 6, "hamstrings": 6, "glutes": 6, "calves": 6,
+            "adductors": 6, "abductors": 6, "tibialis": 0, "fibularis": 0
         ])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .beine, in: h, namen: [:]) == nil)
     }
@@ -65,7 +67,7 @@ struct MuskelHinweiseTests {
     @Test func brauchtTrainingsNurBeiAuswertbarerHaeufigkeitOhneFortschritt() {
         #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: true) == true)
         #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: false) == false)
-        #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: true, selten: true) == false)
+        #expect(FortschrittsText.brauchtTrainings(.keinWert, auswertbar: true, ohneKraftuebung: true) == false)
         #expect(FortschrittsText.brauchtTrainings(.stabil, auswertbar: true) == false)
         #expect(FortschrittsText.brauchtTrainings(.wert(5), auswertbar: true) == false)
         #expect(FortschrittsText.brauchtTrainingsText == "braucht noch Trainings")

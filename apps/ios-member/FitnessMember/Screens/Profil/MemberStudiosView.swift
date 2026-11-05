@@ -4,6 +4,7 @@ struct MemberStudiosView: View {
     @Environment(CatalogStore.self) private var catalogStore
     @State private var studioPendingLeave: BootstrapResponse.Studio?
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @State private var errorMessage: String?
     @State private var wechselPending: Ort?
     let apiClient: APIClient
@@ -119,7 +120,7 @@ struct MemberStudiosView: View {
     /// Lokal sofort, Server im Hintergrund -- kein Abschluss-Screen in diesem
     /// Pfad, der Server beendet sonst nach vier Stunden selbst.
     private func beendenUndWechseln(zu ziel: Ort) {
-        let ende = sessions.beendenFuerOrtswechsel()
+        let ende = sessions.beendenFuerOrtswechsel(ablauf: planAblauf)
         catalogStore.setOrt(ziel)
         let client = apiClient
         Task { await WorkoutSessionStore.melden(ende, loader: client) }

@@ -8,11 +8,13 @@ import { FOKUS_MUSKELN } from "./trainingsplan-regeln.js";
 /** Reihenfolge der Liste ist die Auswahlreihenfolge; der Aufrufer sortiert fuer Determinismus. */
 export type Kandidat = {
   exerciseId: string;
-  machineId: string;
+  modelId: string;
   baustein: Baustein;
   typ: PlanTyp;
   bereiche: Bereich[];
   hauptmuskeln: string[];
+  /** Die Uebung steht auf der Merkliste "gefaellt nicht": sie kommt nur zum Zug, wenn nichts anderes bleibt. */
+  gefaelltNicht?: boolean;
 };
 
 export type Beschwerden = Partial<Record<Bereich, "meiden" | "vorsichtig">>;
@@ -78,9 +80,11 @@ export function waehleKandidat(
   const uebungen = new Map<string, Kandidat>();
   for (const k of liste) if (!uebungen.has(k.exerciseId)) uebungen.set(k.exerciseId, k);
   const gruppen = [...uebungen.values()];
+  const gemocht = gruppen.filter((k) => !k.gefaelltNicht);
   return (
-    rotiere(gruppen.filter((k) => !vorsichtig(k)), variation, belegt) ??
-    rotiere(gruppen.filter(vorsichtig), variation, belegt)
+    rotiere(gemocht.filter((k) => !vorsichtig(k)), variation, belegt) ??
+    rotiere(gemocht.filter(vorsichtig), variation, belegt) ??
+    rotiere(gruppen.filter((k) => k.gefaelltNicht), variation, belegt)
   );
 }
 
@@ -92,12 +96,8 @@ export function waehleFokus(
   belegt: ReadonlySet<string>,
 ): Kandidat | null {
   const muskeln = FOKUS_MUSKELN[bereich];
-  return (
-    kandidaten.find(
-      (k) =>
-        bausteine.includes(k.baustein) &&
-        !belegt.has(k.exerciseId) &&
-        k.hauptmuskeln.some((m) => muskeln.includes(m)),
-    ) ?? null
-  );
+  const passt = (k: Kandidat) =>
+    bausteine.includes(k.baustein) && !belegt.has(k.exerciseId) && k.hauptmuskeln.some((m) => muskeln.includes(m));
+  // "gefaellt nicht" kommt erst dran, wenn keine andere Uebung den Fokus traegt.
+  return kandidaten.find((k) => passt(k) && !k.gefaelltNicht) ?? kandidaten.find(passt) ?? null;
 }

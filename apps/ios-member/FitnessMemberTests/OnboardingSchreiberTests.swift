@@ -62,6 +62,230 @@ actor FakeProfilSchreibend: ProfilSchreibend {
         if fehlerBei.contains(name) { throw .server(message: "boom") }
         return Ziel(id: "z-\(body.kind)", kind: body.kind, targetValue: body.targetValue, createdAt: "2026-01-01")
     }
+
+    private(set) var trainingsprofile: [TrainingsplanProfil] = []
+    private(set) var beschwerden: [[String: String]] = []
+
+    func putTrainingProfile(_ profil: TrainingsplanProfil) async throws(APIError) -> TrainingsplanProfil {
+        aufrufe.append("putTrainingProfile")
+        trainingsprofile.append(profil)
+        if fehlerBei.contains("putTrainingProfile") { throw .offline }
+        return profil
+    }
+
+    func putTrainingLimits(areas: [String: String]) async throws(APIError) {
+        aufrufe.append("putTrainingLimits")
+        beschwerden.append(areas)
+        if fehlerBei.contains("putTrainingLimits") { throw .offline }
+    }
+
+    func deleteTrainingLimits() async throws(APIError) {
+        aufrufe.append("deleteTrainingLimits")
+        if fehlerBei.contains("deleteTrainingLimits") { throw .offline }
+    }
+
+    /// Was GET training-limits liefert; nil = 404 (keine Einwilligung).
+    private var gespeicherteBeschwerden: [String: String]?
+    func setzeGespeicherteBeschwerden(_ areas: [String: String]?) { gespeicherteBeschwerden = areas }
+
+    func trainingLimits() async throws(APIError) -> [String: String]? {
+        aufrufe.append("trainingLimits")
+        if fehlerBei.contains("trainingLimits") { throw .offline }
+        return gespeicherteBeschwerden
+    }
+}
+
+/// Das Beschwerden-Sheet aus dem Profil (Review Task 10, Runde 2): ohne
+/// gelungenen Abruf darf nichts gespeichert werden -- sonst saehe ein
+/// gescheiterter Abruf wie "keine Einwilligung" aus, und "Speichern" schloesse
+/// das Sheet wie nach einem Widerruf, ohne dass einer passiert ist.
+@MainActor
+@Suite("BeschwerdenSitzung")
+struct BeschwerdenSitzungTests {
+    @Test("Abruf scheitert: Speichern unmoeglich, nichts geschrieben; nach Erneut versuchen gilt der gespeicherte Stand, Haken weg sendet DELETE")
+    func abrufScheitertDannWiderruf() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        await fake.lassFehlschlagen("trainingLimits")
+        let sitzung = BeschwerdenSitzung(client: fake)
+
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .fehler(.offline))
+        #expect(!sitzung.kannSpeichern)
+        #expect(await sitzung.speichern() == false)
+        #expect(await fake.aufrufe == ["trainingLimits"])
+
+        await fake.lassGelingen("trainingLimits")
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .geladen)
+        #expect(sitzung.plan.einwilligung)
+        #expect(sitzung.plan.beschwerden == ["knie": "meiden"])
+
+        // Die ganze Kette wie im Sheet: Haken weg -> Speichern -> DELETE.
+        sitzung.plan.einwilligung = false
+        #expect(sitzung.kannSpeichern)
+        #expect(await sitzung.speichern())
+        #expect(await fake.aufrufe == ["trainingLimits", "trainingLimits", "deleteTrainingLimits"])
+    }
+
+    @Test("Abruf 404 (keine Einwilligung) ist ein Erfolg: mit Haken und Bereich geht ein PUT raus")
+    func keineEinwilligungDannPut() async {
+        let fake = FakeProfilSchreibend()
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        #expect(sitzung.laden == .geladen)
+        #expect(!sitzung.plan.einwilligung)
+
+        sitzung.plan.setzeStufe("vorsichtig", fuer: "huefte")
+        #expect(!sitzung.kannSpeichern)
+        sitzung.plan.einwilligung = true
+        #expect(await sitzung.speichern())
+        #expect(await fake.aufrufe == ["trainingLimits", "putTrainingLimits"])
+        #expect(await fake.beschwerden == [["huefte": "vorsichtig"]])
+    }
+
+    @Test("Abbrechen sendet nichts -- auch nicht nach einer Aenderung")
+    func abbrechenSendetNichts() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        sitzung.plan.einwilligung = false
+        sitzung.abbrechen()
+        #expect(await fake.aufrufe == ["trainingLimits"])
+    }
+
+    @Test("scheitert das Speichern, bleibt das Sheet mit Fehler offen")
+    func speichernScheitert() async {
+        let fake = FakeProfilSchreibend()
+        await fake.setzeGespeicherteBeschwerden(["knie": "meiden"])
+        await fake.lassFehlschlagen("deleteTrainingLimits")
+        let sitzung = BeschwerdenSitzung(client: fake)
+        await sitzung.vorbelegen()
+        sitzung.plan.einwilligung = false
+        #expect(await sitzung.speichern() == false)
+        #expect(sitzung.schreibFehler == .offline)
+    }
+}
+
+/// Der Block "Dein Trainingsplan" (Etappe 3, Task 10): Trainingsprofil und
+/// Beschwerden laufen nach den vier Bestandsvorgaengen.
+@Suite("OnboardingSchreiber Plan")
+struct OnboardingSchreiberPlanTests {
+    private var vollerPlan: PlanAntworten {
+        var plan = PlanAntworten(profil: nil)
+        plan.minuten = 60
+        plan.erfahrung = "regelmaessig"
+        plan.schwerpunktUmschalten("po")
+        return plan
+    }
+
+    @Test("Schreiber: Profil-PUT nur mit minuten und erfahrung")
+    func profilPutNurMitMinutenUndErfahrung() async {
+        var plan = PlanAntworten(profil: nil)
+        plan.minuten = 60
+        let fake = FakeProfilSchreibend()
+        // Sheet-Modus ohne Bestandsantworten: nur der Plan-Block zaehlt.
+        let ergebnis = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false)
+        #expect(ergebnis == .fertig)
+        #expect(await fake.aufrufe.isEmpty)
+
+        let fake2 = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: vollerPlan, mit: fake2, mitAbschluss: false)
+        #expect(await fake2.aufrufe == ["putTrainingProfile"])
+        #expect(await fake2.trainingsprofile == [TrainingsplanProfil(minutes: 60, experience: "regelmaessig", focus: ["po"])])
+    }
+
+    @Test("Wurzel-Modus: Bestand zuerst, dann Trainingsprofil, dann Beschwerden")
+    func reihenfolgeMitBestand() async {
+        var plan = vollerPlan
+        plan.setzeStufe("vorsichtig", fuer: "knie")
+        plan.einwilligung = true
+        let fake = FakeProfilSchreibend()
+        let ergebnis = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: plan, mit: fake)
+        #expect(ergebnis == .fertig)
+        #expect(await fake.aufrufe == ["updateProfile", "putTrainingProfile", "putTrainingLimits"])
+        #expect(await fake.beschwerden == [["knie": "vorsichtig"]])
+    }
+
+    @Test("Beschwerden ohne Einwilligung gehen nie raus")
+    func beschwerdenOhneEinwilligung() async {
+        var plan = vollerPlan
+        plan.setzeStufe("meiden", fuer: "knie")
+        let fake = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false)
+        #expect(await fake.aufrufe == ["putTrainingProfile"])
+        #expect(await fake.beschwerden.isEmpty)
+    }
+
+    @Test("Widerruf sendet DELETE statt PUT")
+    func widerrufSendetDelete() async {
+        var plan = vollerPlan
+        plan.beschwerdenUebernehmen(["knie": "meiden"])
+        plan.einwilligung = false
+        let fake = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false)
+        #expect(await fake.aufrufe == ["putTrainingProfile", "deleteTrainingLimits"])
+    }
+
+    @Test("scheitert das Trainingsprofil, bleiben Profil und Beschwerden offen")
+    func trainingsprofilScheitert() async {
+        var plan = vollerPlan
+        plan.setzeStufe("meiden", fuer: "knie")
+        plan.einwilligung = true
+        let fake = FakeProfilSchreibend()
+        await fake.lassFehlschlagen("putTrainingProfile")
+        let ergebnis = await OnboardingSchreiber.schreiben(OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false)
+        #expect(ergebnis == .teilweise(offen: [.trainingsprofil, .beschwerden], fehler: .offline))
+
+        // Der zweite Versuch wiederholt nur das Offene.
+        await fake.lassGelingen("putTrainingProfile")
+        let zweites = await OnboardingSchreiber.schreiben(
+            OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false, offen: [.trainingsprofil, .beschwerden])
+        #expect(zweites == .fertig)
+        #expect(await fake.aufrufe == ["putTrainingProfile", "putTrainingProfile", "putTrainingLimits"])
+    }
+
+    @Test("nurBeschwerden schreibt nur die Beschwerden, nie das Trainingsprofil")
+    func nurBeschwerdenSchreibtNurLimits() async {
+        #expect(OnboardingSchreiber.vorgaenge(umfang: .nurBeschwerden) == [.beschwerden])
+        #expect(OnboardingSchreiber.vorgaenge(umfang: .nurPlan) == nil)
+
+        var plan = vollerPlan
+        plan.beschwerdenUebernehmen(["knie": "meiden"])
+        plan.einwilligung = false
+        let fake = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(
+            OnboardingAntworten(), plan: plan, mit: fake, mitAbschluss: false,
+            offen: OnboardingSchreiber.vorgaenge(umfang: .nurBeschwerden))
+        #expect(await fake.aufrufe == ["deleteTrainingLimits"])
+    }
+
+    @Test("ohne Plan-Block (nil) bleibt alles wie vor Etappe 3")
+    func ohnePlanBlock() async {
+        let fake = FakeProfilSchreibend()
+        _ = await OnboardingSchreiber.schreiben(OnboardingAntworten(), mit: fake)
+        #expect(await fake.aufrufe == ["updateProfile"])
+    }
+
+    @Test("nach einem gelungenen Versuch laufen nur geaenderte Vorgaenge erneut")
+    func nurGeaenderteVorgaenge() {
+        var antworten = OnboardingAntworten()
+        antworten.richtung = .abnehmen
+        antworten.tageProWoche = 3
+        let plan = vollerPlan
+
+        var spaeter = antworten
+        spaeter.tageProWoche = 4
+        var spaeterPlan = plan
+        spaeterPlan.minuten = 45
+        #expect(OnboardingSchreiber.geaenderteVorgaenge(
+            vorher: antworten, planVorher: plan, jetzt: spaeter, planJetzt: spaeterPlan
+        ) == [.wochenziel, .trainingsprofil, .beschwerden])
+        #expect(OnboardingSchreiber.geaenderteVorgaenge(
+            vorher: antworten, planVorher: plan, jetzt: antworten, planJetzt: plan
+        ) == [.beschwerden])
+    }
 }
 
 @Suite("OnboardingSchreiber")

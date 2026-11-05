@@ -6,6 +6,7 @@ import Foundation
 ///
 /// App-Support statt Keychain: das sind Trainingsdaten, keine Zugangsdaten.
 final class SessionFileStore {
+    private let schreiber = HintergrundSchreiber()
     private let fileURL: URL
     private let beendetURL: URL
 
@@ -24,33 +25,60 @@ final class SessionFileStore {
         try? FileManager.default.removeItem(at: directory.appendingPathComponent("trainingsbeginn.json"))
     }
 
+    /// Wartet, bis alle angenommenen Schreibvorgaenge auf der Platte sind.
+    func abwarten() { schreiber.abwarten() }
+
     func load() -> LokaleSession? {
+        schreiber.abwarten()
         guard let data = try? Data(contentsOf: fileURL) else { return nil }
         return try? JSONDecoder().decode(LokaleSession.self, from: data)
     }
 
+    /// Kodiert und schreibt im Hintergrund in Reihenfolge der Aufrufe: der
+    /// Satz-Knopf wartet nicht auf die Platte (die Session waechst mit jedem
+    /// Satz). Lesen wartet dagegen, damit load() immer den letzten Stand sieht.
     func save(_ session: LokaleSession?) {
+        let fileURL = fileURL
         guard let session else {
-            try? FileManager.default.removeItem(at: fileURL)
+            schreiber.async { try? FileManager.default.removeItem(at: fileURL) }
             return
         }
-        guard let data = try? JSONEncoder().encode(session) else { return }
-        TrainingsDateischutz.schreiben(data, nach: fileURL)
+        schreiber.async {
+            guard let data = try? JSONEncoder().encode(session) else { return }
+            TrainingsDateischutz.schreiben(data, nach: fileURL)
+        }
     }
 
     func loadBeendet() -> BeendeteSession? {
+        schreiber.abwarten()
         guard let data = try? Data(contentsOf: beendetURL) else { return nil }
         return try? JSONDecoder().decode(BeendeteSession.self, from: data)
     }
 
     func saveBeendet(_ beendet: BeendeteSession?) {
+        let beendetURL = beendetURL
         guard let beendet else {
-            try? FileManager.default.removeItem(at: beendetURL)
+            schreiber.async { try? FileManager.default.removeItem(at: beendetURL) }
             return
         }
-        guard let data = try? JSONEncoder().encode(beendet) else { return }
-        TrainingsDateischutz.schreiben(data, nach: beendetURL)
+        schreiber.async {
+            guard let data = try? JSONEncoder().encode(beendet) else { return }
+            TrainingsDateischutz.schreiben(data, nach: beendetURL)
+        }
     }
+}
+
+/// Eine serielle Warteschlange fuer Dateischreibvorgaenge: gleiche Reihenfolge
+/// wie die Aufrufe, aber nie auf dem Main Actor. `abwarten()` ist die
+/// Schranke fuer Leser und Tests. Die Warteschlange gehoert allen Stores
+/// gemeinsam, damit auch eine zweite Instanz auf derselben Datei (Neustart,
+/// Test) erst liest, wenn die erste fertig geschrieben hat.
+final class HintergrundSchreiber: @unchecked Sendable {
+    private static let queue = DispatchQueue(label: "gymtavo.datei-schreiber", qos: .userInitiated)
+    private var queue: DispatchQueue { Self.queue }
+
+    func async(_ arbeit: @escaping @Sendable () -> Void) { queue.async(execute: arbeit) }
+    func abwarten() { queue.sync {} }
 }
 
 /// Die zuletzt beendete Einheit, 30 Minuten lang fortsetzbar (Testnotiz

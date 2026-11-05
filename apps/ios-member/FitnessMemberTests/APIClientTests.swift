@@ -229,4 +229,173 @@ struct APIClientTests {
         #expect(geladen.rohdaten == Data(json.utf8))
         #expect(geladen.antwort.studios.isEmpty)
     }
+
+    // MARK: - Trainingsplan (Etappe 3)
+
+    @Test("map erkennt profil_unvollstaendig und liest detail.fehlt")
+    func mapProfilUnvollstaendig() {
+        let detail = JSONValue.object(["fehlt": .array([.string("minutes"), .string("experience")])])
+        #expect(APIError.map(code: "profil_unvollstaendig", message: "Profil fehlt.", detail: detail)
+                == .profilUnvollstaendig(message: "Profil fehlt.", fehlt: ["minutes", "experience"]))
+        #expect(APIError.map(code: "profil_unvollstaendig", message: "m")
+                == .profilUnvollstaendig(message: "m", fehlt: []))
+    }
+
+    @Test("map erkennt plan_nicht_moeglich und liest baustein und grund")
+    func mapPlanNichtMoeglich() {
+        let detail = JSONValue.object(["baustein": .string("rumpf"), "grund": .string("keine_uebung")])
+        let fehler = APIError.map(code: "plan_nicht_moeglich", message: "Geht nicht.", detail: detail)
+        #expect(fehler == .planNichtMoeglich(message: "Geht nicht.", baustein: "rumpf", grund: "keine_uebung"))
+        #expect(fehler.istDauerhaft)
+        #expect(fehler.servertext == "Geht nicht.")
+        #expect(APIError.profilUnvollstaendig(message: "x", fehlt: []).istDauerhaft)
+    }
+
+    @Test("unbekannter Code bleibt .server")
+    func mapUnbekannterCode() {
+        #expect(APIError.map(code: "irgendwas", message: "m", detail: .object([:])) == .server(message: "m"))
+    }
+
+    @Test("createPlan 422 wird .planNichtMoeglich")
+    func createPlan422() async throws {
+        StubURLProtocol.handler = { _ in
+            let json = #"{"error":{"code":"plan_nicht_moeglich","message":"Kein Plan.","detail":{"baustein":"rumpf","grund":"keine_uebung"}}}"#
+            return (422, Data(json.utf8))
+        }
+        let client = stubbedClient()
+        await #expect(throws: APIError.planNichtMoeglich(message: "Kein Plan.", baustein: "rumpf", grund: "keine_uebung")) {
+            try await client.createPlan(studioId: "s1")
+        }
+    }
+
+    @Test("Swap sendet grund, modelId und ortId")
+    func swapSendetGrund() async throws {
+        nonisolated(unsafe) var bodies: [[String: String]] = []
+        StubURLProtocol.handler = { request in
+            let data = request.httpBodyStream.map { s -> Data in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return d
+            } ?? Data()
+            bodies.append((try? JSONSerialization.jsonObject(with: data) as? [String: String]) ?? [:])
+            return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
+        }
+        let client = stubbedClient()
+        _ = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                              modelId: "em-m7", grund: "nicht_vorhanden", ortId: "s1")
+        #expect(bodies[0] == ["einheitKey": "A", "positionKey": "A0", "exerciseId": "e7", "modelId": "em-m7",
+                              "grund": "nicht_vorhanden", "ortId": "s1"])
+        // Ohne Grund fehlen beide Schluessel ganz.
+        _ = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "A0", exerciseId: "e7",
+                                              modelId: "em-m7", grund: nil, ortId: nil)
+        #expect(bodies[1] == ["einheitKey": "A", "positionKey": "A0", "exerciseId": "e7", "modelId": "em-m7"])
+    }
+
+    @Test("createPlan sendet POST /me/plans mit studioId und dekodiert 201")
+    func createPlanOk() async throws {
+        nonisolated(unsafe) var gesehen: (String?, String?, String?)?
+        StubURLProtocol.handler = { request in
+            let body = request.httpBodyStream.map { s -> String in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return String(decoding: d, as: UTF8.self)
+            }
+            gesehen = (request.httpMethod, request.url?.path, body)
+            let json = #"{"id":"p1","studioId":"s1","version":1,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#
+            return (201, Data(json.utf8))
+        }
+        let plan = try await stubbedClient().createPlan(studioId: "s1")
+        #expect(plan.planId == "p1")
+        #expect(gesehen?.0 == "POST")
+        #expect(gesehen?.1 == "/api/v1/me/plans")
+        #expect(gesehen?.2 == #"{"studioId":"s1"}"#)
+    }
+
+    @Test("createPlan ohne Studio sendet einen Rumpf ohne studioId")
+    func createPlanOhneStudio() async throws {
+        nonisolated(unsafe) var gesehen: (String?, String?)?
+        StubURLProtocol.handler = { request in
+            let body = request.httpBodyStream.map { s -> String in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return String(decoding: d, as: UTF8.self)
+            }
+            gesehen = (request.url?.path, body)
+            let json = #"{"id":"p1","version":1,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#
+            return (201, Data(json.utf8))
+        }
+        let plan = try await stubbedClient().createPlan(studioId: nil)
+        #expect(plan.planId == "p1")
+        #expect(plan.studioId == nil)
+        #expect(gesehen?.0 == "/api/v1/me/plans")
+        #expect(gesehen?.1 == "{}")
+    }
+
+    @Test("trainingProfile: 404 ergibt nil, 200 das Profil")
+    func trainingProfileLesen() async throws {
+        StubURLProtocol.handler = { _ in
+            (404, Data(#"{"error":{"code":"not_found","message":"Noch kein Trainingsprofil."}}"#.utf8))
+        }
+        #expect(try await stubbedClient().trainingProfile() == nil)
+        StubURLProtocol.handler = { _ in (200, Data(#"{"minutes":60,"experience":"neu","focus":["brust"]}"#.utf8)) }
+        #expect(try await stubbedClient().trainingProfile()
+                == TrainingsplanProfil(minutes: 60, experience: "neu", focus: ["brust"]))
+    }
+
+    @Test("cardioChecks: GET mit from/to, PUT und DELETE mit day")
+    func cardioChecks() async throws {
+        nonisolated(unsafe) var gesehen: [String] = []
+        StubURLProtocol.handler = { request in
+            gesehen.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")?\(request.url?.query ?? "")")
+            if request.httpMethod == "GET" { return (200, Data(#"{"days":["2026-10-26","2026-10-28"]}"#.utf8)) }
+            return (204, Data())
+        }
+        let client = stubbedClient()
+        #expect(try await client.cardioChecks(from: "2026-10-26", to: "2026-11-01") == ["2026-10-26", "2026-10-28"])
+        try await client.setCardioCheck(day: "2026-10-28")
+        try await client.deleteCardioCheck(day: "2026-10-28")
+        #expect(gesehen.count == 3)
+        #expect(gesehen[0].hasSuffix("/me/cardio-checks?from=2026-10-26&to=2026-11-01"))
+        #expect(gesehen[1].hasPrefix("PUT ") && gesehen[1].hasSuffix("/me/cardio-checks?day=2026-10-28"))
+        #expect(gesehen[2].hasPrefix("DELETE ") && gesehen[2].hasSuffix("/me/cardio-checks?day=2026-10-28"))
+    }
+
+    @Test("trainingLimits: 404 ergibt nil, 200 die Bereiche")
+    func trainingLimitsLesen() async throws {
+        StubURLProtocol.handler = { _ in (404, Data(#"{"error":{"code":"not_found","message":"Keine."}}"#.utf8)) }
+        #expect(try await stubbedClient().trainingLimits() == nil)
+        StubURLProtocol.handler = { _ in (200, Data(#"{"consentAt":"x","areas":{"knie":"meiden"}}"#.utf8)) }
+        #expect(try await stubbedClient().trainingLimits() == ["knie": "meiden"])
+    }
+
+    @Test("putTrainingLimits sendet einwilligung und areas, deleteTrainingLimits nimmt 204")
+    func limitsSchreiben() async throws {
+        nonisolated(unsafe) var pfade: [String] = []
+        StubURLProtocol.handler = { request in
+            pfade.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")")
+            if request.httpMethod == "DELETE" { return (204, Data()) }
+            return (200, Data(#"{"consentAt":"x","areas":{}}"#.utf8))
+        }
+        let client = stubbedClient()
+        try await client.putTrainingLimits(areas: ["knie": "meiden"])
+        try await client.deleteTrainingLimits()
+        #expect(pfade == ["PUT /api/v1/me/training-limits", "DELETE /api/v1/me/training-limits"])
+    }
+
+    @Test("acceptPlan und swapPlanPosition treffen die richtigen Pfade")
+    func acceptUndSwap() async throws {
+        nonisolated(unsafe) var pfade: [String] = []
+        StubURLProtocol.handler = { request in
+            pfade.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")")
+            return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
+        }
+        let client = stubbedClient()
+        _ = try await client.acceptPlan(id: "p1")
+        let neu = try await client.swapPlanPosition(planId: "p1", einheitKey: "A", positionKey: "0", exerciseId: "e", modelId: "m")
+        #expect(neu.planId == "p2")
+        #expect(pfade == ["POST /api/v1/me/plans/p1/accept", "POST /api/v1/me/plans/p1/swap"])
+    }
 }

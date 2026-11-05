@@ -7,6 +7,7 @@ import SwiftUI
 struct StudioBeitretenView: View {
     @Environment(CatalogStore.self) private var catalogStore
     @Environment(WorkoutSessionStore.self) private var sessions
+    @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     /// Meldet den Abschluss einer fuer den Wechsel beendeten Einheit.
     let loader: any GeraetLoading
     let beiErfolg: () -> Void
@@ -171,7 +172,7 @@ struct StudioBeitretenView: View {
     /// Hintergrund melden, kein Abschluss-Screen.
     private func beendenUndWechseln(_ ergebnis: JoinResult) {
         wechselPending = nil
-        let ende = sessions.beendenFuerOrtswechsel()
+        let ende = sessions.beendenFuerOrtswechsel(ablauf: planAblauf)
         catalogStore.ortNachBeitritt(ergebnis)
         let client = loader
         Task { await WorkoutSessionStore.melden(ende, loader: client) }

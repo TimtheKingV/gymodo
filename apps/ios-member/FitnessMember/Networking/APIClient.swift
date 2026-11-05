@@ -222,6 +222,96 @@ actor APIClient {
         try await executeNoContent(path: "me/goals/\(kind)", method: "DELETE")
     }
 
+    // MARK: - Trainingsplan (Etappe 3)
+
+    /// 404 heisst "noch kein Profil" und ist hier kein Fehler.
+    func trainingProfile() async throws(APIError) -> TrainingsplanProfil? {
+        do throws(APIError) { return try await get("me/training-profile") }
+        catch { if case .notFound = error { return nil }; throw error }
+    }
+
+    func putTrainingProfile(_ profil: TrainingsplanProfil) async throws(APIError) -> TrainingsplanProfil {
+        try await send("me/training-profile", method: "PUT", body: profil)
+    }
+
+    /// Nur die Bereiche mit Stufe (Gesundheitsdaten, nie cachen); nil ohne
+    /// Einwilligung (404).
+    func trainingLimits() async throws(APIError) -> [String: String]? {
+        struct Antwort: Decodable { let areas: [String: String] }
+        do throws(APIError) { return try await get("me/training-limits", as: Antwort.self).areas }
+        catch { if case .notFound = error { return nil }; throw error }
+    }
+
+    /// Mit dem Speichern willigt das Mitglied ein; der Server nimmt ohne
+    /// `einwilligung: true` nichts an.
+    func putTrainingLimits(areas: [String: String]) async throws(APIError) {
+        struct Rumpf: Encodable { let einwilligung = true; let areas: [String: String] }
+        // Die Antwort traegt nichts, was die App braucht (nicht dekodiert genug).
+        let _: JSONValue = try await send("me/training-limits", method: "PUT", body: Rumpf(areas: areas))
+    }
+
+    /// Widerruf; ohne Einwilligung ebenfalls 204.
+    func deleteTrainingLimits() async throws(APIError) {
+        try await executeNoContent(path: "me/training-limits", method: "DELETE")
+    }
+
+    /// `studioId` nennt den Ort (Merkliste); ohne ihn gilt das Freie Training.
+    func createPlan(studioId: String?) async throws(APIError) -> Trainingsplan {
+        let body: [String: String] = studioId.map { ["studioId": $0] } ?? [:]
+        return try await send("me/plans", method: "POST", body: body)
+    }
+
+    func acceptPlan(id: String) async throws(APIError) -> Trainingsplan {
+        try await sendNoBody("me/plans/\(id)/accept", method: "POST")
+    }
+
+    func swapPlanPosition(
+        planId: String, einheitKey: String, positionKey: String, exerciseId: String, modelId: String,
+        grund: String? = nil, ortId: String? = nil
+    ) async throws(APIError) -> Trainingsplan {
+        // `grund` ("nicht_vorhanden" | "gefaellt_nicht") und `ortId` nur zusammen mit
+        // einem Tausch; beides gehoert zur Person und wird nirgends geloggt.
+        struct Rumpf: Encodable {
+            let einheitKey, positionKey, exerciseId, modelId: String
+            let grund, ortId: String?
+        }
+        return try await send("me/plans/\(planId)/swap", method: "POST", body: Rumpf(
+            einheitKey: einheitKey, positionKey: positionKey, exerciseId: exerciseId, modelId: modelId,
+            grund: grund, ortId: ortId))
+    }
+
+    // MARK: - Cardio-Checks
+
+    /// Die abgehakten Cardio-Tage von `from` bis `to` (je "YYYY-MM-DD", eingeschlossen).
+    func cardioChecks(from: String, to: String) async throws(APIError) -> [String] {
+        struct Antwort: Decodable { let days: [String] }
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        let antwort: Antwort = try await execute(url: url, method: "GET", bodyData: nil)
+        return antwort.days
+    }
+
+    /// Hakt Cardio fuer `day` ab (idempotent, 204). Der Server bekommt nur den Tag des
+    /// Mitglieds, kein `today`; liegt der Tag in der Zukunft, antwortet er 422.
+    func setCardioCheck(day: String) async throws(APIError) {
+        try await cardioCheckOhneInhalt(day: day, method: "PUT")
+    }
+
+    /// Nimmt das Abhaken zurueck; ein fehlender Tag ist kein Fehler (204).
+    func deleteCardioCheck(day: String) async throws(APIError) {
+        try await cardioCheckOhneInhalt(day: day, method: "DELETE")
+    }
+
+    private func cardioCheckOhneInhalt(day: String, method: String) async throws(APIError) {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "day", value: day)]
+        guard let url = components.url else { throw APIError.encodingFailed }
+        try await executeNoContent(url: url, method: method)
+    }
+
     // MARK: - Hilfsmethoden
 
     private func get<T: Decodable>(_ path: String, as type: T.Type = T.self) async throws(APIError) -> T {
@@ -278,7 +368,7 @@ actor APIClient {
         if (200..<300).contains(http.statusCode) { return data }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
-            throw APIError.map(code: envelope.error.code, message: envelope.error.message)
+            throw APIError.map(code: envelope.error.code, message: envelope.error.message, detail: envelope.error.detail)
         }
         throw APIError.server(message: "Unerwarteter Fehler.")
     }
@@ -297,7 +387,11 @@ actor APIClient {
     }
 
     private func executeNoContent(path: String, method: String) async throws(APIError) {
-        let request = try await anfrage(url: baseURL.appendingPathComponent(path), method: method)
+        try await executeNoContent(url: baseURL.appendingPathComponent(path), method: method)
+    }
+
+    private func executeNoContent(url: URL, method: String) async throws(APIError) {
+        let request = try await anfrage(url: url, method: method)
 
         let data: Data
         let response: URLResponse
@@ -311,7 +405,7 @@ actor APIClient {
         if (200..<300).contains(http.statusCode) { return }
 
         if let envelope = try? decoder.decode(ErrorEnvelope.self, from: data) {
-            throw APIError.map(code: envelope.error.code, message: envelope.error.message)
+            throw APIError.map(code: envelope.error.code, message: envelope.error.message, detail: envelope.error.detail)
         }
         throw APIError.server(message: "Unerwarteter Fehler.")
     }

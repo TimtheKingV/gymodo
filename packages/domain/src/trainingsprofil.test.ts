@@ -5,7 +5,7 @@ const gueltig = { minutes: 60, experience: "neu", focus: ["brust"] };
 
 describe("pruefeTrainingsprofil", () => {
   it("nimmt ein gueltiges Profil", () => {
-    expect(pruefeTrainingsprofil(gueltig)).toEqual(gueltig);
+    expect(pruefeTrainingsprofil(gueltig)).toMatchObject(gueltig);
   });
   it("lehnt Minuten 50 ab", () => {
     expect(() => pruefeTrainingsprofil({ ...gueltig, minutes: 50 })).toThrow();
@@ -18,6 +18,50 @@ describe("pruefeTrainingsprofil", () => {
   });
   it("akzeptiert leeren Fokus", () => {
     expect(pruefeTrainingsprofil({ ...gueltig, focus: [] }).focus).toEqual([]);
+  });
+});
+
+describe("pruefeTrainingsprofil: Wochenraster", () => {
+  it("ein Profil ohne die neuen Felder liefert leere Listen", () => {
+    expect(pruefeTrainingsprofil(gueltig)).toEqual({
+      ...gueltig,
+      kursTage: [],
+      cardioTage: [],
+      cardioArten: [],
+      kraftTage: [],
+    });
+  });
+  it("nimmt gueltige Wochentage und Cardio-Arten", () => {
+    const p = pruefeTrainingsprofil({
+      ...gueltig,
+      kursTage: [1],
+      cardioTage: [7],
+      cardioArten: ["laufen", "radfahren"],
+      kraftTage: [3, 5],
+    });
+    expect(p.kursTage).toEqual([1]);
+    expect(p.cardioArten).toEqual(["laufen", "radfahren"]);
+    expect(p.kraftTage).toEqual([3, 5]);
+  });
+  it("lehnt eine unbekannte Cardio-Art ab", () => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, cardioArten: ["joggen"] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+  it("lehnt doppelte Cardio-Arten ab", () => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, cardioArten: ["laufen", "laufen"] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+  it("lehnt einen Tag in zwei Arten ab", () => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, kursTage: [2], kraftTage: [2] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+  it("lehnt Wochentag 8 ab", () => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, kursTage: [8] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
   });
 });
 

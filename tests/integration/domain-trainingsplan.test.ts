@@ -3,13 +3,14 @@ import {
   DomainError,
   acceptPlan,
   deleteTrainingLimits,
+  aktiverKatalogPlan,
   erzeugePlanVorschlag,
   listPlaene,
   saveTrainingLimits,
   type TrainingPlan,
 } from "@fitretro/domain";
 import { serviceClient } from "./helpers/clients.js";
-import { legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
+import { GYMTAVO, legeEinheitAn, legeMitgliedAn, legePlanStudiosAn, type PlanStudios } from "./helpers/plan-studio.js";
 
 // Task 7 Etappe 2: Plaene speichern, versionieren und bestaetigen.
 // Alle Aufrufe laufen mit dem Client des Mitglieds, damit RLS (auch beim
@@ -31,7 +32,9 @@ async function fehlerVon(p: Promise<unknown>): Promise<DomainError> {
   throw new Error("Kein Fehler geworfen");
 }
 
-async function zeilen(userId: string, studioId: string) {
+// Der Plan gehoert dem Katalog-Studio (0066); der Ort von erzeugePlanVorschlag
+// bestimmt nur die Merkliste.
+async function zeilen(userId: string, studioId: string = GYMTAVO) {
   const { data, error } = await admin
     .from("training_plans")
     .select("id, version, status")
@@ -48,20 +51,54 @@ describe("erzeugePlanVorschlag", () => {
   it("erzeugt Vorschlag mit version 1", async () => {
     const m = await legeMitgliedAn("plan-v1", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    expect(plan).toMatchObject({ studioId: s.voll, version: 1, status: "vorschlag", acceptedAt: null, struktur: "gk_ab" });
-    expect(plan.regelVersion).toBe("1.1.0");
+    expect(plan).toMatchObject({ studioId: GYMTAVO, version: 1, status: "vorschlag", acceptedAt: null, struktur: "gk_ab" });
+    expect(plan.regelVersion).toBe("1.3.0");
     expect(plan.eingabe).toEqual({
       ziel: "muskelaufbau",
       tage: 3,
       minuten: 60,
       fokus: [],
       erfahrung: "regelmaessig",
+      anfaengerBeendet: false,
       beschwerdenBeruecksichtigt: false,
     });
     expect(plan.eingabe).not.toHaveProperty("kandidaten");
     expect(plan.einheiten[0]!.positionen.length).toBeGreaterThan(0);
-    expect(positionen(plan).every((p) => p.exerciseId && p.machineId)).toBe(true);
+    expect(positionen(plan).every((p) => p.exerciseId && p.modelId)).toBe(true);
     expect(plan.gruende.length).toBeGreaterThan(0);
+  });
+
+  it("erzeugt einen Plan ohne Mitgliedschaft im Katalog-Studio", async () => {
+    const m = await legeMitgliedAn("plan-ohne-mitgliedschaft", { studios: [] });
+    const plan = await erzeugePlanVorschlag(m.client, m.userId);
+    expect(plan).toMatchObject({ studioId: GYMTAVO, version: 1, status: "vorschlag" });
+    const { data } = await admin.from("studio_memberships").select("id").eq("user_id", m.userId);
+    expect(data).toEqual([]);
+  });
+
+  it("Positionen tragen modelId und kein machineId", async () => {
+    const m = await legeMitgliedAn("plan-model-id", { studios: [] });
+    const plan = await erzeugePlanVorschlag(m.client, m.userId);
+    expect(positionen(plan).length).toBeGreaterThan(0);
+    for (const p of positionen(plan)) {
+      expect(p.modelId).toEqual(expect.any(String));
+      expect(p).not.toHaveProperty("machineId");
+    }
+    const { data } = await admin.from("equipment_models").select("id, studio_id").in("id", [...new Set(positionen(plan).map((p) => p.modelId))]);
+    expect(data!.every((z) => z.studio_id === GYMTAVO)).toBe(true);
+  });
+
+  it("Merkliste: nicht_vorhanden am Ort faellt weg, am Katalog-Ort nicht", async () => {
+    const m = await legeMitgliedAn("plan-merkliste", { studios: [s.voll] });
+    const weg = s.uebungen["Latzug"]!;
+    const { error } = await admin
+      .from("plan_merkliste")
+      .insert({ user_id: m.userId, exercise_id: weg, art: "nicht_vorhanden", studio_id: s.voll });
+    if (error) throw error;
+    expect(positionen(await erzeugePlanVorschlag(m.client, m.userId, s.voll)).some((p) => p.exerciseId === weg)).toBe(false);
+    // Im Freien Training (Katalog-Studio) gilt die Angabe nicht.
+    const katalog = positionen(await erzeugePlanVorschlag(m.client, m.userId));
+    expect(katalog.length).toBeGreaterThan(0);
   });
 
   it("zweiter Vorschlag verwirft den ersten und hat version 2", async () => {
@@ -69,7 +106,7 @@ describe("erzeugePlanVorschlag", () => {
     const erster = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     const zweiter = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     expect(zweiter.version).toBe(2);
-    expect(await zeilen(m.userId, s.voll)).toEqual([
+    expect(await zeilen(m.userId)).toEqual([
       { id: erster.id, version: 1, status: "verworfen" },
       { id: zweiter.id, version: 2, status: "vorschlag" },
     ]);
@@ -103,7 +140,7 @@ describe("erzeugePlanVorschlag", () => {
       expect(z.eingabe).toMatchObject({ beschwerdenBeruecksichtigt: false });
       expect((z.gruende as string[]).some((g) => g.startsWith("beschwerden_"))).toBe(false);
     }
-    const [neu] = await listPlaene(m.client, m.userId, s.voll);
+    const [neu] = await listPlaene(m.client, m.userId);
     expect(neu!.id).toBe(zweiter.id);
     expect(neu!.gruende).toEqual(zweiter.gruende.filter((g) => !g.startsWith("beschwerden_")));
 
@@ -118,7 +155,7 @@ describe("erzeugePlanVorschlag", () => {
     expect(gespeichert.some((p) => s.knieUebungen.includes(p.exerciseId))).toBe(false);
     // Die Uebungen selbst bleiben unveraendert (F14: Plaene sind stabil).
     expect(data.einheiten).toEqual(plan.einheiten);
-    const gelesen = await listPlaene(m.client, m.userId, s.voll);
+    const gelesen = await listPlaene(m.client, m.userId);
     expect(gelesen.map((p) => p.einheiten)).toEqual([zweiter.einheiten, plan.einheiten]);
   });
 
@@ -139,7 +176,7 @@ describe("erzeugePlanVorschlag", () => {
     expect(e.code).toBe("profil_unvollstaendig");
     expect(e.message).toContain("profil_unvollstaendig");
     expect(e.detail).toEqual({ fehlt: ["trainingsprofil"] });
-    expect(await zeilen(m.userId, s.voll)).toEqual([]);
+    expect(await zeilen(m.userId)).toEqual([]);
   });
 
   it("ohne weekly_days: profil_unvollstaendig", async () => {
@@ -165,16 +202,27 @@ describe("erzeugePlanVorschlag", () => {
     expect(a.einheiten).toEqual(b.einheiten);
   });
 
-  it("Studio ohne Druckmaschine: plan_nicht_moeglich baustein druecken", async () => {
-    const m = await legeMitgliedAn("plan-ohne-druck", { studios: [s.ohneDruck] });
-    const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.ohneDruck));
-    expect(e.code).toBe("plan_nicht_moeglich");
-    expect(e.detail).toEqual({ baustein: "druecken", grund: "kein_geraet" });
-    expect(e.message).not.toContain("druecken");
-    expect(await zeilen(m.userId, s.ohneDruck)).toEqual([]);
+  it("erzeugePlanVorschlag nach 8 Einheiten plant 3 Saetze", async () => {
+    const m = await legeMitgliedAn("plan-anfaenger-ende", {
+      studios: [s.voll, s.voll2], profil: { minutes: 60, experience: "neu", focus: [] },
+    });
+    const kraft = (p: TrainingPlan) => positionen(p).filter((x) => x.rolle !== "cardio");
+    const plan = await acceptPlan(m.client, m.userId, (await erzeugePlanVorschlag(m.client, m.userId, s.voll)).id);
+    expect(plan.eingabe.anfaengerBeendet).toBe(false);
+    expect(new Set(kraft(plan).map((x) => x.saetze))).toEqual(new Set([2]));
+
+    const stunden = (h: number) => new Date(Date.now() - h * 3_600_000);
+    for (let i = 0; i < 8; i++) {
+      await legeEinheitAn(m.userId, s.voll, { planId: plan.id, einheitKey: plan.einheiten[0]!.key, startedAt: stunden(100 - i * 10) });
+    }
+    const danach = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    expect(danach.eingabe.anfaengerBeendet).toBe(true);
+    expect(danach.gruende).not.toContain("anfaenger_reserve");
+    expect(new Set(kraft(danach).map((x) => x.saetze))).toEqual(new Set([3]));
+
   });
 
-  it("Studio, in dem das Mitglied nicht ist: not_found", async () => {
+  it("Ort ohne Mitgliedschaft ergibt not_found", async () => {
     const m = await legeMitgliedAn("plan-fremdes-studio", { studios: [s.voll] });
     const e = await fehlerVon(erzeugePlanVorschlag(m.client, m.userId, s.voll2));
     expect(e.code).toBe("not_found");
@@ -191,10 +239,10 @@ describe("acceptPlan", () => {
 
     const v2 = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     // Ein neuer Vorschlag laesst den aktiven Plan unberuehrt.
-    expect((await zeilen(m.userId, s.voll)).map((z) => z.status)).toEqual(["aktiv", "vorschlag"]);
+    expect((await zeilen(m.userId)).map((z) => z.status)).toEqual(["aktiv", "vorschlag"]);
     const aktiv2 = await acceptPlan(m.client, m.userId, v2.id);
     expect(aktiv2.status).toBe("aktiv");
-    expect((await zeilen(m.userId, s.voll)).map((z) => z.status)).toEqual(["ersetzt", "aktiv"]);
+    expect((await zeilen(m.userId)).map((z) => z.status)).toEqual(["ersetzt", "aktiv"]);
   });
 
   it("accept auf verworfenen Vorschlag wirft Konflikt", async () => {
@@ -217,7 +265,7 @@ describe("acceptPlan", () => {
     expect(ergebnisse.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     const abgelehnt = ergebnisse.find((r) => r.status === "rejected") as PromiseRejectedResult;
     expect((abgelehnt.reason as DomainError).code).toBe("conflict");
-    const stand = await zeilen(m.userId, s.voll);
+    const stand = await zeilen(m.userId);
     expect(stand.filter((z) => z.status === "aktiv")).toEqual([{ id: v2.id, version: 2, status: "aktiv" }]);
   });
 
@@ -240,10 +288,11 @@ describe("RLS training_plans", () => {
     // WITH CHECK schlaegt als Fehler (42501) zu; 0 Zeilen waere ebenso eine Ablehnung.
     expect(error !== null || (data ?? []).length === 0).toBe(true);
     const { data: zeile } = await admin.from("training_plans").select("studio_id").eq("id", plan.id).single();
-    expect(zeile!.studio_id).toBe(s.voll);
+    expect(zeile!.studio_id).toBe(GYMTAVO);
   });
 
-  it("Update innerhalb des eigenen Studios bleibt erlaubt", async () => {
+  // Seit 0062 schreibt das Mitglied nur ueber create_/accept_training_plan.
+  it("Update innerhalb des eigenen Studios wird ebenfalls abgelehnt", async () => {
     const m = await legeMitgliedAn("plan-update-ok", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     const { data, error } = await m.client
@@ -251,47 +300,59 @@ describe("RLS training_plans", () => {
       .update({ status: "verworfen" })
       .eq("id", plan.id)
       .select("id");
-    expect(error).toBeNull();
-    expect(data).toHaveLength(1);
+    expect(error !== null || (data ?? []).length === 0).toBe(true);
+    const { data: zeile } = await admin.from("training_plans").select("status").eq("id", plan.id).single();
+    expect(zeile!.status).toBe("vorschlag");
   });
 });
 
 describe("listPlaene", () => {
-  it("Plaene verschiedener Studios des Mitglieds sind unabhaengig", async () => {
-    const m = await legeMitgliedAn("plan-zwei-studios", { studios: [s.voll, s.voll2] });
+  it("aktiverKatalogPlan liefert hoechstens einen Plan", async () => {
+    const m = await legeMitgliedAn("plan-aktiv-eins", { studios: [s.voll, s.voll2] });
+    expect(await aktiverKatalogPlan(m.client, m.userId)).toBeNull();
     const a = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const b = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
-    expect(b.version).toBe(1);
+    expect(await aktiverKatalogPlan(m.client, m.userId)).toBeNull();
     await acceptPlan(m.client, m.userId, a.id);
+    const b = await erzeugePlanVorschlag(m.client, m.userId, s.voll2);
     await acceptPlan(m.client, m.userId, b.id);
-    const listeA = await listPlaene(m.client, m.userId, s.voll);
-    const listeB = await listPlaene(m.client, m.userId, s.voll2);
-    expect(listeA.map((p) => [p.id, p.status])).toEqual([[a.id, "aktiv"]]);
-    expect(listeB.map((p) => [p.id, p.status])).toEqual([[b.id, "aktiv"]]);
+    expect((await aktiverKatalogPlan(m.client, m.userId))!.id).toBe(b.id);
+    expect((await listPlaene(m.client, m.userId)).map((p) => [p.id, p.status])).toEqual([[b.id, "aktiv"], [a.id, "ersetzt"]]);
+  });
+
+  it("aktiverKatalogPlan ignoriert aktive Plaene normaler Studios (Altbestand)", async () => {
+    const m = await legeMitgliedAn("plan-aktiv-altbestand", { studios: [s.voll] });
+    const a = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    await acceptPlan(m.client, m.userId, a.id);
+    // Wie Prod vor 0066: zusaetzlich ein aktiver Plan im normalen Studio.
+    const { error } = await admin.from("training_plans").insert({
+      user_id: m.userId, studio_id: s.voll, version: 1, status: "aktiv", regel_version: "alt",
+      eingabe: {}, struktur: "gk_ab", einheiten: [], gruende: [], accepted_at: new Date().toISOString(),
+    });
+    expect(error).toBeNull();
+    expect((await aktiverKatalogPlan(m.client, m.userId))!.id).toBe(a.id);
   });
 
   it("neueste Version zuerst, ohne Neuberechnung", async () => {
     const m = await legeMitgliedAn("plan-liste", { studios: [s.voll] });
     const v1 = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
     const v2 = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
-    const liste = await listPlaene(m.client, m.userId, s.voll);
+    const liste = await listPlaene(m.client, m.userId);
     expect(liste.map((p) => p.version)).toEqual([2, 1]);
     expect(liste[0]).toEqual(v2);
     expect(liste[1]).toMatchObject({ id: v1.id, status: "verworfen", einheiten: v1.einheiten });
-    expect(await listPlaene(m.client, m.userId, s.ohneDruck)).toEqual([]);
   });
 
   it("fremder Nutzer sieht keinen Plan", async () => {
     const a = await legeMitgliedAn("plan-eigner", { studios: [s.voll] });
     const b = await legeMitgliedAn("plan-fremder", { studios: [s.voll] });
     const plan = await erzeugePlanVorschlag(a.client, a.userId, s.voll);
-    expect(await listPlaene(b.client, b.userId, s.voll)).toEqual([]);
+    expect(await listPlaene(b.client, b.userId)).toEqual([]);
     // Auch mit fremder userId liefert RLS nichts.
-    expect(await listPlaene(b.client, a.userId, s.voll)).toEqual([]);
+    expect(await listPlaene(b.client, a.userId)).toEqual([]);
     const { data } = await b.client.from("training_plans").select("id").eq("id", plan.id);
     expect(data).toEqual([]);
     const e = await fehlerVon(acceptPlan(b.client, b.userId, plan.id));
     expect(e.code).toBe("conflict");
-    expect((await zeilen(a.userId, s.voll))[0]!.status).toBe("vorschlag");
+    expect((await zeilen(a.userId))[0]!.status).toBe("vorschlag");
   });
 });

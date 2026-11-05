@@ -1,6 +1,7 @@
 import Foundation
 
-/// Der typisierte Pfad des Kurse-Tabs.
+/// Der typisierte Pfad des Plan-Tabs (frueher Kurse-Tab). `.einheit` ist die
+/// Vorschau einer Planeinheit (Leinwand 2e), `.detail` das Kursdetail.
 ///
 /// Seit die eigenen Anmeldungen als Band auf dem Wochenplan stehen
 /// (`KurseBandView`), gibt es nur noch ein Ziel. `.meine` ist damit
@@ -17,4 +18,5 @@ import Foundation
 /// nicht als Push in einem solchen Stack geoeffnet, sitzt das Mitglied fest.
 enum KursRoute: Hashable {
     case detail(sessionId: String)
+    case einheit(key: String)
 }

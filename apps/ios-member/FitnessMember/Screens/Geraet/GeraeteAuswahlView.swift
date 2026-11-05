@@ -32,6 +32,8 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     /// (Testnotiz 12.10., #3) -- derselbe Screen, damit Zeilen, Fotos und
     /// Suche nicht ein zweites Mal entstehen.
     let gruppe: Geraetegruppe?
+    /// Gesetzt: nur Stationen, die diese Uebung anbieten (Planposition).
+    let uebungId: String?
     /// Die Station und, bei einem reinen Uebungstreffer der Suche, die
     /// gefundene Uebung (Testnotiz 14.10., 18:45 #2).
     let beiAuswahl: (Station, _ uebungId: String?) -> Void
@@ -40,7 +42,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     let beiKachel: (GeraeteAuswahl.Kachel) -> Void
 
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
-         gruppe: Geraetegruppe? = nil,
+         gruppe: Geraetegruppe? = nil, uebungId: String? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
          @ViewBuilder trainingsinhalt: () -> Trainingsinhalt,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void,
@@ -48,6 +50,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
         self.fotoLader = fotoLader
         self.vorschauLader = vorschauLader
         self.gruppe = gruppe
+        self.uebungId = uebungId
         self.kopfinhalt = kopfinhalt()
         self.trainingsinhalt = trainingsinhalt()
         self.beiAuswahl = beiAuswahl
@@ -186,7 +189,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     }
 
     private var titel: String {
-        gruppe.map { $0.titel.uppercased() } ?? "GERÄT WÄHLEN"
+        gruppe.map { $0.titel.uppercased() } ?? (uebungId == nil ? "GERÄT WÄHLEN" : "WO TRAINIERST DU?")
     }
 
     private var suchprompt: String {
@@ -194,7 +197,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     }
 
     private var untertitel: String {
-        if gruppe != nil {
+        if gruppe != nil || uebungId != nil {
             let anzahl = gruppen.liste.count
             return anzahl == 1 ? "1 Gerät" : "\(anzahl) Geräte"
         }
@@ -267,12 +270,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     }
 
     private func berechneStationen() -> [Station] {
-        katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort) } ?? []
+        katalog.bootstrap.map { GeraeteAuswahl.stationen(bootstrap: $0, ort: ort, uebungId: uebungId) } ?? []
     }
 
     private func berechneGruppen(_ text: String) -> GeraeteAuswahl.Gruppen {
         guard let bootstrap = katalog.bootstrap else { return .leer }
-        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: text, gruppe: gruppe)
+        return GeraeteAuswahl.gruppen(bootstrap: bootstrap, ort: ort, suchtext: text, gruppe: gruppe, uebungId: uebungId)
     }
 
     @ViewBuilder
@@ -704,9 +707,9 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
 
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView, Trainingsinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
-         gruppe: Geraetegruppe? = nil,
+         gruppe: Geraetegruppe? = nil, uebungId: String? = nil,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void) {
-        self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe,
+        self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe, uebungId: uebungId,
                   kopfinhalt: { EmptyView() }, trainingsinhalt: { EmptyView() },
                   beiAuswahl: beiAuswahl)
     }
