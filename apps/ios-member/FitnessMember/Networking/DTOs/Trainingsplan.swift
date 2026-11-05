@@ -39,11 +39,17 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     /// Das Wochenraster (nach Tag sortiert). Leer in einer alten Server-Antwort
     /// und in der eines Schreibwegs ohne Raster.
     let wochenraster: [Rasterplatz]
+    /// Die gezaehlten Einheiten, aelteste zuerst. Leer in einer alten
+    /// Server-Antwort und in der eines Schreibwegs.
+    let erledigt: [ErledigteEinheit]
+    /// ISO-Zeitpunkt, ab dem der Plan gilt (Annahme, sonst Anlage, hoechstens
+    /// bis zur ersten erledigten Einheit zurueck). nil in einer alten Antwort.
+    let beginn: String?
 
     private enum CodingKeys: String, CodingKey {
         case planId, id, studioId, version, regelVersion, struktur, einheiten, gruende,
              naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen,
-             zielgewichte, merkliste, wochenraster
+             zielgewichte, merkliste, wochenraster, erledigt, beginn
     }
 
     init(from decoder: any Decoder) throws {
@@ -63,6 +69,8 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         zielgewichte = try c.decodeIfPresent([String: Zielgewicht].self, forKey: .zielgewichte) ?? [:]
         merkliste = try c.decodeIfPresent(PlanMerkliste.self, forKey: .merkliste) ?? PlanMerkliste()
         wochenraster = try c.decodeIfPresent([Rasterplatz].self, forKey: .wochenraster) ?? []
+        erledigt = try c.decodeIfPresent([ErledigteEinheit].self, forKey: .erledigt) ?? []
+        beginn = try c.decodeIfPresent(String.self, forKey: .beginn)
     }
 
     /// Wie `zielSchluessel` in packages/domain/src/plangewichte.ts: erst
@@ -75,6 +83,14 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     func zielgewicht(einheitKey: String, positionKey: String) -> Zielgewicht? {
         zielgewichte[Self.zielSchluessel(einheitKey: einheitKey, positionKey: positionKey)]
     }
+}
+
+/// Eine gezaehlte Einheit (`GezaehlteEinheit` im Server). `startedAt` bleibt
+/// Text: die Zeitzone der Anzeige entscheidet erst der Aufrufer.
+struct ErledigteEinheit: Decodable, Equatable, Sendable {
+    let sessionId: String
+    let einheitKey: String
+    let startedAt: String
 }
 
 /// Das Zielgewicht einer Planposition (`PositionsZiel` im Server).

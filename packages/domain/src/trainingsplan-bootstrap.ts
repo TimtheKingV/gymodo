@@ -225,6 +225,10 @@ export type PlanFuerApp = {
   /** Zielgewicht je Positionsschluessel (G8, G17); Positionen ohne Ziel fehlen. */
   zielgewichte: Record<string, PositionsZiel>;
   merkliste: PlanMerkliste;
+  /** Die gezaehlten Einheiten, aelteste zuerst; die App zeigt damit erledigte Plantage. */
+  erledigt: GezaehlteEinheit[];
+  /** ISO-Zeitpunkt, ab dem der Plan gilt: Annahme (sonst Anlage), nie nach der ersten erledigten Einheit. */
+  beginn: string;
 };
 
 type MerklisteZeile = { exercise_id: string; art: string; studio_id: string | null };
@@ -282,6 +286,11 @@ export function planFuerApp(
   merkliste: PlanMerkliste,
 ): PlanFuerApp {
   const zuletzt = gezaehlt.at(-1)?.einheitKey ?? null;
+  // Eine Einheit vor der Annahme (etwa ein Plan, der spaeter angenommen wurde) zaehlt trotzdem:
+  // der Beginn reicht bis zu ihr zurueck, sonst fehlte sie im Kalender.
+  const planBeginn = plan.acceptedAt ?? plan.createdAt;
+  const erste = gezaehlt[0]?.startedAt;
+  const beginn = erste !== undefined && Date.parse(erste) < Date.parse(planBeginn) ? erste : planBeginn;
   return {
     planId: plan.id,
     studioId: plan.studioId,
@@ -301,6 +310,8 @@ export function planFuerApp(
     alternativen,
     zielgewichte,
     merkliste,
+    erledigt: gezaehlt,
+    beginn,
   };
 }
 

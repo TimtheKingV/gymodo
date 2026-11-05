@@ -644,6 +644,21 @@ struct DTOTests {
         #expect(plan.zielgewicht(einheitKey: "C", positionKey: "0") == nil)
     }
 
+    @Test("erledigt und beginn aus dem Bootstrap werden dekodiert")
+    func trainingsplanMitErledigtUndBeginn() throws {
+        let json = #"{"planId":"p1","studioId":"s1","version":1,"regelVersion":"1.2.0","struktur":"gk_ab","einheiten":[],"erledigt":[{"sessionId":"s1","einheitKey":"A","startedAt":"2026-11-02T17:00:00Z"}],"beginn":"2026-10-20T08:00:00Z"}"#
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+        #expect(plan.erledigt == [ErledigteEinheit(sessionId: "s1", einheitKey: "A", startedAt: "2026-11-02T17:00:00Z")])
+        #expect(plan.beginn == "2026-10-20T08:00:00Z")
+    }
+
+    @Test("Ohne erledigt und beginn (alte Server-Antwort) bleibt der Plan lesbar")
+    func trainingsplanOhneErledigtUndBeginn() throws {
+        let plan = try JSONDecoder().decode(Trainingsplan.self, from: Data(Self.planJSON.utf8))
+        #expect(plan.erledigt == [])
+        #expect(plan.beginn == nil)
+    }
+
     @Test("Der Schluessel ist derselbe wie zielSchluessel im Server")
     func zielSchluesselWieImServer() {
         #expect(Trainingsplan.zielSchluessel(einheitKey: "A", positionKey: "0") == "A:0")

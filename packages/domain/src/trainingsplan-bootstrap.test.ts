@@ -164,6 +164,27 @@ describe("planFuerApp", () => {
     const beendet = { ...plan, eingabe: { ...plan.eingabe, anfaengerBeendet: true } };
     expect(planFuerApp(beendet, einheiten(8), neu, {}, {}, LEER).anfaengerUebergang).toBe(false);
   });
+
+  it("liefert die gezaehlten Einheiten als erledigt", () => {
+    const gezaehlt = [
+      { sessionId: "s1", einheitKey: "A", startedAt: "2026-10-21T17:00:00Z" },
+      { sessionId: "s2", einheitKey: "B", startedAt: "2026-10-23T17:00:00Z" },
+    ];
+    expect(planFuerApp(plan, gezaehlt, neu, {}, {}, LEER).erledigt).toEqual(gezaehlt);
+  });
+
+  it("beginn ist acceptedAt, sonst createdAt", () => {
+    const angenommen = { ...plan, acceptedAt: "2026-10-20T08:00:00Z", createdAt: "2026-10-19T08:00:00Z" } as TrainingPlan;
+    expect(planFuerApp(angenommen, [], neu, {}, {}, LEER).beginn).toBe("2026-10-20T08:00:00Z");
+    const offen = { ...plan, acceptedAt: null, createdAt: "2026-10-19T08:00:00Z" } as TrainingPlan;
+    expect(planFuerApp(offen, [], neu, {}, {}, LEER).beginn).toBe("2026-10-19T08:00:00Z");
+  });
+
+  it("beginn reicht bis zur ersten erledigten Einheit zurueck", () => {
+    const spaet = { ...plan, acceptedAt: "2026-11-01T08:00:00Z", createdAt: "2026-10-30T08:00:00Z" } as TrainingPlan;
+    const gezaehlt = [{ sessionId: "s1", einheitKey: "A", startedAt: "2026-10-22T17:00:00Z" }];
+    expect(planFuerApp(spaet, gezaehlt, neu, {}, {}, LEER).beginn).toBe("2026-10-22T17:00:00Z");
+  });
 });
 
 describe("nachzuholendeSessions", () => {
