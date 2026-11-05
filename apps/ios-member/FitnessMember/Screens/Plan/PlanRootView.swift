@@ -171,6 +171,9 @@ struct PlanRootView: View {
 
                 PlanTagListe(
                     einheitNamen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
+                    muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap),
+                    geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)),
+                    kalender: kalender,
                     ueberschrift: wochentage.first { $0.id == tagId }
                         .map { KurseWochenInhalt.tagesueberschrift($0, zeitzone: zeitzone) } ?? "",
                     istHeute: kalender.isDate(tag, inSameDayAs: jetzt),
@@ -423,9 +426,8 @@ struct PlanRootView: View {
     private func eintraege(_ termine: [PlanTermin], plan: Trainingsplan, tagId: String) -> [PlanTagEintrag] {
         termine.compactMap { termin in
             switch termin {
-            // `.verpasst` zeigt vorerst wie nicht erledigt (eigene Darstellung folgt).
             case .einheit(let key, let zustand):
-                return plan.einheiten.first { $0.key == key }.map { .einheit($0, erledigt: zustand == .erledigt) }
+                return plan.einheiten.first { $0.key == key }.map { .einheit($0, zustand: zustand) }
             case .kurs(let titel, let beginn, _, _):
                 return sitzungen.first {
                     $0.localDay == tagId && $0.name == titel && Zeitpunkt.parse($0.startsAt) == beginn

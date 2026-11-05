@@ -30,6 +30,7 @@
 		0E9F219ADEE737580E75D93A /* Geraetegruppe.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
 		0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */; };
+		10F957824659379153EAEFFB /* EinheitKarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
 		14BE1A62DADBD13DA29327F8 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BDB535E7D98C969B8C5F58 /* OnboardingFlow.swift */; };
@@ -380,6 +381,7 @@
 		F0857DA316FD7198004B18A6 /* PlanWocheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEA2E5727EBC607DE7C4146D /* PlanWocheTests.swift */; };
 		F14604FCBA9586B5962BF956 /* PlanTabZustandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E86C2CE1222506D926E3290 /* PlanTabZustandTests.swift */; };
 		F1E9DFA75153BCFFEF5FDD62 /* PendingWriteStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E07C7F4A13CB277BC11B8D77 /* PendingWriteStoreTests.swift */; };
+		F201DA30B23E5647F8792079 /* EinheitKarteModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93E46899D2A3C9FD4A557222 /* EinheitKarteModellTests.swift */; };
 		F2B07A22DDA47AC16486472F /* MuskelModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96654D646EF71D44A91FCDF5 /* MuskelModellTests.swift */; };
 		F317A9B9C5941A16B69CC0E9 /* GeraetegruppeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */; };
 		F3EC6BE2F4C7D29CB4039D48 /* VerlaufStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFADB880946E0F424CFDAB8 /* VerlaufStoreTests.swift */; };
@@ -592,6 +594,7 @@
 		67C6741D2E03280491212701 /* Zeitachse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitachse.swift; sourceTree = "<group>"; };
 		691D7A55E93218DCF36E3CF3 /* VorschaubildTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VorschaubildTests.swift; sourceTree = "<group>"; };
 		6A4AC12659D2E513D2EDC2FE /* StudiosListe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudiosListe.swift; sourceTree = "<group>"; };
+		6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinheitKarte.swift; sourceTree = "<group>"; };
 		6C7F985D94669B331CD23AE0 /* AusgewogenheitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AusgewogenheitTests.swift; sourceTree = "<group>"; };
 		6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahl.swift; sourceTree = "<group>"; };
 		6CDEA4E4113A2333A539F030 /* KursDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursDetailView.swift; sourceTree = "<group>"; };
@@ -650,6 +653,7 @@
 		918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeTests.swift; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
+		93E46899D2A3C9FD4A557222 /* EinheitKarteModellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinheitKarteModellTests.swift; sourceTree = "<group>"; };
 		941088E8ADF755FB4FCC5B33 /* Fortschrittsfenster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortschrittsfenster.swift; sourceTree = "<group>"; };
 		9436BD839D6EE4533F5FB157 /* plan-ablauf.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "plan-ablauf.json"; sourceTree = "<group>"; };
 		943C19386AFE9634615213ED /* Info-Additions.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions.plist"; sourceTree = "<group>"; };
@@ -1076,6 +1080,7 @@
 				1B227508179FE62A4DAA06A0 /* Chip.swift */,
 				25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */,
 				8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */,
+				6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */,
 				13D8C4AC64870FF3423C494F /* InlineBanner.swift */,
 				A96F27D1E2E9BE4F4CC5F986 /* Kalenderzelle.swift */,
 				58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */,
@@ -1167,6 +1172,7 @@
 				DB8CC4AA1ADA4ED3E6D39207 /* CatalogStoreTests.swift */,
 				CF7B9170FFCF2B3FBDF4A2F0 /* ColorHexTests.swift */,
 				FD55A1626F478A9D5D1A0861 /* DTOTests.swift */,
+				93E46899D2A3C9FD4A557222 /* EinheitKarteModellTests.swift */,
 				DEAB287960EA00EF47B55D57 /* EinheitNamenTests.swift */,
 				2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */,
 				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
@@ -1671,6 +1677,7 @@
 				13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */,
 				A2F067EE32F1B07AA7C5F02F /* DangerOutlineButton.swift in Sources */,
 				C0D21B900231DB8BC9A5323E /* DesignSystem.swift in Sources */,
+				10F957824659379153EAEFFB /* EinheitKarte.swift in Sources */,
 				8C1C7D2E198E0CB922AB48BB /* EinheitVerwerfen.swift in Sources */,
 				7CC1C37F84B1C73C92267048 /* Einstellungen.swift in Sources */,
 				286251A6DE657B6FB5A84126 /* EinweisungMedien.swift in Sources */,
@@ -1919,6 +1926,7 @@
 				A536169303BCBE5ED5385A9A /* CatalogStoreTests.swift in Sources */,
 				4FF2547C2EF53854366AC3A1 /* ColorHexTests.swift in Sources */,
 				1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */,
+				F201DA30B23E5647F8792079 /* EinheitKarteModellTests.swift in Sources */,
 				78F52750FE295093916B0450 /* EinheitNamenTests.swift in Sources */,
 				23E350E22AA8410C99DF73CA /* EinheitVerwerfenTests.swift in Sources */,
 				0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */,

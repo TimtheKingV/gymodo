@@ -31,7 +31,12 @@ enum MuskelFarben {
     /// Akzent. Wer nicht beansprucht wurde, fehlt -- `MuskelFigur` malt ihn
     /// dann grau.
     static func farben(profil: TrainingsProfil) -> [String: Color] {
-        profil.stufen.mapValues { stufe in
+        farben(stufen: profil.stufen)
+    }
+
+    /// Dieselbe Abbildung fuer Stufen ohne Profil (`EinheitKarteModell`).
+    static func farben(stufen: [String: TrainingsProfil.Stufe]) -> [String: Color] {
+        stufen.mapValues { stufe in
             switch stufe {
             case .stark: DesignSystem.Color.accent
             case .schwach: DesignSystem.Color.accentPressed

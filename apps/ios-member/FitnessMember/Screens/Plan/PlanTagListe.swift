@@ -4,7 +4,7 @@ import SwiftUI
 /// der Kurs als voller Termin (fuer `KursTerminZeile` und das Kursdetail),
 /// die Einheit mit ihrem Planinhalt.
 enum PlanTagEintrag: Identifiable {
-    case einheit(TrainingsplanEinheit, erledigt: Bool)
+    case einheit(TrainingsplanEinheit, zustand: TerminZustand)
     case kurs(CourseWeekSession)
     case cardio(arten: [String], erledigt: Bool)
 
@@ -36,6 +36,9 @@ enum EinheitKuerzel {
 /// Eintraege, bei leerem Tag ein Satz und "Als nächstes".
 struct PlanTagListe: View {
     let einheitNamen: EinheitNamen
+    let muskeln: [String: [GeraetMuskel]]
+    let geschlecht: Geschlecht?
+    let kalender: Calendar
     let ueberschrift: String
     let istHeute: Bool
     /// Heute oder vergangen -- nur dann laesst sich Cardio abhaken (der Server
@@ -75,8 +78,8 @@ struct PlanTagListe: View {
     @ViewBuilder
     private func zeile(_ eintrag: PlanTagEintrag) -> some View {
         switch eintrag {
-        case .einheit(let einheit, let erledigt):
-            einheitKarte(einheit, erledigt: erledigt)
+        case .einheit(let einheit, let zustand):
+            einheitKarte(einheit, zustand: zustand)
         case .kurs(let termin):
             kursZeile(termin)
         case .cardio(let arten, let erledigt):
@@ -86,57 +89,18 @@ struct PlanTagListe: View {
 
     // MARK: - Einheit
 
-    private func einheitKarte(_ einheit: TrainingsplanEinheit, erledigt: Bool) -> some View {
-        let zeigtStart = istHeute && !erledigt && einheit.key == naechsteEinheitKey
-        return HStack(spacing: DesignSystem.Spacing.s12) {
-            Button { beiEinheit(einheit.key) } label: {
-                HStack(spacing: DesignSystem.Spacing.s12) {
-                    PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: true)
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                        Text(einheitNamen.name(einheit.key))
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(DesignSystem.Color.text)
-                        Text(erledigt ? "Erledigt" : "Flexibel · \(EinheitKuerzel.untertitel(einheit))")
-                            .font(.system(size: 12))
-                            .monospacedDigit()
-                            .foregroundStyle(DesignSystem.Color.textMuted)
-                    }
-                    Spacer(minLength: 0)
-                    if !zeigtStart {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(DesignSystem.Color.textFaint)
-                    }
-                }
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressButtonStyle())
-            .accessibilityElement(children: .combine)
-            .accessibilityHint("Zeigt die Übungen der Einheit")
-
-            if zeigtStart {
-                // Die eine Akzentflaeche des Screens: das, was heute dran ist.
-                Button { beiStart() } label: {
-                    Text("Start")
-                        .font(.system(size: 14, weight: .heavy))
-                        .foregroundStyle(DesignSystem.Color.onAccent)
-                        .padding(.horizontal, DesignSystem.Spacing.s16)
-                        .frame(minHeight: 44)
-                        .background(DesignSystem.Color.accent)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(PressButtonStyle())
-                .accessibilityLabel("\(einheitNamen.name(einheit.key)) starten")
-                .accessibilityHint("Öffnet das Training")
-            }
-        }
-        .padding(DesignSystem.Spacing.s16)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(zeigtStart ? DesignSystem.Color.accent : .clear, lineWidth: 1.5))
+    private func einheitKarte(_ einheit: TrainingsplanEinheit, zustand: TerminZustand) -> some View {
+        var offen = false
+        if case .geplant = zustand { offen = true }
+        let zeigtStart = istHeute && offen && einheit.key == naechsteEinheitKey
+        return EinheitKarte(
+            modell: .einheit(
+                einheit, namen: einheitNamen, muskeln: muskeln, tag: nil, zustand: zustand),
+            geschlecht: geschlecht, kalender: kalender,
+            beiTipp: { beiEinheit(einheit.key) },
+            // Die eine Akzentflaeche des Screens: das, was heute dran ist.
+            aktion: zeigtStart ? (titel: "Training starten", ausloesen: beiStart) : nil)
+        .accessibilityHint("Zeigt die Übungen der Einheit")
     }
 
     // MARK: - Cardio (Leinwand 2i)
@@ -236,13 +200,12 @@ struct PlanTagListe: View {
     @ViewBuilder
     private func naechsteZeile(_ eintrag: PlanTagEintrag, tag: String) -> some View {
         switch eintrag {
-        case .einheit(let einheit, _):
-            Button { beiEinheit(einheit.key) } label: {
-                naechsteInhalt(
-                    kaestchen: AnyView(PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: false)),
-                    titel: einheitNamen.name(einheit.key), tag: tag)
-            }
-            .buttonStyle(PressButtonStyle())
+        case .einheit(let einheit, let zustand):
+            EinheitKarte(
+                modell: .einheit(
+                    einheit, namen: einheitNamen, muskeln: muskeln, tag: tag, zustand: zustand),
+                geschlecht: geschlecht, kalender: kalender,
+                beiTipp: { beiEinheit(einheit.key) })
             .accessibilityHint("Zeigt die Übungen der Einheit")
         case .kurs(let termin):
             naechsteInhalt(kaestchen: AnyView(PlanKursKaestchen()), titel: termin.name, tag: tag)

@@ -428,7 +428,7 @@ private extension HomeSerieView {
                     // Teile selbst.
                     beiAuswahl(karte.id)
                 } label: {
-                    tageskarte(karte)
+                    EinheitKarte(modell: .training(karte, muskeln: muskeln), geschlecht: geschlecht)
                 }
                 .buttonStyle(PressButtonStyle())
                 .accessibilityLabel(kartenLabel(karte))
@@ -447,58 +447,6 @@ private extension HomeSerieView {
                     eigene: kurseBuchungen)
             }
         }
-    }
-
-    func tageskarte(_ karte: Trainingskarte) -> some View {
-        let profil = TrainingsProfil.berechne(karte: karte, muskeln: muskeln)
-        return HStack(spacing: DesignSystem.Spacing.s12) {
-            // Beide Seiten: im Kleinformat ist schwer zu sehen, ob eine
-            // Figur Vorder- oder Rueckseite zeigt -- darum die Beschriftung.
-            VStack(spacing: DesignSystem.Spacing.s4) {
-                MuskelFigur(
-                    farben: MuskelFarben.farben(profil: profil), geschlecht: geschlecht,
-                    kompakt: true)
-                HStack {
-                    Text("vorne")
-                    Spacer(minLength: 0)
-                    Text("hinten")
-                }
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-            .frame(width: 76)
-            tageskartenText(karte, titel: profil.titel)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignSystem.Spacing.s16)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-    }
-
-    func tageskartenText(_ karte: Trainingskarte, titel: String) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(titel)
-                .font(DesignSystem.Typography.label)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-
-            Text(HomeZeilen.grosseZeile(karte))
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
-                .monospacedDigit()
-
-            // Keine "AUTO BEENDET"-Marke mehr: sie stand vor dieser Zeile
-            // und war damit das Erste, was an einem erledigten Training
-            // ins Auge fiel -- eine Warnfarbe fuer eine Nebensaechlichkeit,
-            // auf einem Screen, der sonst nur Zahlen zeigt. Sie steht
-            // jetzt im Detail, wo sie einen erklaerenden Satz neben sich
-            // hat (`SessionDetailView.autoBeendetHinweis`, Testnotiz vom
-            // 19. September, Eintrag 4).
-            Text(HomeZeilen.kleineZeile(karte))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .monospacedDigit()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
