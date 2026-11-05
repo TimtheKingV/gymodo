@@ -27,6 +27,11 @@ struct SessionDetailView: View {
     let apiClient: APIClient
     /// Nach erfolgreichem Fortsetzen: Home-Pfad leeren, auf den Training-Tab.
     var beiFortgesetzt: () -> Void = {}
+    /// Tipp auf den Kopf einer Uebung: der Host legt den Uebungsfortschritt
+    /// auf SEINEN Pfad (Home: `HomeRoute`, Plan-Tab: `KursRoute`). Ein
+    /// `NavigationLink(value:)` mit festem Routentyp liefe im jeweils
+    /// anderen Stack ins Leere.
+    let beiUebung: (_ exerciseId: String) -> Void
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -109,24 +114,17 @@ struct SessionDetailView: View {
         .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
-    /// Datum des aeltesten Teils, darunter dieselben zwei Zeilen wie auf
-    /// der Karte: wer die Karte antippt, soll oben wiederfinden, was er
-    /// angetippt hat, statt eine zweite Rechnung ueber dieselbe Sache.
+    /// Der gleiche Kopf wie im Einheiten-Detail (`ProfilKopf`): Datum des
+    /// aeltesten Teils, Name nach den Muskeln, dieselben zwei Zeilen wie auf der
+    /// Karte und die Figur. Wer die Karte antippt, soll oben wiederfinden, was
+    /// er angetippt hat, statt eine zweite Rechnung ueber dieselbe Sache.
     private func kopf(_ karte: Trainingskarte) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(Zeitpunkt.parse(karte.teile[0].startedAt).map(Zahlformat.kurzerWochentagDatum) ?? "")
-                .font(DesignSystem.Typography.detailScreentitel)
-                .foregroundStyle(DesignSystem.Color.text)
-
-            Text(HomeZeilen.grosseZeile(karte))
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
-                .monospacedDigit()
-
-            Text(HomeZeilen.kleineZeile(karte))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .monospacedDigit()
+        let beginn = Zeitpunkt.parse(karte.teile[0].startedAt)
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            ProfilKopf(
+                ueberzeile: beginn.map { ProfilKopf.ueberzeile(trainiertAm: $0, kalender: .current) } ?? "",
+                modell: .training(karte, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
+                geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
             if karte.istAutoBeendet { autoBeendetHinweis }
         }
@@ -214,7 +212,7 @@ struct SessionDetailView: View {
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             // Ein Tipp auf den Kopf oeffnet den Uebungsfortschritt dieser
             // Uebung (Testnotiz 18.10., #6).
-            NavigationLink(value: HomeRoute.uebungsfortschritt(exerciseId: block.exerciseId)) {
+            Button { beiUebung(block.exerciseId) } label: {
                 HStack {
                     Text("\(block.machineLabel) · \(block.exerciseName)")
                         .font(DesignSystem.Typography.uebungsname)

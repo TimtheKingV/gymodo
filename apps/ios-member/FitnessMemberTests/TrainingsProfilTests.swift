@@ -149,4 +149,53 @@ struct TrainingsProfilTests {
         #expect(p.stufen["pectorals"] == .stark)
         #expect(p.stufen["lats"] == .stark)
     }
+
+    // MARK: Planeinheit
+
+    private func position(
+        _ uebung: String, saetze: Int = 3, baustein: String = "mehrgelenk", typ: String = "mehrgelenk"
+    ) -> TrainingsplanPosition {
+        TrainingsplanPosition(
+            key: "p-\(uebung)", baustein: baustein, rolle: "haupt", exerciseId: uebung,
+            modelId: "model-\(uebung)", typ: typ, saetze: saetze, wdhVon: 8, wdhBis: 12,
+            reserveVon: 1, reserveBis: 2, pauseSek: 90, aufwaermsatz: false, dauerMin: nil,
+            hauptmuskeln: [])
+    }
+
+    private func planEinheit(_ positionen: [TrainingsplanPosition]) -> TrainingsplanEinheit {
+        TrainingsplanEinheit(key: "A", positionen: positionen, geschaetzteMinuten: 45)
+    }
+
+    @Test func einheitBrustTrizeps() {
+        let p = TrainingsProfil.berechne(
+            einheit: planEinheit([position("bankdruecken"), position("trizepsdruecken")]),
+            muskeln: standardKatalog())
+
+        #expect(p.titel == "Brust, Trizeps")
+    }
+
+    @Test func einheitGanzkoerper() {
+        let p = TrainingsProfil.berechne(
+            einheit: planEinheit([position("beinpresse"), position("rudern"), position("bankdruecken")]),
+            muskeln: standardKatalog())
+
+        #expect(p.titel == "Ganzkörper")
+    }
+
+    @Test func einheitNurCardio() {
+        let p = TrainingsProfil.berechne(
+            einheit: planEinheit([position("laufband", baustein: "cardio")]),
+            muskeln: standardKatalog())
+
+        #expect(p.titel == "Cardio")
+        #expect(p.stufen.isEmpty)
+    }
+
+    @Test func einheitStufen() {
+        let p = TrainingsProfil.berechne(
+            einheit: planEinheit([position("bankdruecken"), position("trizepsdruecken")]),
+            muskeln: standardKatalog())
+
+        #expect(p.stufen["pectorals"] == .stark)
+    }
 }

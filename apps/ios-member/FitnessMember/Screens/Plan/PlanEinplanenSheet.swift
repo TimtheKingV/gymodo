@@ -84,6 +84,7 @@ struct PlanEinplanenSheet: View {
     let raster: [Rasterplatz]
     let einheiten: [String]
     let hatKurse: Bool
+    let namen: EinheitNamen
     var vorauswahl: Wochenart = .kraft
     /// Liefert einen Fehlertext oder nil (dann schliesst das Sheet).
     let speichern: (TrainingsplanProfil) async -> String?
@@ -140,7 +141,7 @@ struct PlanEinplanenSheet: View {
                         }
                     }
 
-                    Text(hinweis)
+                    Text(Self.hinweis(einheiten: einheiten, namen: namen))
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -180,13 +181,15 @@ struct PlanEinplanenSheet: View {
         }
     }
 
-    /// "Die Folge bleibt A → B, egal an welchem Tag." (F5/F14)
-    private var hinweis: String {
-        let folge = einheiten.map(EinheitKuerzel.text).joined(separator: " → ")
+    /// "Die Folge bleibt „Brust, Trizeps“ → „Rücken, Bizeps“, egal an welchem
+    /// Tag." (F5/F14) Ein verpasster Termin rueckt die Einheit auf den naechsten
+    /// Trainingstag (`PlanKalender`), ohne Nachholschuld.
+    static func hinweis(einheiten: [String], namen: EinheitNamen) -> String {
+        let folge = einheiten.map(namen.zitiert).joined(separator: " → ")
         let erster = einheiten.count > 1
             ? "Die Folge bleibt \(folge), egal an welchem Tag."
             : "Die Einheit bleibt dieselbe, egal an welchem Tag."
-        return erster + " Verpasst du einen Termin, rutscht nichts nach."
+        return erster + " Verpasst du einen Termin, rückt die Einheit auf den nächsten Trainingstag – nachholen musst du nichts."
     }
 
     private func abschnitt<Inhalt: View>(_ titel: String, @ViewBuilder _ inhalt: () -> Inhalt) -> some View {

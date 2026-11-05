@@ -311,6 +311,7 @@ struct PlanWochenSchritt: View {
         case fehler
     }
 
+    @Environment(CatalogStore.self) private var katalog
     @State private var zustand: Zustand = .laedt
     /// Der Krafttag, der gerade getauscht wird; nil = kein Tausch offen.
     @State private var tauschVon: Int?
@@ -362,6 +363,7 @@ struct PlanWochenSchritt: View {
     @ViewBuilder
     private func woche(_ vorschlag: Trainingsplan) -> some View {
         let anzeige = plan.wochenAnzeige(raster: vorschlag.wochenraster, einheiten: vorschlag.einheiten.map(\.key))
+        let namen = EinheitNamen(plan: vorschlag, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
         let freie = (1...7).filter { tag in !anzeige.contains { $0.tag == tag } }
         if vorschlag.gruende.contains("kraft_tage_auf_eins"), let satz = PlanWarumText.grundSatz("kraft_tage_auf_eins") {
             InlineBanner(tone: .muted, message: satz)
@@ -375,17 +377,17 @@ struct PlanWochenSchritt: View {
         VStack(spacing: DesignSystem.Spacing.s8) {
             ForEach(1...7, id: \.self) { tag in
                 zeile(tag: tag, plaetze: anzeige.filter { $0.tag == tag }, kannTauschen: !freie.isEmpty,
-                      raster: vorschlag.wochenraster)
+                      raster: vorschlag.wochenraster, namen: namen)
             }
         }
     }
 
     @ViewBuilder
-    private func zeile(tag: Int, plaetze: [Rasterplatz], kannTauschen: Bool, raster: [Rasterplatz]) -> some View {
+    private func zeile(tag: Int, plaetze: [Rasterplatz], kannTauschen: Bool, raster: [Rasterplatz], namen: EinheitNamen) -> some View {
         if let platz = plaetze.first {
             switch platz.art {
             case .kraft:
-                kraftZeile(tag: tag, key: platz.einheitKey, kannTauschen: kannTauschen)
+                kraftZeile(tag: tag, key: platz.einheitKey, kannTauschen: kannTauschen, namen: namen)
             case .kurs:
                 festeZeile(tag: tag, titel: "Kurs", zeile: nil) {
                     Text("K")
@@ -416,16 +418,15 @@ struct PlanWochenSchritt: View {
             .frame(width: 28, alignment: .leading)
     }
 
-    private func kraftZeile(tag: Int, key: String?, kannTauschen: Bool) -> some View {
-        let name = key.map(EinheitName.text) ?? "Krafttraining"
+    private func kraftZeile(tag: Int, key: String?, kannTauschen: Bool, namen: EinheitNamen) -> some View {
+        let name = key.map(namen.name) ?? "Krafttraining"
         let wirdGetauscht = tauschVon == tag
         return HStack(spacing: DesignSystem.Spacing.s12) {
             tagSpalte(tag, farbe: DesignSystem.Color.text)
-            Text(key.map(EinheitKuerzel.text) ?? "K")
-                .font(.system(size: 17, weight: .black))
+            // Kraft neutral wie auf Home: die Einheit hat keinen Buchstaben mehr.
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: 15, weight: .black))
                 .foregroundStyle(DesignSystem.Color.onAccent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
                 .frame(width: 36, height: 36)
                 .background(DesignSystem.Color.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -533,6 +534,7 @@ struct PlanWochenSchritt: View {
 /// Server das Raster vorschlaegt.
 struct PlanWochenZeile: View {
     let raster: [Rasterplatz]
+    let namen: EinheitNamen
 
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.s4) {
@@ -542,7 +544,7 @@ struct PlanWochenZeile: View {
                     Text(PlanWochenText.kurz(tag))
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(DesignSystem.Color.textMuted)
-                    Text(marke(platz))
+                    marke(platz)
                         .font(.system(size: 12, weight: .black))
                         .foregroundStyle(platz?.art == .kraft ? DesignSystem.Color.onAccent : DesignSystem.Color.text)
                         .lineLimit(1)
@@ -558,19 +560,24 @@ struct PlanWochenZeile: View {
         }
     }
 
-    private func marke(_ platz: Rasterplatz?) -> String {
-        guard let platz else { return "–" }
-        switch platz.art {
-        case .kraft: return platz.einheitKey.map(EinheitKuerzel.text) ?? "K"
-        case .kurs: return "Kurs"
-        case .cardio: return "Cardio"
+    /// Kraft neutral (Hantel) wie auf Home: die Einheit hat keinen Buchstaben mehr.
+    @ViewBuilder
+    private func marke(_ platz: Rasterplatz?) -> some View {
+        if let platz {
+            switch platz.art {
+            case .kraft: Image(systemName: "dumbbell.fill")
+            case .kurs: Text("Kurs")
+            case .cardio: Text("Cardio")
+            }
+        } else {
+            Text("–")
         }
     }
 
     private func beschreibung(_ platz: Rasterplatz?) -> String {
         guard let platz else { return "frei" }
         switch platz.art {
-        case .kraft: return platz.einheitKey.map(EinheitName.text) ?? "Krafttraining"
+        case .kraft: return platz.einheitKey.map(namen.name) ?? "Krafttraining"
         case .kurs: return "Kurs"
         case .cardio: return "Cardio"
         }

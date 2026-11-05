@@ -4,6 +4,7 @@ import Testing
 
 /// Zustand des Plan-Tabs: Woche Mo 26.10. bis So 1.11.2026 (Europe/Berlin).
 struct PlanTabZustandTests {
+
     private static let kalender: Calendar = {
         var k = Calendar(identifier: .gregorian)
         k.timeZone = TimeZone(identifier: "Europe/Berlin")!
@@ -170,13 +171,13 @@ struct PlanTabZustandTests {
 
     @Test func alsNaechstesSindDieZweiFolgendenTermine() {
         let termine: [Date: [PlanTermin]] = [
-            Self.tag(2026, 10, 28): [.einheit(key: "A", erledigt: false)],
-            Self.tag(2026, 10, 30): [.einheit(key: "B", erledigt: false)],
-            Self.tag(2026, 11, 1): [.cardio(arten: [], erledigt: false)],
+            Self.tag(2026, 10, 28): [.einheit(key: "A", zustand: .geplant)],
+            Self.tag(2026, 10, 30): [.einheit(key: "B", zustand: .geplant)],
+            Self.tag(2026, 11, 1): [.cardio(arten: [], zustand: .geplant)],
         ]
         let naechste = PlanTabZustand.alsNaechstes(termine: termine, nach: Self.tag(2026, 10, 29), anzahl: 2)
         #expect(naechste.map(\.tag) == [Self.tag(2026, 10, 30), Self.tag(2026, 11, 1)])
-        #expect(naechste.first?.termin == .einheit(key: "B", erledigt: false))
+        #expect(naechste.first?.termin == .einheit(key: "B", zustand: .geplant))
     }
 
     // MARK: - Einplanen (PlanWochentage)
@@ -202,5 +203,38 @@ struct PlanTabZustandTests {
         #expect(neu.cardioTage == [7])
         #expect(neu.cardioArten == ["laufen"])
         #expect(neu.minutes == 45)
+    }
+
+    // MARK: - Ansicht und Woche
+
+    @Test func ansichtVorgabeWoche() {
+        #expect(PlanTabZustand().ansicht == .woche)
+    }
+
+    /// Mit vergangenen Wochen ist die laufende nicht mehr die erste Seite:
+    /// ohne Auswahl steht der Streifen trotzdem auf ihr.
+    @Test func wochenIndexOhneAuswahlIstDieLaufendeWoche() {
+        let montage = [Self.tag(2026, 10, 19), Self.tag(2026, 10, 26), Self.tag(2026, 11, 2)]
+        let heute = Self.tag(2026, 10, 29, stunde: 9)
+        #expect(PlanTabZustand.wochenIndex(montage: montage, tag: nil, heute: heute) == 1)
+        #expect(PlanTabZustand.wochenIndex(montage: montage, tag: Self.tag(2026, 10, 21), heute: heute) == 0)
+        #expect(PlanTabZustand.wochenIndex(montage: montage, tag: Self.tag(2026, 11, 8), heute: heute) == 2)
+        // Vor der ersten Seite (alter Sprungtag): die laufende Woche, nicht die aelteste.
+        #expect(PlanTabZustand.wochenIndex(montage: montage, tag: Self.tag(2026, 9, 1), heute: heute) == 1)
+    }
+
+    // MARK: - Monatsgitter
+
+    /// November 2026 beginnt an einem Sonntag: sechs Vortage aus dem Oktober,
+    /// volle Wochen bis So 6.12.; jeder Tag als Tagesbeginn im Plan-Kalender.
+    @Test func monatsgitterFuelltVolleWochenImPlanKalender() {
+        let tage = PlanMonatsgitterTage.tage(
+            monat: Self.tag(2026, 11, 18, stunde: 15), heute: Self.tag(2026, 11, 4, stunde: 9), kalender: Self.kalender)
+        #expect(tage.count == 42)
+        #expect(tage.first?.datum == Self.tag(2026, 10, 26))
+        #expect(tage.first?.zelle.ausserhalb == true)
+        #expect(tage[6].datum == Self.tag(2026, 11, 1))
+        #expect(tage[6].zelle.ausserhalb == false)
+        #expect(tage.filter(\.zelle.istHeute).map(\.datum) == [Self.tag(2026, 11, 4)])
     }
 }

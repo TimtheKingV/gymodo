@@ -15,3 +15,12 @@ enum HomeRoute: Hashable {
     /// "Muskelgruppen").
     case muskelgruppe(MuskelHauptgruppe)
 }
+
+/// Wohin Home im Plan-Tab springt: die Woche, eine Einheit oder ein Tag
+/// (Tipp auf einen Tag der Streak-Woche, "Nächste Einheit" als Kurs oder Cardio).
+enum PlanSprung: Equatable {
+    case woche
+    case einheit(key: String)
+    /// `startOfDay` des Tages im Studio-Kalender.
+    case tag(Date)
+}

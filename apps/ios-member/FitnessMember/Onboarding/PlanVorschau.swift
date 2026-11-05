@@ -140,7 +140,9 @@ struct PlanVorschauSchritt: View {
             // Server-Antwort), fehlt die Zeile.
             if !plan.wochenraster.isEmpty {
                 OnboardingAbschnitt(label: "Deine Woche") {
-                    PlanWochenZeile(raster: plan.wochenraster)
+                    PlanWochenZeile(
+                        raster: plan.wochenraster,
+                        namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)))
                 }
                 .padding(.bottom, DesignSystem.Spacing.s4)
             }
@@ -175,6 +177,7 @@ struct PlanVorschauSchritt: View {
     /// Entwurf 1.4 `.tabs`: gewaehlt = gefuellt. Scrollt, weil Ober-/
     /// Unterkoerper vier lange Namen hat.
     private func einheitenTabs(_ plan: Trainingsplan) -> some View {
+        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
         let gewaehlt = einheitKey ?? plan.einheiten.first?.key
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: DesignSystem.Spacing.s8) {
@@ -183,7 +186,7 @@ struct PlanVorschauSchritt: View {
                     Button {
                         einheitKey = einheit.key
                     } label: {
-                        Chip(text: EinheitName.text(einheit.key), isActive: istAktiv,
+                        Chip(text: namen.name(einheit.key), isActive: istAktiv,
                              innenabstand: DesignSystem.Spacing.s16, gefuellt: true)
                             .fixedSize()
                     }

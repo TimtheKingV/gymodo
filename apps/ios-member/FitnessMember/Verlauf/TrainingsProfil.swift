@@ -39,23 +39,57 @@ struct TrainingsProfil: Equatable {
     static func berechne(
         karte: Trainingskarte, muskeln: [String: [GeraetMuskel]]
     ) -> TrainingsProfil {
-        var last: [String: Double] = [:]
+        var saetze: [(exerciseId: String, kraftSaetze: Int)] = []
         var hatCardio = false
 
         for einheit in karte.teile {
             for block in einheit.blocks {
                 let kraft = block.sets.filter { $0.cardio == nil }.count
                 if kraft < block.sets.count { hatCardio = true }
-                guard kraft > 0 else { continue }
-                for muskel in muskeln[block.exerciseId] ?? [] {
-                    switch muskel.role {
-                    case .primary:
-                        last[muskel.key, default: 0] += Double(kraft)
-                    case .secondary where kraft >= mindestNebensaetze:
-                        last[muskel.key, default: 0] += Double(kraft) * nebensatzGewicht
-                    case .secondary:
-                        break
-                    }
+                saetze.append((block.exerciseId, kraft))
+            }
+        }
+
+        return profil(aus: saetze, hatCardio: hatCardio, muskeln: muskeln)
+    }
+
+    /// Das Profil einer geplanten Einheit: dieselbe Rechnung, die Saetze
+    /// kommen aus dem Plan. Eine Cardio-Position (Baustein "cardio") zaehlt
+    /// keine Kraftsaetze und setzt nur `hatCardio`.
+    static func berechne(
+        einheit: TrainingsplanEinheit, muskeln: [String: [GeraetMuskel]]
+    ) -> TrainingsProfil {
+        var saetze: [(exerciseId: String, kraftSaetze: Int)] = []
+        var hatCardio = false
+
+        for position in einheit.positionen {
+            if position.baustein == "cardio" {
+                hatCardio = true
+            } else {
+                saetze.append((position.exerciseId, position.saetze))
+            }
+        }
+
+        return profil(aus: saetze, hatCardio: hatCardio, muskeln: muskeln)
+    }
+
+    /// Der gemeinsame Kern: Muskellast aus Kraftsaetzen je Uebung, daraus
+    /// Stufen und Titel.
+    private static func profil(
+        aus saetze: [(exerciseId: String, kraftSaetze: Int)], hatCardio: Bool,
+        muskeln: [String: [GeraetMuskel]]
+    ) -> TrainingsProfil {
+        var last: [String: Double] = [:]
+
+        for (exerciseId, kraft) in saetze where kraft > 0 {
+            for muskel in muskeln[exerciseId] ?? [] {
+                switch muskel.role {
+                case .primary:
+                    last[muskel.key, default: 0] += Double(kraft)
+                case .secondary where kraft >= mindestNebensaetze:
+                    last[muskel.key, default: 0] += Double(kraft) * nebensatzGewicht
+                case .secondary:
+                    break
                 }
             }
         }

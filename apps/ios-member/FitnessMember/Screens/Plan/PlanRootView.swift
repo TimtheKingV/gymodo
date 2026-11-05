@@ -1,18 +1,22 @@
 import SwiftUI
 
-/// Der Tab "Plan" (Leinwand 2a, 2f, 2g, 2i): die Woche mit Einheiten, festen
-/// Kursen und Cardio-Tagen. Ohne aktiven Plan zeigt er die Kurse wie bisher
-/// und darueber die Karte "Plan einrichten" (Ruling).
+/// Der Tab "Plan" (Leinwand 2a, 2f, 2g, 2i): der Trainingskalender. Die Woche
+/// (oder der Monat) mit Einheiten, festen Kursen und Cardio-Tagen, rueckwaerts
+/// bis zum Planbeginn mit den absolvierten Trainings und verpassten Terminen.
+/// Ohne aktiven Plan zeigt er die Kurse wie bisher und darueber die Karte
+/// "Plan einrichten" (Ruling).
 ///
 /// Die App rechnet am Plan nichts (F15): Raster, Folge und Kraft-Tage kommen
-/// vom Server; hier wird nur zugeordnet (`PlanWoche`, `PlanTabZustand`).
+/// vom Server; hier wird nur zugeordnet (`PlanKalender`, `PlanTabZustand`).
 struct PlanRootView: View {
     let apiClient: APIClient
     let beiKurs: (String) -> Void
     let beiEinheit: (String) -> Void
+    /// Session-Id eines vergangenen Trainings -> Training-Detail im Plan-Stack.
+    let beiTraining: (String) -> Void
     let beiTrainingStarten: () -> Void
-    /// Ein Tag, den Home zeigen will ("Als nächstes" auf einen Cardio- oder
-    /// Kurstag, Leinwand 2d). Wird beim Uebernehmen geleert, damit derselbe
+    /// Ein Tag, den Home zeigen will (ein Tag der Streak-Woche, "Nächste Einheit"
+    /// als Kurs oder Cardio, Spec 1.1). Wird beim Uebernehmen geleert, damit derselbe
     /// Tag ein zweites Mal ankommt.
     @Binding var tagWunsch: Date?
 
@@ -21,6 +25,7 @@ struct PlanRootView: View {
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(CardioChecksStore.self) private var cardio
+    @Environment(VerlaufStore.self) private var verlauf
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -49,6 +54,7 @@ struct PlanRootView: View {
         .task(id: tagWunsch) {
             guard let tagWunsch else { return }
             zustand.gewaehlterTag = tagWunsch
+            zustand.ansicht = .woche
             self.tagWunsch = nil
         }
         .sheet(isPresented: $beitretenOffen) {
@@ -82,23 +88,23 @@ struct PlanRootView: View {
 
     /// Wie `KurseWochenView.zeitzoneFuerAnfrage`; ohne Studio die des Geraets.
     private var zeitzone: String {
-        kurse.woche?.timezone
-            ?? studios.first.flatMap { erstes in katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone }
-            ?? TimeZone.current.identifier
+        PlanKalenderKontext.zeitzone(
+            bootstrap: katalog.bootstrap, aktivesStudioId: katalog.activeStudioId, wochenZone: kurse.woche?.timezone)
     }
 
-    private var kalender: Calendar {
-        var k = Calendar(identifier: .gregorian)
-        k.timeZone = TimeZone(identifier: zeitzone) ?? .current
-        k.locale = Locale(identifier: "de_DE")
-        return k
-    }
+    private var kalender: Calendar { PlanKalenderKontext.kalender(zeitzone: zeitzone) }
 
     private var profil: TrainingsplanProfil? { katalog.bootstrap?.member.trainingProfile }
 
     private func raster(_ plan: Trainingsplan) -> [Rasterplatz] {
         PlanTabZustand.anzeigeRaster(
             planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key), profil: profil)
+    }
+
+    /// Wie weit der Streifen zurueckreicht: bis zum Planbeginn (vor dem Plan
+    /// gibt es keine Slots), gedeckelt in `wochenMontage`.
+    private var zurueckBis: Date? {
+        PlanAnzeige.plan(bootstrap: katalog.bootstrap)?.beginn.flatMap(Zeitpunkt.parse)
     }
 
     private var sitzungen: [CourseWeekSession] { hatStudio ? (kurse.woche?.sessions ?? []) : [] }
@@ -108,8 +114,9 @@ struct PlanRootView: View {
     private func planInhalt(plan: Trainingsplan, jetzt: Date) -> some View {
         let kalender = kalender
         let raster = raster(plan)
-        let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone)
-        let wochenIndex = montage.lastIndex { m in zustand.gewaehlterTag.map { $0 >= m } ?? false } ?? 0
+        let beginn = plan.beginn.flatMap(Zeitpunkt.parse)
+        let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone, zurueckBis: beginn)
+        let wochenIndex = PlanTabZustand.wochenIndex(montage: montage, tag: zustand.gewaehlterTag, heute: jetzt)
         let wochentage = KurseWochenBerechnung.wochentage(
             abMontag: montage.indices.contains(wochenIndex) ? montage[wochenIndex]
                 : KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone),
@@ -129,47 +136,100 @@ struct PlanRootView: View {
         let alleTage = montage.flatMap { m in
             KurseWochenBerechnung.wochentage(abMontag: m, jetzt: jetzt, zeitzone: zeitzone).map(\.datum)
         }
-        let termine = PlanWoche.termine(
-            tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, raster: raster, kurse: sitzungen,
-            cardioErledigt: cardio.erledigt, einheitenErledigt: [], filter: filter)
+        let trainingsJeTag = HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: zeitzone)
+        let ersterTag = alleTage.first ?? tage.first ?? jetzt
+        let letzterTag = alleTage.last ?? tage.last ?? jetzt
+        let termine = PlanKalenderKontext.termine(
+            plan: plan, tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, profil: profil,
+            heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
+            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
+            heute: jetzt, kurse: sitzungen, cardioErledigt: cardio.erledigt,
+            cardioGeladen: cardio.geladen, filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
+        // Trainings gehoeren zu "Einheiten": bei Kurs- oder Cardio-Filter nicht.
+        let trainings = tag <= kalender.startOfDay(for: jetzt) && (filter == .alle || filter == .einheiten)
+            ? HomeZeilen.trainingskarten(trainingsJeTag[tagId] ?? []) : []
+        let trainiert: (Date) -> Bool = { trainingsJeTag[Self.tagId($0, kalender: kalender)] != nil }
+        // Legende "verpasst": die gezeigten Tage -- Woche oder ganzer Monat.
+        let hatVerpasst = termine.contains { tagStart, liste in
+            let gezeigt = zustand.ansicht == .monat
+                ? kalender.isDate(tagStart, equalTo: tag, toGranularity: .month)
+                : tage.contains { kalender.isDate($0, inSameDayAs: tagStart) }
+            return gezeigt && liste.contains { Self.istVerpasst($0) }
+        }
 
         return ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                kopf(plan)
+                kopf
                 if !hatKraft { trainingstageKarte }
                 if !sichtbar.isEmpty { filterLeiste(sichtbar, filter: filter) }
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                    Text(PlanTabZustand.wochenTitel(tage: tage, kalender: kalender))
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.text)
-                    KurseWochenstreifen(
-                        montage: montage, index: wochenIndex, jetzt: jetzt, zeitzone: zeitzone,
-                        gewaehlterTagId: tagId, hoehe: 72,
-                        beiWochenwahl: { index in
-                            guard montage.indices.contains(index) else { return }
-                            let neu = KurseWochenBerechnung.wochentage(
-                                abMontag: montage[index], jetzt: jetzt, zeitzone: zeitzone).map(\.datum)
-                            zustand.gewaehlterTag = PlanTabZustand.vorauswahl(tage: neu, heute: jetzt, kalender: kalender)
-                        },
-                        beiTagwahl: { zustand.gewaehlterTag = $0.datum },
-                        label: { t in tagLabel(t, termine: termine[kalender.startOfDay(for: t.datum)] ?? []) },
-                        marke: { t in marken(termine[kalender.startOfDay(for: t.datum)] ?? []) })
-                    if hatKurse || hatCardio {
-                        legende(hatKraft: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio)
+                    switch zustand.ansicht {
+                    case .woche:
+                        Text(PlanTabZustand.wochenTitel(tage: tage, kalender: kalender))
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(DesignSystem.Color.text)
+                        KurseWochenstreifen(
+                            montage: montage, index: wochenIndex, jetzt: jetzt, zeitzone: zeitzone,
+                            gewaehlterTagId: tagId, hoehe: 72,
+                            trainiert: { trainiert($0.datum) },
+                            beiWochenwahl: { index in
+                                guard montage.indices.contains(index) else { return }
+                                let neu = KurseWochenBerechnung.wochentage(
+                                    abMontag: montage[index], jetzt: jetzt, zeitzone: zeitzone).map(\.datum)
+                                zustand.gewaehlterTag = PlanTabZustand.vorauswahl(tage: neu, heute: jetzt, kalender: kalender)
+                            },
+                            beiTagwahl: { zustand.gewaehlterTag = $0.datum },
+                            label: { t in
+                                tagLabel(
+                                    wochentag: t.wochentagVoll, nummer: t.tagesnummer, istHeute: t.istHeute,
+                                    trainiert: trainiert(t.datum),
+                                    termine: termine[kalender.startOfDay(for: t.datum)] ?? [])
+                            },
+                            marke: { t in marken(termine[kalender.startOfDay(for: t.datum)] ?? []) })
+                    case .monat:
+                        // Nur Tage der wischbaren Wochen: dahinter haette die Woche keine Seite.
+                        PlanMonatsgitter(
+                            monat: tag, kalender: kalender, heute: jetzt,
+                            marken: { d in marken(termine[d] ?? []) },
+                            gewaehlt: tag,
+                            waehlbar: { d in d >= kalender.startOfDay(for: ersterTag) && d <= letzterTag },
+                            trainiert: trainiert,
+                            label: { d in
+                                tagLabel(
+                                    wochentag: Self.wochentagVoll(d, kalender: kalender),
+                                    nummer: kalender.component(.day, from: d),
+                                    istHeute: kalender.isDate(d, inSameDayAs: jetzt),
+                                    trainiert: trainiert(d), termine: termine[d] ?? [])
+                            },
+                            beiTag: { d in
+                                zustand.gewaehlterTag = d
+                                zustand.ansicht = .woche
+                            })
+                    }
+                    if hatKurse || hatCardio || hatVerpasst {
+                        legende(hatKraft: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio, hatVerpasst: hatVerpasst)
                     }
                 }
 
                 PlanTagListe(
+                    einheitNamen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
+                    muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap),
+                    geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)),
+                    kalender: kalender,
                     ueberschrift: wochentage.first { $0.id == tagId }
                         .map { KurseWochenInhalt.tagesueberschrift($0, zeitzone: zeitzone) } ?? "",
                     istHeute: kalender.isDate(tag, inSameDayAs: jetzt),
                     darfAbhaken: tag <= kalender.startOfDay(for: jetzt),
-                    eintraege: eintraege(termine[tag] ?? [], plan: plan, tagId: tagId),
+                    eintraege: Self.ohneDoppelteErledigte(
+                        eintraege(termine[tag] ?? [], plan: plan, tagId: tagId), trainings: trainings),
+                    trainings: trainings,
                     naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
-                    alsNaechstes: PlanTabZustand.alsNaechstes(termine: termine, nach: tag, anzahl: 2)
+                    // Von einem vergangenen Tag aus zaehlt erst, was ab heute ansteht.
+                    alsNaechstes: PlanTabZustand.alsNaechstes(
+                        termine: termine.filter { $0.key >= kalender.startOfDay(for: jetzt) }, nach: tag, anzahl: 2)
                         .compactMap { n in
                             let id = Self.tagId(n.tag, kalender: kalender)
                             return eintraege([n.termin], plan: plan, tagId: id).first
@@ -184,6 +244,7 @@ struct PlanRootView: View {
                             beiAuswahl: beiKurs)
                     },
                     beiEinheit: beiEinheit,
+                    beiTraining: beiTraining,
                     beiStart: beiTrainingStarten,
                     beiCardio: { erledigt in await cardioSetzen(tagId: tagId, erledigt: erledigt) })
                 // Neuer Tag, neue Liste: Lauf- und Fehlerzustand der Cardio-Karte
@@ -203,6 +264,7 @@ struct PlanRootView: View {
                         PlanEinplanenSheet(
                             profil: profil, raster: raster, einheiten: plan.einheiten.map(\.key),
                             hatKurse: hatStudio,
+                            namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
                             speichern: { neu in await profilSpeichern(neu) })
                     }
                 }
@@ -234,7 +296,7 @@ struct PlanRootView: View {
     }
 
     private func cardioLaden() async {
-        let montage = KurseWochenBerechnung.wochenMontage(ab: Date(), zeitzone: zeitzone)
+        let montage = KurseWochenBerechnung.wochenMontage(ab: Date(), zeitzone: zeitzone, zurueckBis: zurueckBis)
         guard let erster = montage.first, let letzter = montage.last,
               let sonntag = kalender.date(byAdding: .day, value: 6, to: letzter) else { return }
         await cardio.laden(
@@ -264,20 +326,19 @@ struct PlanRootView: View {
 
     // MARK: - Teile
 
-    private func kopf(_ plan: Trainingsplan) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+    /// Rechts der Umschalter Woche/Monat (das Monatsgitter ist von Home
+    /// hierher umgezogen); die Anzahl der Einheiten steht dafuer nicht mehr hier.
+    private var kopf: some View {
+        HStack(alignment: .center) {
             Text("PLAN")
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            Text(plan.einheiten.count == 1
-                 ? "EINE EINHEIT"
-                 : "EINHEITEN " + plan.einheiten.map { EinheitKuerzel.text($0.key) }.joined(separator: " · "))
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
+            SegmentSchalter(werte: PlanAnsicht.allCases, auswahl: $zustand.ansicht, titel: \.titel)
+                .frame(width: 168)
+                .accessibilityLabel("Ansicht")
         }
     }
 
@@ -305,13 +366,22 @@ struct PlanRootView: View {
     private func arten(_ termine: [PlanTermin]) -> [MarkenEintrag] {
         var ergebnis: [MarkenEintrag] = []
         for termin in termine {
+            // Verpasst (Einheit oder Cardio): eine Marke, der gestrichelte Ring.
+            if Self.istVerpasst(termin) {
+                if !ergebnis.contains(where: { $0.art == .verpasst }) { ergebnis.append(MarkenEintrag(.verpasst, false)) }
+                continue
+            }
             switch termin {
-            case .einheit(_, let erledigt):
-                if !ergebnis.contains(where: { $0.art == .einheit }) { ergebnis.append(MarkenEintrag(.einheit, erledigt)) }
+            case .einheit(_, let zustand):
+                if !ergebnis.contains(where: { $0.art == .einheit }) {
+                    ergebnis.append(MarkenEintrag(.einheit, zustand == .erledigt))
+                }
             case .kurs:
                 if !ergebnis.contains(where: { $0.art == .kurs }) { ergebnis.append(MarkenEintrag(.kurs, false)) }
-            case .cardio(_, let erledigt):
-                if !ergebnis.contains(where: { $0.art == .cardio }) { ergebnis.append(MarkenEintrag(.cardio, erledigt)) }
+            case .cardio(_, let zustand):
+                if !ergebnis.contains(where: { $0.art == .cardio }) {
+                    ergebnis.append(MarkenEintrag(.cardio, zustand == .erledigt))
+                }
             }
         }
         return ergebnis
@@ -327,25 +397,30 @@ struct PlanRootView: View {
         .frame(height: 8)
     }
 
-    private func tagLabel(_ tag: KurseWochentag, termine: [PlanTermin]) -> String {
-        var teile = ["\(tag.wochentagVoll), \(tag.tagesnummer)."]
-        if tag.istHeute { teile.append("Heute.") }
-        let namen = arten(termine).map { eintrag -> String in
+    private func tagLabel(
+        wochentag: String, nummer: Int, istHeute: Bool, trainiert: Bool, termine: [PlanTermin]
+    ) -> String {
+        var teile = ["\(wochentag), \(nummer)."]
+        if istHeute { teile.append("Heute.") }
+        var namen = trainiert ? ["Training"] : []
+        namen += arten(termine).map { eintrag -> String in
             switch eintrag.art {
             case .einheit: eintrag.gedeckt ? "Einheit erledigt" : "Einheit"
             case .kurs: "Kurs"
             case .cardio: eintrag.gedeckt ? "Cardio erledigt" : "Cardio"
+            case .verpasst: "verpasst"
             }
         }
         teile.append(namen.isEmpty ? "Nichts geplant." : namen.joined(separator: ", ") + ".")
         return teile.joined(separator: " ")
     }
 
-    private func legende(hatKraft: Bool, hatKurse: Bool, hatCardio: Bool) -> some View {
+    private func legende(hatKraft: Bool, hatKurse: Bool, hatCardio: Bool, hatVerpasst: Bool) -> some View {
         HStack(spacing: DesignSystem.Spacing.s16) {
             if hatKraft { legendeEintrag(.einheit, "Einheit") }
             if hatKurse { legendeEintrag(.kurs, "Kurs") }
             if hatCardio { legendeEintrag(.cardio, "Cardio") }
+            if hatVerpasst { legendeEintrag(.verpasst, "verpasst") }
         }
         .accessibilityHidden(true)
     }
@@ -412,16 +487,41 @@ struct PlanRootView: View {
     private func eintraege(_ termine: [PlanTermin], plan: Trainingsplan, tagId: String) -> [PlanTagEintrag] {
         termine.compactMap { termin in
             switch termin {
-            case .einheit(let key, let erledigt):
-                return plan.einheiten.first { $0.key == key }.map { .einheit($0, erledigt: erledigt) }
-            case .kurs(let titel, let beginn, _):
+            case .einheit(let key, let zustand):
+                return plan.einheiten.first { $0.key == key }.map { .einheit($0, zustand: zustand) }
+            case .kurs(let titel, let beginn, _, _):
                 return sitzungen.first {
                     $0.localDay == tagId && $0.name == titel && Zeitpunkt.parse($0.startsAt) == beginn
                 }.map { .kurs($0) }
-            case .cardio(_, let erledigt):
-                return .cardio(arten: profil?.cardioArten ?? [], erledigt: erledigt)
+            case .cardio(_, let zustand):
+                return .cardio(arten: profil?.cardioArten ?? [], zustand: zustand)
             }
         }
+    }
+
+    static func istVerpasst(_ termin: PlanTermin) -> Bool {
+        if case .verpasst = termin.zustand { return true }
+        return false
+    }
+
+    /// Steht das Training des Tages schon als Trainingskarte da, faellt die
+    /// erledigte Planeinheit weg -- sonst stuende dasselbe zweimal. Ohne
+    /// Training (Verlauf nicht geladen oder gedeckelt) bleibt sie stehen.
+    static func ohneDoppelteErledigte(_ eintraege: [PlanTagEintrag], trainings: [Trainingskarte]) -> [PlanTagEintrag] {
+        guard !trainings.isEmpty else { return eintraege }
+        return eintraege.filter { eintrag in
+            if case .einheit(_, .erledigt) = eintrag { return false }
+            return true
+        }
+    }
+
+    /// "Montag" -- fuer VoiceOver im Monatsgitter.
+    static func wochentagVoll(_ tag: Date, kalender: Calendar) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "de_DE")
+        f.timeZone = kalender.timeZone
+        f.dateFormat = "EEEE"
+        return f.string(from: tag)
     }
 
     static func tagId(_ tag: Date, kalender: Calendar) -> String {

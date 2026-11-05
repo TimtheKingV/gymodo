@@ -8,6 +8,7 @@ struct PlanTauschBestaetigung: View {
     let sitzung: PlanTauschSitzung
     let kandidat: TauschKandidat
     let beiFertig: () -> Void
+    @Environment(CatalogStore.self) private var katalog
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -19,10 +20,11 @@ struct PlanTauschBestaetigung: View {
                 .accessibilityAddTraits(.isHeader)
             if sitzung.grund == nil {
                 PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
-                    einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+                    einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name,
+                    namen: EinheitNamen(bootstrap: katalog.bootstrap)))
             } else {
                 // Aus "Übung gefällt mir nicht": die Dauer steht fest.
-                Text(PlanTausch.bestaetigungsHinweis(einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+                Text(PlanTausch.bestaetigungsHinweis(einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name, namen: EinheitNamen(bootstrap: katalog.bootstrap)))
                     .font(.system(size: 14))
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .fixedSize(horizontal: false, vertical: true)

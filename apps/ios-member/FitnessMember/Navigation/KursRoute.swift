@@ -1,7 +1,9 @@
 import Foundation
 
 /// Der typisierte Pfad des Plan-Tabs (frueher Kurse-Tab). `.einheit` ist die
-/// Vorschau einer Planeinheit (Leinwand 2e), `.detail` das Kursdetail.
+/// Vorschau einer Planeinheit (Leinwand 2e), `.detail` das Kursdetail,
+/// `.sessionDetail` ein vergangenes Training aus dem Kalender -- derselbe
+/// Screen wie von Home (`HomeRoute.sessionDetail`).
 ///
 /// Seit die eigenen Anmeldungen als Band auf dem Wochenplan stehen
 /// (`KurseBandView`), gibt es nur noch ein Ziel. `.meine` ist damit
@@ -19,4 +21,8 @@ import Foundation
 enum KursRoute: Hashable {
     case detail(sessionId: String)
     case einheit(key: String)
+    case sessionDetail(id: String)
+    /// Der Uebungsfortschritt aus einem vergangenen Training -- derselbe
+    /// Screen wie `HomeRoute.uebungsfortschritt`.
+    case uebungsfortschritt(exerciseId: String)
 }

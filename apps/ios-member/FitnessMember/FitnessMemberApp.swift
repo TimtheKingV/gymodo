@@ -8,7 +8,7 @@ struct FitnessMemberApp: App {
     /// Neben workoutStore: der Planablauf gibt es schon vor dem ersten Satz.
     @State private var planAblauf: TrainingsplanAblaufStore
     @State private var kurseStore: KurseStore
-    /// Cardio-Haken fuer Plan-Tab und Home (Woche auf Home, Leinwand 2d).
+    /// Cardio-Haken fuer Plan-Tab und Home (Marken der Streak-Woche).
     @State private var cardioChecks = CardioChecksStore()
     @State private var verlaufStore: VerlaufStore
     @State private var netzwerkMonitor: NetzwerkMonitor

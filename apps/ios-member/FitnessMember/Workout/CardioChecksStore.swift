@@ -4,12 +4,17 @@ import Observation
 /// Die abgehakten Cardio-Tage ("YYYY-MM-DD"), geteilt von Plan-Tab und Home.
 ///
 /// Frueher hielt der Plan-Tab sie als eigenen `@State`; seit Home die Woche
-/// zeigt (Leinwand 2d), lesen beide denselben Stand -- ein Haken im Plan steht
+/// markiert (Spec 1.1), lesen beide denselben Stand -- ein Haken im Plan steht
 /// ohne zweiten Abruf auch auf Home.
 @MainActor
 @Observable
 final class CardioChecksStore {
     private(set) var erledigt: Set<String> = []
+    /// Die erfolgreich geladenen Bereiche ("YYYY-MM-DD", eingeschlossen). Nur
+    /// darin heisst ein fehlender Haken "nicht gemacht"; ausserhalb (noch nicht
+    /// geladen, Abruf fehlgeschlagen) weiss die App es nicht -- der Plan-Kalender
+    /// laesst vergangene Cardio-Slots dort neutral statt "verpasst".
+    private(set) var geladen: [ClosedRange<String>] = []
     /// Jede Aenderung am Haken zaehlt hoch; eine GET-Antwort, die vor ihr
     /// losging, wird verworfen (wie `KurseStore.generation`) -- sonst
     /// ueberschriebe ein aelterer Stand den frisch gesetzten Haken.
@@ -23,6 +28,7 @@ final class CardioChecksStore {
             let tage = try await apiClient.cardioChecks(from: von, to: bis)
             guard start == generation else { return }
             erledigt = Self.zusammenfuehren(alt: erledigt, neu: Set(tage), von: von, bis: bis)
+            geladen = Self.bereiche(alt: geladen, von: von, bis: bis)
         } catch {
             // Bleibt beim letzten Stand.
         }
@@ -50,5 +56,13 @@ final class CardioChecksStore {
     /// loeschen. "YYYY-MM-DD" vergleicht sich als Text wie als Datum.
     nonisolated static func zusammenfuehren(alt: Set<String>, neu: Set<String>, von: String, bis: String) -> Set<String> {
         alt.filter { $0 < von || $0 > bis }.union(neu)
+    }
+
+    /// Merkt sich `von`...`bis` als geladen; ein schon abgedeckter Bereich
+    /// kommt nicht doppelt hinzu (der Plan-Tab laedt bei jedem Erscheinen).
+    nonisolated static func bereiche(alt: [ClosedRange<String>], von: String, bis: String) -> [ClosedRange<String>] {
+        guard von <= bis else { return alt }
+        if alt.contains(where: { $0.contains(von) && $0.contains(bis) }) { return alt }
+        return alt + [von...bis]
     }
 }

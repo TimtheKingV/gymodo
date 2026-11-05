@@ -211,10 +211,10 @@ enum PlanAnzeige {
     }
 
     /// "Danach: Einheit B"; ein Plan mit nur einer Einheit hat kein Danach.
-    static func danachText(plan: Trainingsplan, einheitKey: String) -> String? {
+    static func danachText(plan: Trainingsplan, einheitKey: String, namen: EinheitNamen) -> String? {
         let keys = plan.einheiten.map(\.key)
         guard keys.count > 1 else { return nil }
-        return "Danach: \(EinheitName.text(TrainingsplanFolge.naechsteEinheitKey(einheitKeys: keys, zuletzt: einheitKey)))"
+        return "Danach: \(namen.name(TrainingsplanFolge.naechsteEinheitKey(einheitKeys: keys, zuletzt: einheitKey)))"
     }
 
     // MARK: - Zusaetzlich gemacht
@@ -336,7 +336,7 @@ enum PlanAnzeige {
     /// selbst, nicht der Plan im Bootstrap: der kann inzwischen eine neuere
     /// Version mit anderen Positionen sein.
     static func abschluss(einheitKey: String, zustand: AblaufZustand,
-                          naechsteEinheitKey: String?, ausgelassen: Set<String> = []) -> Abschluss {
+                          naechsteEinheitKey: String?, namen: EinheitNamen, ausgelassen: Set<String> = []) -> Abschluss {
         let positionen = zustand.positionen.filter { !ausgelassen.contains($0.key) }
         let gesamt = positionen.count
         let erledigt = positionen.filter { $0.status == .erledigt }.count
@@ -345,10 +345,10 @@ enum PlanAnzeige {
         if optional > 0 { zeile += ", \(optional) optional" }
         let naechstes = naechsteEinheitKey.map { key in
             key == einheitKey
-                ? "Nächstes Mal ist wieder \(EinheitName.text(key)) dran."
-                : "Nächstes Mal ist \(EinheitName.text(key)) dran."
+                ? "Nächstes Mal ist wieder \(namen.zitiert(key)) dran."
+                : "Nächstes Mal ist \(namen.zitiert(key)) dran."
         }
-        return Abschluss(titel: EinheitName.text(einheitKey).uppercased(), zeile: zeile, naechstes: naechstes)
+        return Abschluss(titel: namen.name(einheitKey).uppercased(), zeile: zeile, naechstes: naechstes)
     }
 
     // MARK: - Anfaengerangebot (2.3)

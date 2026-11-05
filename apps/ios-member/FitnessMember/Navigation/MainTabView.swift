@@ -37,6 +37,7 @@ struct MainTabView: View {
                     apiClient: apiClient,
                     beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
                     beiEinheit: { key in planPfad.append(.einheit(key: key)) },
+                    beiTraining: { id in planPfad.append(.sessionDetail(id: id)) },
                     beiTrainingStarten: trainingZeigen,
                     tagWunsch: $planTagWunsch)
                 .navigationDestination(for: KursRoute.self) { route in
@@ -45,6 +46,13 @@ struct MainTabView: View {
                         KursDetailView(sessionId: sessionId)
                     case .einheit(let key):
                         PlanEinheitView(einheitKey: key, beiTrainingStarten: trainingZeigen)
+                    case .sessionDetail(let id):
+                        // Fortgesetzt wird im Training-Tab, wie von Home.
+                        SessionDetailView(
+                            sessionId: id, apiClient: apiClient, beiFortgesetzt: trainingZeigen,
+                            beiUebung: { planPfad.append(.uebungsfortschritt(exerciseId: $0)) })
+                    case .uebungsfortschritt(let exerciseId):
+                        UebungsfortschrittView(exerciseId: exerciseId)
                     }
                 }
             }
@@ -82,7 +90,7 @@ struct MainTabView: View {
         ausgewaehlterTab = 1
     }
 
-    /// Von Home in den Plan (Leinwand 2d): die Woche, eine Einheit (derselbe
+    /// Von Home in den Plan (Spec 1.1): die Woche, eine Einheit (derselbe
     /// Push wie ein Tipp im Plan) oder ein Tag. Der Pfad beginnt jedes Mal neu,
     /// sonst laege die Einheit ueber einem alten Kursdetail.
     private func planZeigen(_ sprung: PlanSprung) {

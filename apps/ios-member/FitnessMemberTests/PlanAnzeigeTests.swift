@@ -276,8 +276,8 @@ struct PlanAnzeigeTests {
     func metaUndDanach() {
         let plan = Self.plan()
         #expect(PlanAnzeige.metaText(plan.einheiten[0]) == "4 Übungen · ca. 60 Min")
-        #expect(PlanAnzeige.danachText(plan: plan, einheitKey: "A") == "Danach: Einheit B")
-        #expect(PlanAnzeige.danachText(plan: plan, einheitKey: "B") == "Danach: Einheit A")
+        #expect(PlanAnzeige.danachText(plan: plan, einheitKey: "A", namen: EinheitNamen(bootstrap: nil)) == "Danach: Einheit B")
+        #expect(PlanAnzeige.danachText(plan: plan, einheitKey: "B", namen: EinheitNamen(bootstrap: nil)) == "Danach: Einheit A")
     }
 
     // MARK: - Bild
@@ -484,12 +484,12 @@ struct PlanAnzeigeTests {
     @Test("Abschluss zaehlt ausgelassene Positionen nicht als offen")
     func abschlussOhneAusgelassene() {
         let zustand = Self.zustand(["A0": .erledigt, "A2": .optional])
-        let abschluss = PlanAnzeige.abschluss(einheitKey: "A", zustand: zustand, naechsteEinheitKey: "B",
+        let abschluss = PlanAnzeige.abschluss(einheitKey: "A", zustand: zustand, naechsteEinheitKey: "B", namen: EinheitNamen(bootstrap: nil),
                                               ausgelassen: ["A1", "A3"])
         #expect(abschluss.zeile == "1 von 2 Übungen erledigt, 1 optional")
         // Eine ausgelassene, schon erledigte Position zaehlt ebenfalls nicht.
         let erledigtUndAusgelassen = PlanAnzeige.abschluss(
-            einheitKey: "A", zustand: Self.zustand(["A0": .erledigt]), naechsteEinheitKey: "B", ausgelassen: ["A0"])
+            einheitKey: "A", zustand: Self.zustand(["A0": .erledigt]), naechsteEinheitKey: "B", namen: EinheitNamen(bootstrap: nil), ausgelassen: ["A0"])
         #expect(erledigtUndAusgelassen.zeile == "0 von 3 Übungen erledigt")
     }
 
@@ -498,12 +498,13 @@ struct PlanAnzeigeTests {
     @Test("Abschluss nennt erledigt, optional und die naechste Einheit")
     func abschlussText() {
         let zustand = Self.zustand(["A0": .erledigt, "A1": .optional, "A3": .erledigt])
-        let abschluss = PlanAnzeige.abschluss(einheitKey: "A", zustand: zustand, naechsteEinheitKey: "B")
+        let abschluss = PlanAnzeige.abschluss(einheitKey: "A", zustand: zustand, naechsteEinheitKey: "B", namen: EinheitNamen(bootstrap: nil))
         #expect(abschluss.titel == "EINHEIT A")
         #expect(abschluss.zeile == "2 von 4 Übungen erledigt, 1 optional")
         #expect(abschluss.naechstes == "Nächstes Mal ist Einheit B dran.")
 
-        let nichts = PlanAnzeige.abschluss(einheitKey: "A", zustand: Self.zustand(), naechsteEinheitKey: "A")
+        let nichts = PlanAnzeige.abschluss(einheitKey: "A", zustand: Self.zustand(), naechsteEinheitKey: "A",
+                                         namen: EinheitNamen(bootstrap: nil))
         #expect(nichts.zeile == "0 von 4 Übungen erledigt")
         #expect(nichts.naechstes == "Nächstes Mal ist wieder Einheit A dran.")
     }

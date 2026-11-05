@@ -189,7 +189,13 @@ function falscherClient(tabellen: Record<string, Antwort>): SupabaseClient {
     for (const m of ["select", "eq", "in", "not", "order", "limit", "range"]) b[m] = () => b;
     b.maybeSingle = () => Promise.resolve(antwort);
     b.single = () => Promise.resolve(antwort);
-    b.then = (ok: (a: Antwort) => unknown, fehler: (e: unknown) => unknown) => Promise.resolve(antwort).then(ok, fehler);
+    // Ohne single/maybeSingle ist es eine Listenabfrage: eine Zeile kommt als Liste mit
+    // ihr (etwa training_plans fuer die Planlinie).
+    const liste =
+      antwort.data !== null && typeof antwort.data === "object" && !Array.isArray(antwort.data)
+        ? { ...antwort, data: [antwort.data] }
+        : antwort;
+    b.then = (ok: (a: Antwort) => unknown, fehler: (e: unknown) => unknown) => Promise.resolve(liste).then(ok, fehler);
     return b;
   };
   return {

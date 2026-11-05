@@ -414,4 +414,135 @@ struct HomeSerieTests {
         #expect(!HomeSerie.serieLaeuft(stehendeSerie))
         #expect(stehendeSerie.weeks == 2)
     }
+
+    // MARK: - Plan in der Streak-Woche (Spec 1.1)
+
+    private static let planKalender = PlanKalenderKontext.kalender(zeitzone: "Europe/Berlin")
+
+    private static func planTag(_ monat: Int, _ t: Int) -> Date {
+        planKalender.date(from: DateComponents(year: 2026, month: monat, day: t))!
+    }
+
+    /// Woche Mo 2.11. bis So 8.11.2026, heute Do 5.11.
+    private var planWoche: Serienstand {
+        stand(weekStart: "2026-11-02", today: "2026-11-05", trainedDays: ["2026-11-02"])
+    }
+
+    @Test func geplanteTageTragenMarke() {
+        let tage = HomeSerie.tage(
+            planWoche, trainingstage: ["2026-11-02"],
+            geplant: ["2026-11-06": .einheit, "2026-11-07": .cardio])
+        #expect(tage.map(\.geplant) == [nil, nil, nil, nil, .einheit, .cardio, nil])
+    }
+
+    @Test func markenAusDenTerminen() {
+        let termine: [Date: [PlanTermin]] = [
+            Self.planTag(11, 2): [.einheit(key: "A", zustand: .erledigt)],
+            Self.planTag(11, 3): [.einheit(key: "B", zustand: .verpasst(verschobenAuf: Self.planTag(11, 5)))],
+            Self.planTag(11, 5): [.einheit(key: "B", zustand: .geplant)],
+            Self.planTag(11, 6): [.kurs(titel: "Zirkel", beginn: Self.planTag(11, 6), angemeldet: true, zustand: .geplant)],
+            Self.planTag(11, 7): [.cardio(arten: [], zustand: .geplant)],
+        ]
+        let marken = HomeSerie.planMarken(termine, kalender: Self.planKalender)
+        #expect(marken == [
+            "2026-11-03": .verpasst, "2026-11-05": .einheit, "2026-11-06": .kurs, "2026-11-07": .cardio,
+        ])
+    }
+
+    @Test func kuenftigerTagMitMarkeWaehlbar() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-06": .einheit, "2026-11-05": .einheit])
+        // Freitag (kuenftig) mit Marke: Sprung in den Plan, auch mit eigenem Kurs.
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planTag)
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planTag)
+    }
+
+    /// R8: die Trainings von heute bleiben auf Home erreichbar.
+    @Test func heuteMitMarkeUndInhaltKlapptAuf() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .einheit])
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
+    }
+
+    @Test func heuteMitMarkeOhneInhaltSpringtInDenPlan() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .einheit])
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == .planTag)
+    }
+
+    @Test func kuenftigerTagOhneMarkeNicht() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: [:])
+        #expect(HomeSerie.tippZiel(tage[5], heute: "2026-11-05", hatInhalt: false) == nil)
+        // Ein eigener Kurs ohne Planmarke klappt weiter auf wie bisher.
+        #expect(HomeSerie.tippZiel(tage[5], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
+    }
+
+    @Test func vergangenerTagKlapptAuf() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: ["2026-11-02"], geplant: ["2026-11-03": .verpasst])
+        #expect(HomeSerie.tippZiel(tage[0], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
+        // Verpasst ohne Training: nichts zu zeigen, kein Sprung.
+        #expect(HomeSerie.tippZiel(tage[1], heute: "2026-11-05", hatInhalt: false) == nil)
+    }
+
+    @Test func tagesIdWirdZumPlanTag() {
+        #expect(PlanKalenderKontext.tag(id: "2026-11-06", kalender: Self.planKalender) == Self.planTag(11, 6))
+        #expect(PlanKalenderKontext.tag(id: "kaputt", kalender: Self.planKalender) == nil)
+    }
+
+    // MARK: - Naechste Einheit
+
+    @Test func naechsteEinheitIstDerErsteGeplanteTerminAbHeute() {
+        let termine: [Date: [PlanTermin]] = [
+            Self.planTag(11, 3): [.einheit(key: "B", zustand: .verpasst(verschobenAuf: Self.planTag(11, 6)))],
+            Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)],
+        ]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: nil, jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 6))
+        #expect(n?.termin == .einheit(key: "B", zustand: .geplant))
+        #expect(NaechsteEinheitKarte.tagText(Self.planTag(11, 6), jetzt: jetzt, kalender: Self.planKalender)
+            == "Freitag, 6. Nov")
+        #expect(NaechsteEinheitKarte.tagText(Self.planTag(11, 5), jetzt: jetzt, kalender: Self.planKalender)
+            == "Heute")
+    }
+
+    /// Laeuft eine Einheit, ist sie die naechste -- heute, auch an einem Nicht-Slot-Tag.
+    @Test func laufendeEinheitIstHeute() {
+        let termine: [Date: [PlanTermin]] = [Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)]]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: "B", jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 5))
+        #expect(n?.termin == .einheit(key: "B", zustand: .geplant))
+    }
+
+    /// Ein vorbereiteter, ungebundener Ablauf (jeder Plan hat einen) ist kein
+    /// laufendes Training: die Karte nennt den naechsten Termin des Kalenders.
+    @Test func ungebundenerAblaufLaeuftNicht() {
+        let plan = PlanAnzeigeTests.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: PlanAnzeigeTests.zustand(), ausgelassen: [])
+        let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: false)
+        #expect(laufend == nil)
+        let termine: [Date: [PlanTermin]] = [Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)]]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 6))
+        #expect(n?.termin == .einheit(key: "B", zustand: .geplant))
+    }
+
+    /// Gebunden an eine Session laeuft die Einheit: heute, "Weiter trainieren".
+    @Test func gebundenerAblaufLaeuft() {
+        let plan = PlanAnzeigeTests.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: PlanAnzeigeTests.zustand(), ausgelassen: [])
+        let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: true)
+        #expect(laufend?.einheitKey == "A")
+        let termine: [Date: [PlanTermin]] = [Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)]]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 5))
+        #expect(n?.termin == .einheit(key: "A", zustand: .geplant))
+        // Ohne Zustand (anderer Plan / andere Einheit) laeuft nichts.
+        let offen = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil, ausgelassen: [])
+        #expect(NaechsteEinheitKarte.laufend(offen, gebunden: true) == nil)
+    }
 }
