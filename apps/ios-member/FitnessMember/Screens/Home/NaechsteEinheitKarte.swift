@@ -61,6 +61,15 @@ struct NaechsteEinheitKarte: View {
 
     // MARK: - Ableitungen
 
+    /// Laeuft die Einheit von heute wirklich? Nur ein an eine Session
+    /// gebundener Ablauf zaehlt: `TrainingsplanAblaufStore.vorbereiten` legt
+    /// fuer jeden Plan einen ungebundenen Ablauf an, dessen Zustand schon vor
+    /// dem ersten Satz gesetzt ist -- der allein ist kein laufendes Training.
+    static func laufend(_ heute: PlanAnzeige.Heute?, gebunden: Bool) -> PlanAnzeige.Heute? {
+        guard gebunden, let heute, heute.zustand != nil else { return nil }
+        return heute
+    }
+
     /// Laeuft eine Einheit, ist sie die naechste -- heute, auch an einem Tag
     /// ohne Slot. Sonst der erste geplante Termin ab heute (`PlanKalender.naechster`).
     static func auswahl(

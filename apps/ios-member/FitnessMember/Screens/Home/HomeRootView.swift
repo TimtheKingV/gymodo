@@ -362,7 +362,7 @@ private extension HomeRootView {
             TrainingstageFestlegenZeile { beiPlanZeigen(.woche) }
         } else {
             let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)
-            let laufend = heute?.zustand != nil ? heute : nil
+            let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: planAblauf.gebundeneSessionId != nil)
             if let naechster = NaechsteEinheitKarte.auswahl(
                 termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: kalender) {
                 NaechsteEinheitKarte(

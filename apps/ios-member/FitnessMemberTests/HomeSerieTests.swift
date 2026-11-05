@@ -513,4 +513,36 @@ struct HomeSerieTests {
         #expect(n?.tag == Self.planTag(11, 5))
         #expect(n?.termin == .einheit(key: "B", zustand: .geplant))
     }
+
+    /// Ein vorbereiteter, ungebundener Ablauf (jeder Plan hat einen) ist kein
+    /// laufendes Training: die Karte nennt den naechsten Termin des Kalenders.
+    @Test func ungebundenerAblaufLaeuftNicht() {
+        let plan = PlanAnzeigeTests.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: PlanAnzeigeTests.zustand())
+        let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: false)
+        #expect(laufend == nil)
+        let termine: [Date: [PlanTermin]] = [Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)]]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 6))
+        #expect(n?.termin == .einheit(key: "B", zustand: .geplant))
+    }
+
+    /// Gebunden an eine Session laeuft die Einheit: heute, "Weiter trainieren".
+    @Test func gebundenerAblaufLaeuft() {
+        let plan = PlanAnzeigeTests.plan()
+        let heute = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: PlanAnzeigeTests.zustand())
+        let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: true)
+        #expect(laufend?.einheitKey == "A")
+        let termine: [Date: [PlanTermin]] = [Self.planTag(11, 6): [.einheit(key: "B", zustand: .geplant)]]
+        let jetzt = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 5))!
+        let n = NaechsteEinheitKarte.auswahl(
+            termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: Self.planKalender)
+        #expect(n?.tag == Self.planTag(11, 5))
+        #expect(n?.termin == .einheit(key: "A", zustand: .geplant))
+        // Ohne Zustand (anderer Plan / andere Einheit) laeuft nichts.
+        let offen = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: nil)
+        #expect(NaechsteEinheitKarte.laufend(offen, gebunden: true) == nil)
+    }
 }
