@@ -112,6 +112,39 @@ struct KurseWochenPagingTests {
 
         #expect(tage.filter(\.istHeute).map(\.id) == ["2026-09-09"])
     }
+
+    // MARK: - Zurueck bis zum Planbeginn (Plan-Tab)
+
+    @Test func montageReichenZurueckBisBeginn() {
+        // Mittwoch, 4. November 2026; Plan seit Montag, 19. Oktober.
+        let jetzt = zeitpunkt("2026-11-04T12:00:00Z")
+        let beginn = zeitpunkt("2026-10-19T08:00:00Z")
+
+        let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone, zurueckBis: beginn)
+
+        #expect(montage.map(tagId) == ["2026-10-19", "2026-10-26", "2026-11-02", "2026-11-09"])
+    }
+
+    @Test func montageHoechstens26Zurueck() {
+        let jetzt = zeitpunkt("2026-11-04T12:00:00Z")
+        let vorEinemJahr = zeitpunkt("2025-11-04T12:00:00Z")
+        let laufend = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: zeitzone)
+
+        let montage = KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone, zurueckBis: vorEinemJahr)
+
+        #expect(montage.filter { $0 < laufend }.count == 26)
+        #expect(montage.firstIndex(of: laufend) == 26)
+    }
+
+    @Test func ohneZurueckBisWieBisher() {
+        let jetzt = zeitpunkt("2026-11-04T12:00:00Z")
+        #expect(KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone, zurueckBis: nil)
+            == KurseWochenBerechnung.wochenMontage(ab: jetzt, zeitzone: zeitzone))
+        // Ein Beginn in dieser Woche bringt keine Seite davor.
+        #expect(KurseWochenBerechnung.wochenMontage(
+            ab: jetzt, zeitzone: zeitzone, zurueckBis: zeitpunkt("2026-11-03T08:00:00Z")).map(tagId)
+            == ["2026-11-02", "2026-11-09"])
+    }
 }
 
 /// Welcher Tag gilt -- und was passiert, wenn der gemerkte Tag aus dem

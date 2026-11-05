@@ -1,23 +1,31 @@
 import Foundation
 
+/// Woche (Streifen) oder Monat (Gitter) im Plan-Tab.
+enum PlanAnsicht: CaseIterable {
+    case woche, monat
+
+    var titel: String {
+        switch self {
+        case .woche: "Woche"
+        case .monat: "Monat"
+        }
+    }
+}
+
 /// Der reine Zustand des Plan-Tabs: gewaehlter Tag und Filter, beide `nil`,
 /// solange niemand getippt hat -- dann gelten die Vorauswahlen. Dasselbe Muster
 /// wie `gewaehlterTagId`/`gewaehlteAnsicht` im Kurse-Screen: eine abgeleitete
 /// Vorauswahl bleibt richtig, wenn ueber Mitternacht oder nach neuem Laden die
 /// Daten unter der offenen App wechseln.
 struct PlanTabZustand: Equatable {
-    /// Die Marke rechts im Plan-Kopf: nur die Anzahl, die Namen stehen auf
-    /// den Karten (sie enthalten selbst " · ").
-    static func einheitenKopf(_ anzahl: Int) -> String {
-        anzahl == 1 ? "1 EINHEIT" : "\(anzahl) EINHEITEN"
-    }
-
     var gewaehlterTag: Date?
     var gewaehlterFilter: PlanFilter?
+    var ansicht: PlanAnsicht
 
-    init(gewaehlterTag: Date? = nil, gewaehlterFilter: PlanFilter? = nil) {
+    init(gewaehlterTag: Date? = nil, gewaehlterFilter: PlanFilter? = nil, ansicht: PlanAnsicht = .woche) {
         self.gewaehlterTag = gewaehlterTag
         self.gewaehlterFilter = gewaehlterFilter
+        self.ansicht = ansicht
     }
 
     // MARK: - Tag
@@ -31,6 +39,16 @@ struct PlanTabZustand: Equatable {
             return kalender.startOfDay(for: treffer)
         }
         return tage.first.map { kalender.startOfDay(for: $0) } ?? heuteStart
+    }
+
+    /// Die Seite des Streifens: die Woche des gewaehlten Tages, ohne Auswahl
+    /// die laufende. Seit der Streifen in die Vergangenheit reicht, ist die
+    /// laufende Woche nicht mehr Index 0. Liegt der Tag vor der ersten Seite,
+    /// gilt ebenfalls die laufende Woche.
+    static func wochenIndex(montage: [Date], tag: Date?, heute: Date) -> Int {
+        let laufend = montage.lastIndex { $0 <= heute } ?? 0
+        guard let tag else { return laufend }
+        return montage.lastIndex { $0 <= tag } ?? laufend
     }
 
     /// Der getippte Tag, solange er in `tage` liegt (der sichtbaren Woche),

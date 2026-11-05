@@ -53,6 +53,9 @@ enum KurseWochenBerechnung {
         return kalender.date(byAdding: .day, value: versatz, to: heute) ?? heute
     }
 
+    /// Wie weit der Plan-Tab hoechstens zurueckblaettert: ein halbes Jahr.
+    static let maxWochenZurueck = 26
+
     /// Die exklusive Obergrenze fuer `KurseStore.laden(von:bis:)`:
     /// `jetzt` plus 14 Tage (Spec 5.1 -- "dieselbe Abfrage mit groesserem
     /// Fenster (jetzt bis +14 Tage)").
@@ -90,19 +93,34 @@ enum KurseWochenBerechnung {
     /// hier trotzdem nirgends: aendert sich `fensterEnde`, wandert das
     /// Paging von allein mit.
     ///
-    /// Rueckwaerts gibt es nichts -- das Fenster beginnt am Montag dieser
-    /// Woche (siehe `KurseWochenView.neuLaden`), davor haette der Streifen
-    /// keine Daten zu zeigen.
-    static func wochenMontage(ab jetzt: Date, zeitzone: String) -> [Date] {
+    /// Rueckwaerts gibt es nur mit `zurueckBis` (Plan-Tab: Beginn des Plans):
+    /// dann alle Wochen ab der Woche von `zurueckBis` bis vor die laufende,
+    /// hoechstens `maxWochenZurueck`. Der Kursplan uebergibt nichts -- sein
+    /// Fenster beginnt am Montag dieser Woche (siehe `KurseWochenView.neuLaden`),
+    /// davor haette der Streifen keine Daten zu zeigen.
+    static func wochenMontage(ab jetzt: Date, zeitzone: String, zurueckBis: Date? = nil) -> [Date] {
         let kalender = kalender(zeitzone: zeitzone)
         let ende = fensterEnde(ab: jetzt, zeitzone: zeitzone)
         var montage: [Date] = []
         var laufend = montag(enthaelt: jetzt, zeitzone: zeitzone)
 
+        if let zurueckBis {
+            let erster = montag(enthaelt: zurueckBis, zeitzone: zeitzone)
+            var vorher: [Date] = []
+            var zurueck = laufend
+            while vorher.count < maxWochenZurueck,
+                  let davor = kalender.date(byAdding: .day, value: -7, to: zurueck), davor >= erster {
+                vorher.append(davor)
+                zurueck = davor
+            }
+            montage = vorher.reversed()
+        }
+        let vergangene = montage.count
+
         // Die Obergrenze ist eine Schranke gegen eine kaputte Zeitrechnung,
         // keine fachliche Grenze: `date(byAdding:)` kann nil liefern, und
         // ohne sie liefe die Schleife dann ewig.
-        while montage.count < 8 {
+        while montage.count - vergangene < 8 {
             guard let sonntagEnde = kalender.date(byAdding: .day, value: 7, to: laufend),
                   sonntagEnde <= ende else { break }
             montage.append(laufend)

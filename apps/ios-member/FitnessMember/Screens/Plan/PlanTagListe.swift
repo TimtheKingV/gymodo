@@ -6,7 +6,7 @@ import SwiftUI
 enum PlanTagEintrag: Identifiable {
     case einheit(TrainingsplanEinheit, zustand: TerminZustand)
     case kurs(CourseWeekSession)
-    case cardio(arten: [String], erledigt: Bool)
+    case cardio(arten: [String], zustand: TerminZustand)
 
     var id: String {
         switch self {
@@ -33,7 +33,8 @@ enum EinheitKuerzel {
 }
 
 /// Die Liste des gewaehlten Tages (Leinwand 2a, 2f, 2g, 2i): Ueberschrift,
-/// Eintraege, bei leerem Tag ein Satz und "Als nächstes".
+/// die Trainings des Tages, die Eintraege, bei leerem Tag ein Satz und
+/// "Als nächstes".
 struct PlanTagListe: View {
     let einheitNamen: EinheitNamen
     let muskeln: [String: [GeraetMuskel]]
@@ -45,11 +46,16 @@ struct PlanTagListe: View {
     /// lehnt die Zukunft ab).
     let darfAbhaken: Bool
     let eintraege: [PlanTagEintrag]
+    /// Die abgeschlossenen Trainings des Tages (Vergangenheit und heute),
+    /// gefaltet wie auf Home (`HomeZeilen.trainingskarten`).
+    var trainings: [Trainingskarte] = []
     /// Die Einheit, die im Training-Tab als naechste startet.
     let naechsteEinheitKey: String?
     let alsNaechstes: [(tag: String, eintrag: PlanTagEintrag)]
     let kursZeile: (CourseWeekSession) -> KursTerminZeile
     let beiEinheit: (String) -> Void
+    /// Session-Id des aeltesten Teils einer Trainingskarte -> Training-Detail.
+    var beiTraining: (String) -> Void = { _ in }
     let beiStart: () -> Void
     /// Liefert einen Fehlertext oder nil.
     let beiCardio: (_ erledigt: Bool) async -> String?
@@ -65,9 +71,16 @@ struct PlanTagListe: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .accessibilityAddTraits(.isHeader)
 
-            if eintraege.isEmpty {
+            if eintraege.isEmpty && trainings.isEmpty {
                 leer
             } else {
+                // Erledigtes zuerst, darunter, was (noch) ansteht oder verpasst ist.
+                ForEach(trainings) { karte in
+                    EinheitKarte(
+                        modell: .training(karte, muskeln: muskeln), geschlecht: geschlecht,
+                        kalender: kalender, beiTipp: { beiTraining(karte.id) },
+                        hinweis: "Zeigt das Training")
+                }
                 ForEach(eintraege) { eintrag in
                     zeile(eintrag)
                 }
@@ -82,8 +95,8 @@ struct PlanTagListe: View {
             einheitKarte(einheit, zustand: zustand)
         case .kurs(let termin):
             kursZeile(termin)
-        case .cardio(let arten, let erledigt):
-            cardioKarte(arten: arten, erledigt: erledigt)
+        case .cardio(let arten, let zustand):
+            cardioKarte(arten: arten, zustand: zustand)
         }
     }
 
@@ -108,8 +121,11 @@ struct PlanTagListe: View {
 
     // MARK: - Cardio (Leinwand 2i)
 
-    private func cardioKarte(arten: [String], erledigt: Bool) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+    private func cardioKarte(arten: [String], zustand: TerminZustand) -> some View {
+        let erledigt = zustand == .erledigt
+        var verpasst = false
+        if case .verpasst = zustand { verpasst = true }
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack(spacing: DesignSystem.Spacing.s12) {
                 PlanCardioKaestchen()
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
@@ -119,6 +135,12 @@ struct PlanTagListe: View {
                     Text(CardioArtName.zeile(arten))
                         .font(.system(size: 12))
                         .foregroundStyle(DesignSystem.Color.textMuted)
+                    // Cardio rueckt nicht nach: nur "verpasst", ohne Zieltag.
+                    if verpasst {
+                        Text("verpasst")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
                 }
                 Spacer(minLength: 0)
                 if erledigt {
@@ -129,6 +151,7 @@ struct PlanTagListe: View {
                 }
             }
             .accessibilityElement(children: .combine)
+            .opacity(verpasst ? 0.75 : 1)
 
             if darfAbhaken {
                 if erledigt {
@@ -175,13 +198,17 @@ struct PlanTagListe: View {
     private var leer: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(istHeute ? "Heute nichts geplant" : "Nichts geplant")
+                // Ein vergangener Tag (abhakbar, aber nicht heute) hatte nichts.
+                let vergangen = darfAbhaken && !istHeute
+                Text(vergangen ? "Kein Training" : istHeute ? "Heute nichts geplant" : "Nichts geplant")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.text)
-                Text("Willst du spontan trainieren, geht das jederzeit im Tab Training.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !vergangen {
+                    Text("Willst du spontan trainieren, geht das jederzeit im Tab Training.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(DesignSystem.Spacing.s16)
@@ -263,9 +290,10 @@ struct PlanKursKaestchen: View {
 }
 
 /// Die Marken unter einem Tag im Streifen und in der Legende: Punkt (Einheit),
-/// Ring (Kurs), Raute (Cardio) -- Formen, nicht nur Farben.
+/// Ring (Kurs), Raute (Cardio), gestrichelter Ring (verpasst) -- Formen,
+/// nicht nur Farben.
 struct PlanTagMarke: View {
-    enum Art: CaseIterable { case einheit, kurs, cardio }
+    enum Art: CaseIterable { case einheit, kurs, cardio, verpasst }
     let art: Art
     /// Gedeckt fuer Erledigtes.
     var gedeckt = false
@@ -282,6 +310,9 @@ struct PlanTagMarke: View {
                     .fill(gedeckt ? DesignSystem.Color.textFaint : DesignSystem.Color.text)
                     .frame(width: 6, height: 6)
                     .rotationEffect(.degrees(45))
+            case .verpasst:
+                Circle().strokeBorder(
+                    DesignSystem.Color.textFaint, style: StrokeStyle(lineWidth: 1.5, dash: [2, 2]))
             }
         }
         .frame(width: 8, height: 8)

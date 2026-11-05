@@ -37,6 +37,7 @@ struct MainTabView: View {
                     apiClient: apiClient,
                     beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
                     beiEinheit: { key in planPfad.append(.einheit(key: key)) },
+                    beiTraining: { id in planPfad.append(.sessionDetail(id: id)) },
                     beiTrainingStarten: trainingZeigen,
                     tagWunsch: $planTagWunsch)
                 .navigationDestination(for: KursRoute.self) { route in
@@ -45,6 +46,9 @@ struct MainTabView: View {
                         KursDetailView(sessionId: sessionId)
                     case .einheit(let key):
                         PlanEinheitView(einheitKey: key, beiTrainingStarten: trainingZeigen)
+                    case .sessionDetail(let id):
+                        // Fortgesetzt wird im Training-Tab, wie von Home.
+                        SessionDetailView(sessionId: id, apiClient: apiClient, beiFortgesetzt: trainingZeigen)
                     }
                 }
             }

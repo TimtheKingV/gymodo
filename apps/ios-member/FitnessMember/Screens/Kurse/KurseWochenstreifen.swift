@@ -19,6 +19,9 @@ struct KurseWochenstreifen<Marke: View>: View {
     /// dann die Marke. Eine TabView hat keine Eigenhoehe, ohne diese Angabe
     /// fuellte sie den ganzen ScrollView.
     var hoehe: CGFloat = 69
+    /// Ein Tag mit abgeschlossenem Training (Plan-Tab): Hantel statt Zahl wie
+    /// im Home-Kalender. Der Kursplan kennt das nicht.
+    var trainiert: (KurseWochentag) -> Bool = { _ in false }
     let beiWochenwahl: (Int) -> Void
     let beiTagwahl: (KurseWochentag) -> Void
     /// Das VoiceOver-Label des Tages -- die Marke selbst ist Verzierung.
@@ -62,14 +65,14 @@ struct KurseWochenstreifen<Marke: View>: View {
                                 ausgewaehlt
                                     ? DesignSystem.Color.text : DesignSystem.Color.textFaint)
 
-                        // Dieselbe Zelle wie im Home-Kalender -- der
-                        // Kursplan kennt keine trainierten Tage und keine
-                        // Nachbarmonate, beides bleibt deshalb aus.
+                        // Dieselbe Zelle wie im Home-Kalender -- trainierte
+                        // Tage kennt nur der Plan-Tab, Nachbarmonate keiner.
+                        let hatTraining = trainiert(tag)
                         Kalenderzelle(
-                            inhalt: .zahl(tag.tagesnummer),
+                            inhalt: hatTraining ? .hantel : .zahl(tag.tagesnummer),
                             istGewaehlt: ausgewaehlt,
                             istHeute: tag.istHeute,
-                            trainiert: false,
+                            trainiert: hatTraining,
                             gedeckt: false)
 
                         marke(tag)
