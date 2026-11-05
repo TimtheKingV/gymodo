@@ -38,11 +38,22 @@ export async function hauptlandmarken(page: Page): Promise<number> {
  *
  * Gibt Beschreibungen zurueck, keine Zahl -- bei "erwartet 1, waren 2"
  * will man wissen, welche zwei.
+ *
+ * Zaehlt erst, wenn der Platzhalter "Lädt …" aus (schreibtisch)/loading.tsx
+ * weg ist. `goto` kehrt beim load-Ereignis zurueck, und dann steht im
+ * Produktionsbau noch der Platzhalter, der Seiteninhalt kommt gestreamt
+ * nach: gezaehlt wurde 0, obwohl die Seite eine Akzentflaeche hat. Gemessen
+ * am 5. November: acht von acht Aufrufen von /geraete zaehlten beim
+ * Rueckkehren von goto 0 mit sichtbarem Platzhalter. Ob die Zaehlung
+ * gelang, hing damit nur daran, ob die Datenabfrage vor dem load fertig
+ * war; in der CI war sie es auf der Geraeteseite seit dem 28. Oktober
+ * nicht mehr.
  */
 export async function akzentflaechen(
   page: Page,
   { nurViewport = false }: { nurViewport?: boolean } = {},
 ): Promise<string[]> {
+  await page.getByText("Lädt …", { exact: true }).waitFor({ state: "hidden" });
   return await page.evaluate(
     ({ akzent, nurViewport }) => {
       const treffer: string[] = [];
