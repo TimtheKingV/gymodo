@@ -189,7 +189,7 @@ struct PlanEinplanenSheet: View {
         let erster = einheiten.count > 1
             ? "Die Folge bleibt \(folge), egal an welchem Tag."
             : "Die Einheit bleibt dieselbe, egal an welchem Tag."
-        return erster + " Verpasst du einen Termin, rutscht nichts nach."
+        return erster + " Verpasst du einen Termin, rückt die Einheit auf den nächsten Trainingstag – nachholen musst du nichts."
     }
 
     private func abschnitt<Inhalt: View>(_ titel: String, @ViewBuilder _ inhalt: () -> Inhalt) -> some View {

@@ -118,5 +118,7 @@ struct EinheitNamenTests {
 
         let hinweis = PlanEinplanenSheet.hinweis(einheiten: ["A", "B"], namen: namen)
         #expect(hinweis.hasPrefix("Die Folge bleibt „Brust, Trizeps“ → „\(namen.name("B"))“, egal an welchem Tag."))
+        #expect(hinweis.hasSuffix(
+            "Verpasst du einen Termin, rückt die Einheit auf den nächsten Trainingstag – nachholen musst du nichts."))
     }
 }
