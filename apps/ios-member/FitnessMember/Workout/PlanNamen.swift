@@ -79,6 +79,15 @@ struct EinheitNamen: Equatable {
         namen[key] ?? Self.mechanisch(key)
     }
 
+    /// Fuer Fliesstext: "Brust, Trizeps" in Anfuehrung, damit das Komma nicht
+    /// wie eine Aufzaehlung liest ("Nächstes Mal ist „Brust, Trizeps“ dran.").
+    /// Der mechanische Name ("Einheit A", "Oberkörper A") bleibt ohne -- wie
+    /// in `PlanTausch`.
+    func zitiert(_ key: String) -> String {
+        guard let name = namen[key], name != Self.mechanisch(key) else { return name(key) }
+        return "„\(name)“"
+    }
+
     private static func mechanisch(_ key: String) -> String {
         if key.hasPrefix("OK_") { return "Oberkörper \(key.dropFirst(3))" }
         if key.hasPrefix("UK_") { return "Unterkörper \(key.dropFirst(3))" }

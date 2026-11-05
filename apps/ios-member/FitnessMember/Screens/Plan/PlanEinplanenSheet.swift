@@ -141,7 +141,7 @@ struct PlanEinplanenSheet: View {
                         }
                     }
 
-                    Text(hinweis)
+                    Text(Self.hinweis(einheiten: einheiten, namen: namen))
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -181,9 +181,11 @@ struct PlanEinplanenSheet: View {
         }
     }
 
-    /// "Die Folge bleibt A → B, egal an welchem Tag." (F5/F14)
-    private var hinweis: String {
-        let folge = einheiten.map(namen.name).joined(separator: " → ")
+    /// "Die Folge bleibt „Brust, Trizeps“ → „Rücken, Bizeps“, egal an welchem
+    /// Tag." (F5/F14) Ein verpasster Termin rueckt die Einheit auf den naechsten
+    /// Trainingstag (`PlanKalender`), ohne Nachholschuld.
+    static func hinweis(einheiten: [String], namen: EinheitNamen) -> String {
+        let folge = einheiten.map(namen.zitiert).joined(separator: " → ")
         let erster = einheiten.count > 1
             ? "Die Folge bleibt \(folge), egal an welchem Tag."
             : "Die Einheit bleibt dieselbe, egal an welchem Tag."

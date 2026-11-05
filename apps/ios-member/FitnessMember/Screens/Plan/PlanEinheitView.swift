@@ -138,7 +138,7 @@ struct PlanEinheitView: View {
                     if !istNaechste, let naechste {
                         InlineBanner(
                             tone: .muted,
-                            message: "Dran ist gerade \(namen.name(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag.")
+                            message: "Dran ist gerade \(namen.zitiert(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag.")
                     }
                 }
                 .padding(20)

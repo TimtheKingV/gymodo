@@ -280,8 +280,8 @@ enum PlanAnzeige {
         if optional > 0 { zeile += ", \(optional) optional" }
         let naechstes = naechsteEinheitKey.map { key in
             key == einheitKey
-                ? "Nächstes Mal ist wieder \(namen.name(key)) dran."
-                : "Nächstes Mal ist \(namen.name(key)) dran."
+                ? "Nächstes Mal ist wieder \(namen.zitiert(key)) dran."
+                : "Nächstes Mal ist \(namen.zitiert(key)) dran."
         }
         return Abschluss(titel: namen.name(einheitKey).uppercased(), zeile: zeile, naechstes: naechstes)
     }

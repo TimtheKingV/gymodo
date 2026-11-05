@@ -99,4 +99,24 @@ struct EinheitNamenTests {
         #expect(PlanStrukturText.text("gk_abc")
                 == "Ganzkörper, drei Einheiten im Wechsel. Die nächste folgt der letzten, egal an welchem Tag.")
     }
+
+    /// Im Fliesstext steht ein Name mit Komma in Anfuehrung, der mechanische nicht.
+    @Test func zitiertImFliesstext() {
+        let plan = plan([
+            einheit("A", [("druecken", "bankdruecken", 6), ("arme", "trizepsdruecken", 2)]),
+            einheit("B", [("ziehen", "rudern", 3)]),
+        ])
+        let namen = EinheitNamen(plan: plan, muskeln: katalog())
+        #expect(namen.zitiert("A") == "„Brust, Trizeps“")
+        #expect(EinheitNamen(plan: plan, muskeln: [:]).zitiert("A") == "Einheit A")
+        #expect(EinheitNamen(bootstrap: nil).zitiert("OK_A") == "Oberkörper A")
+
+        let abschluss = PlanAnzeige.abschluss(
+            einheitKey: "B", zustand: AblaufZustand(positionen: [], ungeplanteGesehen: []),
+            naechsteEinheitKey: "A", namen: namen)
+        #expect(abschluss.naechstes == "Nächstes Mal ist „Brust, Trizeps“ dran.")
+
+        let hinweis = PlanEinplanenSheet.hinweis(einheiten: ["A", "B"], namen: namen)
+        #expect(hinweis.hasPrefix("Die Folge bleibt „Brust, Trizeps“ → „\(namen.name("B"))“, egal an welchem Tag."))
+    }
 }
