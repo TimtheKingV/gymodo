@@ -429,7 +429,7 @@ describe("getBootstrap -- Trainingsplan", () => {
 
     // Die Beschwerden selbst stehen nirgends im Bootstrap (Gesundheitsdaten).
     expect(Object.keys(p).sort()).toEqual([
-      "alternativen", "anfaengerUebergang", "einheiten", "einheitenErledigt", "gruende", "merkliste",
+      "alternativen", "anfaengerUebergang", "beginn", "einheiten", "einheitenErledigt", "erledigt", "gruende", "merkliste",
       "naechsteEinheitKey", "planId", "regelVersion", "struktur", "studioId", "version", "wochenraster",
       "zielgewichte", "zuletztEinheitKey",
     ]);
