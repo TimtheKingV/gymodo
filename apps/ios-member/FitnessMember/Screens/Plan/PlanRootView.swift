@@ -163,6 +163,7 @@ struct PlanRootView: View {
                 }
 
                 PlanTagListe(
+                    einheitNamen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
                     ueberschrift: wochentage.first { $0.id == tagId }
                         .map { KurseWochenInhalt.tagesueberschrift($0, zeitzone: zeitzone) } ?? "",
                     istHeute: kalender.isDate(tag, inSameDayAs: jetzt),
@@ -203,6 +204,7 @@ struct PlanRootView: View {
                         PlanEinplanenSheet(
                             profil: profil, raster: raster, einheiten: plan.einheiten.map(\.key),
                             hatKurse: hatStudio,
+                            namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
                             speichern: { neu in await profilSpeichern(neu) })
                     }
                 }
@@ -265,7 +267,8 @@ struct PlanRootView: View {
     // MARK: - Teile
 
     private func kopf(_ plan: Trainingsplan) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
+        return         HStack(alignment: .firstTextBaseline) {
             Text("PLAN")
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-0.8)
@@ -274,8 +277,9 @@ struct PlanRootView: View {
             Spacer()
             Text(plan.einheiten.count == 1
                  ? "EINE EINHEIT"
-                 : "EINHEITEN " + plan.einheiten.map { EinheitKuerzel.text($0.key) }.joined(separator: " · "))
+                 : "EINHEITEN " + plan.einheiten.map { namen.name($0.key).uppercased() }.joined(separator: " · "))
                 .font(DesignSystem.Typography.label)
+                .multilineTextAlignment(.trailing)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
         }

@@ -40,6 +40,7 @@ struct PlanEinheitView: View {
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
         let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: einheit.key, zustand: nil,
                                         bloecke: [], bootstrap: katalog.bootstrap)
+        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
         let naechste = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
         let istNaechste = naechste == nil || naechste == einheit.key
 
@@ -49,7 +50,7 @@ struct PlanEinheitView: View {
                     HStack(spacing: DesignSystem.Spacing.s16) {
                         PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: true)
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                            Text(EinheitName.text(einheit.key))
+                            Text(namen.name(einheit.key))
                                 .font(DesignSystem.Typography.detailScreentitel)
                                 .foregroundStyle(DesignSystem.Color.text)
                                 .accessibilityAddTraits(.isHeader)
@@ -111,7 +112,7 @@ struct PlanEinheitView: View {
                     if !istNaechste, let naechste {
                         InlineBanner(
                             tone: .muted,
-                            message: "Dran ist gerade \(EinheitName.text(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag – im Training startet \(EinheitName.text(naechste)).")
+                            message: "Dran ist gerade \(namen.name(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag – im Training startet \(namen.name(naechste)).")
                     }
                 }
                 .padding(20)

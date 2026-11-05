@@ -12,6 +12,7 @@ struct PlanTauschListe: View {
     let sitzung: PlanTauschSitzung
     let bilder: [String: UIImage]
     let beiFertig: () -> Void
+    @Environment(CatalogStore.self) private var katalog
 
     private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
 
@@ -48,7 +49,8 @@ struct PlanTauschListe: View {
         .safeAreaInset(edge: .bottom) {
             // Mit einem Grund (Entfernen) steht die Dauer schon fest.
             if sitzung.grund == nil {
-                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.dauerhaftHinweis(einheitKey: auftrag.einheitKey))
+                PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.dauerhaftHinweis(
+                    einheitKey: auftrag.einheitKey, namen: EinheitNamen(bootstrap: katalog.bootstrap)))
                     .padding(.horizontal, 18)
                     .padding(.vertical, DesignSystem.Spacing.s12)
                     .background(DesignSystem.Color.surface)
@@ -102,6 +104,7 @@ struct PlanTauschBestaetigung: View {
     let sitzung: PlanTauschSitzung
     let kandidat: TauschKandidat
     let beiFertig: () -> Void
+    @Environment(CatalogStore.self) private var katalog
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -112,7 +115,8 @@ struct PlanTauschBestaetigung: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             PlanTauschSchalter(sitzung: sitzung, hinweis: PlanTausch.bestaetigungsHinweis(
-                einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name))
+                einheitKey: sitzung.auftrag.einheitKey, uebung: kandidat.name,
+                namen: EinheitNamen(bootstrap: katalog.bootstrap)))
             if let fehler = sitzung.fehler {
                 InlineBanner(tone: .danger, message: PlanTausch.fehlerText(fehler))
             }

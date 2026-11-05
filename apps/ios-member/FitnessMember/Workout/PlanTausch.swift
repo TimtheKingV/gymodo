@@ -220,15 +220,15 @@ enum PlanTausch {
     }
 
     /// Untertitel des Schalters (Entwurf 3.2).
-    static func dauerhaftHinweis(einheitKey: String) -> String {
-        "Gilt für alle künftigen \(einheitenPlural(einheitKey)). Heute ändert sich nichts anderes."
+    static func dauerhaftHinweis(einheitKey: String, namen: EinheitNamen) -> String {
+        "Gilt für alle künftigen \(einheitenPlural(einheitKey, namen)). Heute ändert sich nichts anderes."
     }
 
     /// Text der Bestaetigung (Entwurf 3.3). Ohne Artikel vor dem Namen: der
     /// Katalog kennt das Geschlecht der Uebung nicht ("die Schrägbankpresse",
     /// "das Schulterdrücken").
-    static func bestaetigungsHinweis(einheitKey: String, uebung: String) -> String {
-        "Ab der nächsten \(einheitSingular(einheitKey)) steht hier: \(uebung)."
+    static func bestaetigungsHinweis(einheitKey: String, uebung: String, namen: EinheitNamen) -> String {
+        "Ab der nächsten \(einheitSingular(einheitKey, namen)) steht hier: \(uebung)."
     }
 
     /// Was nach einem gescheiterten "Übernehmen" im Sheet steht. Immer mit
@@ -250,13 +250,13 @@ enum PlanTausch {
 
     /// "Einheiten A"; "Oberkörper A" bleibt ein Name in Anfuehrung, sonst
     /// hiesse es "Einheiten Oberkörper A".
-    private static func einheitenPlural(_ key: String) -> String {
-        let name = EinheitName.text(key)
+    private static func einheitenPlural(_ key: String, _ namen: EinheitNamen) -> String {
+        let name = namen.name(key)
         return name == "Einheit \(key)" ? "Einheiten \(key)" : "Einheiten „\(name)“"
     }
 
-    private static func einheitSingular(_ key: String) -> String {
-        let name = EinheitName.text(key)
+    private static func einheitSingular(_ key: String, _ namen: EinheitNamen) -> String {
+        let name = namen.name(key)
         return name == "Einheit \(key)" ? name : "Einheit „\(name)“"
     }
 

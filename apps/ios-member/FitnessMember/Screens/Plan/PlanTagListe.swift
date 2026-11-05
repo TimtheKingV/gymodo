@@ -35,6 +35,7 @@ enum EinheitKuerzel {
 /// Die Liste des gewaehlten Tages (Leinwand 2a, 2f, 2g, 2i): Ueberschrift,
 /// Eintraege, bei leerem Tag ein Satz und "Als nächstes".
 struct PlanTagListe: View {
+    let einheitNamen: EinheitNamen
     let ueberschrift: String
     let istHeute: Bool
     /// Heute oder vergangen -- nur dann laesst sich Cardio abhaken (der Server
@@ -92,7 +93,7 @@ struct PlanTagListe: View {
                 HStack(spacing: DesignSystem.Spacing.s12) {
                     PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: true)
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                        Text(EinheitName.text(einheit.key))
+                        Text(einheitNamen.name(einheit.key))
                             .font(.system(size: 16, weight: .bold))
                             .foregroundStyle(DesignSystem.Color.text)
                         Text(erledigt ? "Erledigt" : "Flexibel · \(EinheitKuerzel.untertitel(einheit))")
@@ -126,7 +127,7 @@ struct PlanTagListe: View {
                         .clipShape(Capsule())
                 }
                 .buttonStyle(PressButtonStyle())
-                .accessibilityLabel("\(EinheitName.text(einheit.key)) starten")
+                .accessibilityLabel("\(einheitNamen.name(einheit.key)) starten")
                 .accessibilityHint("Öffnet das Training")
             }
         }
@@ -239,7 +240,7 @@ struct PlanTagListe: View {
             Button { beiEinheit(einheit.key) } label: {
                 naechsteInhalt(
                     kaestchen: AnyView(PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: false)),
-                    titel: EinheitName.text(einheit.key), tag: tag)
+                    titel: einheitNamen.name(einheit.key), tag: tag)
             }
             .buttonStyle(PressButtonStyle())
             .accessibilityHint("Zeigt die Übungen der Einheit")

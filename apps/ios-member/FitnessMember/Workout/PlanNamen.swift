@@ -23,14 +23,86 @@ enum BausteinName {
     }
 }
 
-/// Die Einheiten eines Plans heissen beim Server "A", "B", "C" oder
-/// "OK_A"/"UK_A" (Ober-/Unterkoerper, `strukturFuerTage`); das Mitglied
-/// liest "Einheit A" bzw. "Oberkörper A".
-enum EinheitName {
-    static func text(_ key: String) -> String {
+/// Die Namen der Einheiten eines Plans. Eine Einheit heisst nach ihren
+/// Muskeln ("Brust, Trizeps", `TrainingsProfil`), nicht nach dem Buchstaben
+/// des Servers ("A", "B", "C", "OK_A"/"UK_A"). Ohne Muskelkatalog (oder wenn
+/// das Profil nur "Training" sagt) bleibt der mechanische Name: "Einheit A"
+/// bzw. "Oberkörper A".
+///
+/// Heissen mehrere Einheiten eines Plans gleich ("Ganzkörper"), bekommt jede
+/// den Zusatz "· Schwerpunkt <Baustein>" ihres satzstaerksten Bausteins; sind
+/// auch die Zusaetze gleich, haengt der Buchstabe als letzter Zusatz dran.
+struct EinheitNamen: Equatable {
+    private let namen: [String: String]
+
+    private init(namen: [String: String]) { self.namen = namen }
+
+    init(plan: Trainingsplan, muskeln: [String: [GeraetMuskel]]) {
+        var roh: [String: String] = [:]
+        for einheit in plan.einheiten {
+            let titel = TrainingsProfil.berechne(einheit: einheit, muskeln: muskeln).titel
+            if !muskeln.isEmpty, titel != "Training" { roh[einheit.key] = titel }
+        }
+
+        var namen: [String: String] = [:]
+        for einheit in plan.einheiten {
+            guard let titel = roh[einheit.key] else {
+                namen[einheit.key] = Self.mechanisch(einheit.key)
+                continue
+            }
+            let gleichnamig = plan.einheiten.filter { roh[$0.key] == titel }
+            namen[einheit.key] = gleichnamig.count > 1
+                ? "\(titel) · Schwerpunkt \(Self.schwerpunkt(einheit))" : titel
+        }
+
+        // Auch der Zusatz gleich: der Buchstabe unterscheidet.
+        var haeufigkeit: [String: Int] = [:]
+        for name in namen.values { haeufigkeit[name, default: 0] += 1 }
+        for einheit in plan.einheiten where roh[einheit.key] != nil {
+            if let name = namen[einheit.key], haeufigkeit[name, default: 0] > 1 {
+                namen[einheit.key] = "\(name) (\(Self.buchstabe(einheit.key)))"
+            }
+        }
+        self.namen = namen
+    }
+
+    /// Ohne Plan im Bootstrap: alle Namen mechanisch.
+    init(bootstrap: BootstrapResponse?) {
+        if let plan = PlanAnzeige.plan(bootstrap: bootstrap) {
+            self.init(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(bootstrap))
+        } else {
+            self.init(namen: [:])
+        }
+    }
+
+    func name(_ key: String) -> String {
+        namen[key] ?? Self.mechanisch(key)
+    }
+
+    private static func mechanisch(_ key: String) -> String {
         if key.hasPrefix("OK_") { return "Oberkörper \(key.dropFirst(3))" }
         if key.hasPrefix("UK_") { return "Unterkörper \(key.dropFirst(3))" }
         return "Einheit \(key)"
+    }
+
+    private static func buchstabe(_ key: String) -> String {
+        key.split(separator: "_").last.map(String.init) ?? key
+    }
+
+    /// Der Baustein mit den meisten Saetzen; bei Gleichstand der erste in
+    /// Positionsreihenfolge.
+    private static func schwerpunkt(_ einheit: TrainingsplanEinheit) -> String {
+        var summen: [String: Int] = [:]
+        var reihenfolge: [String] = []
+        for position in einheit.positionen {
+            if summen[position.baustein] == nil { reihenfolge.append(position.baustein) }
+            summen[position.baustein, default: 0] += position.saetze
+        }
+        var bester: String?
+        for baustein in reihenfolge where bester == nil || summen[baustein, default: 0] > summen[bester!, default: 0] {
+            bester = baustein
+        }
+        return BausteinName.text(bester ?? "")
     }
 }
 
@@ -41,8 +113,8 @@ enum PlanStrukturText {
     static func text(_ struktur: String) -> String {
         switch struktur {
         case "gk_eine": "Ganzkörper, eine Einheit. Jedes Training ist dieselbe Einheit."
-        case "gk_ab": "Ganzkörper, A und B im Wechsel. Nach A kommt B, egal an welchem Tag."
-        case "gk_abc": "Ganzkörper, A, B und C im Wechsel. Nach A kommt B, nach B kommt C, egal an welchem Tag."
+        case "gk_ab": "Ganzkörper, zwei Einheiten im Wechsel. Die nächste folgt der letzten, egal an welchem Tag."
+        case "gk_abc": "Ganzkörper, drei Einheiten im Wechsel. Die nächste folgt der letzten, egal an welchem Tag."
         case "ober_unter": "Oberkörper und Unterkörper im Wechsel. Die nächste Einheit folgt der letzten, egal an welchem Tag."
         default: "Die Einheiten folgen aufeinander, egal an welchem Tag."
         }

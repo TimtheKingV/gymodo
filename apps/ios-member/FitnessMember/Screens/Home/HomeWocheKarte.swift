@@ -135,7 +135,8 @@ enum HomeWoche {
     /// Erinnerung. Ohne Key (kein Ablauf) der des Rasters.
     static func alsNaechstes(
         raster: [Rasterplatz], kurse: [CourseWeekSession], cardioErledigt: Set<String>,
-        heute: Date, kalender: Calendar, naechsteEinheitKey: String? = nil
+        heute: Date, kalender: Calendar, naechsteEinheitKey: String? = nil,
+        namen: EinheitNamen = EinheitNamen(bootstrap: nil)
     ) -> HomeNaechster? {
         guard let montag = datum(tag: 1, woche: heute, kalender: kalender) else { return nil }
         let tage = (0..<14).compactMap { kalender.date(byAdding: .day, value: $0, to: montag) }
@@ -150,7 +151,7 @@ enum HomeWoche {
         switch naechster.termin {
         case .einheit(let rasterKey, _):
             let key = naechsteEinheitKey ?? rasterKey
-            titel = EinheitName.text(key)
+            titel = namen.name(key)
             ziel = .einheit(key: key)
         case .kurs(let name, _, _):
             titel = name

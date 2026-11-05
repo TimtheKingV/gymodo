@@ -119,7 +119,7 @@ struct PlanKarte: View {
     /// hier bleibt die Uebungsliste, an der trainiert wird. Die Uhr steht im
     /// Kopf "TRAINING LÄUFT" darueber.
     private var kopf: some View {
-        let einheit = EinheitName.text(heute.einheitKey)
+        let einheit = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(bootstrap)).name(heute.einheitKey)
         let rechts: String
         let gesprochen: String
         if laeuft {
@@ -188,7 +188,8 @@ struct PlanKarte: View {
     /// vorerst auf eine Platzhalterseite; die Erklaertexte kommen mit Etappe 5.
     private var fuss: some View {
         HStack {
-            if let danach = PlanAnzeige.danachText(plan: plan, einheitKey: heute.einheitKey) {
+            if let danach = PlanAnzeige.danachText(plan: plan, einheitKey: heute.einheitKey,
+                                                namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(bootstrap))) {
                 Text(danach)
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)

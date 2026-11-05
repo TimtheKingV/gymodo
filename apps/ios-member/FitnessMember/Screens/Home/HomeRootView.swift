@@ -137,7 +137,7 @@ struct HomeRootView: View {
                     // die Woche. Schliesst Karte 1.5 aus (die gibt es nur ohne
                     // Plan).
                     if let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) {
-                        HeuteDranZeile(heute: heute, beiTippen: beiTrainingZeigen)
+                        HeuteDranZeile(heute: heute, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap), beiTippen: beiTrainingZeigen)
                     }
                     if let plan = PlanAnzeige.plan(bootstrap: katalog.bootstrap) {
                         woche(plan: plan, jetzt: Date())
@@ -350,7 +350,8 @@ private extension HomeRootView {
         }
         if let naechster = HomeWoche.alsNaechstes(
             raster: raster, kurse: sitzungen, cardioErledigt: cardio.erledigt, heute: jetzt, kalender: kalender,
-            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey) {
+            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
+            namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))) {
             HomeNaechsterKarte(naechster: naechster) { beiPlanZeigen(naechster.ziel) }
         }
     }

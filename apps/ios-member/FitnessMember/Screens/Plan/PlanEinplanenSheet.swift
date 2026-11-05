@@ -84,6 +84,7 @@ struct PlanEinplanenSheet: View {
     let raster: [Rasterplatz]
     let einheiten: [String]
     let hatKurse: Bool
+    let namen: EinheitNamen
     var vorauswahl: Wochenart = .kraft
     /// Liefert einen Fehlertext oder nil (dann schliesst das Sheet).
     let speichern: (TrainingsplanProfil) async -> String?
@@ -182,7 +183,7 @@ struct PlanEinplanenSheet: View {
 
     /// "Die Folge bleibt A → B, egal an welchem Tag." (F5/F14)
     private var hinweis: String {
-        let folge = einheiten.map(EinheitKuerzel.text).joined(separator: " → ")
+        let folge = einheiten.map(namen.name).joined(separator: " → ")
         let erster = einheiten.count > 1
             ? "Die Folge bleibt \(folge), egal an welchem Tag."
             : "Die Einheit bleibt dieselbe, egal an welchem Tag."

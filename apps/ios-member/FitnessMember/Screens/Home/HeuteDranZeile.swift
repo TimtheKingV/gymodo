@@ -10,10 +10,12 @@ import SwiftUI
 /// steht im Akzent, als Schrift.
 struct HeuteDranZeile: View {
     let heute: PlanAnzeige.Heute
+    let muskeln: [String: [GeraetMuskel]]
     let beiTippen: () -> Void
 
     var body: some View {
         let untertitel = PlanAnzeige.heuteDranUntertitel(heute)
+        let name = EinheitNamen(plan: heute.plan, muskeln: muskeln).name(heute.einheitKey)
         Card {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -21,7 +23,7 @@ struct HeuteDranZeile: View {
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
                         .foregroundStyle(DesignSystem.Color.accent)
-                    Text(EinheitName.text(heute.einheitKey))
+                    Text(name)
                         .font(DesignSystem.Typography.detailScreentitel)
                         .foregroundStyle(DesignSystem.Color.text)
                         .lineLimit(1)
@@ -32,7 +34,7 @@ struct HeuteDranZeile: View {
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Heute dran: \(EinheitName.text(heute.einheitKey)), \(untertitel)")
+                .accessibilityLabel("Heute dran: \(name), \(untertitel)")
                 .accessibilityAddTraits(.isHeader)
                 SecondaryButton(title: "Training starten") { beiTippen() }
                     .accessibilityHint("Öffnet das Training")

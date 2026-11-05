@@ -565,11 +565,13 @@ struct PlanTauschTests {
 
     @Test("Schaltertexte nennen die Einheit")
     func schaltertexte() {
-        #expect(PlanTausch.dauerhaftHinweis(einheitKey: "A")
+        // Ohne Bootstrap (kein Katalog) gilt der mechanische Name.
+        let ohne = EinheitNamen(bootstrap: nil)
+        #expect(PlanTausch.dauerhaftHinweis(einheitKey: "A", namen: ohne)
                 == "Gilt für alle künftigen Einheiten A. Heute ändert sich nichts anderes.")
-        #expect(PlanTausch.bestaetigungsHinweis(einheitKey: "A", uebung: "Schrägbankpresse")
+        #expect(PlanTausch.bestaetigungsHinweis(einheitKey: "A", uebung: "Schrägbankpresse", namen: ohne)
                 == "Ab der nächsten Einheit A steht hier: Schrägbankpresse.")
-        #expect(PlanTausch.dauerhaftHinweis(einheitKey: "OK_A")
+        #expect(PlanTausch.dauerhaftHinweis(einheitKey: "OK_A", namen: ohne)
                 == "Gilt für alle künftigen Einheiten „Oberkörper A“. Heute ändert sich nichts anderes.")
     }
 
