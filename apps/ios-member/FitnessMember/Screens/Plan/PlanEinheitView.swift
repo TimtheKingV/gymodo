@@ -37,29 +37,54 @@ struct PlanEinheitView: View {
         .testnotizScreen()
     }
 
+    @Environment(VerlaufStore.self) private var verlauf
+
+    /// Der Tag, auf dem die Folge diese Einheit als naechste liegt (heute oder
+    /// spaeter); nil, wenn sie in den naechsten vier Wochen nicht drankommt.
+    /// Dieselbe Rechnung wie der Plan-Tab (`PlanKalender.termine`), ohne Kurse
+    /// und Cardio; Zeitzone des Geraets statt der des Studios.
+    private func geplanterTag(plan: Trainingsplan, einheitKey: String, kalender: Calendar) -> Date? {
+        let jetzt = Date()
+        let heute = kalender.startOfDay(for: jetzt)
+        let tage = (0..<28).compactMap { kalender.date(byAdding: .day, value: $0, to: heute) }
+        let raster = PlanTabZustand.anzeigeRaster(
+            planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
+            profil: katalog.bootstrap?.member.trainingProfile)
+        let termine = PlanKalender.termine(
+            tage: tage, kalender: kalender, raster: raster, einheiten: plan.einheiten.map(\.key),
+            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
+                ?? plan.naechsteEinheitKey,
+            erledigt: plan.erledigt,
+            trainiertAn: Set(HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: kalender.timeZone.identifier).keys),
+            beginn: plan.beginn.flatMap(Zeitpunkt.parse), heute: jetzt, kurse: [],
+            cardioErledigt: [], filter: .einheiten)
+        return termine.keys.filter { $0 >= heute }.sorted().first { tag in
+            termine[tag]?.contains(.einheit(key: einheitKey, zustand: .geplant)) ?? false
+        }
+    }
+
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
         let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: einheit.key, zustand: nil,
                                         bloecke: [], bootstrap: katalog.bootstrap)
-        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
+        let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
+        let namen = EinheitNamen(plan: plan, muskeln: muskeln)
+        var kalender = Calendar(identifier: .gregorian)
+        kalender.locale = Locale(identifier: "de_DE")
+        let geplanterTag = geplanterTag(plan: plan, einheitKey: einheit.key, kalender: kalender)
+        let istGeplanterTag = geplanterTag.map { kalender.isDateInToday($0) } ?? false
         let naechste = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
         let istNaechste = naechste == nil || naechste == einheit.key
 
         return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                    HStack(spacing: DesignSystem.Spacing.s16) {
-                        PlanKuerzelKaestchen(text: EinheitKuerzel.text(einheit.key), gefuellt: true)
-                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                            Text(namen.name(einheit.key))
-                                .font(DesignSystem.Typography.detailScreentitel)
-                                .foregroundStyle(DesignSystem.Color.text)
-                                .accessibilityAddTraits(.isHeader)
-                            Text("Flexibel · \(EinheitKuerzel.untertitel(einheit))")
-                                .font(.system(size: 13))
-                                .monospacedDigit()
-                                .foregroundStyle(DesignSystem.Color.textMuted)
-                        }
-                    }
+                    ProfilKopf(
+                        ueberzeile: geplanterTag.map {
+                            ProfilKopf.ueberzeile(geplantAm: $0, kalender: kalender)
+                        } ?? "EINHEIT",
+                        modell: .einheit(
+                            einheit, namen: namen, muskeln: muskeln, tag: nil, zustand: .geplant),
+                        geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
                         Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · REIHENFOLGE EGAL")
@@ -112,7 +137,7 @@ struct PlanEinheitView: View {
                     if !istNaechste, let naechste {
                         InlineBanner(
                             tone: .muted,
-                            message: "Dran ist gerade \(namen.name(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag – im Training startet \(namen.name(naechste)).")
+                            message: "Dran ist gerade \(namen.name(naechste)). Der Plan folgt der Reihenfolge, nicht dem Wochentag.")
                     }
                 }
                 .padding(20)
@@ -120,8 +145,10 @@ struct PlanEinheitView: View {
 
             VStack {
                 if istNaechste {
-                    PrimaryButton(title: "Im Training öffnen") { beiTrainingStarten() }
-                        .accessibilityLabel("Im Training öffnen")
+                    PrimaryButton(title: ProfilKopf.startKnopfText(istGeplanterTag: istGeplanterTag)) {
+                        beiTrainingStarten()
+                    }
+                        .accessibilityLabel(ProfilKopf.startKnopfText(istGeplanterTag: istGeplanterTag))
                         .accessibilityHint("Wechselt in den Tab Training, dort startet die Einheit")
                 } else {
                     SecondaryButton(title: "Zum Training") { beiTrainingStarten() }

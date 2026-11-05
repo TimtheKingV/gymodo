@@ -109,24 +109,17 @@ struct SessionDetailView: View {
         .testnotizScreen(kontext: ["sessionId": sessionId])
     }
 
-    /// Datum des aeltesten Teils, darunter dieselben zwei Zeilen wie auf
-    /// der Karte: wer die Karte antippt, soll oben wiederfinden, was er
-    /// angetippt hat, statt eine zweite Rechnung ueber dieselbe Sache.
+    /// Der gleiche Kopf wie im Einheiten-Detail (`ProfilKopf`): Datum des
+    /// aeltesten Teils, Name nach den Muskeln, dieselben zwei Zeilen wie auf der
+    /// Karte und die Figur. Wer die Karte antippt, soll oben wiederfinden, was
+    /// er angetippt hat, statt eine zweite Rechnung ueber dieselbe Sache.
     private func kopf(_ karte: Trainingskarte) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(Zeitpunkt.parse(karte.teile[0].startedAt).map(Zahlformat.kurzerWochentagDatum) ?? "")
-                .font(DesignSystem.Typography.detailScreentitel)
-                .foregroundStyle(DesignSystem.Color.text)
-
-            Text(HomeZeilen.grosseZeile(karte))
-                .font(DesignSystem.Typography.wertSekundaer)
-                .foregroundStyle(DesignSystem.Color.text)
-                .monospacedDigit()
-
-            Text(HomeZeilen.kleineZeile(karte))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .monospacedDigit()
+        let beginn = Zeitpunkt.parse(karte.teile[0].startedAt)
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            ProfilKopf(
+                ueberzeile: beginn.map { ProfilKopf.ueberzeile(trainiertAm: $0, kalender: .current) } ?? "",
+                modell: .training(karte, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)),
+                geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
             if karte.istAutoBeendet { autoBeendetHinweis }
         }

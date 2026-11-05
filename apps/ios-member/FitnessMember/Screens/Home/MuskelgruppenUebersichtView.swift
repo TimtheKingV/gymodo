@@ -47,8 +47,8 @@ struct MuskelgruppenUebersichtView: View {
                 VStack(spacing: DesignSystem.Spacing.s8) {
                     MuskelFigur(farben: MuskelFarben.farbenAlle(h), geschlecht: geschlecht)
                     HStack(spacing: 0) {
-                        ansichtsname("Vorderseite")
-                        ansichtsname("Rückseite")
+                        MuskelAnsichtsname(text: "Vorderseite")
+                        MuskelAnsichtsname(text: "Rückseite")
                     }
                 }
                 MuskelLegende()
@@ -57,13 +57,6 @@ struct MuskelgruppenUebersichtView: View {
         // Die Figur ist schematisch und fuer VoiceOver verborgen; die
         // Gruppenliste darunter traegt dieselbe Aussage als Text.
         .accessibilityHidden(true)
-    }
-
-    private func ansichtsname(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13, weight: .regular))
-            .foregroundStyle(DesignSystem.Color.textFaint)
-            .frame(maxWidth: .infinity)
     }
 
     private var gruppenListe: some View {
@@ -150,6 +143,18 @@ struct MuskelKartenRahmen<Inhalt: View>: View {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt)
                     .stroke(DesignSystem.Color.line, lineWidth: 1)
             )
+    }
+}
+
+/// „Vorderseite“ / „Rückseite“ unter der Figur.
+struct MuskelAnsichtsname: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 13, weight: .regular))
+            .foregroundStyle(DesignSystem.Color.textFaint)
+            .frame(maxWidth: .infinity)
     }
 }
 

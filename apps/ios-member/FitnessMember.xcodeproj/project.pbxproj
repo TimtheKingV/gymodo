@@ -62,6 +62,7 @@
 		215187D05D933026E5A2804A /* StudiosListeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C696DD1314C884FF6A54B333 /* StudiosListeTests.swift */; };
 		223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */; };
 		235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */; };
+		237A06E179CE2F8B3650E80C /* ProfilKopf.swift in Sources */ = {isa = PBXBuildFile; fileRef = B348F9FA951580D3C3D178EF /* ProfilKopf.swift */; };
 		237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0891F265EBB3E05C805211B8 /* TrainingTab.swift */; };
 		237F577BE2292F3ACD8ECD42 /* PlanKalender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD3299523732B253EF5E226 /* PlanKalender.swift */; };
 		23E350E22AA8410C99DF73CA /* EinheitVerwerfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */; };
@@ -708,6 +709,7 @@
 		B1B3C9D4E64E63C38BBE2D69 /* GeraeteGruppierungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteGruppierungTests.swift; sourceTree = "<group>"; };
 		B1E8C81E65A1D4F315BC214D /* MuskelAuswertung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelAuswertung.swift; sourceTree = "<group>"; };
 		B1E92E5D724516E5B3B5E702 /* PlanAnzeigeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanAnzeigeTests.swift; sourceTree = "<group>"; };
+		B348F9FA951580D3C3D178EF /* ProfilKopf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilKopf.swift; sourceTree = "<group>"; };
 		B35373D3C51509959FCF6FB0 /* MachinePhotosResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachinePhotosResponse.swift; sourceTree = "<group>"; };
 		B3B500073898DAD86823CE2A /* Uebungsstart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Uebungsstart.swift; sourceTree = "<group>"; };
 		B4F343E35EB2C94664395961 /* Zielkachel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zielkachel.swift; sourceTree = "<group>"; };
@@ -1090,6 +1092,7 @@
 				093AF1E26DA1B50273353878 /* PausenRad.swift */,
 				9CEB043A2F6633F4B756357E /* PressButtonStyle.swift */,
 				2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */,
+				B348F9FA951580D3C3D178EF /* ProfilKopf.swift */,
 				45AE341D5234D5BED46BA218 /* RastRad.swift */,
 				978059008AA97910D1DE0F64 /* ReserveSkala.swift */,
 				55093183C1B476C12C44B469 /* ScannerSheet.swift */,
@@ -1811,6 +1814,7 @@
 				309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */,
 				4BE7020FEE8B695A9FDD3A75 /* ProblemSheet.swift in Sources */,
 				E9F883B378238A0C91352496 /* Produktgrenze.swift in Sources */,
+				237A06E179CE2F8B3650E80C /* ProfilKopf.swift in Sources */,
 				EF061CDAF1B6712C17872C0A /* ProfilRootView.swift in Sources */,
 				252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */,
 				D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */,

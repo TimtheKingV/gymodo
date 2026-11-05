@@ -238,23 +238,6 @@ struct PlanTagListe: View {
     }
 }
 
-/// Das Kaestchen mit dem Einheitenkuerzel: gefuellt (accentMuted) fuer den
-/// gewaehlten Tag, sonst nur Kontur.
-struct PlanKuerzelKaestchen: View {
-    let text: String
-    let gefuellt: Bool
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: text.count > 1 ? 13 : 18, weight: .black))
-            .foregroundStyle(gefuellt ? DesignSystem.Color.accent : DesignSystem.Color.text)
-            .frame(width: 40, height: 40)
-            .background(gefuellt ? DesignSystem.Color.accentMuted : DesignSystem.Color.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .accessibilityHidden(true)
-    }
-}
-
 struct PlanCardioKaestchen: View {
     var body: some View {
         Image(systemName: "waveform.path.ecg")
