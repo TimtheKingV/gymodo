@@ -143,6 +143,17 @@ struct TrainingRootView: View {
     @State private var zirkelAbschluss: ZirkelAbschluss?
     /// Die angetippte Planzeile (Entwuerfe 3.1-3.3, `planPositionSheet`).
     @State private var planPosition: PlanTauschAuftrag?
+    /// Die Position, zu der die Auswahl "Andere Übung wählen" offen ist
+    /// (`GeraetRoute.planErsatz`); gilt, solange die Route im Pfad steht.
+    @State private var planErsatzAuftrag: PlanTauschAuftrag?
+    /// Kurzer Hinweis im Kopf der Ersatzwahl ("Das ist schon die Übung von heute.").
+    @State private var ersatzHinweis: String?
+    /// "Welche Übung?" einer Station mit mehreren Uebungen in der Ersatzwahl.
+    @State private var ersatzUebungswahl: ZirkelUebungswahl?
+    /// Die Wahl aus dem Blatt oben: sie wird erst nach dessen Schliessen
+    /// angewandt, sonst verschluckt SwiftUI das Grund-Sheet (zwei Sheets in
+    /// einem Zug).
+    @State private var ersatzNachSchliessen: (station: Station, uebungId: String)?
 
     var body: some View {
         NavigationStack(path: $pfad) {
@@ -222,8 +233,22 @@ struct TrainingRootView: View {
                 ziel(route).id(route).environment(videoVorrat)
             }
             .environment(videoVorrat)
-            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient, vorschauLader: vorschauLader) { uebungId in
-                pfad.append(.planUebung(exerciseId: uebungId))
+            .planPositionSheet(auftrag: $planPosition, apiClient: apiClient) { uebungId in
+                planUebungStarten(uebungId)
+            } beiAndereUebung: { auftrag in
+                planErsatzAuftrag = auftrag
+                pfad.append(.planErsatz(positionKey: auftrag.position.key))
+            }
+            .sheet(item: $ersatzUebungswahl, onDismiss: {
+                guard let wahl = ersatzNachSchliessen else { return }
+                ersatzNachSchliessen = nil
+                ersatzAnwenden(wahl.station, uebungId: wahl.uebungId)
+            }) { wahl in
+                ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                    ersatzNachSchliessen = (wahl.station, uebung.exerciseId)
+                    ersatzUebungswahl = nil
+                }
+                .environment(videoVorrat)
             }
             .sheet(item: $uebungsstart, onDismiss: zirkelPlanungOeffnen) { auftrag in
                 if let modell = modell(station: auftrag.station, exerciseId: auftrag.exerciseId,
@@ -301,6 +326,16 @@ struct TrainingRootView: View {
             // Deshalb reicht EIN Ort fuer diese Pruefung.
             .task {
                 if let eingang = pendingTag.consume() { verarbeite(eingang) }
+            }
+            // Verlaesst die Ersatzwahl den Pfad (Zurueck, Scan,
+            // Pfadbereinigung), gehoert ihr Zustand mit weg.
+            .onChange(of: pfad) { _, _ in
+                if !ersatzModus {
+                    planErsatzAuftrag = nil
+                    ersatzUebungswahl = nil
+                    ersatzNachSchliessen = nil
+                    ersatzHinweis = nil
+                }
             }
             // Deckt die beiden anderen Faelle ab: ein Tag-Tap, waehrend die
             // App schon auf einem anderen Tab laeuft, UND -- der haeufigere
@@ -394,7 +429,10 @@ struct TrainingRootView: View {
     /// steht der Titel "TRAINING" mit den Scanwegen da, wie vor dem Umbau.
     @ViewBuilder
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
-        if katalog.bootstrap != nil {
+        if katalog.bootstrap != nil, let mitte, let session,
+           PlanAnzeige.planModus(laeuft: true, heute: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)) {
+            planModusWurzel(mitte: mitte, session: session)
+        } else if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                     sensorKarte
@@ -403,7 +441,8 @@ struct TrainingRootView: View {
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
                     PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf)
+                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
+                                                          bloecke: session?.bloecke ?? [])
                     }
                 }
             } trainingsinhalt: {
@@ -501,6 +540,61 @@ struct TrainingRootView: View {
     }
 
     // MARK: - Laufende Mitte (TrainingLaeuft.dc.html)
+
+    /// Plan-Modus (Spec "Plan im Training"): laeuft eine Einheit und gibt es
+    /// den Plan von heute, steht hier nur die Plankarte -- ohne Kategorien,
+    /// "Zuletzt bei dir" und Blockliste. Weitere Uebungen kommen ueber
+    /// "Übung hinzufügen" (`.planHinzufuegen`).
+    private func planModusWurzel(mitte: TrainingTab.Mitte, session: LokaleSession) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                if #unavailable(iOS 26.0) { titel }
+                sensorKarte
+                laufendKopf(mitte, session: session)
+                PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
+                    planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
+                                                      bloecke: session.bloecke)
+                } beiZusatz: { oeffne($0) }
+                uebungHinzufuegenKnopf
+                // Der Hinweis zeigt auf die Zusatz-Zeilen: ohne eine antippbare keiner.
+                if planModusHatAntippbareBloecke(session) { zirkelHinweis }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, DesignSystem.Spacing.s16)
+        }
+        .background(DesignSystem.Color.bg)
+        .modifier(PlanModusTitel())
+        .safeAreaInset(edge: .bottom) { fuss }
+    }
+
+    private func planModusHatAntippbareBloecke(_ session: LokaleSession) -> Bool {
+        guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf) else { return false }
+        return PlanAnzeige.zusaetzlichGemacht(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                                              bloecke: session.bloecke, bootstrap: katalog.bootstrap)
+            .contains { PlanAnzeige.block(fuerZusatz: $0.id, bloecke: session.bloecke) != nil }
+    }
+
+    /// Ruhig: gestrichelter Rand, kein Akzent -- die Akzentflaeche des
+    /// Screens bleibt "Gerät scannen".
+    private var uebungHinzufuegenKnopf: some View {
+        Button { pfad.append(.planHinzufuegen) } label: {
+            HStack(spacing: DesignSystem.Spacing.s8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Übung hinzufügen")
+                    .font(.system(size: 15, weight: .semibold))
+            }
+            .foregroundStyle(DesignSystem.Color.textMuted)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Color.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Öffnet die Geräteauswahl für eine weitere Übung")
+    }
 
     /// Kopf und die schon gemachten Uebungen -- ueber der Geraeteliste,
     /// mit der sie scrollen (Testnotiz 06.10., #13). Bis dahin hatte die
@@ -689,8 +783,41 @@ struct TrainingRootView: View {
         switch route {
         case .kategorie(let gruppe):
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader, gruppe: gruppe) { station, uebungId in
-                waehle(station, uebungId: uebungId)
+                // Aus der Ersatzwahl (Route im Pfad) wird gewaehlt, nicht gestartet.
+                auswahlTreffen(station, uebungId: uebungId)
             }
+        case .planErsatz(let positionKey):
+            if let auftrag = planErsatzAuftrag, auftrag.position.key == positionKey {
+                GeraeteAuswahlView(
+                    fotoLader: apiClient, vorschauLader: vorschauLader, titel: "KATEGORIE WÄHLEN",
+                    kopfinhalt: {
+                        PlanErsatzKopf(auftrag: auftrag, fotoLader: apiClient, vorschauLader: vorschauLader,
+                                       hinweis: ersatzHinweis,
+                                       beiKandidat: { ersatzFertig(.ersatz($0)) },
+                                       beiOhneErsatz: { ersatzFertig(.ohneErsatz) })
+                    },
+                    trainingsinhalt: { EmptyView() },
+                    beiAuswahl: { station, uebungId in ersatzWaehlen(station, uebungId: uebungId) },
+                    beiKachel: { kachel in
+                        switch GeraeteAuswahl.ziel(kachel) {
+                        case .station(let station): ersatzWaehlen(station, uebungId: nil)
+                        case .liste(let gruppe): pfad.append(.kategorie(gruppe))
+                        }
+                    })
+            }
+        case .planHinzufuegen:
+            // Dieselbe Auswahl ohne Kopf; die Wahl startet die Uebung.
+            GeraeteAuswahlView(
+                fotoLader: apiClient, vorschauLader: vorschauLader, titel: "ÜBUNG HINZUFÜGEN",
+                kopfinhalt: { EmptyView() },
+                trainingsinhalt: { EmptyView() },
+                beiAuswahl: { station, uebungId in auswahlTreffen(station, uebungId: uebungId) },
+                beiKachel: { kachel in
+                    switch GeraeteAuswahl.ziel(kachel) {
+                    case .station(let station): auswahlTreffen(station, uebungId: nil)
+                    case .liste(let gruppe): pfad.append(.kategorie(gruppe))
+                    }
+                })
         case .planUebung(let exerciseId):
             // Nur Stationen mit der Uebung der Position; der Tipp startet
             // genau diese Uebung (Spec 5).
@@ -894,6 +1021,88 @@ struct TrainingRootView: View {
         beitrittZeigen = true
     }
 
+    // MARK: - Ersatzwahl (Andere Übung wählen)
+
+    /// Die Ersatzwahl laeuft, solange ihre Route im Pfad steht. Faellt sie aus
+    /// dem Pfad (Zurueck, Scan, Pfadbereinigung), raeumt `onChange(of: pfad)`
+    /// den zugehoerigen Zustand weg.
+    private var ersatzModus: Bool {
+        GeraetRoute.auswahlzweck(im: pfad) == .ersatz
+    }
+
+    /// Eine Wahl aus einer Auswahlroute oder deren Kategorieseite: je nach
+    /// Zweck der Route wird gewaehlt (Ersatz) oder die Uebung gestartet
+    /// (Hinzufuegen, normale Liste). Gibt es mehrere Uebungen am Geraet,
+    /// fragt `waehle` ueber den Drawer, `ersatzWaehlen` ueber das Blatt.
+    private func auswahlTreffen(_ station: Station, uebungId: String?) {
+        switch GeraetRoute.auswahlzweck(im: pfad) {
+        case .ersatz: ersatzWaehlen(station, uebungId: uebungId)
+        case .hinzufuegen, nil: waehle(station, uebungId: uebungId)
+        }
+    }
+
+    /// Eine Station (und Uebung) aus der normalen Auswahl. Ohne Uebung und mit
+    /// mehreren am Geraet fragt ein kleines Blatt nach.
+    private func ersatzWaehlen(_ station: Station, uebungId: String?) {
+        if let uebungId {
+            ersatzAnwenden(station, uebungId: uebungId)
+        } else if station.exercises.count == 1, let einzige = station.exercises.first {
+            ersatzAnwenden(station, uebungId: einzige.id)
+        } else if station.exercises.count > 1 {
+            ersatzUebungswahl = ZirkelUebungswahl(
+                station: station,
+                offen: station.exercises.map { ZirkelUebung(station: station.schluessel, exerciseId: $0.id, token: nil) },
+                schonDabei: [])
+        }
+    }
+
+    private func ersatzAnwenden(_ station: Station, uebungId: String) {
+        // Nicht ableitbar: nichts zeigen, die Auswahl bleibt offen.
+        guard let kandidat = PlanTausch.kandidat(station: station, uebungId: uebungId,
+                                                 bootstrap: katalog.bootstrap) else { return }
+        ersatzFertig(.ersatz(kandidat))
+    }
+
+    /// Die Wahl steht: zurueck zur Wurzel, dort die Grund-Frage als Sheet der
+    /// Position, direkt beim Schritt "Warum wechselst du?".
+    private func ersatzFertig(_ start: PlanTauschAuftrag.ErsatzStart) {
+        // Veraltet (Pfad inzwischen woanders, z. B. nach einem Scan): nichts tun.
+        guard ersatzModus, let auftrag = planErsatzAuftrag else { return }
+        switch PlanTausch.ersatzErgebnis(start, auftrag: auftrag) {
+        case .hinweis(let hinweis):
+            // In der Auswahl bleiben, auf der Seite mit dem Hinweis.
+            if let i = pfad.firstIndex(where: { if case .planErsatz = $0 { true } else { false } }) {
+                pfad = Array(pfad[...i])
+            }
+            ersatzHinweis = hinweis
+        case .grundFrage(let mitWahl):
+            ersatzHinweis = nil
+            planErsatzAuftrag = nil
+            pfad.removeAll()
+            planPosition = mitWahl
+        }
+    }
+
+    /// Tipp auf "Weiter…"/"Übung starten" im Plan-Sheet (aus dessen
+    /// onDismiss): gibt es schon einen Block der Uebung, geht es dorthin
+    /// zurueck -- der naechste Satz landet im selben Block. Sonst: bietet
+    /// genau ein Geraet die Uebung an, geht es direkt los; sonst (mehrere
+    /// oder keines, dann der Leerzustand) in die Auswahl (`PlanStart`).
+    private func planUebungStarten(_ uebungId: String) {
+        if let block = PlanAnzeige.neuesterBlock(exerciseId: uebungId,
+                                                 bloecke: sessions.aktiveSession()?.bloecke ?? []) {
+            oeffne(block)
+            return
+        }
+        let stationen = katalog.bootstrap.map {
+            GeraeteAuswahl.stationen(bootstrap: $0, ort: katalog.ort, uebungId: uebungId)
+        } ?? []
+        switch PlanStart.ziel(stationen: stationen, uebungId: uebungId) {
+        case .direkt(let station): waehle(station, uebungId: uebungId)
+        case .auswahl, .keine: pfad.append(.planUebung(exerciseId: uebungId))
+        }
+    }
+
     /// Eine Station aus der Liste nimmt denselben Weg wie ein Scan: steht
     /// sie an einem anderen Ort ("Auch in X suchen"), wird erst gewechselt
     /// oder gefragt, dann geoeffnet.
@@ -1037,6 +1246,9 @@ struct TrainingRootView: View {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
         } else {
+            // Aus "Übung hinzufügen": wie ein Start aus der Liste, die Auswahl
+            // (samt Kategorieseiten darueber) faellt weg.
+            if let i = pfad.firstIndex(of: .planHinzufuegen) { pfad = Array(pfad[..<i]) }
             pfad.append(ziel)
         }
     }
@@ -1728,4 +1940,17 @@ private struct ScanRueckfrage: Equatable {
 private struct UmschaltTick: Equatable {
     let datum: Date
     let wach: Bool
+}
+
+
+/// Unter iOS 26 traegt die Navigationsleiste den grossen Titel wie in
+/// `GeraeteAuswahlView`; darunter steht er im Inhalt (`titel`).
+private struct PlanModusTitel: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.navigationTitle("TRAINING").navigationBarTitleDisplayMode(.large)
+        } else {
+            content.navigationBarTitleDisplayMode(.inline)
+        }
+    }
 }
