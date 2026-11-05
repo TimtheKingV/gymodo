@@ -90,5 +90,55 @@ struct AccessibilityBaumTests {
         #expect(gefunden?.label == "Satz 2 sichern")
         #expect(gefunden?.typ == "Button")
     }
+
+    /// Eine Planzeile bietet die Verschiebungen als VoiceOver-Aktionen an; an
+    /// den Enden fehlt die unmoegliche. Das Rendern der echten PlanKarte
+    /// braucht Speicher und Bootstrap, deshalb prueft der Test den Baum der
+    /// Aktionen selbst (`PlanBewegungsAktionen`).
+    @Test func planZeileBietetDieVerschiebeAktionen() async throws {
+        func aktionsnamen(index: Int, anzahl: Int) async throws -> [String] {
+            let szene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+            let fenster = UIWindow(windowScene: szene)
+            fenster.rootViewController = UIHostingController(rootView:
+                Text("Beinpresse")
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Beinpresse, 3 × 8–12")
+                    .modifier(PlanBewegungsAktionen(aktionen: PlanReihenfolge.aktionen(index: index, anzahl: anzahl),
+                                                    index: index, anzahl: anzahl, bewegen: { _ in }))
+                    .padding())
+            fenster.windowLevel = .alert
+            fenster.isHidden = false
+            defer { fenster.isHidden = true }
+            try await Task.sleep(for: .milliseconds(500))
+            return await AXSchalter.eingeschaltet { Self.aktionsnamen(ab: fenster, label: "Beinpresse, 3 × 8–12") }
+        }
+        let mitte = try await aktionsnamen(index: 1, anzahl: 4)
+        #expect(Set(mitte) == ["Nach oben verschieben", "Nach unten verschieben"])
+        let erste = try await aktionsnamen(index: 0, anzahl: 4)
+        #expect(erste == ["Nach unten verschieben"])
+        let letzte = try await aktionsnamen(index: 3, anzahl: 4)
+        #expect(letzte == ["Nach oben verschieben"])
+    }
+
+    private static func aktionsnamen(ab wurzel: NSObject, label: String) -> [String] {
+        var namen: [String] = []
+        func gehen(_ objekt: NSObject, _ tiefe: Int) {
+            guard tiefe < 60 else { return }
+            if objekt.isAccessibilityElement, objekt.accessibilityLabel == label {
+                namen += (objekt.accessibilityCustomActions ?? []).map { $0.name }
+            }
+            if let elemente = objekt.accessibilityElements {
+                for case let kind as NSObject in elemente { gehen(kind, tiefe + 1) }
+            } else {
+                let anzahl = objekt.accessibilityElementCount()
+                if anzahl != NSNotFound, anzahl > 0 {
+                    for i in 0..<anzahl { if let kind = objekt.accessibilityElement(at: i) as? NSObject { gehen(kind, tiefe + 1) } }
+                }
+            }
+            if let view = objekt as? UIView { for sub in view.subviews { gehen(sub, tiefe + 1) } }
+        }
+        gehen(wurzel, 0)
+        return namen
+    }
 }
 #endif

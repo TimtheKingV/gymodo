@@ -10,4 +10,25 @@ enum PlanStart {
     static func bietetAn(_ station: Station, uebungId: String) -> Bool {
         station.exercises.contains { $0.id == uebungId }
     }
+
+    /// Wohin ein Tipp auf eine Planzeile fuehrt.
+    enum Ziel: Equatable {
+        /// Genau ein Geraet bietet die Uebung an: ohne Auswahl starten.
+        case direkt(Station)
+        /// Mehrere Geraete bieten sie an: Auswahl mit Scan/QR zeigen.
+        case auswahl([Station])
+        /// Kein Geraet bietet die Uebung an.
+        case keine
+    }
+
+    /// Startregel: nur Stationen, die die Uebung anbieten, zaehlen. Eine
+    /// einzige startet direkt, mehrere fuehren in die Auswahl.
+    static func ziel(stationen: [Station], uebungId: String) -> Ziel {
+        let passend = stationen.filter { bietetAn($0, uebungId: uebungId) }
+        switch passend.count {
+        case 0: return .keine
+        case 1: return .direkt(passend[0])
+        default: return .auswahl(passend)
+        }
+    }
 }

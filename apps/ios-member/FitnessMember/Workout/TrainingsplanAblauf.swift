@@ -93,6 +93,17 @@ enum TrainingsplanAblauf {
         return neu
     }
 
+    /// Verschiebt eine Position an `index` (geklemmt auf die Liste); Status und Ersatz
+    /// bleiben, unbekannter Schluessel aendert nichts. Nur Reihenfolge, keine Regel des
+    /// Servers -- deshalb kein Gegenstueck in trainingsplan-ablauf.ts.
+    static func umordnen(_ z: AblaufZustand, positionKey: String, nach index: Int) -> AblaufZustand {
+        guard let von = z.positionen.firstIndex(where: { $0.key == positionKey }) else { return z }
+        var neu = z
+        let position = neu.positionen.remove(at: von)
+        neu.positionen.insert(position, at: min(max(index, 0), neu.positionen.count))
+        return neu
+    }
+
     /// Eine Einheit zaehlt fuer die Folge, sobald mindestens eine Position erledigt oder optional ist.
     static func zaehlt(_ z: AblaufZustand) -> Bool {
         z.positionen.contains { $0.status == .erledigt || $0.status == .optional }

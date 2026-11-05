@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 extension PlanTausch {
     /// Der Auftrag zur angetippten Zeile aus Bootstrap und Ablaufspeicher --
@@ -7,10 +6,11 @@ extension PlanTausch {
     /// Zeile dieselbe Einheit und denselben Status meinen.
     @MainActor
     static func auftrag(position: TrainingsplanPosition, katalog: CatalogStore,
-                        ablauf: TrainingsplanAblaufStore) -> PlanTauschAuftrag? {
+                        ablauf: TrainingsplanAblaufStore, bloecke: [LokalerBlock]) -> PlanTauschAuftrag? {
         guard let heute = PlanAnzeige.heute(katalog: katalog, ablauf: ablauf) else { return nil }
         return auftrag(position: position, heute: heute, bootstrap: katalog.bootstrap,
-                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap))
+                       ort: ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap),
+                       bloecke: bloecke)
     }
 }
 
@@ -19,10 +19,10 @@ extension View {
     /// Training-Tabs. Nicht an der Karte: die lebt in einer LazyVStack, und
     /// ein Sheet dort kann beim Scrollen mit ihr verschwinden.
     func planPositionSheet(auftrag: Binding<PlanTauschAuftrag?>, apiClient: APIClient,
-                           vorschauLader: VorschauLader,
-                           beiStarten: @escaping (String) -> Void) -> some View {
-        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, vorschauLader: vorschauLader,
-                                         beiStarten: beiStarten))
+                           beiStarten: @escaping (String) -> Void,
+                           beiAndereUebung: @escaping (PlanTauschAuftrag) -> Void) -> some View {
+        modifier(PlanPositionSheetHuelle(auftrag: auftrag, apiClient: apiClient, beiStarten: beiStarten,
+                                         beiAndereUebung: beiAndereUebung))
     }
 }
 
@@ -31,8 +31,14 @@ extension View {
 private struct PlanPositionSheetHuelle: ViewModifier {
     @Binding var auftrag: PlanTauschAuftrag?
     let apiClient: APIClient
-    let vorschauLader: VorschauLader
     let beiStarten: (String) -> Void
+    let beiAndereUebung: (PlanTauschAuftrag) -> Void
+
+    /// "Weiter…" schliesst das Sheet; der Start (ein zweites Sheet an der
+    /// Wurzel) laeuft erst in onDismiss, sonst kann SwiftUI ihn verschlucken.
+    @State private var startNachSchliessen: String?
+    /// Ebenso "Andere Übung wählen": der Push der Auswahl folgt dem Schliessen.
+    @State private var andereNachSchliessen: PlanTauschAuftrag?
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -40,7 +46,15 @@ private struct PlanPositionSheetHuelle: ViewModifier {
     @Environment(UebungsVideoVorrat.self) private var videoVorrat
 
     func body(content: Content) -> some View {
-        content.sheet(item: $auftrag) { auftrag in
+        content.sheet(item: $auftrag, onDismiss: {
+            if let uebungId = startNachSchliessen {
+                startNachSchliessen = nil
+                beiStarten(uebungId)
+            } else if let andere = andereNachSchliessen {
+                andereNachSchliessen = nil
+                beiAndereUebung(andere)
+            }
+        }) { auftrag in
             PlanPositionSheet(
                 sitzung: PlanTauschSitzung(
                     auftrag: auftrag, client: apiClient, ablauf: planAblauf,
@@ -57,42 +71,50 @@ private struct PlanPositionSheetHuelle: ViewModifier {
                         guard let bootstrap = katalog.bootstrap else { return }
                         planAblauf.vorbereiten(bootstrap: bootstrap)
                     }),
-                fotoLader: apiClient, vorschauLader: vorschauLader,
                 beiFertig: { self.auftrag = nil },
-                beiStarten: { uebungId in
+                beiDochMachen: { [planAblauf] in
+                    planAblauf.auslassenZuruecknehmen(positionKey: auftrag.position.key)
                     self.auftrag = nil
-                    beiStarten(uebungId)
+                },
+                beiStarten: { uebungId in
+                    startNachSchliessen = uebungId
+                    self.auftrag = nil
+                },
+                beiAndereUebung: {
+                    andereNachSchliessen = auftrag
+                    self.auftrag = nil
                 })
             .environment(videoVorrat)
         }
     }
 }
 
-/// Das Sheet zu einer Planzeile: erst die Vorgabe (3.1), auf Wunsch die
-/// Kandidaten (3.2) und mit Schalter die Bestaetigung (3.3) -- ein Sheet,
-/// das seinen Inhalt wechselt, statt drei gestapelter.
+/// Das Sheet zu einer Planzeile: erst die Vorgabe (3.1), nach der Wahl in
+/// der Auswahl die Grund-Frage (4) und ggf. die Bestaetigung (3.3) -- ein
+/// Sheet, das seinen Inhalt wechselt, statt mehrerer gestapelter.
 ///
-/// 3.1 hat bewusst keine Akzentflaeche: trainiert wird ueber Scan oder
-/// Geraeteliste wie sonst.
+/// 3.1: der Hauptknopf "Weiter mit Satz X" / "Übung starten" ist die
+/// einzige Akzentflaeche des Sheets.
 struct PlanPositionSheet: View {
     @State private var sitzung: PlanTauschSitzung
-    let fotoLader: any GeraetefotosLoading
-    let vorschauLader: VorschauLader
     let beiFertig: () -> Void
     /// "Gerät wählen": die Uebung der Position starten, an welchem Geraet
     /// auch immer (Spec 5). Schliesst das Sheet; die Wurzel oeffnet die Auswahl.
     var beiStarten: ((String) -> Void)?
+    /// "Doch machen": nimmt das Auslassen von heute zurueck.
+    var beiDochMachen: (() -> Void)?
+    /// "Andere Übung wählen": schliesst das Sheet; die Wurzel oeffnet die Auswahl.
+    var beiAndereUebung: (() -> Void)?
 
     /// Gemessene Hoehe fuer 3.1/3.3: so hoch wie der Inhalt, wie der Drawer.
     @State private var hoehe: CGFloat = 340
-    @State private var bilder: [String: UIImage] = [:]
 
-    init(sitzung: PlanTauschSitzung, fotoLader: any GeraetefotosLoading, vorschauLader: VorschauLader,
-         beiFertig: @escaping () -> Void, beiStarten: ((String) -> Void)? = nil) {
+    init(sitzung: PlanTauschSitzung, beiFertig: @escaping () -> Void, beiDochMachen: (() -> Void)? = nil,
+         beiStarten: ((String) -> Void)? = nil, beiAndereUebung: (() -> Void)? = nil) {
         self.beiStarten = beiStarten
+        self.beiDochMachen = beiDochMachen
+        self.beiAndereUebung = beiAndereUebung
         _sitzung = State(initialValue: sitzung)
-        self.fotoLader = fotoLader
-        self.vorschauLader = vorschauLader
         self.beiFertig = beiFertig
     }
 
@@ -103,31 +125,18 @@ struct PlanPositionSheet: View {
             switch sitzung.schritt {
             case .vorgabe:
                 gemessen(vorgabe)
-            case .kandidaten:
-                PlanTauschListe(sitzung: sitzung, bilder: bilder, beiFertig: beiFertig)
             case .entfernen:
-                gemessen(PlanEntfernenFrage(sitzung: sitzung, beiFertig: beiFertig))
+                gemessen(PlanGrundFrage(sitzung: sitzung, beiFertig: beiFertig))
             case .bestaetigen(let kandidat):
                 gemessen(PlanTauschBestaetigung(sitzung: sitzung, kandidat: kandidat, beiFertig: beiFertig))
             }
         }
-        .presentationDetents(sitzung.schritt == .kandidaten ? [.medium, .large] : [.height(hoehe)])
+        .presentationDetents([.height(hoehe)])
         .presentationDragIndicator(.visible)
         .presentationBackground(DesignSystem.Color.surface)
         // Waehrend "Übernehmen" schreibt, nicht wegwischen: sonst bliebe
         // offen, ob die neue Version steht.
         .interactiveDismissDisabled(sitzung.schreibtGerade)
-        .task {
-            // Fotos nur, wenn es eine Liste gibt; fehlen sie, bleibt der
-            // Platzhalter (GeraeteFotos.laden).
-            guard auftrag.zeigtAndereUebung else { return }
-            let fotos = await GeraeteFotos.laden(von: fotoLader)
-            for kandidat in auftrag.kandidaten {
-                guard let modell = kandidat.vorschaubildModell, bilder[modell] == nil,
-                      let url = fotos[modell] else { continue }
-                bilder[modell] = await vorschauLader.bild(modellId: modell, url: url, kantePixel: 168)
-            }
-        }
     }
 
     /// Misst den Inhalt fuer den Detent; die untere Safe Area gehoert dazu,
@@ -165,23 +174,26 @@ struct PlanPositionSheet: View {
             if let vorgesehen = auftrag.vorgesehen {
                 absatz(vorgesehen)
             }
-            // Die Position meint die Uebung, nicht ein Geraet: die Auswahl
-            // zeigt nur Geraete, die sie anbieten. Erledigte Positionen
-            // starten nichts mehr.
-            if let beiStarten, auftrag.status != .erledigt {
-                SecondaryButton(title: "Gerät wählen") { beiStarten(auftrag.uebungId) }
-                    .accessibilityHint("Zeigt Geräte, an denen du \(auftrag.ersatzName ?? auftrag.name) machen kannst")
+            if auftrag.satzGemacht > 0 {
+                absatz("\(auftrag.satzGemacht) von \(auftrag.satzGeplant) Sätzen gemacht")
             }
-            // Ohne Kandidaten gar kein Knopf -- nie eine leere Liste
-            // (Review Focus 3); erledigt, optional und Cardio tauschen nicht.
-            if auftrag.zeigtAndereUebung {
-                SecondaryButton(title: "Andere Übung wählen") { sitzung.andereUebung() }
+            // Die Position meint die Uebung, nicht ein Geraet. Auch eine
+            // erledigte Position bleibt startbar: der erste Satz hakt sie ab,
+            // weitere Saetze sind erlaubt ("Weiter mit Satz X").
+            if auftrag.istAusgelassen {
+                if let beiDochMachen {
+                    PrimaryButton(title: "Doch machen") { beiDochMachen() }
+                        .accessibilityHint("Nimmt das Auslassen zurück")
+                }
+            } else if let beiStarten {
+                PrimaryButton(title: auftrag.weiterTitel) { beiStarten(auftrag.uebungId) }
+                    .accessibilityHint("Startet die Übung")
+            }
+            // Erledigt, optional und Cardio tauschen nicht.
+            if auftrag.zeigtAndereUebung, let beiAndereUebung {
+                SecondaryButton(title: "Andere Übung wählen") { beiAndereUebung() }
                     .padding(.top, DesignSystem.Spacing.s4)
-                    .accessibilityHint("Zeigt Übungen, die hier auch passen")
-            }
-            if auftrag.zeigtEntfernen {
-                PlanLeiserKnopf(titel: "Übung entfernen") { sitzung.entfernen() }
-                    .accessibilityHint("Fragt, warum, und bietet eine andere Übung an")
+                    .accessibilityHint("Öffnet die Übungsauswahl")
             }
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
@@ -237,47 +249,84 @@ struct PlanLeiserKnopf: View {
     }
 }
 
-/// "Übung entfernen": die drei Gruende (Entwurf, Tim liest die Texte vor dem
-/// Merge). Ohne Alternative im Baustein nur "Überspringen", das nichts merkt
-/// und nichts sendet. Die dauerhaften Gruende brauchen Verbindung und sagen es.
-struct PlanEntfernenFrage: View {
+/// Entwurf 4 "Warum wechseln?": drei Zeilen wie Radio-Knoepfe, "Heute
+/// auslassen" vorgewaehlt, ohne Erklaertext darunter. "Übung wechseln" ist
+/// die eine Akzentflaeche. "Übung gefällt mir nicht" braucht Verbindung und
+/// sagt es.
+struct PlanGrundFrage: View {
     let sitzung: PlanTauschSitzung
     let beiFertig: () -> Void
 
     private var auftrag: PlanTauschAuftrag { sitzung.auftrag }
 
+    /// Was heute dran war: der Ersatz eines frueheren Tauschs, sonst die Planuebung.
+    private var alt: String { auftrag.ersatzName ?? auftrag.name }
+
+    private var titel: String {
+        sitzung.ersatz.map { "\($0.name) statt \(alt)" } ?? "\(alt) auslassen"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text(auftrag.name.uppercased())
-                .font(.system(size: 22, weight: .black))
-                .tracking(-0.5)
-                .foregroundStyle(DesignSystem.Color.text)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
-            Text(auftrag.kandidaten.isEmpty
-                 ? "Dafür gibt es hier keine andere Übung."
-                 : "Warum möchtest du sie nicht machen?")
-                .font(.system(size: 14))
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .fixedSize(horizontal: false, vertical: true)
-            ForEach(auftrag.entfernOptionen, id: \.titel) { option in
-                let gesperrt = option.serverGrund != nil && !sitzung.dauerhaftMoeglich
-                SecondaryButton(title: option.titel) {
-                    if option == .ueberspringen { beiFertig() } else { sitzung.grundWaehlen(option) }
-                }
-                .disabled(gesperrt)
-                .opacity(gesperrt ? 0.5 : 1)
-                .accessibilityHint(gesperrt ? "Braucht Verbindung" : "")
-            }
-            if auftrag.entfernOptionen.contains(where: { $0.serverGrund != nil }), !sitzung.dauerhaftMoeglich {
-                Text("Braucht Verbindung")
-                    .font(.system(size: 12, weight: .semibold))
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(titel.uppercased())
+                    .font(.system(size: 20, weight: .black))
+                    .tracking(-0.4)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Warum wechselst du?")
+                    .font(.system(size: 14))
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
+            VStack(spacing: 0) {
+                ForEach(sitzung.optionen, id: \.titel) { option in
+                    zeile(option)
+                }
+            }
+            PrimaryButton(title: "Übung wechseln") {
+                if sitzung.optionBestaetigen() { beiFertig() }
+            }
+            .disabled(!sitzung.optionMoeglich(sitzung.gewaehlteOption))
+                .padding(.top, DesignSystem.Spacing.s4)
             PlanLeiserKnopf(titel: "Schließen", aktion: beiFertig)
         }
         .padding(.horizontal, 18)
         .padding(.top, 28)
         .padding(.bottom, DesignSystem.Spacing.s8)
+    }
+
+    private func zeile(_ option: PlanTausch.EntfernOption) -> some View {
+        let an = sitzung.gewaehlteOption == option
+        let gesperrt = !sitzung.optionMoeglich(option)
+        return Button {
+            sitzung.optionAuswaehlen(option)
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                ZStack {
+                    Circle().stroke(an ? DesignSystem.Color.text : DesignSystem.Color.line, lineWidth: 1.5)
+                    if an { Circle().fill(DesignSystem.Color.text).padding(5) }
+                }
+                .frame(width: 22, height: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.titel)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.text)
+                    if gesperrt && option.serverGrund != nil {
+                        Text("Braucht Verbindung")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .disabled(gesperrt)
+        .opacity(gesperrt ? 0.5 : 1)
+        .accessibilityHint(gesperrt && option.serverGrund != nil ? "Braucht Verbindung" : "")
+        .accessibilityAddTraits(an ? [.isButton, .isSelected] : .isButton)
     }
 }

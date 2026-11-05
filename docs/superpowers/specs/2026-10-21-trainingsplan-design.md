@@ -185,6 +185,8 @@ Gleiches Prinzip für Gewichtsvorschläge: Der vorhandene `reasonCode` wird als 
 
 ## 5. Ablauf im Studio
 
+> Hinweis: Die Beschreibung "Ungeplante Übung → optional" und "Situativer Austausch" ist für den manuellen Ersetzen-/Auslassen-Weg durch `2026-10-28-training-im-plan-ablauf-design.md` überholt. Die automatische Optional-Regel für Übungen, die ohne das Menü gemacht werden, bleibt.
+
 - Die App zeigt die heutige Einheit mit ihren Übungen. Gestartet wird wie heute über Scan oder Geräteauswahl; es gibt keinen zweiten Trainingsmodus. Session, Sätze und Synchronisation bleiben dieselben.
 - `workout_sessions` bekommt einen Bezug zur Planeinheit, die bei Start dieser Session die aktuelle war.
 - **Geplante Übung gemacht** (gleiche `exercise_id`, egal an welchem Gerät des Studios): Planposition abgehakt. Reihenfolge ist egal, keine Hinweise.

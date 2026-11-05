@@ -40,9 +40,11 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     /// Ein Tipp auf eine Kachel. Wohin er fuehrt, entscheidet die Wurzel
     /// (`GeraeteAuswahl.ziel`) -- sie haelt den Pfad.
     let beiKachel: (GeraeteAuswahl.Kachel) -> Void
+    /// Gesetzt: statt des Standardtitels ("Kategorie wählen" der Ersatzwahl).
+    let eigenerTitel: String?
 
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
-         gruppe: Geraetegruppe? = nil, uebungId: String? = nil,
+         gruppe: Geraetegruppe? = nil, uebungId: String? = nil, titel eigenerTitel: String? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
          @ViewBuilder trainingsinhalt: () -> Trainingsinhalt,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void,
@@ -51,6 +53,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
         self.vorschauLader = vorschauLader
         self.gruppe = gruppe
         self.uebungId = uebungId
+        self.eigenerTitel = eigenerTitel
         self.kopfinhalt = kopfinhalt()
         self.trainingsinhalt = trainingsinhalt()
         self.beiAuswahl = beiAuswahl
@@ -189,7 +192,8 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     }
 
     private var titel: String {
-        gruppe.map { $0.titel.uppercased() } ?? (uebungId == nil ? "GERÄT WÄHLEN" : "WO TRAINIERST DU?")
+        if let eigenerTitel { return eigenerTitel }
+        return gruppe.map { $0.titel.uppercased() } ?? (uebungId == nil ? "GERÄT WÄHLEN" : "WO TRAINIERST DU?")
     }
 
     private var suchprompt: String {
