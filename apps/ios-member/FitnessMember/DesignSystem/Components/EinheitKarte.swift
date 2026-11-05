@@ -126,6 +126,9 @@ struct EinheitKarte: View {
                 .foregroundStyle(DesignSystem.Color.textFaint)
             }
             .frame(width: 76)
+            // Die Figur ist Bild, ihre Beschriftung nur fuer das Auge:
+            // VoiceOver laese sonst "vorne hinten" vor dem Titel.
+            .accessibilityHidden(true)
             text
         }
         .opacity(verpasst ? 0.75 : 1)
