@@ -27,6 +27,11 @@ struct SessionDetailView: View {
     let apiClient: APIClient
     /// Nach erfolgreichem Fortsetzen: Home-Pfad leeren, auf den Training-Tab.
     var beiFortgesetzt: () -> Void = {}
+    /// Tipp auf den Kopf einer Uebung: der Host legt den Uebungsfortschritt
+    /// auf SEINEN Pfad (Home: `HomeRoute`, Plan-Tab: `KursRoute`). Ein
+    /// `NavigationLink(value:)` mit festem Routentyp liefe im jeweils
+    /// anderen Stack ins Leere.
+    let beiUebung: (_ exerciseId: String) -> Void
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -207,7 +212,7 @@ struct SessionDetailView: View {
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             // Ein Tipp auf den Kopf oeffnet den Uebungsfortschritt dieser
             // Uebung (Testnotiz 18.10., #6).
-            NavigationLink(value: HomeRoute.uebungsfortschritt(exerciseId: block.exerciseId)) {
+            Button { beiUebung(block.exerciseId) } label: {
                 HStack {
                     Text("\(block.machineLabel) · \(block.exerciseName)")
                         .font(DesignSystem.Typography.uebungsname)

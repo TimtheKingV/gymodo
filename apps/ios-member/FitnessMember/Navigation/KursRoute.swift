@@ -22,4 +22,7 @@ enum KursRoute: Hashable {
     case detail(sessionId: String)
     case einheit(key: String)
     case sessionDetail(id: String)
+    /// Der Uebungsfortschritt aus einem vergangenen Training -- derselbe
+    /// Screen wie `HomeRoute.uebungsfortschritt`.
+    case uebungsfortschritt(exerciseId: String)
 }

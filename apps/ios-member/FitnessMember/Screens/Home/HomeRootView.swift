@@ -194,7 +194,7 @@ struct HomeRootView: View {
                     SessionDetailView(sessionId: id, apiClient: apiClient, beiFortgesetzt: {
                         pfad.removeAll()
                         beiTrainingZeigen()
-                    })
+                    }, beiUebung: { pfad.append(.uebungsfortschritt(exerciseId: $0)) })
                 case .uebungsfortschritt(let exerciseId):
                     UebungsfortschrittView(exerciseId: exerciseId)
                 case .gewichtsverlauf:

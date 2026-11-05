@@ -48,7 +48,11 @@ struct MainTabView: View {
                         PlanEinheitView(einheitKey: key, beiTrainingStarten: trainingZeigen)
                     case .sessionDetail(let id):
                         // Fortgesetzt wird im Training-Tab, wie von Home.
-                        SessionDetailView(sessionId: id, apiClient: apiClient, beiFortgesetzt: trainingZeigen)
+                        SessionDetailView(
+                            sessionId: id, apiClient: apiClient, beiFortgesetzt: trainingZeigen,
+                            beiUebung: { planPfad.append(.uebungsfortschritt(exerciseId: $0)) })
+                    case .uebungsfortschritt(let exerciseId):
+                        UebungsfortschrittView(exerciseId: exerciseId)
                     }
                 }
             }
