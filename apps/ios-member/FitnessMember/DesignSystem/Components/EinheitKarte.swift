@@ -3,6 +3,10 @@ import SwiftUI
 /// Was die eine Karte zeigt -- fuer ein absolviertes Training (Home) und fuer
 /// eine Planeinheit (Plan-Tab, spaeter die Kopfzeile im Detail).
 struct EinheitKarteModell: Equatable {
+    /// Absolviertes Training (Home) oder Planeinheit.
+    enum Art: Equatable { case training, einheit }
+
+    let art: Art
     let titel: String
     /// Zeile unter dem Titel: Tag („Freitag, 6. Nov“, Akzent) oder nil.
     let tag: String?
@@ -17,7 +21,7 @@ struct EinheitKarteModell: Equatable {
         // Keine "AUTO BEENDET"-Marke auf der Karte: sie steht im Detail, wo ein
         // erklaerender Satz neben ihr hat (`SessionDetailView.autoBeendetHinweis`).
         return EinheitKarteModell(
-            titel: profil.titel, tag: nil,
+            art: .training, titel: profil.titel, tag: nil,
             zeilen: [HomeZeilen.grosseZeile(karte), HomeZeilen.kleineZeile(karte)],
             stufen: profil.stufen, zustand: .erledigt)
     }
@@ -27,7 +31,7 @@ struct EinheitKarteModell: Equatable {
         tag: String?, zustand: TerminZustand
     ) -> EinheitKarteModell {
         EinheitKarteModell(
-            titel: namen.name(einheit.key), tag: tag,
+            art: .einheit, titel: namen.name(einheit.key), tag: tag,
             zeilen: [EinheitKuerzel.untertitel(einheit)],
             stufen: TrainingsProfil.berechne(einheit: einheit, muskeln: muskeln).stufen,
             zustand: zustand)
@@ -58,8 +62,11 @@ struct EinheitKarte: View {
     var kalender: Calendar = .current
     /// Tippen auf die Karte (ohne den Knopf); nil, wenn die Umgebung selbst tippbar macht.
     var beiTipp: (() -> Void)? = nil
+    /// VoiceOver-Hinweis nur fuer den Tipp-Inhalt, nicht fuer den Knopf.
+    var hinweis: String? = nil
     /// Optionaler Knopf rechts unten („Training starten“), nur am geplanten Tag.
-    var aktion: (titel: String, ausloesen: () -> Void)? = nil
+    /// `label`/`hinweis` fuer VoiceOver; ohne `label` gilt der Titel.
+    var aktion: (titel: String, label: String?, hinweis: String?, ausloesen: () -> Void)? = nil
 
     private var verpasst: Bool {
         if case .verpasst = modell.zustand { return true }
@@ -71,6 +78,7 @@ struct EinheitKarte: View {
             if let beiTipp {
                 Button(action: beiTipp) { inhalt }
                     .buttonStyle(PressButtonStyle())
+                    .accessibilityHint(hinweis ?? "")
             } else {
                 inhalt
             }
@@ -87,6 +95,8 @@ struct EinheitKarte: View {
                             .clipShape(Capsule())
                     }
                     .buttonStyle(PressButtonStyle())
+                    .accessibilityLabel(aktion.label ?? aktion.titel)
+                    .accessibilityHint(aktion.hinweis ?? "")
                 }
             }
         }
@@ -137,9 +147,9 @@ struct EinheitKarte: View {
 
             ForEach(Array(modell.zeilen.enumerated()), id: \.offset) { index, zeile in
                 Text(zeile)
-                    .font(index == 0 && modell.zeilen.count > 1
+                    .font(index == 0 && modell.art == .training
                         ? DesignSystem.Typography.wertSekundaer : DesignSystem.Typography.fliesstext)
-                    .foregroundStyle(index == 0 && modell.zeilen.count > 1
+                    .foregroundStyle(index == 0 && modell.art == .training
                         ? DesignSystem.Color.text : DesignSystem.Color.textMuted)
                     .monospacedDigit()
             }
@@ -161,7 +171,7 @@ struct EinheitKarte: View {
                     .overlay(
                         Capsule().strokeBorder(
                             DesignSystem.Color.textFaint, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-            } else if case .erledigt = modell.zustand, modell.zeilen.count == 1 {
+            } else if case .erledigt = modell.zustand, modell.art == .einheit {
                 // Beim Training ist Erledigt selbstverstaendlich; nur die Planeinheit sagt es.
                 Text(text)
                     .font(.system(size: 12, weight: .semibold))

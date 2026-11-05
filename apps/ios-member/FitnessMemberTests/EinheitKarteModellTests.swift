@@ -60,6 +60,7 @@ struct EinheitKarteModellTests {
             blocks: [block("bankdruecken", saetze: 6), block("trizepsdruecken", saetze: 2)])
         let modell = EinheitKarteModell.training(Trainingskarte(teile: [teil]), muskeln: katalog())
 
+        #expect(modell.art == .training)
         #expect(modell.titel == "Brust, Trizeps")
         #expect(modell.zeilen.count == 2)
         #expect(modell.zustand == .erledigt)
@@ -74,6 +75,7 @@ struct EinheitKarteModellTests {
             plan.einheiten[0], namen: namen, muskeln: katalog(),
             tag: "Freitag, 6. Nov", zustand: .geplant)
 
+        #expect(modell.art == .einheit)
         #expect(modell.titel == "Brust, Trizeps")
         #expect(modell.zeilen == ["2 Übungen · ca. 50 Min"])
         #expect(modell.tag == "Freitag, 6. Nov")

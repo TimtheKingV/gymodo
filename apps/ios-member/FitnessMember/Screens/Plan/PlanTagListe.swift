@@ -98,9 +98,12 @@ struct PlanTagListe: View {
                 einheit, namen: einheitNamen, muskeln: muskeln, tag: nil, zustand: zustand),
             geschlecht: geschlecht, kalender: kalender,
             beiTipp: { beiEinheit(einheit.key) },
+            hinweis: "Zeigt die Übungen der Einheit",
             // Die eine Akzentflaeche des Screens: das, was heute dran ist.
-            aktion: zeigtStart ? (titel: "Training starten", ausloesen: beiStart) : nil)
-        .accessibilityHint("Zeigt die Übungen der Einheit")
+            aktion: zeigtStart
+                ? (titel: "Training starten", label: "\(einheitNamen.name(einheit.key)) starten",
+                   hinweis: "Öffnet das Training", ausloesen: beiStart)
+                : nil)
     }
 
     // MARK: - Cardio (Leinwand 2i)
@@ -205,8 +208,8 @@ struct PlanTagListe: View {
                 modell: .einheit(
                     einheit, namen: einheitNamen, muskeln: muskeln, tag: tag, zustand: zustand),
                 geschlecht: geschlecht, kalender: kalender,
-                beiTipp: { beiEinheit(einheit.key) })
-            .accessibilityHint("Zeigt die Übungen der Einheit")
+                beiTipp: { beiEinheit(einheit.key) },
+                hinweis: "Zeigt die Übungen der Einheit")
         case .kurs(let termin):
             naechsteInhalt(kaestchen: AnyView(PlanKursKaestchen()), titel: termin.name, tag: tag)
         case .cardio:
