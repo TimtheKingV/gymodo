@@ -1,0 +1,21 @@
+set_id,zeit,uebung,set_index,kg,reps_wahr,quelle,reps_app_live
+706AC414-75AC-49FA-90F5-CB0C06A4A133,18:01:11,Kurzhantel-Schraegbankdruecken,1,14,20,korrigiert,21
+DDD01EB1-073E-444E-85E4-E5EACEC59C9F,18:02:14,Kurzhantel-Bizepscurl,1,10,12,eingegeben,
+81B64F0B-1CEA-420B-BFCA-C616F9CF9377,18:02:57,Kurzhantel-Schulterdruecken,1,10,10,korrigiert,9
+D6C7DEAC-AC2D-4F5D-ACB4-E936A21A1D7A,18:03:34,Kurzhantel-Seitheben,1,10,8,korrigiert,7
+BCC6B70D-EBB7-401D-A291-810187EFF898,18:04:40,Kurzhantel-Schraegbankdruecken,2,14,15,korrigiert,12
+E2E3B240-9A44-4417-8E50-57DEC6FEB4B1,18:05:51,Kurzhantel-Bizepscurl,2,10,12,gemessen,12
+88B3BA3E-C1A6-4E13-855C-B7210B6F8974,18:06:37,Kurzhantel-Schulterdruecken,2,10,10,gemessen,10
+7DC59C81-93F1-4A13-8154-F438587BE5F5,18:07:04,Kurzhantel-Seitheben,2,10,5,gemessen,5
+ED15420F-3C06-4687-BA48-604A495A4542,18:08:26,Kurzhantel-Schraegbankdruecken,3,14,19,gemessen,19
+6D3494D3-AC77-4E4C-BF83-63115EDFC0BB,18:09:21,Kurzhantel-Bizepscurl,3,10,10,gemessen,10
+EDEE9A53-8CCE-424E-9159-375A0BAF5F97,18:09:56,Kurzhantel-Schulterdruecken,3,10,7,gemessen,7
+35ABC9BF-1293-4413-B8E1-CA05D5B6FD0A,18:10:20,Kurzhantel-Seitheben,3,10,4,gemessen,4
+7D605D55-3C73-4506-A829-18E84FE82DB2,18:13:04,Bauchbeugen am Geraet,1,85,20,gemessen,20
+862F154C-CFC9-4EC7-BDB0-DC966D583EBC,18:14:38,Bauchbeugen am Geraet,2,85,20,gemessen,20
+DEA06022-403E-40B6-85E0-4E14A29D3A6C,18:16:15,Bauchbeugen am Geraet,3,85,20,gemessen,20
+CC2D6EA3-D755-4485-85CD-4919E252515D,18:19:12,Hip Thrust am Geraet,1,35,20,gemessen,20
+C3FCB830-D6B0-400F-B1DC-E23E051E3DD8,18:20:46,Hip Thrust am Geraet,2,35,20,korrigiert,19
+3AEB793E-21A2-4406-BDB6-73269FB188DE,18:22:39,Hip Thrust am Geraet,3,35,20,gemessen,20
+34A2AD3F-95D2-468A-B457-2DCEA8A320F4,18:25:01,Rudern am Geraet - enger Neutralgriff,1,50,20,korrigiert,15
+023066B4-814D-450E-A60B-524665AA5AA3,18:26:31,Rudern am Geraet - enger Neutralgriff,2,50,14,gemessen,14

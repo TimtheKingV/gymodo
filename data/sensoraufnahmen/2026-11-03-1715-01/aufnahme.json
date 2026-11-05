@@ -1,0 +1,46 @@
+{
+  "abschluss" : "abgebrochen",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-11-03T17:16:35+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "6c9c15f2-80da-41d0-8245-30b1ee555eb9",
+    "exerciseId" : "589fef3f-91bc-417d-aa29-2363f430d2a7",
+    "exerciseName" : "Reverse Butterfly – Neutralgriff",
+    "machineId" : null,
+    "machineName" : "Butterfly / Reverse-Fly-Kombigerät",
+    "sessionId" : null,
+    "setId" : null,
+    "setIndex" : null
+  },
+  "label" : {
+    "problemFlag" : null,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 10,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-11-03T17:15:51+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 177.44,
+      "median" : 0,
+      "p95" : 60.59
+    },
+    "luecken" : 1,
+    "pakete" : 1106,
+    "rateIstHz" : 50,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}

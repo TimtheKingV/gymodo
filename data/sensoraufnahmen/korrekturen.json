@@ -1582,6 +1582,230 @@
       "repsWahr": 10,
       "fuerZaehler": true,
       "grund": "Tim hat alle Wiederholungszahlen der Einheit am 26.10.2026 im Gespräch ausdrücklich als selbst geprüft bestätigt; Label unverändert als Wahrheit übernommen. Befestigungsart aus Aufnahme; keine widersprechende Notiz."
+    },
+    "2026-11-03-1715-01": {
+      "was": "Reverse Butterfly – Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz (1 Luecke)"
+    },
+    "2026-11-03-1755-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz (1 Luecke)"
+    },
+    "2026-11-03-1800-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1801-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schrägbankdrücken) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bizepscurl – stehend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1802-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-03-1802-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1802-03": {
+      "was": "Kurzhantel-Seitheben",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-03-1803-01": {
+      "was": "Kurzhantel-Seitheben",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 8,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Seitheben (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1803-02": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-03-1804-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 15,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Seitheben) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schrägbankdrücken (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1804-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-03-1804-03": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schrägbankdrücken) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bizepscurl – stehend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1805-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-03-1805-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1806-01": {
+      "was": "Kurzhantel-Seitheben",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Seitheben (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1807-01": {
+      "was": "Kurzhantel-Schrägbankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 19,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Seitheben) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schrägbankdrücken (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1808-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schrägbankdrücken) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bizepscurl – stehend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1809-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 7,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1810-01": {
+      "was": "Kurzhantel-Seitheben",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 4,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Seitheben (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-03-1811-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1813-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1815-01": {
+      "was": "Bauchbeugen am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1818-01": {
+      "was": "Hip Thrust am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1820-01": {
+      "was": "Hip Thrust am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1821-01": {
+      "was": "Hip Thrust am Gerät",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1824-01": {
+      "was": "Rudern am Gerät – enger Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 20,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1825-01": {
+      "was": "Rudern am Gerät – enger Neutralgriff",
+      "befestigung": null,
+      "befestigungsart": "stapel",
+      "repsWahr": 14,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-03-1827-01": {
+      "was": "Ruderergometer",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "Cardio (Ruderergometer), keine Wiederholungen"
     }
   }
 }

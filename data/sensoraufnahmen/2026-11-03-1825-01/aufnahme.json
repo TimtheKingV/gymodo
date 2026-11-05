@@ -1,0 +1,155 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : "stapel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-11-03T18:26:31+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "8a3a5071-0701-4322-a2c4-79ed64e90afc",
+    "exerciseId" : "3fe180f2-4851-43a3-be84-663040d979db",
+    "exerciseName" : "Rudern am Gerät – enger Neutralgriff",
+    "machineId" : null,
+    "machineName" : "Rudermaschine",
+    "sessionId" : "0EC1E68D-F99D-4DA8-AE68-E9E3AB9A503A",
+    "setId" : "023066B4-814D-450E-A60B-524665AA5AA3",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 14,
+    "weightKg" : 50
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-11-03T18:25:49+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 405.19,
+      "median" : 0,
+      "p95" : 61.1
+    },
+    "luecken" : 0,
+    "pakete" : 2090,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "stapel/phasen1",
+    "ereignisse" : {
+      "algo" : "stapel/phasen1",
+      "befestigungsart" : "stapel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 0,
+          "ende" : 2.44,
+          "sicherheit" : 0.99,
+          "umkehr" : 1.16
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 2.44,
+          "ende" : 5.01,
+          "sicherheit" : 0.99,
+          "umkehr" : 3.73
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 5.01,
+          "ende" : 7.57,
+          "sicherheit" : 0.99,
+          "umkehr" : 6.29
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 7.57,
+          "ende" : 10.13,
+          "sicherheit" : 0.99,
+          "umkehr" : 8.85
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 10.13,
+          "ende" : 12.7,
+          "sicherheit" : 0.99,
+          "umkehr" : 11.41
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 12.7,
+          "ende" : 15.26,
+          "sicherheit" : 0.99,
+          "umkehr" : 13.98
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 15.26,
+          "ende" : 17.82,
+          "sicherheit" : 0.99,
+          "umkehr" : 16.54
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 17.82,
+          "ende" : 20.38,
+          "sicherheit" : 0.99,
+          "umkehr" : 19.1
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 20.38,
+          "ende" : 22.95,
+          "sicherheit" : 0.99,
+          "umkehr" : 21.67
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 22.95,
+          "ende" : 25.51,
+          "sicherheit" : 0.99,
+          "umkehr" : 24.23
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 25.51,
+          "ende" : 28.07,
+          "sicherheit" : 0.99,
+          "umkehr" : 26.79
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 28.07,
+          "ende" : 30.64,
+          "sicherheit" : 0.99,
+          "umkehr" : 29.35
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 30.64,
+          "ende" : 33.2,
+          "sicherheit" : 0.99,
+          "umkehr" : 31.92
+        },
+        {
+          "ausschlag" : 0.81,
+          "beginn" : 33.2,
+          "ende" : 35.76,
+          "sicherheit" : 0.99,
+          "umkehr" : 34.48
+        }
+      ]
+    },
+    "gezaehlt" : 14,
+    "herkunft" : "gemessen"
+  }
+}
