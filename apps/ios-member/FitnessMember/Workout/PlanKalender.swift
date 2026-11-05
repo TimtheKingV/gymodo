@@ -43,11 +43,15 @@ enum PlanKalender {
     /// Termin statt eines falschen "verpasst" (der Verlauf ist gedeckelt). nil:
     /// kein Verlauf bekannt, dann ist kein vergangener Slot verpasst. `erledigt`
     /// kommt vollstaendig vom Server und gilt immer.
+    ///
+    /// `cardioGeladen`: die Tage, fuer die `cardioErledigt` geladen ist
+    /// (`CardioChecksStore.geladen`). Ein vergangener Cardio-Slot ohne Haken
+    /// ausserhalb davon ist neutral -- ungeladen ist nicht "verpasst".
     static func termine(
         tage: [Date], kalender: Calendar, raster: [Rasterplatz], einheiten: [String],
         naechsteEinheitKey: String?, erledigt: [ErledigteEinheit], trainiertAn: Set<String>,
         beginn: Date?, verlaufAb: Date?, heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>,
-        filter: PlanFilter
+        cardioGeladen: [ClosedRange<String>], filter: PlanFilter
     ) -> [Date: [PlanTermin]] {
         let heuteStart = kalender.startOfDay(for: heute)
         let sichtbar = Set(tage.map { kalender.startOfDay(for: $0) })
@@ -101,8 +105,10 @@ enum PlanKalender {
                 }
                 if filter == .alle || filter == .cardio, hatSlots, cardioTage.contains(iso) {
                     let erledigtCardio = cardioErledigt.contains(schluessel)
-                    // Vor `verlaufAb` ist ein offener vergangener Slot neutral (kein Termin).
-                    if erledigtCardio || !vergangen || verlaufBekannt(start) {
+                    // Vor `verlaufAb` oder ausserhalb der geladenen Haken ist ein
+                    // offener vergangener Slot neutral (kein Termin).
+                    let cardioBekannt = cardioGeladen.contains { $0.contains(schluessel) }
+                    if erledigtCardio || !vergangen || (verlaufBekannt(start) && cardioBekannt) {
                         let zustand: TerminZustand = erledigtCardio ? .erledigt
                             : vergangen ? .verpasst(verschobenAuf: nil) : .geplant
                         liste.append(.cardio(arten: [], zustand: zustand))

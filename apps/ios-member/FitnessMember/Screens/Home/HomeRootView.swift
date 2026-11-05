@@ -346,7 +346,7 @@ private extension HomeRootView {
             heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
             sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
             heute: jetzt, kurse: kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? []),
-            cardioErledigt: cardio.erledigt, filter: .alle)
+            cardioErledigt: cardio.erledigt, cardioGeladen: cardio.geladen, filter: .alle)
     }
 
     /// "Nächste Einheit" (Spec 1.1). Ohne Kraft-Tage (Bestandsplan, I3) statt

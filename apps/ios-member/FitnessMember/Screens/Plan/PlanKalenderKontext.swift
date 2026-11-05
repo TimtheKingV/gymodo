@@ -34,7 +34,8 @@ enum PlanKalenderKontext {
     static func termine(
         plan: Trainingsplan, tage: [Date], kalender: Calendar, profil: TrainingsplanProfil?,
         heuteEinheitKey: String?, sessions: [SessionSummary], gesamt: Int?, verlaufGeladen: Bool,
-        heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>, filter: PlanFilter
+        heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>,
+        cardioGeladen: [ClosedRange<String>], filter: PlanFilter
     ) -> [Date: [PlanTermin]] {
         let beginn = plan.beginn.flatMap(Zeitpunkt.parse)
         return PlanKalender.termine(
@@ -48,7 +49,8 @@ enum PlanKalenderKontext {
             beginn: beginn,
             verlaufAb: PlanKalender.verlaufAb(
                 sessions: sessions, gesamt: gesamt, geladen: verlaufGeladen, beginn: beginn, kalender: kalender),
-            heute: heute, kurse: kurse, cardioErledigt: cardioErledigt, filter: filter)
+            heute: heute, kurse: kurse, cardioErledigt: cardioErledigt, cardioGeladen: cardioGeladen,
+            filter: filter)
     }
 
     /// "yyyy-MM-dd" (Tages-Id der Streak-Woche) -> `startOfDay` im Kalender des Plans.

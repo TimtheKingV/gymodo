@@ -43,12 +43,14 @@ struct PlanKalenderTests {
         trainiertAn: Set<String> = [], beginn: Date? = PlanKalenderTests.tag(10, 26, stunde: 9),
         verlaufAb: Date? = PlanKalenderTests.tag(10, 26),
         heute: Date = PlanKalenderTests.tag(11, 4, stunde: 10), kurse: [CourseWeekSession] = [],
-        cardio: Set<String> = [], filter: PlanFilter = .alle
+        cardio: Set<String> = [], cardioGeladen: [ClosedRange<String>] = ["2026-01-01"..."2026-12-31"],
+        filter: PlanFilter = .alle
     ) -> [Date: [PlanTermin]] {
         PlanKalender.termine(
             tage: tage, kalender: Self.kalender, raster: raster ?? self.raster, einheiten: ["A", "B", "C"],
             naechsteEinheitKey: naechste, erledigt: erledigt, trainiertAn: trainiertAn, beginn: beginn,
-            verlaufAb: verlaufAb, heute: heute, kurse: kurse, cardioErledigt: cardio, filter: filter)
+            verlaufAb: verlaufAb, heute: heute, kurse: kurse, cardioErledigt: cardio,
+            cardioGeladen: cardioGeladen, filter: filter)
     }
 
     @Test func verpasstVerschiebtAufNaechstenKraftSlot() {
@@ -126,6 +128,29 @@ struct PlanKalenderTests {
         #expect(t[Self.tag(10, 31)] == [.cardio(arten: [], zustand: .verpasst(verschobenAuf: nil))])
         let abgehakt = termine(cardio: ["2026-10-31"])
         #expect(abgehakt[Self.tag(10, 31)] == [.cardio(arten: [], zustand: .erledigt)])
+    }
+
+    /// Haken noch nicht geladen (oder Abruf fehlgeschlagen): ein vergangener
+    /// Cardio-Slot ist neutral statt verpasst; heute und kuenftig bleibt geplant.
+    @Test func cardioUngeladenNichtVerpasst() {
+        let t = termine(cardioGeladen: [])
+        #expect(t[Self.tag(10, 31)] == nil)
+        #expect(t[Self.tag(11, 7)] == [.cardio(arten: [], zustand: .geplant)])
+        // Nur die laufende Woche geladen (Home): die Vorwoche bleibt neutral.
+        let woche = termine(cardioGeladen: ["2026-11-02"..."2026-11-08"])
+        #expect(woche[Self.tag(10, 31)] == nil)
+        // Ein Haken zaehlt auch ausserhalb des geladenen Bereichs.
+        let abgehakt = termine(cardio: ["2026-10-31"], cardioGeladen: [])
+        #expect(abgehakt[Self.tag(10, 31)] == [.cardio(arten: [], zustand: .erledigt)])
+    }
+
+    @Test func cardioGeladeneBereiche() {
+        let eins = CardioChecksStore.bereiche(alt: [], von: "2026-11-02", bis: "2026-11-08")
+        #expect(eins == ["2026-11-02"..."2026-11-08"])
+        #expect(CardioChecksStore.bereiche(alt: eins, von: "2026-11-02", bis: "2026-11-08") == eins)
+        let zwei = CardioChecksStore.bereiche(alt: eins, von: "2026-10-05", bis: "2026-11-08")
+        #expect(zwei == ["2026-11-02"..."2026-11-08", "2026-10-05"..."2026-11-08"])
+        #expect(CardioChecksStore.bereiche(alt: [], von: "2026-11-08", bis: "2026-11-02") == [])
     }
 
     @Test func kurseErledigtNachBeginnUndNieVerpasst() {

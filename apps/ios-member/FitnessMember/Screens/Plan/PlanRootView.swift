@@ -143,7 +143,8 @@ struct PlanRootView: View {
             plan: plan, tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, profil: profil,
             heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
             sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
-            heute: jetzt, kurse: sitzungen, cardioErledigt: cardio.erledigt, filter: filter)
+            heute: jetzt, kurse: sitzungen, cardioErledigt: cardio.erledigt,
+            cardioGeladen: cardio.geladen, filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
         // Trainings gehoeren zu "Einheiten": bei Kurs- oder Cardio-Filter nicht.

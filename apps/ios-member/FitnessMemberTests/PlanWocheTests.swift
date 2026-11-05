@@ -42,7 +42,7 @@ struct PlanWocheTests {
             naechsteEinheitKey: nil, erledigt: erledigt, trainiertAn: [], beginn: tage[0], verlaufAb: tage[0],
             heute: heute ?? tage[0],
             kurse: kurse ?? [kurs("k1", tag: "2026-10-26", name: "Zirkel", own: "booked")],
-            cardioErledigt: cardio, filter: filter)
+            cardioErledigt: cardio, cardioGeladen: ["2026-01-01"..."2026-12-31"], filter: filter)
     }
 
     @Test func rasterErgibtJeTagGenauEinenTermin() {
@@ -139,7 +139,7 @@ struct PlanWocheTests {
         let t = PlanKalender.termine(
             tage: tage, kalender: montag, raster: raster, einheiten: ["A", "B"], naechsteEinheitKey: nil,
             erledigt: [], trainiertAn: [], beginn: nil, verlaufAb: nil, heute: tage[0], kurse: [], cardioErledigt: [],
-            filter: .alle)
+            cardioGeladen: [], filter: .alle)
         #expect(t[tage[2]] == [.einheit(key: "A", zustand: .geplant)])
     }
 

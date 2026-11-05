@@ -57,7 +57,8 @@ struct PlanEinheitView: View {
             plan: plan, tage: PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender), kalender: kalender,
             profil: katalog.bootstrap?.member.trainingProfile, heuteEinheitKey: naechsteEinheitKey,
             sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
-            heute: jetzt, kurse: [], cardioErledigt: [], filter: .einheiten)
+            heute: jetzt, kurse: [], cardioErledigt: [], cardioGeladen: [],
+            filter: .einheiten)
         return PlanKalenderKontext.geplanterTag(
             einheitKey: einheitKey, termine: termine, heute: jetzt, kalender: kalender)
     }
