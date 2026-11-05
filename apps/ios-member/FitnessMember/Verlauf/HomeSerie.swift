@@ -159,14 +159,16 @@ enum HomeSerie {
         return ergebnis
     }
 
-    /// Vergangene Tage klappen ihren Inhalt auf (Einheit oder eigener Kurs).
-    /// Heute und kuenftig fuehrt ein Tag mit Planmarke in den Plan-Tab;
-    /// ohne Marke bleibt es beim Aufklappen, sofern es etwas zu zeigen gibt.
+    /// Ein Tag mit Inhalt (Einheit oder eigener Kurs) klappt ihn auf -- auch
+    /// heute, sonst waeren die Trainings von heute auf Home nicht mehr zu
+    /// erreichen (R8). Ohne Inhalt fuehrt heute oder ein kuenftiger Tag mit
+    /// Planmarke in den Plan-Tab; kuenftige Tage mit Marke immer.
     /// nil = kein Knopf. Die Ids sind "yyyy-MM-dd" und vergleichen sich als Text.
     static func tippZiel(_ tag: HomeSerieTag, heute: String, hatInhalt: Bool) -> HomeSerieTipp? {
         guard !tag.ausserhalb else { return nil }
-        if tag.id >= heute, tag.geplant != nil { return .planTag }
-        return hatInhalt ? .ausklappen : nil
+        if tag.id > heute, tag.geplant != nil { return .planTag }
+        if hatInhalt { return .ausklappen }
+        return tag.id == heute && tag.geplant != nil ? .planTag : nil
     }
 
     /// Das Monatsgitter um einen Tag herum -- volle Wochen von Montag bis

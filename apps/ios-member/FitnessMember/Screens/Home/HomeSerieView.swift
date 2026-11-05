@@ -16,10 +16,10 @@ enum HomeSerieAuswahl: Equatable {
 /// ist in den Plan-Tab gezogen (`PlanMonatsgitter`, Spec 1.1).
 ///
 /// **Antippbar ist, was etwas zu zeigen hat** (`HomeSerie.tippZiel`): ein
-/// vergangener Tag mit Einheit oder eigenem Kurs klappt ihn darunter auf;
-/// heute und kuenftig fuehrt ein Tag mit Planmarke in den Plan-Tab auf
-/// genau diesen Tag. Ein Tag ohne beides tut nichts. Welche Richtung ein
-/// Tipp nimmt, sieht man vorher an der Marke unter dem Tag.
+/// vergangener Tag oder heute mit Einheit oder eigenem Kurs klappt ihn
+/// darunter auf (und wieder zu); ein kuenftiger Tag mit Planmarke, oder
+/// heute mit Marke und ohne Inhalt, fuehrt in den Plan-Tab auf genau diesen
+/// Tag. Ein Tag ohne beides tut nichts.
 ///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,

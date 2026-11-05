@@ -451,9 +451,20 @@ struct HomeSerieTests {
 
     @Test func kuenftigerTagMitMarkeWaehlbar() {
         let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-06": .einheit, "2026-11-05": .einheit])
-        // Freitag (kuenftig) und heute mit Marke: Sprung in den Plan.
+        // Freitag (kuenftig) mit Marke: Sprung in den Plan, auch mit eigenem Kurs.
         #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planTag)
-        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: true) == .planTag)
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planTag)
+    }
+
+    /// R8: die Trainings von heute bleiben auf Home erreichbar.
+    @Test func heuteMitMarkeUndInhaltKlapptAuf() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .einheit])
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
+    }
+
+    @Test func heuteMitMarkeOhneInhaltSpringtInDenPlan() {
+        let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .einheit])
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == .planTag)
     }
 
     @Test func kuenftigerTagOhneMarkeNicht() {
