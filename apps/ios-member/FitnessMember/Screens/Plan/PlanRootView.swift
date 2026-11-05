@@ -83,17 +83,14 @@ struct PlanRootView: View {
 
     /// Wie `KurseWochenView.zeitzoneFuerAnfrage`; ohne Studio die des Geraets.
     private var zeitzone: String {
-        kurse.woche?.timezone
-            ?? studios.first.flatMap { erstes in katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone }
-            ?? TimeZone.current.identifier
+        PlanKalenderKontext.zeitzone(
+            wochenZone: kurse.woche?.timezone,
+            ersteStudioZone: studios.first.flatMap { erstes in
+                katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone
+            })
     }
 
-    private var kalender: Calendar {
-        var k = Calendar(identifier: .gregorian)
-        k.timeZone = TimeZone(identifier: zeitzone) ?? .current
-        k.locale = Locale(identifier: "de_DE")
-        return k
-    }
+    private var kalender: Calendar { PlanKalenderKontext.kalender(zeitzone: zeitzone) }
 
     private var profil: TrainingsplanProfil? { katalog.bootstrap?.member.trainingProfile }
 

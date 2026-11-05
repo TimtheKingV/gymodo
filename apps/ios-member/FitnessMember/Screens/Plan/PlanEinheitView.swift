@@ -38,29 +38,40 @@ struct PlanEinheitView: View {
     }
 
     @Environment(VerlaufStore.self) private var verlauf
+    @Environment(KurseStore.self) private var kurse
+
+    /// Wie der Plan-Tab: Zeitzone der Kurswoche, sonst die des ersten Studios.
+    private var kalender: Calendar {
+        let studios = KurseStudios.reihenfolge(
+            alle: katalog.bootstrap?.studios.map(\.id) ?? [], aktiv: katalog.activeStudioId)
+        let zone = PlanKalenderKontext.zeitzone(
+            wochenZone: kurse.woche?.timezone,
+            ersteStudioZone: studios.first.flatMap { erstes in
+                katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone
+            })
+        return PlanKalenderKontext.kalender(zeitzone: zone)
+    }
 
     /// Der Tag, auf dem die Folge diese Einheit als naechste liegt (heute oder
-    /// spaeter); nil, wenn sie in den naechsten vier Wochen nicht drankommt.
-    /// Dieselbe Rechnung wie der Plan-Tab (`PlanKalender.termine`), ohne Kurse
-    /// und Cardio; Zeitzone des Geraets statt der des Studios.
-    private func geplanterTag(plan: Trainingsplan, einheitKey: String, kalender: Calendar) -> Date? {
+    /// spaeter); nil, wenn sie im Fenster nicht drankommt. Dieselbe Rechnung wie
+    /// der Plan-Tab (`PlanKalender.termine`), ohne Kurse und Cardio.
+    private func geplanterTag(
+        plan: Trainingsplan, einheitKey: String, naechsteEinheitKey: String?, kalender: Calendar
+    ) -> Date? {
         let jetzt = Date()
-        let heute = kalender.startOfDay(for: jetzt)
-        let tage = (0..<28).compactMap { kalender.date(byAdding: .day, value: $0, to: heute) }
         let raster = PlanTabZustand.anzeigeRaster(
             planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
             profil: katalog.bootstrap?.member.trainingProfile)
         let termine = PlanKalender.termine(
-            tage: tage, kalender: kalender, raster: raster, einheiten: plan.einheiten.map(\.key),
-            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
-                ?? plan.naechsteEinheitKey,
+            tage: PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender),
+            kalender: kalender, raster: raster, einheiten: plan.einheiten.map(\.key),
+            naechsteEinheitKey: naechsteEinheitKey ?? plan.naechsteEinheitKey,
             erledigt: plan.erledigt,
             trainiertAn: Set(HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: kalender.timeZone.identifier).keys),
             beginn: plan.beginn.flatMap(Zeitpunkt.parse), heute: jetzt, kurse: [],
             cardioErledigt: [], filter: .einheiten)
-        return termine.keys.filter { $0 >= heute }.sorted().first { tag in
-            termine[tag]?.contains(.einheit(key: einheitKey, zustand: .geplant)) ?? false
-        }
+        return PlanKalenderKontext.geplanterTag(
+            einheitKey: einheitKey, termine: termine, heute: jetzt, kalender: kalender)
     }
 
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
@@ -68,11 +79,12 @@ struct PlanEinheitView: View {
                                         bloecke: [], bootstrap: katalog.bootstrap)
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let namen = EinheitNamen(plan: plan, muskeln: muskeln)
-        var kalender = Calendar(identifier: .gregorian)
-        kalender.locale = Locale(identifier: "de_DE")
-        let geplanterTag = geplanterTag(plan: plan, einheitKey: einheit.key, kalender: kalender)
-        let istGeplanterTag = geplanterTag.map { kalender.isDateInToday($0) } ?? false
+        let kalender = kalender
         let naechste = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
+        let geplanterTag = geplanterTag(
+            plan: plan, einheitKey: einheit.key, naechsteEinheitKey: naechste, kalender: kalender)
+        let istGeplanterTag = PlanKalenderKontext.istGeplanterTag(
+            geplanterTag, heute: Date(), kalender: kalender)
         let istNaechste = naechste == nil || naechste == einheit.key
 
         return VStack(spacing: 0) {

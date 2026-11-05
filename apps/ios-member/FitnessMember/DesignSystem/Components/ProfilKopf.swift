@@ -10,7 +10,8 @@ struct ProfilKopf: View {
     let modell: EinheitKarteModell
     let geschlecht: Geschlecht?
 
-    private var geplant: Bool { modell.art == .einheit }
+    /// Akzent nur mit Datum: „EINHEIT“ ohne geplanten Tag bleibt gedaempft.
+    private var akzent: Bool { modell.art == .einheit && ueberzeile != "EINHEIT" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -18,7 +19,7 @@ struct ProfilKopf: View {
                 Text(ueberzeile)
                     .font(DesignSystem.Typography.label)
                     .tracking(1.5)
-                    .foregroundStyle(geplant ? DesignSystem.Color.accent : DesignSystem.Color.textMuted)
+                    .foregroundStyle(akzent ? DesignSystem.Color.accent : DesignSystem.Color.textMuted)
                 Text(modell.titel)
                     .font(DesignSystem.Typography.detailScreentitel)
                     .foregroundStyle(DesignSystem.Color.text)
