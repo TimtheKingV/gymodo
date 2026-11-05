@@ -37,10 +37,16 @@ enum PlanKalender {
     /// keine Vergangenheit als ein falsches "verpasst". `trainiertAn` und
     /// `cardioErledigt` enthalten Tage als "yyyy-MM-dd". Die Cardio-Arten
     /// stehen im Profil; hier bleibt `arten` leer, der Aufrufer reicht sie nach.
+    ///
+    /// `verlaufAb`: ab diesem Tag ist `trainiertAn` vollstaendig (`verlaufAb(...)`).
+    /// Davor ist ein Kraft- oder Cardio-Slot ohne Erledigtes neutral -- kein
+    /// Termin statt eines falschen "verpasst" (der Verlauf ist gedeckelt). nil:
+    /// kein Verlauf bekannt, dann ist kein vergangener Slot verpasst. `erledigt`
+    /// kommt vollstaendig vom Server und gilt immer.
     static func termine(
         tage: [Date], kalender: Calendar, raster: [Rasterplatz], einheiten: [String],
         naechsteEinheitKey: String?, erledigt: [ErledigteEinheit], trainiertAn: Set<String>,
-        beginn: Date?, heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>,
+        beginn: Date?, verlaufAb: Date?, heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>,
         filter: PlanFilter
     ) -> [Date: [PlanTermin]] {
         let heuteStart = kalender.startOfDay(for: heute)
@@ -48,6 +54,9 @@ enum PlanKalender {
         let kraftTage = Set(raster.filter { $0.art == .kraft }.map(\.tag))
         let cardioTage = Set(raster.filter { $0.art == .cardio }.map(\.tag))
         let beginnStart = beginn.map { kalender.startOfDay(for: $0) }
+        let verlaufAbStart = verlaufAb.map { kalender.startOfDay(for: $0) }
+        /// Darf ein vergangener Tag "verpasst" heissen?
+        func verlaufBekannt(_ tag: Date) -> Bool { verlaufAbStart.map { tag >= $0 } ?? false }
 
         // Erledigte Einheiten je lokalem Tag, chronologisch.
         var erledigtJeTag: [Date: [String]] = [:]
@@ -60,7 +69,8 @@ enum PlanKalender {
         let einheitTermine = einheitenAufSlots(
             sichtbar: sichtbar, kalender: kalender, kraftTage: kraftTage, einheiten: einheiten,
             naechsteEinheitKey: naechsteEinheitKey, erledigtJeTag: erledigtJeTag,
-            trainiertAn: trainiertAn, beginnStart: beginnStart, heuteStart: heuteStart)
+            trainiertAn: trainiertAn, beginnStart: beginnStart, heuteStart: heuteStart,
+            verlaufBekannt: verlaufBekannt)
 
         var ergebnis: [Date: [PlanTermin]] = [:]
         for start in sichtbar {
@@ -90,9 +100,13 @@ enum PlanKalender {
                     liste.append(termin)
                 }
                 if filter == .alle || filter == .cardio, hatSlots, cardioTage.contains(iso) {
-                    let zustand: TerminZustand = cardioErledigt.contains(schluessel) ? .erledigt
-                        : vergangen ? .verpasst(verschobenAuf: nil) : .geplant
-                    liste.append(.cardio(arten: [], zustand: zustand))
+                    let erledigtCardio = cardioErledigt.contains(schluessel)
+                    // Vor `verlaufAb` ist ein offener vergangener Slot neutral (kein Termin).
+                    if erledigtCardio || !vergangen || verlaufBekannt(start) {
+                        let zustand: TerminZustand = erledigtCardio ? .erledigt
+                            : vergangen ? .verpasst(verschobenAuf: nil) : .geplant
+                        liste.append(.cardio(arten: [], zustand: zustand))
+                    }
                 }
                 if filter == .alle {
                     // Nur gebuchte Kurse; ein Raster-Kurstag ohne Buchung bleibt leer
@@ -103,6 +117,24 @@ enum PlanKalender {
             if !liste.isEmpty { ergebnis[start] = liste }
         }
         return ergebnis
+    }
+
+    /// Wie viele Einheiten `GET /me/sessions` hoechstens liefert (`SESSION_LIMIT`
+    /// in packages/domain/src/sessions.ts).
+    static let verlaufDeckel = 50
+
+    /// Ab welchem Tag der geladene Verlauf vollstaendig ist (`verlaufAb` in
+    /// `termine`). Nie geladen (weder Netz noch Cache): nil. Vollstaendig:
+    /// `beginn`. Gedeckelt (mehr Einheiten als geladen, oder ohne Gesamtzahl
+    /// genau am Deckel): der Tag der aeltesten geladenen Einheit.
+    static func verlaufAb(
+        sessions: [SessionSummary], gesamt: Int?, geladen: Bool, beginn: Date?, kalender: Calendar
+    ) -> Date? {
+        guard geladen else { return nil }
+        let gedeckelt = gesamt.map { $0 > sessions.count } ?? (sessions.count >= verlaufDeckel)
+        guard gedeckelt else { return beginn }
+        return sessions.compactMap { Zeitpunkt.parse($0.startedAt) }.min()
+            .map { kalender.startOfDay(for: $0) }
     }
 
     /// Erster Termin ab heute (heute eingeschlossen) mit Zustand .geplant.
@@ -125,7 +157,7 @@ enum PlanKalender {
     private static func einheitenAufSlots(
         sichtbar: Set<Date>, kalender: Calendar, kraftTage: Set<Int>, einheiten: [String],
         naechsteEinheitKey: String?, erledigtJeTag: [Date: [String]], trainiertAn: Set<String>,
-        beginnStart: Date?, heuteStart: Date
+        beginnStart: Date?, heuteStart: Date, verlaufBekannt: (Date) -> Bool
     ) -> [Date: PlanTermin] {
         let n = einheiten.count
         guard n > 0, !kraftTage.isEmpty, let letzter = sichtbar.max() else { return [:] }
@@ -157,7 +189,7 @@ enum PlanKalender {
                 if istSlot(tag) {
                     if let key {
                         ergebnis[tag] = .einheit(key: key, zustand: .erledigt)
-                    } else if !trainiertAn.contains(PlanWoche.tagesSchluessel(tag, kalender)) {
+                    } else if verlaufBekannt(tag), !trainiertAn.contains(PlanWoche.tagesSchluessel(tag, kalender)) {
                         // Ein freies Training zaehlt den Tag als trainiert, die Einheit bleibt offen.
                         verpasst.append((tag: tag, key: einheiten[p % n]))
                     }

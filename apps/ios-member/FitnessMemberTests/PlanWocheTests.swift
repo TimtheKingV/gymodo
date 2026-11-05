@@ -39,7 +39,7 @@ struct PlanWocheTests {
     ) -> [Date: [PlanTermin]] {
         PlanKalender.termine(
             tage: tage, kalender: Self.kalender, raster: raster ?? self.raster, einheiten: ["A", "B"],
-            naechsteEinheitKey: nil, erledigt: erledigt, trainiertAn: [], beginn: tage[0],
+            naechsteEinheitKey: nil, erledigt: erledigt, trainiertAn: [], beginn: tage[0], verlaufAb: tage[0],
             heute: heute ?? tage[0],
             kurse: kurse ?? [kurs("k1", tag: "2026-10-26", name: "Zirkel", own: "booked")],
             cardioErledigt: cardio, filter: filter)
@@ -138,7 +138,7 @@ struct PlanWocheTests {
         montag.firstWeekday = 2
         let t = PlanKalender.termine(
             tage: tage, kalender: montag, raster: raster, einheiten: ["A", "B"], naechsteEinheitKey: nil,
-            erledigt: [], trainiertAn: [], beginn: nil, heute: tage[0], kurse: [], cardioErledigt: [],
+            erledigt: [], trainiertAn: [], beginn: nil, verlaufAb: nil, heute: tage[0], kurse: [], cardioErledigt: [],
             filter: .alle)
         #expect(t[tage[2]] == [.einheit(key: "A", zustand: .geplant)])
     }

@@ -41,13 +41,14 @@ struct PlanKalenderTests {
     private func termine(
         raster: [Rasterplatz]? = nil, naechste: String? = nil, erledigt: [ErledigteEinheit] = [],
         trainiertAn: Set<String> = [], beginn: Date? = PlanKalenderTests.tag(10, 26, stunde: 9),
+        verlaufAb: Date? = PlanKalenderTests.tag(10, 26),
         heute: Date = PlanKalenderTests.tag(11, 4, stunde: 10), kurse: [CourseWeekSession] = [],
         cardio: Set<String> = [], filter: PlanFilter = .alle
     ) -> [Date: [PlanTermin]] {
         PlanKalender.termine(
             tage: tage, kalender: Self.kalender, raster: raster ?? self.raster, einheiten: ["A", "B", "C"],
             naechsteEinheitKey: naechste, erledigt: erledigt, trainiertAn: trainiertAn, beginn: beginn,
-            heute: heute, kurse: kurse, cardioErledigt: cardio, filter: filter)
+            verlaufAb: verlaufAb, heute: heute, kurse: kurse, cardioErledigt: cardio, filter: filter)
     }
 
     @Test func verpasstVerschiebtAufNaechstenKraftSlot() {
@@ -149,6 +150,64 @@ struct PlanKalenderTests {
                                    heute: Self.tag(11, 5, stunde: 7))
         let heute = PlanKalender.naechster(amDonnerstag, ab: Self.tag(11, 5, stunde: 7), kalender: Self.kalender)
         #expect(heute?.tag == Self.tag(11, 5))
+    }
+
+    // MARK: - Verlauf gedeckelt (R7)
+
+    /// Verlauf erst ab Mo 2.11. vollstaendig: Di 27.10., Do 29.10. und Sa 31.10.
+    /// sind neutral, Mo 26.10. bleibt erledigt, Di 3.11. ist verpasst.
+    @Test func vorVerlaufAbKeinVerpasst() {
+        let t = termine(naechste: "C",
+                        erledigt: [erledigt("A", "2026-10-26T17:00:00Z"), erledigt("B", "2026-11-02T17:00:00Z")],
+                        verlaufAb: Self.tag(11, 2))
+        #expect(t[Self.tag(10, 26)] == [.einheit(key: "A", zustand: .erledigt)])
+        #expect(t[Self.tag(10, 27)] == nil)
+        #expect(t[Self.tag(10, 29)] == nil)
+        #expect(t[Self.tag(10, 31)] == nil)
+        #expect(t[Self.tag(11, 2)] == [.einheit(key: "B", zustand: .erledigt)])
+        guard case .einheit(_, .verpasst)? = t[Self.tag(11, 3)]?.first else {
+            Issue.record("Di 3.11. ist nicht verpasst"); return
+        }
+    }
+
+    @Test func ohneVerlaufKeinVergangenesVerpasst() {
+        let t = termine(erledigt: [erledigt("A", "2026-11-02T17:00:00Z")], verlaufAb: nil)
+        let vergangen = t.filter { $0.key < Self.tag(11, 4) }.values.flatMap { $0 }
+        #expect(!vergangen.contains { if case .verpasst = $0.zustand { true } else { false } })
+        #expect(t[Self.tag(11, 2)] == [.einheit(key: "A", zustand: .erledigt)])
+        #expect(t[Self.tag(11, 5)] != nil)
+    }
+
+    // MARK: - verlaufAb
+
+    private func session(_ id: String, _ start: String) -> SessionSummary {
+        SessionSummary(id: id, startedAt: start, completedAt: start, completedReason: "manual",
+                       machineCount: 0, setCount: 0, blocks: [])
+    }
+
+    @Test func verlaufAbNieGeladenIstNil() {
+        #expect(PlanKalender.verlaufAb(sessions: [], gesamt: nil, geladen: false,
+                                       beginn: Self.tag(10, 26), kalender: Self.kalender) == nil)
+    }
+
+    @Test func verlaufAbVollstaendigIstBeginn() {
+        let s = [session("a", "2026-11-02T17:00:00Z")]
+        #expect(PlanKalender.verlaufAb(sessions: s, gesamt: 1, geladen: true,
+                                       beginn: Self.tag(10, 26, stunde: 9), kalender: Self.kalender)
+            == Self.tag(10, 26, stunde: 9))
+        // Ohne Gesamtzahl unter dem Deckel: auch vollstaendig.
+        #expect(PlanKalender.verlaufAb(sessions: s, gesamt: nil, geladen: true,
+                                       beginn: Self.tag(10, 26), kalender: Self.kalender) == Self.tag(10, 26))
+    }
+
+    @Test func verlaufAbGedeckeltIstAeltesteEinheit() {
+        let s = [session("a", "2026-11-02T17:00:00Z"), session("b", "2026-10-29T06:30:00Z")]
+        #expect(PlanKalender.verlaufAb(sessions: s, gesamt: 80, geladen: true,
+                                       beginn: Self.tag(10, 1), kalender: Self.kalender) == Self.tag(10, 29))
+        let fuenfzig = (0..<50).map { session("s\($0)", "2026-11-02T17:00:00Z") }
+            + [session("x", "2026-10-30T10:00:00Z")]
+        #expect(PlanKalender.verlaufAb(sessions: fuenfzig, gesamt: nil, geladen: true,
+                                       beginn: Self.tag(10, 1), kalender: Self.kalender) == Self.tag(10, 30))
     }
 }
 

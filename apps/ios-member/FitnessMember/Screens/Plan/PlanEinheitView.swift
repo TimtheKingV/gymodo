@@ -68,7 +68,11 @@ struct PlanEinheitView: View {
             naechsteEinheitKey: naechsteEinheitKey ?? plan.naechsteEinheitKey,
             erledigt: plan.erledigt,
             trainiertAn: Set(HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: kalender.timeZone.identifier).keys),
-            beginn: plan.beginn.flatMap(Zeitpunkt.parse), heute: jetzt, kurse: [],
+            beginn: plan.beginn.flatMap(Zeitpunkt.parse),
+            verlaufAb: PlanKalender.verlaufAb(
+                sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount,
+                geladen: verlauf.stand != nil, beginn: plan.beginn.flatMap(Zeitpunkt.parse), kalender: kalender),
+            heute: jetzt, kurse: [],
             cardioErledigt: [], filter: .einheiten)
         return PlanKalenderKontext.geplanterTag(
             einheitKey: einheitKey, termine: termine, heute: jetzt, kalender: kalender)

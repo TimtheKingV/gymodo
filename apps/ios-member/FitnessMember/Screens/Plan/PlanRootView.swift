@@ -149,7 +149,11 @@ struct PlanRootView: View {
                 ?? plan.naechsteEinheitKey,
             erledigt: plan.erledigt,
             trainiertAn: Set(trainingsJeTag.keys),
-            beginn: beginn, heute: jetzt, kurse: sitzungen,
+            beginn: beginn,
+            verlaufAb: PlanKalender.verlaufAb(
+                sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount,
+                geladen: verlauf.stand != nil, beginn: beginn, kalender: kalender),
+            heute: jetzt, kurse: sitzungen,
             cardioErledigt: cardio.erledigt, filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
@@ -157,8 +161,12 @@ struct PlanRootView: View {
         let trainings = tag <= kalender.startOfDay(for: jetzt) && (filter == .alle || filter == .einheiten)
             ? HomeZeilen.trainingskarten(trainingsJeTag[tagId] ?? []) : []
         let trainiert: (Date) -> Bool = { trainingsJeTag[Self.tagId($0, kalender: kalender)] != nil }
-        let wochenVerpasst = tage.contains { t in
-            (termine[kalender.startOfDay(for: t)] ?? []).contains { Self.istVerpasst($0) }
+        // Legende "verpasst": die gezeigten Tage -- Woche oder ganzer Monat.
+        let hatVerpasst = termine.contains { tagStart, liste in
+            let gezeigt = zustand.ansicht == .monat
+                ? kalender.isDate(tagStart, equalTo: tag, toGranularity: .month)
+                : tage.contains { kalender.isDate($0, inSameDayAs: tagStart) }
+            return gezeigt && liste.contains { Self.istVerpasst($0) }
         }
 
         return ScrollView {
@@ -211,8 +219,8 @@ struct PlanRootView: View {
                                 zustand.ansicht = .woche
                             })
                     }
-                    if hatKurse || hatCardio || wochenVerpasst {
-                        legende(hatKraft: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio, hatVerpasst: wochenVerpasst)
+                    if hatKurse || hatCardio || hatVerpasst {
+                        legende(hatKraft: hatKraft, hatKurse: hatKurse, hatCardio: hatCardio, hatVerpasst: hatVerpasst)
                     }
                 }
 

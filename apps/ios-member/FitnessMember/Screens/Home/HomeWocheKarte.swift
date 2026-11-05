@@ -149,7 +149,7 @@ enum HomeWoche {
             .firstIndex { $0.tag >= heuteIso } ?? 0
         let termine = PlanKalender.termine(
             tage: tage, kalender: kalender, raster: raster, einheiten: Array(kraft[ab...] + kraft[..<ab]),
-            naechsteEinheitKey: nil, erledigt: [], trainiertAn: [], beginn: nil, heute: heute,
+            naechsteEinheitKey: nil, erledigt: [], trainiertAn: [], beginn: nil, verlaufAb: nil, heute: heute,
             kurse: kurse, cardioErledigt: cardioErledigt, filter: .alle)
         guard let naechster = PlanTabZustand.alsNaechstes(
             termine: termine, nach: kalender.startOfDay(for: heute), anzahl: 1).first else { return nil }
