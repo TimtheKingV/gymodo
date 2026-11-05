@@ -129,7 +129,7 @@ enum HomeWoche {
     }
 
     /// Der erste Termin NACH heute, ueber diese und die naechste Woche --
-    /// dieselbe Zuordnung wie der Plan-Tab (`PlanWoche.termine`). Fuer eine
+    /// dieselbe Zuordnung wie der Plan-Tab (`PlanKalender.termine`). Fuer eine
     /// Einheit gilt die Folge: `naechsteEinheitKey` ist die Einheit von "Heute
     /// dran", nicht der Buchstabe des Rasters (I5); der Tag bleibt die
     /// Erinnerung. Ohne Key (kein Ablauf) der des Rasters.
@@ -140,9 +140,17 @@ enum HomeWoche {
     ) -> HomeNaechster? {
         guard let montag = datum(tag: 1, woche: heute, kalender: kalender) else { return nil }
         let tage = (0..<14).compactMap { kalender.date(byAdding: .day, value: $0, to: montag) }
-        let termine = PlanWoche.termine(
-            tage: tage, kalender: kalender, raster: raster, kurse: kurse,
-            cardioErledigt: cardioErledigt, einheitenErledigt: [], filter: .alle)
+        // Die Folge ist das Raster selbst, gedreht auf den ersten Kraft-Slot ab
+        // heute -- so traegt jeder Tag den Key des Rasters (die Karte entfaellt
+        // mit dem neuen Home).
+        let kraft = raster.filter { $0.art == .kraft }.sorted { $0.tag < $1.tag }.compactMap(\.einheitKey)
+        let heuteIso = isoWochentag(heute, kalender)
+        let ab = raster.filter { $0.art == .kraft && $0.einheitKey != nil }.sorted { $0.tag < $1.tag }
+            .firstIndex { $0.tag >= heuteIso } ?? 0
+        let termine = PlanKalender.termine(
+            tage: tage, kalender: kalender, raster: raster, einheiten: Array(kraft[ab...] + kraft[..<ab]),
+            naechsteEinheitKey: nil, erledigt: [], trainiertAn: [], beginn: nil, heute: heute,
+            kurse: kurse, cardioErledigt: cardioErledigt, filter: .alle)
         guard let naechster = PlanTabZustand.alsNaechstes(
             termine: termine, nach: kalender.startOfDay(for: heute), anzahl: 1).first else { return nil }
         let iso = isoWochentag(naechster.tag, kalender)
@@ -153,7 +161,7 @@ enum HomeWoche {
             let key = naechsteEinheitKey ?? rasterKey
             titel = namen.name(key)
             ziel = .einheit(key: key)
-        case .kurs(let name, _, _):
+        case .kurs(let name, _, _, _):
             titel = name
             ziel = .tag(naechster.tag)
         case .cardio:

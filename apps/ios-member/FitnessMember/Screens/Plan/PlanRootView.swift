@@ -5,7 +5,7 @@ import SwiftUI
 /// und darueber die Karte "Plan einrichten" (Ruling).
 ///
 /// Die App rechnet am Plan nichts (F15): Raster, Folge und Kraft-Tage kommen
-/// vom Server; hier wird nur zugeordnet (`PlanWoche`, `PlanTabZustand`).
+/// vom Server; hier wird nur zugeordnet (`PlanKalender`, `PlanTabZustand`).
 struct PlanRootView: View {
     let apiClient: APIClient
     let beiKurs: (String) -> Void
@@ -21,6 +21,7 @@ struct PlanRootView: View {
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(NetzwerkMonitor.self) private var netz
     @Environment(CardioChecksStore.self) private var cardio
+    @Environment(VerlaufStore.self) private var verlauf
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -129,9 +130,15 @@ struct PlanRootView: View {
         let alleTage = montage.flatMap { m in
             KurseWochenBerechnung.wochentage(abMontag: m, jetzt: jetzt, zeitzone: zeitzone).map(\.datum)
         }
-        let termine = PlanWoche.termine(
-            tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, raster: raster, kurse: sitzungen,
-            cardioErledigt: cardio.erledigt, einheitenErledigt: [], filter: filter)
+        let termine = PlanKalender.termine(
+            tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, raster: raster,
+            einheiten: plan.einheiten.map(\.key),
+            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
+                ?? plan.naechsteEinheitKey,
+            erledigt: plan.erledigt,
+            trainiertAn: Set(HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: zeitzone).keys),
+            beginn: plan.beginn.flatMap(Zeitpunkt.parse), heute: jetzt, kurse: sitzungen,
+            cardioErledigt: cardio.erledigt, filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
 
@@ -306,12 +313,16 @@ struct PlanRootView: View {
         var ergebnis: [MarkenEintrag] = []
         for termin in termine {
             switch termin {
-            case .einheit(_, let erledigt):
-                if !ergebnis.contains(where: { $0.art == .einheit }) { ergebnis.append(MarkenEintrag(.einheit, erledigt)) }
+            case .einheit(_, let zustand):
+                if !ergebnis.contains(where: { $0.art == .einheit }) {
+                    ergebnis.append(MarkenEintrag(.einheit, zustand == .erledigt))
+                }
             case .kurs:
                 if !ergebnis.contains(where: { $0.art == .kurs }) { ergebnis.append(MarkenEintrag(.kurs, false)) }
-            case .cardio(_, let erledigt):
-                if !ergebnis.contains(where: { $0.art == .cardio }) { ergebnis.append(MarkenEintrag(.cardio, erledigt)) }
+            case .cardio(_, let zustand):
+                if !ergebnis.contains(where: { $0.art == .cardio }) {
+                    ergebnis.append(MarkenEintrag(.cardio, zustand == .erledigt))
+                }
             }
         }
         return ergebnis
@@ -412,14 +423,15 @@ struct PlanRootView: View {
     private func eintraege(_ termine: [PlanTermin], plan: Trainingsplan, tagId: String) -> [PlanTagEintrag] {
         termine.compactMap { termin in
             switch termin {
-            case .einheit(let key, let erledigt):
-                return plan.einheiten.first { $0.key == key }.map { .einheit($0, erledigt: erledigt) }
-            case .kurs(let titel, let beginn, _):
+            // `.verpasst` zeigt vorerst wie nicht erledigt (eigene Darstellung folgt).
+            case .einheit(let key, let zustand):
+                return plan.einheiten.first { $0.key == key }.map { .einheit($0, erledigt: zustand == .erledigt) }
+            case .kurs(let titel, let beginn, _, _):
                 return sitzungen.first {
                     $0.localDay == tagId && $0.name == titel && Zeitpunkt.parse($0.startsAt) == beginn
                 }.map { .kurs($0) }
-            case .cardio(_, let erledigt):
-                return .cardio(arten: profil?.cardioArten ?? [], erledigt: erledigt)
+            case .cardio(_, let zustand):
+                return .cardio(arten: profil?.cardioArten ?? [], erledigt: zustand == .erledigt)
             }
         }
     }

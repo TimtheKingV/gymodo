@@ -2,7 +2,8 @@ import Foundation
 import Testing
 @testable import FitnessMember
 
-/// Wochenmodell des Plan-Tabs: Woche Mo 26.10. bis So 1.11.2026 (Europe/Berlin).
+/// Wochenmodell des Plan-Tabs (`PlanKalender`, Raster und Kurse): Woche Mo 26.10.
+/// bis So 1.11.2026 (Europe/Berlin), heute Mo 26.10. -- alles liegt vorn.
 struct PlanWocheTests {
     private static let kalender: Calendar = {
         var k = Calendar(identifier: .gregorian)
@@ -33,33 +34,40 @@ struct PlanWocheTests {
 
     private func termine(
         raster: [Rasterplatz]? = nil, kurse: [CourseWeekSession]? = nil,
-        cardio: Set<String> = [], einheiten: Set<String> = [], filter: PlanFilter = .alle
+        cardio: Set<String> = [], erledigt: [ErledigteEinheit] = [], heute: Date? = nil,
+        filter: PlanFilter = .alle
     ) -> [Date: [PlanTermin]] {
-        PlanWoche.termine(
-            tage: tage, kalender: Self.kalender, raster: raster ?? self.raster,
+        PlanKalender.termine(
+            tage: tage, kalender: Self.kalender, raster: raster ?? self.raster, einheiten: ["A", "B"],
+            naechsteEinheitKey: nil, erledigt: erledigt, trainiertAn: [], beginn: tage[0],
+            heute: heute ?? tage[0],
             kurse: kurse ?? [kurs("k1", tag: "2026-10-26", name: "Zirkel", own: "booked")],
-            cardioErledigt: cardio, einheitenErledigt: einheiten, filter: filter)
+            cardioErledigt: cardio, filter: filter)
     }
 
     @Test func rasterErgibtJeTagGenauEinenTermin() {
         let t = termine()
         let mo = tage[0], mi = tage[2], fr = tage[4], so = tage[6]
         #expect(t[mo]?.count == 1)
-        #expect(t[mi] == [.einheit(key: "A", erledigt: false)])
-        #expect(t[fr] == [.einheit(key: "B", erledigt: false)])
-        #expect(t[so] == [.cardio(arten: [], erledigt: false)])
+        #expect(t[mi] == [.einheit(key: "A", zustand: .geplant)])
+        #expect(t[fr] == [.einheit(key: "B", zustand: .geplant)])
+        #expect(t[so] == [.cardio(arten: [], zustand: .geplant)])
         #expect(t[tage[1]] == nil)
-        guard case .kurs(let titel, _, let angemeldet)? = t[mo]?.first else {
+        guard case .kurs(let titel, _, let angemeldet, let zustand)? = t[mo]?.first else {
             Issue.record("Montag zeigt keinen Kurs"); return
         }
         #expect(titel == "Zirkel")
         #expect(angemeldet)
+        #expect(zustand == .geplant)
     }
 
     @Test func erledigtesWirdMarkiert() {
-        let t = termine(cardio: ["2026-11-01"], einheiten: ["A"])
-        #expect(t[tage[2]] == [.einheit(key: "A", erledigt: true)])
-        #expect(t[tage[6]] == [.cardio(arten: [], erledigt: true)])
+        let t = termine(
+            cardio: ["2026-11-01"],
+            erledigt: [ErledigteEinheit(sessionId: "s1", einheitKey: "A", startedAt: "2026-10-28T17:00:00Z")],
+            heute: Self.kalender.date(from: DateComponents(year: 2026, month: 11, day: 1, hour: 12)))
+        #expect(t[tage[2]] == [.einheit(key: "A", zustand: .erledigt)])
+        #expect(t[tage[6]] == [.cardio(arten: [], zustand: .erledigt)])
     }
 
     @Test func kursFilterZeigtAuchNichtGebuchteKurse() {
@@ -70,7 +78,7 @@ struct PlanWocheTests {
         ]
         let t = termine(kurse: kurse, filter: .kurse)
         #expect(t[tage[2]]?.count == 1)
-        guard case .kurs(let titel, _, let angemeldet)? = t[tage[2]]?.first else {
+        guard case .kurs(let titel, _, let angemeldet, _)? = t[tage[2]]?.first else {
             Issue.record("Mittwoch zeigt keinen Kurs"); return
         }
         #expect(titel == "Yoga")
@@ -83,7 +91,7 @@ struct PlanWocheTests {
 
     @Test func gebuchterKursErscheintAuchOhneRasterplatz() {
         let t = termine(kurse: [kurs("k2", tag: "2026-10-27", name: "Yoga", own: "booked")])
-        guard case .kurs(let titel, _, let angemeldet)? = t[tage[1]]?.first else {
+        guard case .kurs(let titel, _, let angemeldet, _)? = t[tage[1]]?.first else {
             Issue.record("Dienstag zeigt keinen Kurs"); return
         }
         #expect(titel == "Yoga" && angemeldet)
@@ -108,7 +116,7 @@ struct PlanWocheTests {
             freeSeats: 9, ownStatus: "booked", ownBookingId: "b", ownWaitlistPosition: nil)
         let t = termine(kurse: [spaet, frueh])
         let titel = (t[tage[0]] ?? []).compactMap { termin -> String? in
-            if case .kurs(let n, _, _) = termin { n } else { nil }
+            if case .kurs(let n, _, _, _) = termin { n } else { nil }
         }
         #expect(titel == ["Frueh", "Spaet"])
     }
@@ -122,16 +130,17 @@ struct PlanWocheTests {
         let e = termine(filter: .einheiten)
         #expect(e.keys.count == 2)
         let c = termine(filter: .cardio)
-        #expect(c == [tage[6]: [.cardio(arten: [], erledigt: false)]])
+        #expect(c == [tage[6]: [.cardio(arten: [], zustand: .geplant)]])
     }
 
     @Test func wochentagsZuordnungHaengtNichtVonFirstWeekdayAb() {
         var montag = Self.kalender
         montag.firstWeekday = 2
-        let t = PlanWoche.termine(
-            tage: tage, kalender: montag, raster: raster, kurse: [], cardioErledigt: [],
-            einheitenErledigt: [], filter: .alle)
-        #expect(t[tage[2]] == [.einheit(key: "A", erledigt: false)])
+        let t = PlanKalender.termine(
+            tage: tage, kalender: montag, raster: raster, einheiten: ["A", "B"], naechsteEinheitKey: nil,
+            erledigt: [], trainiertAn: [], beginn: nil, heute: tage[0], kurse: [], cardioErledigt: [],
+            filter: .alle)
+        #expect(t[tage[2]] == [.einheit(key: "A", zustand: .geplant)])
     }
 
     @Test func sichtbareFilter() {

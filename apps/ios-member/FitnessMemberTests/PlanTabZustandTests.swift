@@ -176,13 +176,13 @@ struct PlanTabZustandTests {
 
     @Test func alsNaechstesSindDieZweiFolgendenTermine() {
         let termine: [Date: [PlanTermin]] = [
-            Self.tag(2026, 10, 28): [.einheit(key: "A", erledigt: false)],
-            Self.tag(2026, 10, 30): [.einheit(key: "B", erledigt: false)],
-            Self.tag(2026, 11, 1): [.cardio(arten: [], erledigt: false)],
+            Self.tag(2026, 10, 28): [.einheit(key: "A", zustand: .geplant)],
+            Self.tag(2026, 10, 30): [.einheit(key: "B", zustand: .geplant)],
+            Self.tag(2026, 11, 1): [.cardio(arten: [], zustand: .geplant)],
         ]
         let naechste = PlanTabZustand.alsNaechstes(termine: termine, nach: Self.tag(2026, 10, 29), anzahl: 2)
         #expect(naechste.map(\.tag) == [Self.tag(2026, 10, 30), Self.tag(2026, 11, 1)])
-        #expect(naechste.first?.termin == .einheit(key: "B", erledigt: false))
+        #expect(naechste.first?.termin == .einheit(key: "B", zustand: .geplant))
     }
 
     // MARK: - Einplanen (PlanWochentage)
