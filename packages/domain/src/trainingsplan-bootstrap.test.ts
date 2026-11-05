@@ -7,6 +7,7 @@ import {
   merklisteFuerApp,
   nachzuholendeSessions,
   planFuerApp,
+  planLinie,
 } from "./trainingsplan-bootstrap.js";
 import type { TrainingPlan } from "./trainingsplan.js";
 import type { TrainingProfile } from "./trainingsprofil.js";
@@ -180,10 +181,46 @@ describe("planFuerApp", () => {
     expect(planFuerApp(offen, [], neu, {}, {}, LEER).beginn).toBe("2026-10-19T08:00:00Z");
   });
 
-  it("beginn reicht bis zur ersten erledigten Einheit zurueck", () => {
+  it("beginn reicht bis zur ersten erledigten Einheit desselben Plans zurueck", () => {
     const spaet = { ...plan, acceptedAt: "2026-11-01T08:00:00Z", createdAt: "2026-10-30T08:00:00Z" } as TrainingPlan;
-    const gezaehlt = [{ sessionId: "s1", einheitKey: "A", startedAt: "2026-10-22T17:00:00Z" }];
+    const gezaehlt = [{ sessionId: "s1", einheitKey: "A", startedAt: "2026-10-22T17:00:00Z", planId: "p" }];
     expect(planFuerApp(spaet, gezaehlt, neu, {}, {}, LEER).beginn).toBe("2026-10-22T17:00:00Z");
+    // planId bleibt intern.
+    expect(planFuerApp(spaet, gezaehlt, neu, {}, {}, LEER).erledigt).toEqual([
+      { sessionId: "s1", einheitKey: "A", startedAt: "2026-10-22T17:00:00Z" },
+    ]);
+  });
+
+  it("ein neuer Plan nach einem alten beginnt nicht vor seiner Annahme", () => {
+    const neuerPlan = { ...plan, id: "p2", acceptedAt: "2026-11-01T08:00:00Z", createdAt: "2026-10-31T08:00:00Z" } as TrainingPlan;
+    const zeilen = [
+      { id: "p2", version: 2, createdAt: "2026-10-31T08:00:00Z", acceptedAt: "2026-11-01T08:00:00Z" },
+      { id: "p1", version: 1, createdAt: "2026-09-01T08:00:00Z", acceptedAt: "2026-09-02T08:00:00Z" },
+    ];
+    const linie = planLinie(neuerPlan, zeilen);
+    expect(linie).toEqual({ planIds: ["p2"], beginn: "2026-11-01T08:00:00Z" });
+    const gezaehlt = [
+      { sessionId: "alt", einheitKey: "A", startedAt: "2026-09-10T17:00:00Z", planId: "p1" },
+      { sessionId: "neu", einheitKey: "B", startedAt: "2026-11-02T17:00:00Z", planId: "p2" },
+    ];
+    expect(planFuerApp(neuerPlan, gezaehlt, neu, {}, {}, LEER, linie).beginn).toBe("2026-11-01T08:00:00Z");
+  });
+
+  it("eine Tauschversion behaelt den Beginn der Planlinie", () => {
+    // v1 angenommen, v2 verworfener Vorschlag (kein accepted_at), v3 und v4 Tausch.
+    const getauscht = { ...plan, id: "p4", version: 4, acceptedAt: "2026-10-28T09:00:00.123Z", createdAt: "2026-10-28T09:00:00.123Z" } as TrainingPlan;
+    const zeilen = [
+      { id: "p4", version: 4, createdAt: "2026-10-28T09:00:00.123Z", acceptedAt: "2026-10-28T09:00:00.123Z" },
+      { id: "p3", version: 3, createdAt: "2026-10-25T09:00:00Z", acceptedAt: "2026-10-25T09:00:00Z" },
+      { id: "p1", version: 1, createdAt: "2026-10-19T08:00:00Z", acceptedAt: "2026-10-20T08:00:00Z" },
+    ];
+    const linie = planLinie(getauscht, zeilen);
+    expect(linie).toEqual({ planIds: ["p4", "p3", "p1"], beginn: "2026-10-20T08:00:00Z" });
+    const gezaehlt = [
+      { sessionId: "vorher", einheitKey: "A", startedAt: "2026-09-10T17:00:00Z", planId: "p0" },
+      { sessionId: "s1", einheitKey: "A", startedAt: "2026-10-21T17:00:00Z", planId: "p1" },
+    ];
+    expect(planFuerApp(getauscht, gezaehlt, neu, {}, {}, LEER, linie).beginn).toBe("2026-10-20T08:00:00Z");
   });
 });
 

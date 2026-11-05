@@ -335,11 +335,14 @@ export {
   NACHHOLEN_HOECHSTENS,
   nachzuholendeSessions,
   planFuerApp,
+  planLinie,
 } from "./trainingsplan-bootstrap.js";
 export type {
   GezaehlteEinheit,
   PlanAlternative,
   PlanFuerApp,
+  PlanLinie,
+  PlanLinienZeile,
   PlanMerkliste,
   SessionFuerNachholen,
   SessionFuerZaehler,

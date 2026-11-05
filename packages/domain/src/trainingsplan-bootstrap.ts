@@ -38,10 +38,17 @@ const POSTGREST_MAX_ROWS = 1000;
 /** Saetze je Abfrage fuer die letzte Satzzeit offener Sessions, siehe ladeLetzteSaetze. */
 const SATZ_LIMIT = POSTGREST_MAX_ROWS;
 
-export type GezaehlteEinheit = { sessionId: string; einheitKey: string; startedAt: string };
+export type GezaehlteEinheit = {
+  sessionId: string;
+  einheitKey: string;
+  startedAt: string;
+  /** workout_sessions.plan_id; nur fuer die Planlinie (planFuerApp), geht nicht an die App. */
+  planId?: string;
+};
 
 export type SessionFuerZaehler = {
   id: string;
+  planId?: string;
   einheitKey: string;
   startedAt: string;
   completedAt: string | null;
@@ -62,7 +69,12 @@ export function gezaehlteEinheiten(sessions: SessionFuerZaehler[], jetzt: Date):
   return sessions
     .filter((s) => s.zaehlt && abgeschlossen(s))
     .sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime())
-    .map((s) => ({ sessionId: s.id, einheitKey: s.einheitKey, startedAt: s.startedAt }));
+    .map((s) => ({
+      sessionId: s.id,
+      einheitKey: s.einheitKey,
+      startedAt: s.startedAt,
+      ...(s.planId !== undefined ? { planId: s.planId } : {}),
+    }));
 }
 
 /**
@@ -138,7 +150,7 @@ export async function ladeGezaehlteEinheiten(
 ): Promise<GezaehlteEinheit[]> {
   const { data, error } = await client
     .from("workout_sessions")
-    .select("id, plan_einheit_key, started_at, completed_at")
+    .select("id, plan_id, plan_einheit_key, started_at, completed_at")
     .eq("user_id", userId)
     .not("plan_id", "is", null)
     .order("started_at", { ascending: false })
@@ -146,6 +158,7 @@ export async function ladeGezaehlteEinheiten(
   if (error) throw new DomainError("internal", "Die Einheiten konnten nicht gelesen werden.");
   const sessions = (data ?? []) as Array<{
     id: string;
+    plan_id: string;
     plan_einheit_key: string;
     started_at: string;
     completed_at: string | null;
@@ -181,6 +194,7 @@ export async function ladeGezaehlteEinheiten(
   return gezaehlteEinheiten(
     sessions.map((s) => ({
       id: s.id,
+      planId: s.plan_id,
       einheitKey: s.plan_einheit_key,
       startedAt: s.started_at,
       completedAt: s.completed_at,
@@ -227,7 +241,10 @@ export type PlanFuerApp = {
   merkliste: PlanMerkliste;
   /** Die gezaehlten Einheiten, aelteste zuerst; die App zeigt damit erledigte Plantage. */
   erledigt: GezaehlteEinheit[];
-  /** ISO-Zeitpunkt, ab dem der Plan gilt: Annahme (sonst Anlage), nie nach der ersten erledigten Einheit. */
+  /**
+   * ISO-Zeitpunkt, ab dem der Plan gilt: Annahme der Planlinie (sonst Anlage; ein Tausch setzt
+   * ihn nicht neu, planLinie), nie nach der ersten erledigten Einheit dieser Linie.
+   */
   beginn: string;
 };
 
@@ -276,6 +293,59 @@ export function alternativenJeBaustein(
   return ergebnis;
 }
 
+/** Eine Planversion, soweit die Planlinie sie braucht. */
+export type PlanLinienZeile = { id: string; version: number; createdAt: string; acceptedAt: string | null };
+
+/** Die Versionen eines Plans (aktuelle zuerst) und wann er angenommen wurde. */
+export type PlanLinie = { planIds: string[]; beginn: string };
+
+/**
+ * Ein dauerhafter Tausch legt eine neue Planzeile an (0062/0065/0066/0070): direkt "aktiv",
+ * accepted_at = now() in derselben Transaktion wie created_at -- beide sind gleich. Ein
+ * neuer Plan entsteht als Vorschlag und wird spaeter angenommen (accept_training_plan,
+ * eigene Transaktion): accepted_at liegt nach created_at.
+ */
+function istTauschversion(z: PlanLinienZeile): boolean {
+  return z.acceptedAt !== null && Date.parse(z.acceptedAt) === Date.parse(z.createdAt);
+}
+
+/**
+ * Die Linie des aktuellen Plans: von ihm ueber die Tauschversionen zurueck bis zum
+ * angenommenen Vorschlag. Vorgaenger einer Tauschversion ist die juengste aeltere Version,
+ * die je angenommen wurde (verworfene Vorschlaege haben kein accepted_at). Beginn ist die
+ * Annahme dieses Vorschlags -- ein Tausch setzt den Zeitraum nicht neu, ein neuer Plan schon.
+ * Rein; `zeilen` sind die Versionen desselben Mitglieds und Studios.
+ */
+export function planLinie(aktuell: PlanLinienZeile, zeilen: PlanLinienZeile[]): PlanLinie {
+  const planIds = [aktuell.id];
+  let z = aktuell;
+  while (istTauschversion(z)) {
+    const version = z.version;
+    const vorgaenger = zeilen
+      .filter((v) => v.version < version && v.acceptedAt !== null)
+      .sort((a, b) => b.version - a.version)[0];
+    if (!vorgaenger) break;
+    planIds.push(vorgaenger.id);
+    z = vorgaenger;
+  }
+  return { planIds, beginn: z.acceptedAt ?? z.createdAt };
+}
+
+/** Die je angenommenen Versionen des Plans im Studio des Plans, fuer planLinie. */
+async function ladePlanLinie(client: SupabaseClient, userId: string, plan: TrainingPlan): Promise<PlanLinie> {
+  const { data, error } = await client
+    .from("training_plans")
+    .select("id, version, created_at, accepted_at")
+    .eq("user_id", userId)
+    .eq("studio_id", plan.studioId)
+    .not("accepted_at", "is", null)
+    .order("version", { ascending: false });
+  if (error) throw new DomainError("internal", "Die Planversionen konnten nicht gelesen werden.");
+  const zeilen = ((data ?? []) as Array<{ id: string; version: number; created_at: string; accepted_at: string | null }>)
+    .map((z) => ({ id: z.id, version: z.version, createdAt: z.created_at, acceptedAt: z.accepted_at }));
+  return planLinie(plan, zeilen);
+}
+
 /** Setzt den Plan fuer die App zusammen; rein, damit die Regeln ohne Datenbank pruefbar sind. */
 export function planFuerApp(
   plan: TrainingPlan,
@@ -284,12 +354,15 @@ export function planFuerApp(
   alternativen: PlanFuerApp["alternativen"],
   zielgewichte: PlanFuerApp["zielgewichte"],
   merkliste: PlanMerkliste,
+  linie: PlanLinie = planLinie(plan, []),
 ): PlanFuerApp {
   const zuletzt = gezaehlt.at(-1)?.einheitKey ?? null;
-  // Eine Einheit vor der Annahme (etwa ein Plan, der spaeter angenommen wurde) zaehlt trotzdem:
-  // der Beginn reicht bis zu ihr zurueck, sonst fehlte sie im Kalender.
-  const planBeginn = plan.acceptedAt ?? plan.createdAt;
-  const erste = gezaehlt[0]?.startedAt;
+  // Beginn ist die Annahme der Planlinie (ein Tausch setzt ihn nicht neu). Eine Einheit
+  // dieser Linie vor der Annahme (etwa am Vorschlag) zaehlt trotzdem: der Beginn reicht bis
+  // zu ihr zurueck, sonst fehlte sie im Kalender. Einheiten frueherer Plaene nie -- sonst
+  // bekaeme ein neuer Plan den Zeitraum des alten.
+  const planBeginn = linie.beginn;
+  const erste = gezaehlt.find((g) => g.planId !== undefined && linie.planIds.includes(g.planId))?.startedAt;
   const beginn = erste !== undefined && Date.parse(erste) < Date.parse(planBeginn) ? erste : planBeginn;
   return {
     planId: plan.id,
@@ -310,7 +383,7 @@ export function planFuerApp(
     alternativen,
     zielgewichte,
     merkliste,
-    erledigt: gezaehlt,
+    erledigt: gezaehlt.map(({ sessionId, einheitKey, startedAt }) => ({ sessionId, einheitKey, startedAt })),
     beginn,
   };
 }
@@ -450,12 +523,15 @@ export async function ladePlaeneFuerApp(
   // Ohne Einwilligung (keine Zeile) gibt es keine Beschwerden -- nie raten.
   const beschwerden = limits?.areas ?? {};
   const merkliste = await ladeMerklisteFuerApp(client, userId);
-  const [gezaehlt, kandidaten, zielgewichte] = await Promise.all([
+  const [gezaehlt, linie, kandidaten, zielgewichte] = await Promise.all([
     ladeGezaehlteEinheiten(client, userId, jetzt),
+    ladePlanLinie(client, userId, plan),
     // Ohne Filter der Merkliste: die App entfernt "nicht vorhanden" je Ort selbst;
     // "gefaellt nicht" sortiert ans Ende.
     ladeKandidaten(client, { nichtVorhanden: [], gefaelltNicht: merkliste.gefaelltNicht }),
     ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
   ]);
-  return [planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte, merkliste)];
+  return [
+    planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte, merkliste, linie),
+  ];
 }
