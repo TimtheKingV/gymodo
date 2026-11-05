@@ -6,11 +6,11 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 
 | Art · Set | Sätze | Tage | exakt | ±1 | Rücknahmen |
 |---|---|---|---|---|---|
-| stapel (stapel/phasen1) · Entwicklung | 50 | 3 | 91 % | 100 % | 6 % |
+| stapel (stapel/phasen1) · Entwicklung | 58 | 4 | 89 % | 96 % | 7 % |
 | stapel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | langhantel (langhantel/takt1) · Entwicklung | 17 | 4 | 64 % | 86 % | 18 % |
 | langhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
-| kurzhantel (kurzhantel/takt2) · Entwicklung | 63 | 5 | 81 % | 96 % | 24 % |
+| kurzhantel (kurzhantel/takt2) · Entwicklung | 75 | 6 | 78 % | 95 % | 27 % |
 | kurzhantel · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
 | koerper (koerper/1) · Entwicklung | 1 | 1 | 0 % | 0 % | 0 % |
 | koerper · Torset (nicht eingefroren) | 0 | 0 | 0 % | 0 % | 0 % |
@@ -150,3 +150,23 @@ Tor je Art (Sensor-Spec B 5.5): ≥ 20 Sätze aus ≥ 3 Tagen, exakt ≥ 90 %, �
 | 2026-10-26-1818-02 | langhantel | 14 | 14 | – |
 | 2026-10-26-1820-02 | langhantel | 20 | 20 | – |
 | 2026-10-26-1821-02 | langhantel | 10 | 10 | – |
+| 2026-11-03-1800-01 | kurzhantel | 20 | 22 | signalSchwach |
+| 2026-11-03-1801-01 | kurzhantel | 12 | 12 | – |
+| 2026-11-03-1802-02 | kurzhantel | 10 | 9 | – |
+| 2026-11-03-1803-01 | kurzhantel | 8 | 7 | – |
+| 2026-11-03-1804-01 | kurzhantel | 15 | 12 | – |
+| 2026-11-03-1804-03 | kurzhantel | 12 | 12 | – |
+| 2026-11-03-1805-02 | kurzhantel | 10 | 10 | signalSchwach |
+| 2026-11-03-1806-01 | kurzhantel | 5 | 5 | – |
+| 2026-11-03-1807-01 | kurzhantel | 19 | 19 | luecke |
+| 2026-11-03-1808-01 | kurzhantel | 10 | 10 | luecke |
+| 2026-11-03-1809-01 | kurzhantel | 7 | 7 | signalSchwach |
+| 2026-11-03-1810-01 | kurzhantel | 4 | 4 | – |
+| 2026-11-03-1811-01 | stapel | 20 | 20 | – |
+| 2026-11-03-1813-01 | stapel | 20 | 18 | – |
+| 2026-11-03-1815-01 | stapel | 20 | 20 | – |
+| 2026-11-03-1818-01 | stapel | 20 | 20 | – |
+| 2026-11-03-1820-01 | stapel | 20 | 19 | luecke |
+| 2026-11-03-1821-01 | stapel | 20 | 17 | – |
+| 2026-11-03-1824-01 | stapel | 20 | 20 | – |
+| 2026-11-03-1825-01 | stapel | 14 | 14 | – |

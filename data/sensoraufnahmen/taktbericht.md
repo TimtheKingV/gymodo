@@ -2,7 +2,7 @@
 
 Ziel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSchreiben`.
 
-**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und vier Trainingstagen (14., 16., 18. und 26.10.); die Aussage gilt nur dafür. Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).
+**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und fünf Trainingstagen (14., 16., 18. und 26.10., 3.11.); die Aussage gilt nur dafür. Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).
 
 Seit der Lückenbehandlung werden Empfangsabstände über 0,5 s und explizite Abrisse getrennt ausgewertet. Hintergrund-Bündelung lässt sich anhand der Empfangszeiten nicht sicher von fehlenden Paketen unterscheiden. Solche Sätze bleiben unsicher; auch zuvor richtige Zahlen können sich ändern. Schwellen und Profile wurden unverändert gelassen.
 
@@ -81,15 +81,52 @@ Tim hat alle 27 Labels unabhängig mitgezählt und bestätigt. Diese Einheit wur
 | 2026-10-26-1749-02 | kurzhantel | 10 | 10 | 10 | – |
 | 2026-10-26-1750-02 | kurzhantel | 20 | 20 | 20 | – |
 
+### Gegenprobe 3.11. – aktuell neu berechnet
+
+| Art | Sätze | exakt | ±1 |
+|---|---|---|---|
+| stapel | 8 | 62 % | 75 % |
+| kurzhantel | 12 | 67 % | 83 % |
+| **gepoolt** | 20 | 65 % | 80 % |
+
+Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintragen eingefroren. Wahrheit sind die in der App gespeicherten Werte (`gemessen` = Live-Zahl bestätigt, `korrigiert` = geändert); eine ausdrückliche Zählbestätigung wie am 26.10. gibt es nicht.
+
+| Ordner | Art | wahr (gespeichert) | App live | Replay aktuell | unsicher |
+|---|---|---|---|---|---|
+| 2026-11-03-1811-01 | stapel | 20 | 20 | 20 | – |
+| 2026-11-03-1813-01 | stapel | 20 | 20 | 18 | – |
+| 2026-11-03-1815-01 | stapel | 20 | 20 | 20 | – |
+| 2026-11-03-1818-01 | stapel | 20 | 20 | 20 | – |
+| 2026-11-03-1820-01 | stapel | 20 | 19 | 19 | luecke |
+| 2026-11-03-1821-01 | stapel | 20 | 20 | 17 | – |
+| 2026-11-03-1824-01 | stapel | 20 | 15 | 20 | – |
+| 2026-11-03-1825-01 | stapel | 14 | 14 | 14 | – |
+| 2026-11-03-1800-01 | kurzhantel | 20 | 21 | 22 | signalSchwach |
+| 2026-11-03-1801-01 | kurzhantel | 12 | – | 12 | – |
+| 2026-11-03-1802-02 | kurzhantel | 10 | 9 | 9 | – |
+| 2026-11-03-1803-01 | kurzhantel | 8 | 7 | 7 | – |
+| 2026-11-03-1804-01 | kurzhantel | 15 | 12 | 12 | – |
+| 2026-11-03-1804-03 | kurzhantel | 12 | 12 | 12 | – |
+| 2026-11-03-1805-02 | kurzhantel | 10 | 10 | 10 | signalSchwach |
+| 2026-11-03-1806-01 | kurzhantel | 5 | 5 | 5 | – |
+| 2026-11-03-1807-01 | kurzhantel | 19 | 19 | 19 | luecke |
+| 2026-11-03-1808-01 | kurzhantel | 10 | 10 | 10 | luecke |
+| 2026-11-03-1809-01 | kurzhantel | 7 | 7 | 7 | signalSchwach |
+| 2026-11-03-1810-01 | kurzhantel | 4 | 4 | 4 | – |
+
 ### Sätze außerhalb ±1
 
 | Ordner | Art | Gruppe | wahr | gezählt |
 |---|---|---|---|---|
 | 2026-10-18-1628-01 | stapel | abstimmen | 12 | 1 |
 | 2026-10-18-1630-01 | stapel | blind | 14 | – |
+| 2026-11-03-1813-01 | stapel | gegenprobe | 20 | 18 |
+| 2026-11-03-1821-01 | stapel | gegenprobe | 20 | 17 |
 | 2026-10-18-1623-01 | langhantel | abstimmen | 12 | 7 |
 | 2026-10-18-1658-03 | langhantel | blind | 30 | 33 |
 | 2026-10-18-1611-02 | kurzhantel | abstimmen | 12 | 8 |
 | 2026-10-18-1614-02 | kurzhantel | blind | 9 | 6 |
 | 2026-10-26-1741-01 | kurzhantel | gegenprobe | 20 | 22 |
 | 2026-10-26-1747-04 | kurzhantel | gegenprobe | 16 | 20 |
+| 2026-11-03-1800-01 | kurzhantel | gegenprobe | 20 | 22 |
+| 2026-11-03-1804-01 | kurzhantel | gegenprobe | 15 | 12 |
