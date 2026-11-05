@@ -1,8 +1,9 @@
 import Foundation
 
-/// Zeitzone und Kalender des Plans, einmal gerechnet fuer Plan-Tab und
-/// Einheiten-Detail, damit beide denselben Tag nennen. Dazu der geplante Tag
-/// einer Einheit aus den Terminen von `PlanKalender`.
+/// Zeitzone, Kalender und Termine des Plans, einmal gerechnet fuer Plan-Tab,
+/// Einheiten-Detail und Home, damit alle denselben Tag nennen und dieselben
+/// Tage markieren. Dazu der geplante Tag einer Einheit aus den Terminen von
+/// `PlanKalender`.
 enum PlanKalenderKontext {
     /// Tage, die das Einheiten-Detail nach vorn schaut.
     static let fensterTage = 28
@@ -13,6 +14,48 @@ enum PlanKalenderKontext {
         wochenZone: String?, ersteStudioZone: String?, geraet: String = TimeZone.current.identifier
     ) -> String {
         wochenZone ?? ersteStudioZone ?? geraet
+    }
+
+    /// Dieselbe Zeitzone aus den Rohdaten: die erste Studio-Zone ist die des
+    /// aktiven Studios (vorn in `KurseStudios.reihenfolge`).
+    static func zeitzone(bootstrap: BootstrapResponse?, aktivesStudioId: String?, wochenZone: String?) -> String {
+        let studios = KurseStudios.reihenfolge(alle: bootstrap?.studios.map(\.id) ?? [], aktiv: aktivesStudioId)
+        return zeitzone(
+            wochenZone: wochenZone,
+            ersteStudioZone: studios.first.flatMap { erstes in
+                bootstrap?.studios.first { $0.id == erstes }?.timezone
+            })
+    }
+
+    /// `PlanKalender.termine` mit den Eingaben, die Plan-Tab, Einheiten-Detail
+    /// und Home gleich zusammensetzen: Raster wie angezeigt (`anzeigeRaster`),
+    /// die Folge ab der Einheit von heute (`PlanAnzeige.heute`, sonst der
+    /// Server), trainierte Tage und `verlaufAb` aus dem Verlauf.
+    static func termine(
+        plan: Trainingsplan, tage: [Date], kalender: Calendar, profil: TrainingsplanProfil?,
+        heuteEinheitKey: String?, sessions: [SessionSummary], gesamt: Int?, verlaufGeladen: Bool,
+        heute: Date, kurse: [CourseWeekSession], cardioErledigt: Set<String>, filter: PlanFilter
+    ) -> [Date: [PlanTermin]] {
+        let beginn = plan.beginn.flatMap(Zeitpunkt.parse)
+        return PlanKalender.termine(
+            tage: tage, kalender: kalender,
+            raster: PlanTabZustand.anzeigeRaster(
+                planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key), profil: profil),
+            einheiten: plan.einheiten.map(\.key),
+            naechsteEinheitKey: heuteEinheitKey ?? plan.naechsteEinheitKey,
+            erledigt: plan.erledigt,
+            trainiertAn: Set(HomeSerie.einheitenJeTag(sessions, zeitzone: kalender.timeZone.identifier).keys),
+            beginn: beginn,
+            verlaufAb: PlanKalender.verlaufAb(
+                sessions: sessions, gesamt: gesamt, geladen: verlaufGeladen, beginn: beginn, kalender: kalender),
+            heute: heute, kurse: kurse, cardioErledigt: cardioErledigt, filter: filter)
+    }
+
+    /// "yyyy-MM-dd" (Tages-Id der Streak-Woche) -> `startOfDay` im Kalender des Plans.
+    static func tag(id: String, kalender: Calendar) -> Date? {
+        let teile = id.split(separator: "-").compactMap { Int($0) }
+        guard teile.count == 3 else { return nil }
+        return kalender.date(from: DateComponents(year: teile[0], month: teile[1], day: teile[2]))
     }
 
     static func kalender(zeitzone: String) -> Calendar {

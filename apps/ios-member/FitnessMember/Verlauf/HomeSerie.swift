@@ -1,7 +1,7 @@
 import Foundation
 
-/// Ein Tag im Kalender des Home-Tabs -- im Wochenstreifen wie im
-/// Monatsgitter.
+/// Ein Tag im Kalender: die Streak-Woche auf Home und das Monatsgitter des
+/// Plan-Tabs (`PlanMonatsgitter`).
 ///
 /// `id` ist das Ortsdatum ("yyyy-MM-dd") in der Zeitzone des Studios --
 /// dasselbe Format, in dem `Serienstand` seine Tage nennt, damit der
@@ -25,6 +25,19 @@ struct HomeSerieTag: Identifiable, Equatable {
     /// der eine Zeile auffuellt. Er wird gezeigt, damit das Gitter keine
     /// Loecher hat, aber nicht bedient.
     var ausserhalb: Bool = false
+    /// Nur in der Streak-Woche belegt: die Planmarke des Tages (Einheit,
+    /// Cardio, Kurs, verpasst) aus `PlanKalender.termine`, dieselbe wie im
+    /// Plan-Tab. nil = nichts geplant oder schon erledigt (dann traegt die
+    /// Hantel den Tag).
+    var geplant: PlanTagMarke.Art? = nil
+}
+
+/// Was ein Tipp auf einen Tag der Streak-Woche tut (Spec 1.1).
+enum HomeSerieTipp: Equatable {
+    /// Die Trainings und Kurse des Tages darunter zeigen.
+    case ausklappen
+    /// In den Plan-Tab auf genau diesen Tag springen (`PlanSprung.tag`).
+    case planTag
 }
 
 /// Die reinen Ableitungen des Home-Kalenders -- getrennt vom View,
@@ -103,8 +116,11 @@ enum HomeSerie {
     ///
     /// `trainingstage` uebergibt der Aufrufer, damit Woche und Monat
     /// dieselbe Menge lesen; ohne Angabe bleibt es bei dem, was der
-    /// Server fuer diese Woche nennt.
-    static func tage(_ stand: Serienstand, trainingstage: Set<String>? = nil) -> [HomeSerieTag] {
+    /// Server fuer diese Woche nennt. `geplant` (Tagesschluessel -> Marke,
+    /// aus `planMarken`) legt die Planmarken auf die Tage.
+    static func tage(
+        _ stand: Serienstand, trainingstage: Set<String>? = nil, geplant: [String: PlanTagMarke.Art] = [:]
+    ) -> [HomeSerieTag] {
         guard let montag = datumsFormatter.date(from: stand.weekStart) else { return [] }
 
         let trainiert = trainingstage ?? Set(stand.trainedDays)
@@ -112,8 +128,45 @@ enum HomeSerie {
             guard let tag = kalender.date(byAdding: .day, value: versatz, to: montag) else {
                 return nil
             }
-            return bauen(tag, heute: stand.today, trainingstage: trainiert)
+            var gebaut = bauen(tag, heute: stand.today, trainingstage: trainiert)
+            gebaut.geplant = geplant[gebaut.id]
+            return gebaut
         }
+    }
+
+    /// Die Termine des Plans (`PlanKalender.termine`) als eine Marke je Tag:
+    /// verpasst vor allem anderen (der gestrichelte Ring wie im Plan-Tab),
+    /// sonst der erste geplante Termin. Erledigtes bekommt keine Marke --
+    /// dort steht schon die Hantel. Schluessel "yyyy-MM-dd" im Kalender des
+    /// Plans, dasselbe Format wie `HomeSerieTag.id`.
+    static func planMarken(_ termine: [Date: [PlanTermin]], kalender: Calendar) -> [String: PlanTagMarke.Art] {
+        var ergebnis: [String: PlanTagMarke.Art] = [:]
+        for (tag, liste) in termine {
+            let art: PlanTagMarke.Art?
+            if liste.contains(where: { if case .verpasst = $0.zustand { true } else { false } }) {
+                art = .verpasst
+            } else {
+                art = liste.first { $0.zustand == .geplant }.map { termin in
+                    switch termin {
+                    case .einheit: .einheit
+                    case .kurs: .kurs
+                    case .cardio: .cardio
+                    }
+                }
+            }
+            if let art { ergebnis[PlanWoche.tagesSchluessel(tag, kalender)] = art }
+        }
+        return ergebnis
+    }
+
+    /// Vergangene Tage klappen ihren Inhalt auf (Einheit oder eigener Kurs).
+    /// Heute und kuenftig fuehrt ein Tag mit Planmarke in den Plan-Tab;
+    /// ohne Marke bleibt es beim Aufklappen, sofern es etwas zu zeigen gibt.
+    /// nil = kein Knopf. Die Ids sind "yyyy-MM-dd" und vergleichen sich als Text.
+    static func tippZiel(_ tag: HomeSerieTag, heute: String, hatInhalt: Bool) -> HomeSerieTipp? {
+        guard !tag.ausserhalb else { return nil }
+        if tag.id >= heute, tag.geplant != nil { return .planTag }
+        return hatInhalt ? .ausklappen : nil
     }
 
     /// Das Monatsgitter um einen Tag herum -- volle Wochen von Montag bis

@@ -86,7 +86,7 @@ struct MainTabView: View {
         ausgewaehlterTab = 1
     }
 
-    /// Von Home in den Plan (Leinwand 2d): die Woche, eine Einheit (derselbe
+    /// Von Home in den Plan (Spec 1.1): die Woche, eine Einheit (derselbe
     /// Push wie ein Tipp im Plan) oder ein Tag. Der Pfad beginnt jedes Mal neu,
     /// sonst laege die Einheit ueber einem alten Kursdetail.
     private func planZeigen(_ sprung: PlanSprung) {

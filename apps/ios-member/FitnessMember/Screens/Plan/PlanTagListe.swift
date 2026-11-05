@@ -238,13 +238,21 @@ struct PlanTagListe: View {
                 beiTipp: { beiEinheit(einheit.key) },
                 hinweis: "Zeigt die Übungen der Einheit")
         case .kurs(let termin):
-            naechsteInhalt(kaestchen: AnyView(PlanKursKaestchen()), titel: termin.name, tag: tag)
+            PlanTerminZeile(kaestchen: AnyView(PlanKursKaestchen()), titel: termin.name, tag: tag)
         case .cardio:
-            naechsteInhalt(kaestchen: AnyView(PlanCardioKaestchen()), titel: "Cardio-Einheit", tag: tag)
+            PlanTerminZeile(kaestchen: AnyView(PlanCardioKaestchen()), titel: "Cardio-Einheit", tag: tag)
         }
     }
+}
 
-    private func naechsteInhalt(kaestchen: AnyView, titel: String, tag: String) -> some View {
+/// Die kurze Zeile fuer einen Kurs oder Cardio-Termin mit Tag: Kaestchen,
+/// Titel, Tag. "Als nächstes" im Plan-Tab und "Nächste Einheit" auf Home.
+struct PlanTerminZeile: View {
+    let kaestchen: AnyView
+    let titel: String
+    let tag: String
+
+    var body: some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             kaestchen
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {

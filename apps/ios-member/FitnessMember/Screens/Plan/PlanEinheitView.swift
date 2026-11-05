@@ -42,38 +42,22 @@ struct PlanEinheitView: View {
 
     /// Wie der Plan-Tab: Zeitzone der Kurswoche, sonst die des ersten Studios.
     private var kalender: Calendar {
-        let studios = KurseStudios.reihenfolge(
-            alle: katalog.bootstrap?.studios.map(\.id) ?? [], aktiv: katalog.activeStudioId)
-        let zone = PlanKalenderKontext.zeitzone(
-            wochenZone: kurse.woche?.timezone,
-            ersteStudioZone: studios.first.flatMap { erstes in
-                katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone
-            })
-        return PlanKalenderKontext.kalender(zeitzone: zone)
+        PlanKalenderKontext.kalender(zeitzone: PlanKalenderKontext.zeitzone(
+            bootstrap: katalog.bootstrap, aktivesStudioId: katalog.activeStudioId, wochenZone: kurse.woche?.timezone))
     }
 
     /// Der Tag, auf dem die Folge diese Einheit als naechste liegt (heute oder
     /// spaeter); nil, wenn sie im Fenster nicht drankommt. Dieselbe Rechnung wie
-    /// der Plan-Tab (`PlanKalender.termine`), ohne Kurse und Cardio.
+    /// der Plan-Tab (`PlanKalenderKontext.termine`), ohne Kurse und Cardio.
     private func geplanterTag(
         plan: Trainingsplan, einheitKey: String, naechsteEinheitKey: String?, kalender: Calendar
     ) -> Date? {
         let jetzt = Date()
-        let raster = PlanTabZustand.anzeigeRaster(
-            planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
-            profil: katalog.bootstrap?.member.trainingProfile)
-        let termine = PlanKalender.termine(
-            tage: PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender),
-            kalender: kalender, raster: raster, einheiten: plan.einheiten.map(\.key),
-            naechsteEinheitKey: naechsteEinheitKey ?? plan.naechsteEinheitKey,
-            erledigt: plan.erledigt,
-            trainiertAn: Set(HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: kalender.timeZone.identifier).keys),
-            beginn: plan.beginn.flatMap(Zeitpunkt.parse),
-            verlaufAb: PlanKalender.verlaufAb(
-                sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount,
-                geladen: verlauf.stand != nil, beginn: plan.beginn.flatMap(Zeitpunkt.parse), kalender: kalender),
-            heute: jetzt, kurse: [],
-            cardioErledigt: [], filter: .einheiten)
+        let termine = PlanKalenderKontext.termine(
+            plan: plan, tage: PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender), kalender: kalender,
+            profil: katalog.bootstrap?.member.trainingProfile, heuteEinheitKey: naechsteEinheitKey,
+            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
+            heute: jetzt, kurse: [], cardioErledigt: [], filter: .einheiten)
         return PlanKalenderKontext.geplanterTag(
             einheitKey: einheitKey, termine: termine, heute: jetzt, kalender: kalender)
     }

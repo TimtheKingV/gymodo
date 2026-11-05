@@ -88,7 +88,7 @@ enum PlanKalender {
                     let beginnKurs = Zeitpunkt.parse(k.startsAt) ?? start
                     let angemeldet = k.ownStatus == "booked"
                     // Der Server meldet keine Teilnahme: ein gebuchter Kurs gilt
-                    // mit Beginn als erledigt (wie `HomeWoche.erledigteTage`).
+                    // mit Beginn als erledigt.
                     let zustand: TerminZustand = angemeldet && beginnKurs <= heute ? .erledigt : .geplant
                     return .kurs(titel: k.name, beginn: beginnKurs, angemeldet: angemeldet, zustand: zustand)
                 }

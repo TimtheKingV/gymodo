@@ -4,7 +4,7 @@ import Observation
 /// Die abgehakten Cardio-Tage ("YYYY-MM-DD"), geteilt von Plan-Tab und Home.
 ///
 /// Frueher hielt der Plan-Tab sie als eigenen `@State`; seit Home die Woche
-/// zeigt (Leinwand 2d), lesen beide denselben Stand -- ein Haken im Plan steht
+/// markiert (Spec 1.1), lesen beide denselben Stand -- ein Haken im Plan steht
 /// ohne zweiten Abruf auch auf Home.
 @MainActor
 @Observable

@@ -15,8 +15,8 @@ struct PlanRootView: View {
     /// Session-Id eines vergangenen Trainings -> Training-Detail im Plan-Stack.
     let beiTraining: (String) -> Void
     let beiTrainingStarten: () -> Void
-    /// Ein Tag, den Home zeigen will ("Als nächstes" auf einen Cardio- oder
-    /// Kurstag, Leinwand 2d). Wird beim Uebernehmen geleert, damit derselbe
+    /// Ein Tag, den Home zeigen will (ein Tag der Streak-Woche, "Nächste Einheit"
+    /// als Kurs oder Cardio, Spec 1.1). Wird beim Uebernehmen geleert, damit derselbe
     /// Tag ein zweites Mal ankommt.
     @Binding var tagWunsch: Date?
 
@@ -89,10 +89,7 @@ struct PlanRootView: View {
     /// Wie `KurseWochenView.zeitzoneFuerAnfrage`; ohne Studio die des Geraets.
     private var zeitzone: String {
         PlanKalenderKontext.zeitzone(
-            wochenZone: kurse.woche?.timezone,
-            ersteStudioZone: studios.first.flatMap { erstes in
-                katalog.bootstrap?.studios.first { $0.id == erstes }?.timezone
-            })
+            bootstrap: katalog.bootstrap, aktivesStudioId: katalog.activeStudioId, wochenZone: kurse.woche?.timezone)
     }
 
     private var kalender: Calendar { PlanKalenderKontext.kalender(zeitzone: zeitzone) }
@@ -142,19 +139,11 @@ struct PlanRootView: View {
         let trainingsJeTag = HomeSerie.einheitenJeTag(verlauf.sessions, zeitzone: zeitzone)
         let ersterTag = alleTage.first ?? tage.first ?? jetzt
         let letzterTag = alleTage.last ?? tage.last ?? jetzt
-        let termine = PlanKalender.termine(
-            tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, raster: raster,
-            einheiten: plan.einheiten.map(\.key),
-            naechsteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
-                ?? plan.naechsteEinheitKey,
-            erledigt: plan.erledigt,
-            trainiertAn: Set(trainingsJeTag.keys),
-            beginn: beginn,
-            verlaufAb: PlanKalender.verlaufAb(
-                sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount,
-                geladen: verlauf.stand != nil, beginn: beginn, kalender: kalender),
-            heute: jetzt, kurse: sitzungen,
-            cardioErledigt: cardio.erledigt, filter: filter)
+        let termine = PlanKalenderKontext.termine(
+            plan: plan, tage: alleTage.isEmpty ? tage : alleTage, kalender: kalender, profil: profil,
+            heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
+            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
+            heute: jetzt, kurse: sitzungen, cardioErledigt: cardio.erledigt, filter: filter)
         let herkunft = KurseHerkunft.bilden(
             ladeZustand: kurse.ladeZustand, wocheStand: kurse.wocheStand, jetzt: jetzt)
         // Trainings gehoeren zu "Einheiten": bei Kurs- oder Cardio-Filter nicht.

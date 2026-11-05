@@ -152,6 +152,42 @@ struct PlanKalenderTests {
         #expect(heute?.tag == Self.tag(11, 5))
     }
 
+    /// Aus HomeWocheKarteTests: Warteliste, ohne Anmeldung und abgesagt sind
+    /// kein Termin -- auch nicht als "Nächste Einheit" auf Home.
+    @Test func wartelisteUngebuchtUndAbgesagtKeinTermin() {
+        let abgesagt = kurs("2026-11-06", stunde: 18).mitStatus("cancelled")
+        let t = termine(kurse: [kurs("2026-11-04", stunde: 18, own: "waitlisted"),
+                                kurs("2026-11-05", stunde: 18, own: nil), abgesagt])
+        #expect(t[Self.tag(11, 4)] == nil)
+        #expect(t[Self.tag(11, 5)] == [.einheit(key: "A", zustand: .geplant)])
+        #expect(t[Self.tag(11, 6)] == nil)
+    }
+
+    /// Aus HomeWocheKarteTests: der naechste Termin darf Cardio sein und in die
+    /// naechste Woche reichen.
+    @Test func naechsterCardioUndNaechsteWoche() {
+        let freitag = Self.tag(11, 6, stunde: 10)
+        let t = termine(naechste: "B", heute: freitag)
+        let n = PlanKalender.naechster(t, ab: freitag, kalender: Self.kalender)
+        #expect(n?.tag == Self.tag(11, 7))
+        #expect(n?.termin == .cardio(arten: [], zustand: .geplant))
+
+        let sonntag = Self.tag(11, 8, stunde: 10)
+        let ab = termine(naechste: "B", heute: sonntag)
+        let m = PlanKalender.naechster(ab, ab: sonntag, kalender: Self.kalender)
+        #expect(m?.tag == Self.tag(11, 9))
+        #expect(m?.termin == .einheit(key: "B", zustand: .geplant))
+    }
+
+    /// Aus HomeWocheKarteTests: Home laedt nur die laufende Woche, der Plan-Tab
+    /// mehr -- Laden ersetzt nur den geladenen Bereich.
+    @Test func cardioLadenErsetztNurDenGeladenenBereich() {
+        let alt: Set<String> = ["2026-10-20", "2026-10-27", "2026-11-03"]
+        let neu = CardioChecksStore.zusammenfuehren(
+            alt: alt, neu: ["2026-10-28"], von: "2026-10-26", bis: "2026-11-01")
+        #expect(neu == ["2026-10-20", "2026-10-28", "2026-11-03"])
+    }
+
     // MARK: - Verlauf gedeckelt (R7)
 
     /// Verlauf erst ab Mo 2.11. vollstaendig: Di 27.10., Do 29.10. und Sa 31.10.
@@ -212,6 +248,15 @@ struct PlanKalenderTests {
 }
 
 private extension CourseWeekSession {
+    func mitStatus(_ status: String) -> CourseWeekSession {
+        CourseWeekSession(
+            sessionId: sessionId, templateId: templateId, name: name, description: description,
+            startsAt: startsAt, localDay: localDay, durationMin: durationMin, capacity: capacity,
+            room: room, instructorName: instructorName, status: status, bookedCount: bookedCount,
+            waitlistCount: waitlistCount, freeSeats: freeSeats, ownStatus: ownStatus,
+            ownBookingId: ownBookingId, ownWaitlistPosition: ownWaitlistPosition)
+    }
+
     func mitId(_ id: String) -> CourseWeekSession {
         CourseWeekSession(
             sessionId: id, templateId: templateId, name: name, description: description,

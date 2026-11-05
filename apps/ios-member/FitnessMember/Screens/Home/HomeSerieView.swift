@@ -11,16 +11,15 @@ enum HomeSerieAuswahl: Equatable {
     case keiner
 }
 
-/// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen, die
-/// Trainingskarten des gewaehlten Tages, ein Umschalter auf den Monat.
+/// Der Kalender am Kopf des Home-Tabs -- Flamme, Wochenstreifen mit den
+/// Planmarken, die Trainingskarten des gewaehlten Tages. Die Monatsansicht
+/// ist in den Plan-Tab gezogen (`PlanMonatsgitter`, Spec 1.1).
 ///
-/// **Nur ein Tag mit Inhalt ist antippbar** -- eine Einheit oder, seit
-/// der Testnotiz 06.10. (#1), ein eigener Kurs. Ein Tag ohne beides tut
-/// nichts -- er hat nichts zu zeigen. Er oeffnete eine Zeit lang
-/// stattdessen den Monat, und das war beim Benutzen schlicht verwirrend:
-/// dieselbe Geste schlug je nach Tag in zwei verschiedene Richtungen
-/// aus, ohne dass man vorher sah, in welche. Auf den Monat fuehrt jetzt
-/// genau eine Stelle, und die steht oben rechts in der Kopfzeile.
+/// **Antippbar ist, was etwas zu zeigen hat** (`HomeSerie.tippZiel`): ein
+/// vergangener Tag mit Einheit oder eigenem Kurs klappt ihn darunter auf;
+/// heute und kuenftig fuehrt ein Tag mit Planmarke in den Plan-Tab auf
+/// genau diesen Tag. Ein Tag ohne beides tut nichts. Welche Richtung ein
+/// Tipp nimmt, sieht man vorher an der Marke unter dem Tag.
 ///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,
@@ -65,14 +64,18 @@ struct HomeSerieView: View {
     var muskeln: [String: [GeraetMuskel]] = [:]
     var geschlecht: Geschlecht? = nil
     var beiKursAuswahl: (String) -> Void = { _ in }
+    /// Planmarken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`); leer ohne Plan.
+    var geplant: [String: PlanTagMarke.Art] = [:]
+    /// Tipp auf heute oder einen kuenftigen Tag mit Marke: die Tages-Id, der
+    /// Aufrufer springt in den Plan-Tab (`PlanSprung.tag`).
+    var beiPlanTag: (String) -> Void = { _ in }
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
-    @State private var monatOffen = false
 
     var body: some View {
         let trainingstage = HomeSerie.trainingstage(
             stand: stand, einheitenJeTag: einheitenJeTag)
-        let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage)
+        let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage, geplant: geplant)
         let gewaehlt = gewaehlterTag(wochentage: wochentage)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -93,16 +96,9 @@ struct HomeSerieView: View {
 
             kopfzeile(wochentage)
 
-            // Nur im Wochenstreifen, nicht im Monatsgitter: "diese Woche"
-            // meint genau die laufende Woche, die das Gitter beim
-            // Umschalten verlaesst.
-            if monatOffen {
-                monatsgitter(trainingstage: trainingstage, gewaehlt: gewaehlt)
-            } else {
-                wochenstreifen(wochentage, gewaehlt: gewaehlt)
-                if let wochenziel {
-                    zielzeile(wochentage, ziel: wochenziel)
-                }
+            wochenstreifen(wochentage, gewaehlt: gewaehlt)
+            if let wochenziel {
+                zielzeile(wochentage, ziel: wochenziel)
             }
 
             if let gewaehlt, hatInhalt(gewaehlt) {
@@ -111,7 +107,6 @@ struct HomeSerieView: View {
                            kurse: kurseJeTag[gewaehlt] ?? [])
             }
         }
-        .animation(DesignSystem.Motion.oeffnen, value: monatOffen)
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
     }
 }
@@ -158,16 +153,20 @@ private extension HomeSerieView {
         hatEinheiten(tagId) || !(kurseJeTag[tagId] ?? []).isEmpty
     }
 
-    /// Antippbar ist nur, was etwas zu zeigen hat: ein Tag mit Einheiten,
-    /// und keiner aus einem Nachbarmonat. Alles andere ist gar kein
-    /// Knopf -- VoiceOver liest es als Text, nicht als Bedienelement, und
-    /// niemand tippt ins Leere.
-    func istWaehlbar(_ tag: HomeSerieTag) -> Bool {
-        hatInhalt(tag.id) && !tag.ausserhalb
+    /// Antippbar ist nur, was etwas zu zeigen hat (`HomeSerie.tippZiel`).
+    /// Alles andere ist gar kein Knopf -- VoiceOver liest es als Text,
+    /// nicht als Bedienelement, und niemand tippt ins Leere.
+    func tippZiel(_ tag: HomeSerieTag) -> HomeSerieTipp? {
+        HomeSerie.tippZiel(tag, heute: stand.today, hatInhalt: hatInhalt(tag.id))
     }
 
-    /// Derselbe Tag noch einmal klappt ihn wieder zu.
+    /// Derselbe Tag noch einmal klappt ihn wieder zu; ein Plantag springt
+    /// in den Plan-Tab.
     func auswaehlen(_ tag: HomeSerieTag, gewaehlt: String?) {
+        if tippZiel(tag) == .planTag {
+            beiPlanTag(tag.id)
+            return
+        }
         auswahl = gewaehlt == tag.id ? .keiner : .tag(tag.id)
     }
 }
@@ -193,11 +192,6 @@ private extension HomeSerieView {
                 .accessibilityLabel(
                     HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage, ziel: wochenziel))
 
-            // Die dehnbare Stelle der Zeile ist die Fussnote, nicht der
-            // Umschalter: wird der Platz knapp, bricht ihr Satz um, waehrend
-            // das Wort "Monatsansicht" seine Breite behaelt (fixedSize am
-            // Umschalter). Ein gestauchter Umschalter waere schlechter als
-            // eine zweizeilige Fussnote.
             Text(
                 HomeSerie.fussnote(
                     gesamt: gesamt, lastSessionAt: lastSessionAt,
@@ -206,8 +200,6 @@ private extension HomeSerieView {
             .font(.system(size: 12, weight: .semibold).monospacedDigit())
             .foregroundStyle(DesignSystem.Color.textFaint)
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            umschalterKnopf
         }
     }
 
@@ -233,7 +225,7 @@ private extension HomeSerieView {
     }
 }
 
-// MARK: - Woche und Monat
+// MARK: - Woche
 
 private extension HomeSerieView {
     func wochenstreifen(_ tage: [HomeSerieTag], gewaehlt: String?) -> some View {
@@ -243,7 +235,7 @@ private extension HomeSerieView {
         // damit auf jedem Geraet im selben Verhaeltnis.
         HStack(spacing: 0) {
             ForEach(tage) { tag in
-                if istWaehlbar(tag) {
+                if let ziel = tippZiel(tag) {
                     Button {
                         auswaehlen(tag, gewaehlt: gewaehlt)
                     } label: {
@@ -252,7 +244,7 @@ private extension HomeSerieView {
                     }
                     .buttonStyle(PressButtonStyle())
                     .accessibilityLabel(tagLabel(tag))
-                    .accessibilityHint("Zeigt Trainings und Kurse des Tages.")
+                    .accessibilityHint(ziel == .planTag ? "Öffnet den Tag im Plan." : "Zeigt Trainings und Kurse des Tages.")
                     .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
                 } else {
                     wochenzelle(tag, gewaehlt: gewaehlt)
@@ -302,53 +294,6 @@ private extension HomeSerieView {
         }
     }
 
-    func monatsgitter(trainingstage: Set<String>, gewaehlt: String?) -> some View {
-        let anker = gewaehlt ?? stand.today
-        let tage = HomeSerie.monatstage(
-            um: anker, heute: stand.today, trainingstage: trainingstage)
-        let spalten = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
-
-        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text(HomeSerie.monatstitel(anker).uppercased())
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-
-            // Der Buchstabe steht hier einmal als Spaltenkopf statt an
-            // jeder Zelle -- ueber sechs Zeilen waere er sechsmal
-            // dasselbe Wort.
-            LazyVGrid(columns: spalten, spacing: DesignSystem.Spacing.s8) {
-                ForEach(Array(tage.prefix(7).enumerated()), id: \.offset) { _, tag in
-                    Text(tag.buchstabe)
-                        .font(.system(size: 10, weight: .heavy))
-                        .tracking(1.2)
-                        .foregroundStyle(DesignSystem.Color.textFaint)
-                }
-                .accessibilityHidden(true)
-
-                ForEach(tage) { tag in
-                    if istWaehlbar(tag) {
-                        Button {
-                            auswaehlen(tag, gewaehlt: gewaehlt)
-                        } label: {
-                            monatszelle(tag, gewaehlt: gewaehlt)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PressButtonStyle())
-                        .accessibilityLabel(tagLabel(tag))
-                        .accessibilityHint("Zeigt Trainings und Kurse des Tages.")
-                        .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
-                    } else {
-                        monatszelle(tag, gewaehlt: gewaehlt)
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityHidden(tag.ausserhalb)
-                            .accessibilityLabel(tagLabel(tag))
-                    }
-                }
-            }
-        }
-    }
-
     /// Die Zelle mit ihrem Buchstaben -- die Trefferflaeche ist die ganze
     /// Spalte, nicht der Kreis: 40 pt allein blieben unter den 44 aus
     /// designsystem.md SS4.
@@ -357,10 +302,25 @@ private extension HomeSerieView {
             buchstabe(tag, istGewaehlt: tag.id == gewaehlt)
             VStack(spacing: 6) {
                 zelle(tag, istGewaehlt: tag.id == gewaehlt)
-                kurspunkt(tag)
+                marke(tag)
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Unter dem Tag die Planmarke, dieselbe wie im Plan-Tab (`PlanTagMarke`);
+    /// ohne Planmarke der Kurspunkt. Beide teilen sich die Stelle, damit
+    /// unter einem Tag nie zwei Zeichen stehen.
+    func marke(_ tag: HomeSerieTag) -> some View {
+        Group {
+            if let art = tag.geplant {
+                PlanTagMarke(art: art)
+                    .accessibilityHidden(true)
+            } else {
+                kurspunkt(tag)
+            }
+        }
+        .frame(height: 8)
     }
 
     /// Der Punkt unter dem Tag, wenn man dort einen Kurs hat (Testnotiz
@@ -375,12 +335,6 @@ private extension HomeSerieView {
             .frame(width: 5, height: 5)
             .opacity(punkt == .keiner ? 0 : 1)
             .accessibilityHidden(true)
-    }
-
-    func monatszelle(_ tag: HomeSerieTag, gewaehlt: String?) -> some View {
-        zelle(tag, istGewaehlt: tag.id == gewaehlt)
-            .frame(maxWidth: .infinity)
-            .frame(height: 44)
     }
 
     func buchstabe(_ tag: HomeSerieTag, istGewaehlt: Bool) -> some View {
@@ -450,44 +404,6 @@ private extension HomeSerieView {
     }
 }
 
-// MARK: - Umschalter
-
-private extension HomeSerieView {
-    /// Kein Rahmen und keine volle Breite: ein 48 pt hoher Umriss quer
-    /// ueber den Screen wog schwerer als die Karten darunter, um die es
-    /// eigentlich geht. Uebrig bleibt das Wort und ein Winkel darunter.
-    ///
-    /// Er steht oben rechts in der Kopfzeile, nicht mehr unter dem
-    /// Kalender: die Wochenansicht hat keinen Monatstitel, an dem er
-    /// haengen koennte, und ein Umschalter, der je nach Ansicht woanders
-    /// sitzt, ist zweimal zu suchen -- in der Kopfzeile findet er sich in
-    /// beiden Ansichten an derselben Stelle. Dafuer steht er nicht mehr
-    /// unter der Liste, die er umschaltet; der Winkel zeigt weiterhin in
-    /// die Richtung, in die der Kalender aufgeht.
-    ///
-    /// Die 44 pt aus designsystem.md SS4 traegt die Trefferflaeche, nicht
-    /// die Schrift: sichtbar sind rund 28.
-    var umschalterKnopf: some View {
-        Button {
-            monatOffen.toggle()
-        } label: {
-            VStack(spacing: DesignSystem.Spacing.s4) {
-                Text(monatOffen ? "Wochenansicht" : "Monatsansicht")
-                    .font(.system(size: 13, weight: .semibold))
-                Image(systemName: monatOffen ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 11, weight: .bold))
-            }
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            // Nur waagerecht fest: die Zeile gibt den Platzmangel an die
-            // Fussnote weiter, statt das Wort abzuschneiden.
-            .fixedSize(horizontal: true, vertical: false)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressButtonStyle())
-    }
-}
-
 // MARK: - VoiceOver
 
 private extension HomeSerieView {
@@ -510,6 +426,14 @@ private extension HomeSerieView {
         case .angemeldet: teile.append("Kurs, du bist angemeldet.")
         case .warteliste: teile.append("Kurs, du stehst auf der Warteliste.")
         case .keiner: break
+        }
+        switch tag.geplant {
+        case .einheit: teile.append("Einheit geplant.")
+        // Der Kurspunkt hat den Kurs oben schon genannt.
+        case .kurs: if HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) == .keiner { teile.append("Kurs geplant.") }
+        case .cardio: teile.append("Cardio geplant.")
+        case .verpasst: teile.append("Verpasst.")
+        case nil: break
         }
         return teile.joined(separator: " ")
     }
