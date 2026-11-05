@@ -4,6 +4,12 @@ import Testing
 
 /// Zustand des Plan-Tabs: Woche Mo 26.10. bis So 1.11.2026 (Europe/Berlin).
 struct PlanTabZustandTests {
+    @Test func einheitenKopfNenntNurDieAnzahl() {
+        #expect(PlanTabZustand.einheitenKopf(1) == "1 EINHEIT")
+        #expect(PlanTabZustand.einheitenKopf(3) == "3 EINHEITEN")
+    }
+
+
     private static let kalender: Calendar = {
         var k = Calendar(identifier: .gregorian)
         k.timeZone = TimeZone(identifier: "Europe/Berlin")!

@@ -6,6 +6,12 @@ import Foundation
 /// Vorauswahl bleibt richtig, wenn ueber Mitternacht oder nach neuem Laden die
 /// Daten unter der offenen App wechseln.
 struct PlanTabZustand: Equatable {
+    /// Die Marke rechts im Plan-Kopf: nur die Anzahl, die Namen stehen auf
+    /// den Karten (sie enthalten selbst " · ").
+    static func einheitenKopf(_ anzahl: Int) -> String {
+        anzahl == 1 ? "1 EINHEIT" : "\(anzahl) EINHEITEN"
+    }
+
     var gewaehlterTag: Date?
     var gewaehlterFilter: PlanFilter?
 

@@ -267,19 +267,15 @@ struct PlanRootView: View {
     // MARK: - Teile
 
     private func kopf(_ plan: Trainingsplan) -> some View {
-        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
-        return         HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline) {
             Text("PLAN")
                 .font(DesignSystem.Typography.screentitel)
                 .tracking(-0.8)
                 .foregroundStyle(DesignSystem.Color.text)
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            Text(plan.einheiten.count == 1
-                 ? "EINE EINHEIT"
-                 : "EINHEITEN " + plan.einheiten.map { namen.name($0.key).uppercased() }.joined(separator: " · "))
+            Text(PlanTabZustand.einheitenKopf(plan.einheiten.count))
                 .font(DesignSystem.Typography.label)
-                .multilineTextAlignment(.trailing)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
         }
