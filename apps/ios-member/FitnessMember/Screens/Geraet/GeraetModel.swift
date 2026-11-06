@@ -804,12 +804,22 @@ final class GeraetModel {
                                               bloecke: sessions.aktiveSession()?.bloecke ?? []))
     }
 
-    /// Die Wiederholungen der Planposition, nur wenn beide Grenzen da sind.
+    /// Die Wiederholungen der Planposition, nur wenn beide Grenzen da sind
+    /// und die Uebung Wiederholungen zaehlt: eine Wiederholungsposition,
+    /// getauscht gegen eine Halteuebung, haette sonst "Ziel 8 – 10" an
+    /// einem Sekundenrad.
     private var planspanne: ClosedRange<Int>? {
-        guard let stelle = planStelle, let von = stelle.wdhVon, let bis = stelle.wdhBis, von <= bis else {
+        guard volumeKind == .reps, let stelle = planStelle, let von = stelle.wdhVon, let bis = stelle.wdhBis, von <= bis else {
             return nil
         }
         return von...bis
+    }
+
+    /// Die Satzzahl, die der Screen ueberall zeigt (Radkopf, Hauptknopf,
+    /// Pause, offener Satz): im Plan die Zaehlung der Uebung ueber alle
+    /// Geraete wie Ablaufzeile und Plankarte, frei `satzNummer` (R4).
+    var anzeigeSatz: Int {
+        planStelle.map { $0.satzGemacht + 1 } ?? satzNummer
     }
 
     /// "Übung 3 von 6 · Satz 2 von 3" im Plan, "Satz 2" frei. nil im
@@ -819,7 +829,7 @@ final class GeraetModel {
         if let stelle = planStelle {
             // satzZiel statt stelle.saetze: bei Zeit und Strecke ist ein Satz
             // die ganze Einheit (gleich bei Wiederholungen).
-            return .plan(uebung: stelle.nummer, von: stelle.gesamt, satz: stelle.satzGemacht + 1,
+            return .plan(uebung: stelle.nummer, von: stelle.gesamt, satz: anzeigeSatz,
                          saetze: satzZiel)
         }
         return .frei(satz: satzNummer)

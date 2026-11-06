@@ -453,8 +453,8 @@ struct GeraetModelTests {
     /// Sechs Positionen, e1 an dritter Stelle: 3 Saetze, 8–10 Wdh., Ziel
     /// 40 kg. Die anderen Positionen tragen Uebungen, die es an keinem
     /// Testgeraet gibt.
-    private static func planMitSechs(zielgewicht: Bool = true) -> Trainingsplan {
-        let uebungen = ["e10", "e11", "e1", "e12", "e13", "e14"]
+    private static func planMitSechs(zielgewicht: Bool = true, an3: String = "e1") -> Trainingsplan {
+        let uebungen = ["e10", "e11", an3, "e12", "e13", "e14"]
         let positionen = uebungen.enumerated().map { index, uebung in
             """
             {"key":"A\(index)","baustein":"brust","rolle":"pflicht","exerciseId":"\(uebung)",
@@ -474,12 +474,15 @@ struct GeraetModelTests {
     }
 
     private func planModell(plan: Trainingsplan = planMitSechs(), sessions: WorkoutSessionStore? = nil,
-                            satzZiel: Int = 4) -> GeraetModel {
+                            satzZiel: Int = 4,
+                            maschine: BootstrapResponse.Machine = GeraetTestdaten.maschine,
+                            vorher: (TrainingsplanAblaufStore) -> Void = { _ in }) -> GeraetModel {
         let ablauf = TrainingsplanAblaufStoreTests.store()
         ablauf.vorbereiten(plan: plan, jetzt: Date())
+        vorher(ablauf)
         let bootstrap = BootstrapResponse(member: .init(displayName: nil, plans: [plan]), studios: [],
-                                          machines: [GeraetTestdaten.maschine], calibrations: [], lastSets: [])
-        return modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap, sessions: sessions,
+                                          machines: [maschine], calibrations: [], lastSets: [])
+        return modell(maschine: maschine, bootstrap: bootstrap, sessions: sessions,
                       satzZiel: satzZiel, ablauf: ablauf)
     }
 
@@ -517,7 +520,21 @@ struct GeraetModelTests {
             #expect(sut.kontextzeileUmfang == "Ziel 8 – 12")
             #expect(sut.kontextzeileBelastung == "Schritt 2,5 kg · 5,0 – 150,0")
             #expect(sut.ablaufzeile == .frei(satz: 1))
+            #expect(sut.anzeigeSatz == sut.satzNummer)
         }
+    }
+
+    /// R5: eine Wiederholungsposition, getauscht gegen eine Halteuebung,
+    /// gibt ihre Wiederholungsspanne nicht an das Sekundenrad weiter.
+    @Test func planspanneNurFuerWiederholungen() {
+        let sut = planModell(plan: Self.planMitSechs(an3: "e5"), maschine: GeraetTestdaten.maschineSekunden) {
+            $0.tauschen(positionKey: "A2", ersatz: (exerciseId: "e1", hauptmuskeln: ["chest"]))
+        }
+
+        #expect(sut.planStelle?.positionKey == "A2")
+        #expect(sut.zielspanne == 60...90)
+        #expect(sut.kontextzeileUmfang != "Ziel 8 – 10")
+        #expect(sut.kontextzeileUmfang == "Ziel 1 – 2 min")
     }
 
     /// Review Focus 3: satzNummer zaehlt je Geraet, der Plan je Uebung. Die
@@ -533,6 +550,8 @@ struct GeraetModelTests {
 
         #expect(sut.satzNummer == 1)
         #expect(sut.planStelle?.satzGemacht == 1)
+        // R4: Radkopf und Hauptknopf zeigen die Planzaehlung.
+        #expect(sut.anzeigeSatz == 2)
         #expect(sut.ablaufzeile == .plan(uebung: 3, von: 6, satz: 2, saetze: 3))
 
         // Zwei Saetze hier machen die drei geplanten voll: Abschluss, obwohl

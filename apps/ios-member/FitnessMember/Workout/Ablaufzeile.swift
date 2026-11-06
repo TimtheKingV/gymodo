@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Wo im Ablauf das Mitglied steht -- eine Zeile unter dem Uebungsnamen am
 /// Geraet und im Pausen-Screen (UX-Paket 2, Abschnitt 2.4). Im Plan zaehlt
@@ -18,6 +18,25 @@ enum Ablaufzeile: Equatable {
         case .frei(let satz):
             "Satz \(satz)"
         }
+    }
+}
+
+/// Die Ablaufzeile als kleine Pille (Board "Gerät · Plan · Tracker"): am
+/// Geraet unter dem Uebungsnamen und im Pausen-Screen dieselbe.
+struct AblaufzeilePille: View {
+    let zeile: Ablaufzeile
+
+    var body: some View {
+        Text(zeile.text)
+            .font(.system(size: 13, weight: .bold))
+            .monospacedDigit()
+            .foregroundStyle(DesignSystem.Color.text)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, DesignSystem.Spacing.s8)
+            .padding(.vertical, DesignSystem.Spacing.s4)
+            .background(DesignSystem.Color.surfaceRaised,
+                        in: RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
     }
 }
 

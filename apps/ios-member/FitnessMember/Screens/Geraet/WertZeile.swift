@@ -61,7 +61,7 @@ struct WertZeile: View {
 
     private var kopf: some View {
         HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.s8) {
-            Text("SATZ \(modell.satzNummer)")
+            Text("SATZ \(modell.anzeigeSatz)")
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)

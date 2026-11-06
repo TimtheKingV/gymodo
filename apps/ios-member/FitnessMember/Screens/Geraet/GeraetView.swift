@@ -198,7 +198,7 @@ struct GeraetView: View {
                       beiVerlaengern: modell.pauseVerlaengern,
                       beiGewicht: beiGewichtAendern,
                       einheit: modell.loadUnit,
-                      naechsterSatz: modell.satzNummer,
+                      naechsterSatz: modell.anzeigeSatz,
                       beiWeiter: modell.pauseBeenden,
                       // Derselbe Weg wie "Uebung abschliessen" unter den
                       // Raedern -- nur ohne den Umweg ueber den naechsten
@@ -343,16 +343,7 @@ struct GeraetView: View {
             // Plan Übung und Satz, frei nur der Satz. Im Zirkel nil -- die
             // Zirkel-Ebene setzt dort ihre eigene Zeile.
             if let zeile = modell.ablaufzeile {
-                Text(zeile.text)
-                    .font(.system(size: 13, weight: .bold))
-                    .monospacedDigit()
-                    .foregroundStyle(DesignSystem.Color.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .padding(.horizontal, DesignSystem.Spacing.s8)
-                    .padding(.vertical, DesignSystem.Spacing.s4)
-                    .background(DesignSystem.Color.surfaceRaised,
-                                in: RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
+                AblaufzeilePille(zeile: zeile)
             }
         }
     }
@@ -445,7 +436,7 @@ struct GeraetView: View {
     }
 
     private var hauptaktion: String {
-        "Satz \(modell.satzNummer) sichern"
+        "Satz \(modell.anzeigeSatz) sichern"
     }
 
     /// Nach dem letzten geplanten Satz. Eine Pause vor einem Satz, der nicht
@@ -662,7 +653,7 @@ struct GeraetScreen: View {
             }
         }) {
             SatzOffenSheet(
-                satzNummer: modell.satzNummer,
+                satzNummer: modell.anzeigeSatz,
                 beiSpeichern: {
                     // Abgelehnt (anderes Studio): zurueck auf die Satzseite,
                     // die den Grund zeigt -- nicht still aus der Uebung.
