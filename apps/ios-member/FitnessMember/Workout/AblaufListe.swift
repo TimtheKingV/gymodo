@@ -29,12 +29,12 @@ enum AblaufListe {
                      ausgelassen: Set<String>, bloecke: [LokalerBlock],
                      aktuelleUebung: String?, bootstrap: BootstrapResponse?) -> [AblaufZeile] {
         guard let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) else { return [] }
-        let stellen = PlanAnzeige.planstellen(einheit: einheit, zustand: zustand)
-            .filter { !ausgelassen.contains($0.key) }
+        let alleStellen = PlanAnzeige.planstellen(einheit: einheit, zustand: zustand)
+        let stellen = alleStellen.filter { !ausgelassen.contains($0.key) }
         let naechste = naechstePlanstelle(stellen: stellen, ausgelassen: ausgelassen,
                                           aktuelleUebung: aktuelleUebung)
         var jetztVergeben = false
-        return stellen.map { stelle in
+        var zeilen: [AblaufZeile] = stellen.map { stelle in
             let wirksam = stelle.wirksam
             let stand: AblaufZeile.Stand
             if !jetztVergeben, let aktuelleUebung, wirksam == aktuelleUebung {
@@ -54,7 +54,7 @@ enum AblaufListe {
             let detail: String
             switch stand {
             case .erledigt: detail = erledigtText(uebungsBloecke) ?? vorgabe
-            case .jetzt: detail = jetztText(uebungsBloecke, satzGemacht: PlanAnzeige.satzzahl(exerciseId: wirksam, bloecke: bloecke))
+            case .jetzt: detail = jetztText(uebungsBloecke)
             case .naechste, .offen: detail = vorgabe
             }
             return AblaufZeile(
@@ -63,6 +63,28 @@ enum AblaufListe {
                 detail: detail, stand: stand,
                 bildModellId: PlanAnzeige.bildmodell(exerciseId: wirksam, modelId: modelId, bootstrap: bootstrap))
         }
+        // Zusaetzlich gemacht (R6): Uebungen ohne Position stehen wie in der
+        // Plankarte als erledigte Zeilen hinter dem Plan; die aktuelle
+        // Uebung, falls sie keine Position hat, ist `.jetzt`.
+        var extras = PlanAnzeige.ungeplanteUebungen(stellen: alleStellen, bloecke: bloecke)
+            .map { (id: $0.exerciseId, modell: $0.equipmentModelId) }
+        let geplant = Set(alleStellen.map(\.wirksam))
+        if !jetztVergeben, let aktuelleUebung, !geplant.contains(aktuelleUebung),
+           !extras.contains(where: { $0.id == aktuelleUebung }) {
+            extras.append((id: aktuelleUebung, modell: nil))
+        }
+        for extra in extras {
+            let istJetzt = !jetztVergeben && extra.id == aktuelleUebung
+            if istJetzt { jetztVergeben = true }
+            let eigene = bloecke.filter { $0.exerciseId == extra.id }
+            zeilen.append(AblaufZeile(
+                id: "zusatz:\(extra.id)",
+                name: PlanZeilenModell.uebungsname(exerciseId: extra.id, maschine: nil, bootstrap: bootstrap),
+                detail: istJetzt ? jetztText(eigene) : (erledigtText(eigene) ?? ""),
+                stand: istJetzt ? .jetzt : .erledigt,
+                bildModellId: PlanAnzeige.bildmodell(exerciseId: extra.id, modelId: extra.modell, bootstrap: bootstrap)))
+        }
+        return zeilen
     }
 
     /// E3: die erste Planstelle mit Status `.offen` oder `.getauscht`, nicht
@@ -102,7 +124,7 @@ enum AblaufListe {
             case .naechste: stand = .naechste
             case .dran, .offen: stand = .offen
             }
-            let detail = stand == .erledigt ? werte.joined(separator: " · ") : (werte.last ?? "")
+            let detail = stand == .erledigt ? kompakt(werte) : (werte.last ?? "")
             return AblaufZeile(id: "\(uebung.station):\(uebung.exerciseId)", name: name(uebung),
                                detail: detail, stand: stand, bildModellId: bildModellId(uebung))
         }
@@ -120,8 +142,7 @@ enum AblaufListe {
             guard istAktuell || !block.saetze.isEmpty else { return nil }
             return AblaufZeile(
                 id: block.id, name: name(block),
-                detail: istAktuell ? jetztText([block], satzGemacht: block.saetze.count)
-                                   : TrainingTab.blockzeile(block),
+                detail: istAktuell ? jetztText([block]) : (erledigtText([block]) ?? ""),
                 stand: istAktuell ? .jetzt : .erledigt, bildModellId: block.equipmentModelId)
         }
     }
@@ -146,21 +167,29 @@ enum AblaufListe {
 
     // MARK: - Texte
 
-    /// "3 Sätze · 30,0 kg": Zahl ueber alle Bloecke der Uebung, Werte des
-    /// zuletzt geschriebenen Satzes.
+    /// Satzwerte aller Saetze der Uebung (ueber alle Bloecke, nach Zeit),
+    /// kompakt: siehe `kompakt`. nil ohne Satz.
     private static func erledigtText(_ bloecke: [LokalerBlock]) -> String? {
-        let anzahl = bloecke.reduce(0) { $0 + $1.saetze.count }
-        guard anzahl > 0, let letzter = zuletzt(bloecke) else { return nil }
-        let teile = TrainingTab.blockzeile(letzter).components(separatedBy: " · ").dropFirst()
-        return ([anzahl == 1 ? "1 Satz" : "\(anzahl) Sätze"] + teile).joined(separator: " · ")
+        let werte = bloecke
+            .flatMap { block in block.saetze.map { (satz: $0, block: block) } }
+            .sorted { $0.satz.performedAt < $1.satz.performedAt }
+            .compactMap { ZirkelPauseText.satzwerte($0.satz, $0.block) }
+        return werte.isEmpty ? nil : kompakt(werte)
     }
 
-    /// "12,5 kg × 10 · Satz 3": der letzte Satz und der, der jetzt kommt.
-    private static func jetztText(_ bloecke: [LokalerBlock], satzGemacht: Int) -> String {
-        let satz = "Satz \(satzGemacht + 1)"
-        guard let block = zuletzt(bloecke), let letzter = block.saetze.last,
-              let werte = ZirkelPauseText.satzwerte(letzter, block) else { return satz }
-        return "\(werte) · \(satz)"
+    /// Gleiche Werte in allen Saetzen: "3 × 12,5 kg × 10"; ein Satz: nur die
+    /// Werte; sonst alle Werte in Satzreihenfolge, mit " · " getrennt.
+    static func kompakt(_ werte: [String]) -> String {
+        guard let erster = werte.first else { return "" }
+        if werte.count > 1, werte.allSatisfy({ $0 == erster }) { return "\(werte.count) × \(erster)" }
+        return werte.joined(separator: " · ")
+    }
+
+    /// Nur die Werte des letzten Satzes; "Satz n" sagen Ablaufzeile und
+    /// Hauptknopf schon. "" ohne Satz.
+    private static func jetztText(_ bloecke: [LokalerBlock]) -> String {
+        guard let block = zuletzt(bloecke), let letzter = block.saetze.last else { return "" }
+        return ZirkelPauseText.satzwerte(letzter, block) ?? ""
     }
 
     private static func zuletzt(_ bloecke: [LokalerBlock]) -> LokalerBlock? {

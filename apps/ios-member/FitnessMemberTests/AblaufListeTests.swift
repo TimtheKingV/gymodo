@@ -74,7 +74,8 @@ struct AblaufListeTests {
         let zeilen = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: [0, 1, 2]),
                                       ausgelassen: [], bloecke: bloecke, aktuelleUebung: "e2", bootstrap: nil)
         #expect(zeilen[2].stand == .jetzt)
-        #expect(zeilen[2].detail.hasSuffix("Satz 3"))
+        #expect(zeilen[2].detail == ZirkelPauseText.satzwerte(bloecke[1].saetze[0], bloecke[1]))
+        #expect(!zeilen[2].detail.contains("Satz"))
     }
 
     @Test func naechstePlanstelleUeberspringtErledigteAktuelleUndAusgelassene() {
@@ -144,7 +145,7 @@ struct AblaufListeTests {
                                       aktuell: (stationSchluessel: block.stationSchluessel, exerciseId: "e1"),
                                       name: { _ in "Presse" })
         #expect(zeilen.map(\.stand) == [.jetzt])
-        #expect(zeilen[0].detail == "Satz 1")
+        #expect(zeilen[0].detail == "")
         #expect(!AblaufListe.hatMehr(zeilen))
     }
 
@@ -155,7 +156,51 @@ struct AblaufListeTests {
                                       aktuell: (stationSchluessel: jetzt.stationSchluessel, exerciseId: "e2"),
                                       name: { $0.exerciseId })
         #expect(zeilen.map(\.stand) == [.erledigt, .jetzt])
-        #expect(zeilen[0].detail == "2 Sätze · 20,0 kg")
-        #expect(zeilen[1].detail.hasSuffix("Satz 2"))
+        #expect(zeilen[0].detail == "2 × " + (ZirkelPauseText.satzwerte(alt.saetze[0], alt) ?? "?"))
+        #expect(zeilen[1].detail == ZirkelPauseText.satzwerte(jetzt.saetze[0], jetzt))
+    }
+
+    // MARK: Erledigt-Detail und Zusatzuebungen
+
+    @Test func erledigtDetailKompaktUndMitAbweichungen() {
+        let gleich = LokalerBlock(machineId: "m1", exerciseId: "e0",
+                                  saetze: [satz(1, load: 30, volume: 11), satz(2, load: 30, volume: 11, minuten: 2),
+                                           satz(3, load: 30, volume: 11, minuten: 4)])
+        let zeilen = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: [0]),
+                                      ausgelassen: [], bloecke: [gleich], aktuelleUebung: "e1", bootstrap: nil)
+        let eins = ZirkelPauseText.satzwerte(gleich.saetze[0], gleich) ?? "?"
+        #expect(zeilen[0].detail == "3 × \(eins)")
+
+        let verschieden = LokalerBlock(machineId: "m1", exerciseId: "e0",
+                                       saetze: [satz(1, load: 30, volume: 11), satz(2, load: 30, volume: 9, minuten: 2)])
+        let z2 = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: [0]),
+                                  ausgelassen: [], bloecke: [verschieden], aktuelleUebung: "e1", bootstrap: nil)
+        let a = ZirkelPauseText.satzwerte(verschieden.saetze[0], verschieden) ?? "?"
+        let b = ZirkelPauseText.satzwerte(verschieden.saetze[1], verschieden) ?? "?"
+        #expect(z2[0].detail == "\(a) · \(b)")
+    }
+
+    @Test func zusatzuebungenStehenErledigtHinterDemPlan() {
+        let extra = LokalerBlock(machineId: "m9", exerciseId: "x1", saetze: [satz(1, minuten: 1)])
+        let zeilen = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: [0]),
+                                      ausgelassen: [], bloecke: [extra], aktuelleUebung: "e1", bootstrap: nil)
+        #expect(zeilen.count == 7)
+        #expect(zeilen.last?.id == "zusatz:x1")
+        #expect(zeilen.last?.stand == .erledigt)
+        #expect(zeilen.last?.detail == ZirkelPauseText.satzwerte(extra.saetze[0], extra))
+    }
+
+    @Test func aktuelleZusatzuebungIstJetzt() {
+        let extra = LokalerBlock(machineId: "m9", exerciseId: "x1", saetze: [satz(1, minuten: 1)])
+        let zeilen = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: []),
+                                      ausgelassen: [], bloecke: [extra], aktuelleUebung: "x1", bootstrap: nil)
+        #expect(zeilen.last?.stand == .jetzt)
+        #expect(zeilen.filter { $0.stand == .jetzt }.count == 1)
+        // Ohne Satz (gerade erst geoeffnet) gibt es die Zeile trotzdem.
+        let leer = AblaufListe.plan(plan: plan6(), einheitKey: "A", zustand: zustand(erledigt: []),
+                                    ausgelassen: [], bloecke: [], aktuelleUebung: "x2", bootstrap: nil)
+        #expect(leer.last?.id == "zusatz:x2")
+        #expect(leer.last?.stand == .jetzt)
+        #expect(leer.last?.detail == "")
     }
 }
