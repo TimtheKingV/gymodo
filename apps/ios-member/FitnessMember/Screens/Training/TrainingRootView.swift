@@ -251,7 +251,7 @@ struct TrainingRootView: View {
                 ersatzNachSchliessen = nil
                 ersatzAnwenden(wahl.station, uebungId: wahl.uebungId)
             }) { wahl in
-                ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                     ersatzNachSchliessen = (wahl.station, uebung.exerciseId)
                     ersatzUebungswahl = nil
                 }
@@ -1352,7 +1352,8 @@ struct TrainingRootView: View {
                 case .uebungswahl(let wahl):
                     // Die Wahl reist im Pfad: die Closure hier haelt den State
                     // vom Aufbau des Sheets und sah zirkelUebungswahl noch leer.
-                    ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true) { uebung in
+                    ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true,
+                                           bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                         beiWahl(wahl.station, uebung.exerciseId)
                     }
                     .environment(videoVorrat)
@@ -1373,7 +1374,7 @@ struct TrainingRootView: View {
         // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
         // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
         .sheet(item: inStapel ? Binding<ZirkelUebungswahl?>.constant(nil) : $zirkelUebungswahl) { wahl in
-            ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+            ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                 zirkelUebungswahl = nil
                 beiWahl(wahl.station, uebung.exerciseId)
             }

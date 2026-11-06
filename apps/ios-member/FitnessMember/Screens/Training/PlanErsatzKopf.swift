@@ -37,18 +37,21 @@ struct PlanErsatzKopf: View {
                     .accessibilityAddTraits(.updatesFrequently)
             }
             if !auftrag.kandidaten.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                     Text("PASSEND ZUM PLAN")
                         .font(DesignSystem.Typography.label)
                         .tracking(1.2)
                         .foregroundStyle(DesignSystem.Color.textFaint)
-                        .padding(.bottom, DesignSystem.Spacing.s4)
                         .accessibilityAddTraits(.isHeader)
-                    ForEach(Array(auftrag.kandidaten.enumerated()), id: \.element.id) { index, kandidat in
-                        if index > 0 {
-                            Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
+                    let abschnitte = PlanTausch.abschnitte(auftrag.kandidaten)
+                    let ersteJeGruppe = Set(abschnitte.compactMap { $0.eintraege.first?.id })
+                    MuskelAbschnitte(abschnitte: abschnitte, gefiltert: false) { kandidat in
+                        VStack(spacing: 0) {
+                            if !ersteJeGruppe.contains(kandidat.id) {
+                                Rectangle().fill(DesignSystem.Color.line).frame(height: 1)
+                            }
+                            zeile(kandidat)
                         }
-                        zeile(kandidat)
                     }
                 }
             }

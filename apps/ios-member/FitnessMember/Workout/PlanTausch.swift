@@ -178,6 +178,21 @@ enum PlanTausch {
     /// Das Modell ist der Katalogtyp (bei einem Studio-Geraet sein
     /// `catalogModelId`), den der Server beim Tausch erwartet. nil, wenn die
     /// Station die Uebung nicht fuehrt.
+    /// Die Kandidaten nach Muskelgruppe (E5): Gruppen in fester Reihenfolge,
+    /// innerhalb einer Gruppe die Reihenfolge des Servers -- er stellt
+    /// "vorsichtig" hinten an, und das bleibt bindend. Ohne darstellbaren
+    /// Muskel steht ein Kandidat unter "Weitere".
+    static func abschnitte(_ kandidaten: [TauschKandidat]) -> [MuskelAbschnitt<TauschKandidat>] {
+        let gruppen = kandidaten.map { kandidat in
+            (kandidat, UebungsGruppierung.hauptgruppe(
+                muskeln: kandidat.hauptmuskeln.map { GeraetMuskel(key: $0, name: $0, role: .primary) }))
+        }
+        return MuskelHauptgruppe.allCases.compactMap { gruppe in
+            let treffer = gruppen.filter { $0.1 == gruppe }.map(\.0)
+            return treffer.isEmpty ? nil : MuskelAbschnitt(gruppe: gruppe, eintraege: treffer)
+        }
+    }
+
     static func kandidat(station: Station, uebungId: String, bootstrap: BootstrapResponse?) -> TauschKandidat? {
         guard let uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
         let modellId = station.equipmentModel.catalogModelId ?? station.equipmentModel.id
