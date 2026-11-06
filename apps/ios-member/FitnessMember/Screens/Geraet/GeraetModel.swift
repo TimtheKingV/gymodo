@@ -253,6 +253,9 @@ final class GeraetModel {
     /// Dieselbe Regel fuer die Nebenbelastung, getrennt gefuehrt: wer nur
     /// die Neigung anfasst, soll den Tempo-Vorschlag trotzdem bekommen.
     private var nebenbelastungVomNutzer = false
+    /// Nur lesend, fuer den Gewichts-Drawer der Zirkel-Pause: hat das
+    /// Mitglied an einem der Raeder gedreht?
+    var belastungIstVomNutzer: Bool { belastungVomNutzer || nebenbelastungVomNutzer }
     /// Das Rad steht auf dem Zielgewicht der Planposition aus dem Bootstrap
     /// (Etappe 4, G8). Dann ersetzt auch ein spaeter Kontext es nicht: die
     /// Zahl darf sich nicht unter dem Mitglied aendern, es gilt das zuletzt

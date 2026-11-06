@@ -313,6 +313,19 @@ struct ZirkelVormerkung: Equatable {
         ausPause[uebung] = startwerte
     }
 
+    /// Der Gewichts-Drawer der Pause geht zu: vorgemerkt wird nur, was das
+    /// Mitglied gewaehlt hat -- ein anderer Wert als beim Oeffnen, oder es
+    /// hat am Rad gedreht (`vomNutzer`). Ein unveraendert geschlossener
+    /// Drawer merkte sonst ein geratenes Gewicht vor, und der Drawer von
+    /// Runde 1 entfiele. true, wenn vorgemerkt wurde.
+    @discardableResult
+    mutating func ausPauseUebernehmen(_ uebung: ZirkelUebung, geoeffnetMit: Startwerte,
+                                      gewaehlt: Startwerte, vomNutzer: Bool) -> Bool {
+        guard gewaehlt != geoeffnetMit || vomNutzer else { return false }
+        vormerken(uebung, startwerte: gewaehlt)
+        return true
+    }
+
     /// Was `entnehmen` liefern wuerde, ohne den Eintrag zu raeumen -- der
     /// Gewichts-Drawer der Pause beginnt damit, wenn er ein zweites Mal
     /// aufgeht.

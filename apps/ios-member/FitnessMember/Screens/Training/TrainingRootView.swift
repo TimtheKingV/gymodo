@@ -1732,7 +1732,9 @@ struct TrainingRootView: View {
               !modell.istCardio
         else { return }
         zirkelGewicht = ZirkelGewichtAuftrag(uebung: naechste, modell: modell,
-                                             vorbereitet: modell === vorbereitetesModell)
+                                             vorbereitet: modell === vorbereitetesModell,
+                                             geoeffnetMit: modell.startwerte,
+                                             vomNutzerBeimOeffnen: modell.belastungIstVomNutzer)
         zirkelGewichtOffen = true
     }
 
@@ -1747,9 +1749,13 @@ struct TrainingRootView: View {
               zirkel.naechste == auftrag.uebung
         else { return }
         // Das vorbereitete Modell traegt das Gewicht schon selbst; eine
-        // Vormerkung bliebe sonst fuer eine spaetere Runde liegen.
-        if !auftrag.vorbereitet {
-            zirkelVormerkung.vormerken(auftrag.uebung, startwerte: auftrag.modell.startwerte)
+        // Vormerkung bliebe sonst fuer eine spaetere Runde liegen. Nur was
+        // das Mitglied gewaehlt hat: unveraendert zu laesst den Drawer von
+        // Runde 1 stehen.
+        if !auftrag.vorbereitet,
+           zirkelVormerkung.ausPauseUebernehmen(
+               auftrag.uebung, geoeffnetMit: auftrag.geoeffnetMit, gewaehlt: auftrag.modell.startwerte,
+               vomNutzer: auftrag.modell.belastungIstVomNutzer && !auftrag.vomNutzerBeimOeffnen) {
             zirkelAutomatikVorbereiten()
         }
         if zirkelAblauf.pause?.laeuft() != true {
@@ -2084,4 +2090,7 @@ private struct ZirkelGewichtAuftrag {
     let uebung: ZirkelUebung
     let modell: GeraetModel
     let vorbereitet: Bool
+    /// Stand beim Oeffnen: vorgemerkt wird nur eine Wahl (Finding T5).
+    let geoeffnetMit: Startwerte
+    let vomNutzerBeimOeffnen: Bool
 }
