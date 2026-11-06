@@ -223,11 +223,6 @@ struct TrainingRootView: View {
             }
             .background(DesignSystem.Color.bg)
             .testnotizScreen()
-            .trainingSteuerung(
-                istOffen: $steuerungOffen,
-                pausiert: sessions.aktiveSession()?.istPausiert ?? false,
-                beiPauseUmschalten: pauseUmschalten,
-                beiBeenden: beenden)
             // .id(route): ersetzt navigiere(zu:) den Pfad in einem Zug, landet
             // die neue Route an derselben Stelle wie die alte -- ohne eigene
             // Identitaet behielte der Screen dort sein @State-Modell und zeigte
@@ -409,6 +404,16 @@ struct TrainingRootView: View {
             // in einen verschwundenen Zustand hinein schreiben.
             .onDisappear { neuladeVersuch?.cancel() }
         }
+        // Am Stack, nicht am Wurzelinhalt: die Wurzel, die Zirkel-Pause und
+        // die Zirkel-Uebersicht oeffnen sie, die beiden letzten gepusht --
+        // ein Sheet am verdeckten Wurzelinhalt ist dort nicht verlaesslich.
+        // Der Geraete-Screen traegt seine eigene, mit eigenem Schalter: zwei
+        // Sheets haengen so nie am selben Flag.
+        .trainingSteuerung(
+            istOffen: $steuerungOffen,
+            pausiert: sessions.aktiveSession()?.istPausiert ?? false,
+            beiPauseUmschalten: pauseUmschalten,
+            beiBeenden: beenden)
         // Am Stack, nicht an der Wurzel: ein Aufkleber-Tap kommt auch, waehrend
         // ein Geraete-Screen gepusht ist, und ein Dialog an der verdeckten
         // Wurzel erschien erst nach dem Zuruecknavigieren (Sichtcheck Task 11).
@@ -860,8 +865,8 @@ struct TrainingRootView: View {
                             uebungsname: zirkelUebungsname,
                             ort: { zirkelStation($0).map(GeraetModel.ortsangabe) ?? "" },
                             bildModellId: { zirkelStation($0)?.equipmentModel.id },
-                            // Die Steuerung der Wurzel: sie traegt
-                            // .trainingSteuerung schon.
+                            // Die Steuerung der Wurzel: der Stack traegt
+                            // .trainingSteuerung.
                             beiSteuerung: { steuerungOffen = true },
                             beiStarten: { zirkelWeiter() },
                             // Nur nach der letzten Uebung von Runde 1: danach
