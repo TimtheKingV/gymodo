@@ -164,7 +164,7 @@ struct ZirkelEntwurf: Equatable {
     }
 
     /// Dieselbe Uebung zweimal haette zwei Slots, aber nur einen Block in
-    /// der Einheit -- Rundenzusammenfassung und "Letztes Mal" koennten die
+    /// der Einheit -- Ablauf-Liste und Zirkel-Uebersicht koennten die
     /// beiden nicht auseinanderhalten. Die Liste traegt ausserdem die Uebung
     /// selbst als Identitaet.
     @discardableResult
@@ -275,8 +275,15 @@ extension ZirkelAuswahl {
 /// eingegeben wurden -- nicht zu Platz 1 des Zirkels. Wird umsortiert,
 /// gelten sie, sobald diese Uebung in Runde 1 drankommt; ohne sie liefe
 /// eine einfache Uebung ueber den Direktstart ohne das gewaehlte Gewicht.
+///
+/// Dazu das Gewicht, das das Mitglied in der Pause fuer die naechste
+/// Station waehlt ("± kg", UX-Paket 2, Review Focus 5): es gilt in jeder
+/// Runde, beim naechsten Start dieser Station, und vor dem heutigen Satz.
 struct ZirkelVormerkung: Equatable {
+    /// Aus dem Drawer der Planung: nur Runde 1.
     private var werte: [ZirkelUebung: Startwerte]
+    /// Aus der Pause: jede Runde.
+    private var ausPause: [ZirkelUebung: Startwerte] = [:]
 
     init(_ uebung: ZirkelUebung, werte: Startwerte) {
         self.werte = [uebung: werte]
@@ -295,14 +302,46 @@ struct ZirkelVormerkung: Equatable {
     /// Beim Start: nur, was noch im Entwurf steht. Eine entfernte Uebung
     /// nimmt ihre Werte mit.
     func behalten(nur uebungen: [ZirkelUebung]) -> ZirkelVormerkung {
-        ZirkelVormerkung(werte: werte.filter { uebungen.contains($0.key) })
+        var neu = ZirkelVormerkung(werte: werte.filter { uebungen.contains($0.key) })
+        neu.ausPause = ausPause.filter { uebungen.contains($0.key) }
+        return neu
     }
 
-    /// Einmal und nur in Runde 1: ab Runde 2 belegt GeraetModel das Gewicht
-    /// aus der Vorrunde vor. Auch eine Frage aus Runde 2 raeumt den Eintrag
-    /// (wurde die Uebung in Runde 1 uebersprungen, waere er sonst veraltet).
+    /// "± kg" in der Pause: gilt beim naechsten Start dieser Station, auch
+    /// ab Runde 2, und ersetzt die Werte aus dem Drawer.
+    mutating func vormerken(_ uebung: ZirkelUebung, startwerte: Startwerte) {
+        ausPause[uebung] = startwerte
+    }
+
+    /// Der Gewichts-Drawer der Pause geht zu: vorgemerkt wird nur, was das
+    /// Mitglied gewaehlt hat -- ein anderer Wert als beim Oeffnen, oder es
+    /// hat am Rad gedreht (`vomNutzer`). Ein unveraendert geschlossener
+    /// Drawer merkte sonst ein geratenes Gewicht vor, und der Drawer von
+    /// Runde 1 entfiele. true, wenn vorgemerkt wurde.
+    @discardableResult
+    mutating func ausPauseUebernehmen(_ uebung: ZirkelUebung, geoeffnetMit: Startwerte,
+                                      gewaehlt: Startwerte, vomNutzer: Bool) -> Bool {
+        guard gewaehlt != geoeffnetMit || vomNutzer else { return false }
+        vormerken(uebung, startwerte: gewaehlt)
+        return true
+    }
+
+    /// Was `entnehmen` liefern wuerde, ohne den Eintrag zu raeumen -- der
+    /// Gewichts-Drawer der Pause beginnt damit, wenn er ein zweites Mal
+    /// aufgeht.
+    func gemerkt(_ uebung: ZirkelUebung, runde: Int) -> Startwerte? {
+        ausPause[uebung] ?? (runde == 1 ? werte[uebung] : nil)
+    }
+
+    /// Einmal. Die Drawer-Werte nur in Runde 1: ab Runde 2 belegt
+    /// GeraetModel das Gewicht aus der Vorrunde vor. Auch eine Frage aus
+    /// Runde 2 raeumt den Eintrag (wurde die Uebung in Runde 1
+    /// uebersprungen, waere er sonst veraltet). Ein Pausen-Gewicht gilt in
+    /// jeder Runde.
     mutating func entnehmen(_ uebung: ZirkelUebung, runde: Int) -> Startwerte? {
-        let gemerkt = werte.removeValue(forKey: uebung)
-        return runde == 1 ? gemerkt : nil
+        let wert = gemerkt(uebung, runde: runde)
+        werte.removeValue(forKey: uebung)
+        ausPause.removeValue(forKey: uebung)
+        return wert
     }
 }

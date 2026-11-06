@@ -37,6 +37,16 @@ struct EinheitKarteModell: Equatable {
             zustand: zustand)
     }
 
+    /// Die Einheit laeuft: die Zeile unter dem Titel traegt den Stand
+    /// („4 von 7 · noch ca. 35 Min“) statt der Uebungszahl; sonst unveraendert.
+    /// Ohne Stand (nil) bleibt das Modell, wie es ist.
+    static func laufend(_ modell: EinheitKarteModell, fortschritt: String?) -> EinheitKarteModell {
+        guard let fortschritt else { return modell }
+        return EinheitKarteModell(
+            art: modell.art, titel: modell.titel, tag: modell.tag,
+            zeilen: [fortschritt], stufen: modell.stufen, zustand: modell.zustand)
+    }
+
     /// „verpasst · verschoben auf Fr“, „verpasst“, „Erledigt“, nil bei .geplant.
     static func zustandsText(_ zustand: TerminZustand, kalender: Calendar) -> String? {
         switch zustand {

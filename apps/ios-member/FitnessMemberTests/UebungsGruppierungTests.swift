@@ -113,4 +113,50 @@ struct UebungsGruppierungTests {
         #expect(MuskelAbschnitte<GeraetUebung, EmptyView>.kopf(gruppe: .beine, anzahl: 1, gefiltert: true) == "BEINE · 1 ÜBUNG")
         #expect(MuskelAbschnitte<GeraetUebung, EmptyView>.kopf(gruppe: .beine, anzahl: 3, gefiltert: true) == "BEINE · 3 ÜBUNGEN")
     }
+
+    // MARK: Zirkel-Uebungswahl
+
+    private func zirkelWahl() -> ZirkelUebungswahl {
+        let muskeln = ["pectorals", "lats", "quads", "pectorals", "lats", "quads", "quads"]
+        let uebungen = muskeln.enumerated().map { i, m in
+            "{\"id\":\"e\(i)\",\"name\":\"Uebung \(i)\",\"volumeKind\":\"reps\",\"targetMin\":8,\"targetMax\":12,"
+            + "\"muscles\":[{\"key\":\"\(m)\",\"name\":\"\(m)\",\"role\":\"primary\"}]}"
+        }.joined(separator: ",")
+        let maschine: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":0,
+         "equipmentModel":{"id":"em1","name":"Kabelzug","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":2.5,"loadMin":5.0,"loadMax":150.0,
+           "settingDefinitions":[]},
+         "exercises":[\(uebungen)]}
+        """)
+        let station = Station(maschine: maschine)
+        let offen = (0..<7).map { ZirkelUebung(station: station.schluessel, exerciseId: "e\($0)", token: nil) }
+        return ZirkelUebungswahl(station: station, offen: offen, schonDabei: [])
+    }
+
+    @Test func zirkelWahlGruppiertNachMuskeln() {
+        let wahl = zirkelWahl()
+        #expect(wahl.geraetUebungen.count == 7)
+        #expect(UebungsGruppierung.bietetSchalterAn(uebungsanzahl: wahl.geraetUebungen.count))
+        let abschnitte = UebungsGruppierung.abschnitte(wahl.geraetUebungen, muskeln: \.muscles)
+        #expect(abschnitte.map(\.gruppe) == [.brust, .ruecken, .beine])
+    }
+
+    @Test func zirkelUntertitelHeute() {
+        let wahl = zirkelWahl()
+        let satz = { (i: Int) in
+            LokalerSatz(id: UUID(), setIndex: i, load: 7.5, volume: 10, rir: nil, problemFlag: false,
+                        problemReason: nil, performedAt: Date(timeIntervalSince1970: 1_000_000 + Double(i)))
+        }
+        let block = LokalerBlock(station: wahl.station, exerciseId: "e3", saetze: [satz(1), satz(2)])
+        let heute = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[3], bloecke: [block])
+        #expect(heute.text == "Heute · 2 Sätze · 7,5 kg")
+        #expect(heute.hatHistorie)
+        let neu = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[0], bloecke: [block])
+        #expect(neu.text == "Ziel 8 – 12 Wdh.")
+        #expect(!neu.hatHistorie)
+        // Heute gemachte zuerst, sonst Katalogreihenfolge.
+        #expect(wahl.sortiert(bloecke: [block]).map(\.id) == ["e3", "e0", "e1", "e2", "e4", "e5", "e6"])
+    }
 }

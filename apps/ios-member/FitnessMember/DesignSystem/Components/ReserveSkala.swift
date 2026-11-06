@@ -10,16 +10,31 @@ struct ReserveSkala: View {
     let auswahl: Reserve?
     /// Einmalig beim allerersten Erscheinen: was mit "noch drin" gemeint ist.
     let mitErklaerung: Bool
+    /// Nur Chips und "Weiss nicht", ohne Frage: wo mehrere Skalen unter
+    /// einer gemeinsamen Frage stehen (Zirkel-Uebersicht, je Station).
+    var kompakt: Bool = false
     let aendern: (Reserve) -> Void
 
+    static let frage = "Wie viele Wiederholungen wären im letzten Satz noch drin gewesen?"
+    static let erklaerung = "Gemeint sind saubere Wiederholungen mit demselben Gewicht, ohne Pause."
+
+    init(auswahl: Reserve?, mitErklaerung: Bool, kompakt: Bool = false, aendern: @escaping (Reserve) -> Void) {
+        self.auswahl = auswahl
+        self.mitErklaerung = mitErklaerung
+        self.kompakt = kompakt
+        self.aendern = aendern
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text("Wie viele Wiederholungen wären im letzten Satz noch drin gewesen?")
-                .font(DesignSystem.Typography.uebungsname)
-                .foregroundStyle(DesignSystem.Color.text)
-                .fixedSize(horizontal: false, vertical: true)
-            if mitErklaerung {
-                Text("Gemeint sind saubere Wiederholungen mit demselben Gewicht, ohne Pause.")
+        VStack(alignment: .leading, spacing: kompakt ? DesignSystem.Spacing.s4 : DesignSystem.Spacing.s12) {
+            if !kompakt {
+                Text(Self.frage)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if mitErklaerung && !kompakt {
+                Text(Self.erklaerung)
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                     .fixedSize(horizontal: false, vertical: true)

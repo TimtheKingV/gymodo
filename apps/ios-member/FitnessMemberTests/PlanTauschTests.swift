@@ -1216,3 +1216,29 @@ struct PlanTauschStudioTests {
         #expect(PlanTausch.kandidat(station: station, uebungId: "e1", bootstrap: bootstrap) == nil)
     }
 }
+
+struct PlanErsatzGruppenTests {
+    private func kandidat(_ id: String, _ muskel: String) -> TauschKandidat {
+        TauschKandidat(exerciseId: id, modelId: "em-\(id)", name: id, geraet: nil, muskeln: nil,
+                       hauptmuskeln: [muskel], vorschaubildModell: nil)
+    }
+
+    @Test func ersatzGruppenBehaltenServerreihenfolge() {
+        let abschnitte = PlanTausch.abschnitte([kandidat("x", "pectorals"), kandidat("y", "lats"),
+                                                kandidat("z", "pectorals")])
+        #expect(abschnitte.map(\.gruppe) == [.brust, .ruecken])
+        #expect(abschnitte[0].eintraege.map(\.exerciseId) == ["x", "z"])
+        #expect(abschnitte[1].eintraege.map(\.exerciseId) == ["y"])
+    }
+
+    @Test func ersatzInnerhalbDerGruppeSortiertNichtNachMuskel() {
+        // Lats vor Erectors im Muskelmodell, aber der Server nannte erectors zuerst.
+        let abschnitte = PlanTausch.abschnitte([kandidat("a", "erectors"), kandidat("b", "lats")])
+        #expect(abschnitte[0].eintraege.map(\.exerciseId) == ["a", "b"])
+    }
+
+    @Test func ersatzOhneBekanntenMuskelLandetInWeitere() {
+        let abschnitte = PlanTausch.abschnitte([kandidat("a", "unbekannt"), kandidat("b", "quads")])
+        #expect(abschnitte.map(\.gruppe) == [.beine, .weitere])
+    }
+}

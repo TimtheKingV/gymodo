@@ -17,6 +17,7 @@ struct GeraetModelTests {
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil,
+        mitCountdown: Bool = true,
         ablauf: TrainingsplanAblaufStore? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
@@ -33,6 +34,7 @@ struct GeraetModelTests {
             mitschnitt: mitschnitt,
             zaehler: zaehler,
             startwerte: startwerte,
+            mitCountdown: mitCountdown,
             ablauf: ablauf
         )
     }
@@ -368,6 +370,117 @@ struct GeraetModelTests {
         #expect(!sut.zeigtReserveFrage)
     }
 
+    // MARK: - Uebungsabschluss (UX-Paket 2, E4)
+
+    /// E4: "Übung abschließen" aus der Pause fuehrt erst in den Abschluss
+    /// mit der Reserve-Frage, auch vor dem Satzziel.
+    @Test func abschlussAusDerPauseFragtNachReserve() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+
+        #expect(sut.abschlussAnfragen())
+
+        #expect(sut.phase == .abschluss)
+        #expect(sut.zeigtReserveFrage)
+        #expect(sut.abschlussTitel == "2 SÄTZE GESCHAFFT")
+    }
+
+    /// Ohne Satz gibt es nichts zu fragen: der Aufrufer verlaesst die Uebung.
+    @Test func ohneSatzVerlaesstDirekt() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+
+        #expect(!sut.abschlussAnfragen())
+        #expect(sut.phase == .eingabe)
+    }
+
+    /// Zeitsaetze haben keine Wiederholungen in Reserve: kein Umweg.
+    @Test func zeitsatzVerlaesstOhneReserve() async {
+        let sut = modell(maschine: GeraetTestdaten.maschineSekunden,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.weitererSatz()
+
+        #expect(!sut.abschlussAnfragen())
+    }
+
+    /// Im Zirkel fragt die Uebersicht einmal je Station, nicht das Geraet.
+    @Test func imZirkelFragtDasGeraetNicht() async {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        sut.beiZirkelSatzGesichert = {}
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(!sut.abschlussAnfragen())
+        #expect(sut.phase == .eingabe)
+    }
+
+    /// Der Titel nennt die gemachten Saetze, nicht das Ziel.
+    @Test func abschlussTitelZaehltEchteSaetze() async {
+        #expect(GeraetModel.abschlussTitel(saetze: 2) == "2 SÄTZE GESCHAFFT")
+        #expect(GeraetModel.abschlussTitel(saetze: 1) == "1 SATZ GESCHAFFT")
+
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         satzZiel: 3)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.abschlussAnfragen())
+        #expect(sut.abschlussTitel == "2 SÄTZE GESCHAFFT")
+    }
+
+    /// E3 ueber dieselbe Regel wie die Ablauf-Liste: erledigt, aktuell und
+    /// ausgelassen zaehlen nicht, die erste offene Position ist es.
+    @Test func naechstePlanuebungFolgtDerReihenfolge() {
+        let plan = Self.planMitSechs(zielgewicht: false, uebungen: ["e10", "e1", "e12", "e13", "e14", "e15"])
+        let sut = planModell(plan: plan) { ablauf in
+            _ = ablauf.nachSatz(sessionId: UUID(),
+                                satz: AblaufSatz(exerciseId: "e10", hauptmuskeln: ["chest"], cardio: false))
+            ablauf.auslassen(positionKey: "A2")
+        }
+        #expect(sut.planStelle?.positionKey == "A1")
+
+        #expect(sut.naechstePlanuebung?.positionKey == "A3")
+        #expect(sut.naechstePlanuebung?.name.isEmpty == false)
+    }
+
+    @Test func ohnePlanKeineNaechstePlanuebung() {
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+                         bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         ablauf: ablaufMitPlan())
+        #expect(sut.naechstePlanuebung == nil)
+    }
+
+    /// Kehrt das Mitglied an ein Geraet zurueck (neues Modell), kennt der
+    /// Abschluss den letzten Satz und die Antwort von vorhin noch: beides
+    /// liegt im Speicher der Einheit, nicht im verworfenen Modell.
+    @Test func dieReserveUeberlebtDasModell() async {
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let erfasser = Erfassungswarteschlange()
+        let erstes = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                            sessions: sessions, enqueue: { erfasser.geschriebene.append($0) }, satzZiel: 3)
+        await erstes.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(erstes.abschlussAnfragen())
+        erstes.reserveSetzen(.wert(2))
+
+        let zweites = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                             sessions: sessions, enqueue: { erfasser.geschriebene.append($0) }, satzZiel: 3)
+        #expect(zweites.reserve == .wert(2))
+        #expect(zweites.abschlussAnfragen())
+        zweites.reserveSetzen(.wert(2))
+        #expect(erfasser.geschriebene.count == 2)
+    }
+
     /// Sicherheitsnetz unter Ortswechsel: ein Geraet aus s1 in einer Einheit
     /// in s2 wuerde der Server sicher abweisen -- es wird nicht geschrieben,
     /// und der Screen sagt, warum.
@@ -446,6 +559,135 @@ struct GeraetModelTests {
         await ohnePlan.satzSichern(problemFlag: false, problemReason: nil)
         guard case .pause(let profilTimer) = ohnePlan.phase else { Issue.record("keine Pause"); return }
         #expect(profilTimer.gesamtdauer == TimeInterval(Einstellungen.resttimerSekunden()))
+    }
+
+    // MARK: - Plan-Vorgaben und Ablaufzeile (UX-Paket 2, E1)
+
+    /// Sechs Positionen, e1 an dritter Stelle: 3 Saetze, 8–10 Wdh., Ziel
+    /// 40 kg. Die anderen Positionen tragen Uebungen, die es an keinem
+    /// Testgeraet gibt.
+    private static func planMitSechs(zielgewicht: Bool = true, an3: String = "e1",
+                                     uebungen eigene: [String]? = nil) -> Trainingsplan {
+        let uebungen = eigene ?? ["e10", "e11", an3, "e12", "e13", "e14"]
+        let positionen = uebungen.enumerated().map { index, uebung in
+            """
+            {"key":"A\(index)","baustein":"brust","rolle":"pflicht","exerciseId":"\(uebung)",
+             "modelId":"m-\(uebung)","typ":"mehrgelenk","saetze":3,"wdhVon":8,"wdhBis":10,
+             "reserveVon":1,"reserveBis":3,"pauseSek":120,"aufwaermsatz":false,"dauerMin":null,
+             "hauptmuskeln":["chest"]}
+            """
+        }.joined(separator: ",")
+        let ziele = zielgewicht ? #"{"A:A2":{"load":40,"secondaryLoad":null,"aenderung":null,"grund":null}}"# : "{}"
+        let json = """
+        {"planId":"p6","studioId":"s1","version":1,"regelVersion":"1.2.0",
+         "struktur":"gk_ab","gruende":[],"naechsteEinheitKey":"A","zuletztEinheitKey":null,
+         "einheitenErledigt":0,"anfaengerUebergang":false,"alternativen":{},"zielgewichte":\(ziele),
+         "einheiten":[{"key":"A","geschaetzteMinuten":45,"positionen":[\(positionen)]}]}
+        """
+        return try! JSONDecoder().decode(Trainingsplan.self, from: Data(json.utf8))
+    }
+
+    private func planModell(plan: Trainingsplan = planMitSechs(), sessions: WorkoutSessionStore? = nil,
+                            satzZiel: Int = 4,
+                            maschine: BootstrapResponse.Machine = GeraetTestdaten.maschine,
+                            vorher: (TrainingsplanAblaufStore) -> Void = { _ in }) -> GeraetModel {
+        let ablauf = TrainingsplanAblaufStoreTests.store()
+        ablauf.vorbereiten(plan: plan, jetzt: Date())
+        vorher(ablauf)
+        let bootstrap = BootstrapResponse(member: .init(displayName: nil, plans: [plan]), studios: [],
+                                          machines: [maschine], calibrations: [], lastSets: [])
+        return modell(maschine: maschine, bootstrap: bootstrap, sessions: sessions,
+                      satzZiel: satzZiel, ablauf: ablauf)
+    }
+
+    @Test func planStelleNenntPositionUndVorgabe() {
+        let sut = planModell()
+
+        #expect(sut.planStelle?.positionKey == "A2")
+        #expect(sut.planStelle?.nummer == 3)
+        #expect(sut.planStelle?.gesamt == 6)
+        #expect(sut.satzZiel == 3)
+        #expect(sut.zielspanne == 8...10)
+        // Dasselbe Format wie das Katalogziel ("Ziel 8 – 12").
+        #expect(sut.kontextzeileUmfang == "Ziel 8 – 10")
+        #expect(sut.ablaufzeile == .plan(uebung: 3, von: 6, satz: 1, saetze: 3))
+    }
+
+    @Test func zielgewichtAlsPlanzeile() {
+        #expect(planModell().kontextzeileBelastung == "Plan 40,0 kg")
+        // Ohne Ziel bleibt die Schrittzeile.
+        #expect(planModell(plan: Self.planMitSechs(zielgewicht: false)).kontextzeileBelastung
+                == "Schritt 2,5 kg · 5,0 – 150,0")
+    }
+
+    @Test func ohnePlanUnveraendert() {
+        let ohneAblauf = modell(maschine: GeraetTestdaten.maschine,
+                                bootstrap: GeraetTestdaten.bootstrap(lastSets: []), satzZiel: 4)
+        // Ablauf vorbereitet, aber der Bootstrap kennt keinen Plan.
+        let ohnePlan = modell(maschine: GeraetTestdaten.maschine,
+                              bootstrap: GeraetTestdaten.bootstrap(lastSets: []), satzZiel: 4,
+                              ablauf: ablaufMitPlan())
+        for sut in [ohneAblauf, ohnePlan] {
+            #expect(sut.planStelle == nil)
+            #expect(sut.satzZiel == 4)
+            #expect(sut.zielspanne == 8...12)
+            #expect(sut.kontextzeileUmfang == "Ziel 8 – 12")
+            #expect(sut.kontextzeileBelastung == "Schritt 2,5 kg · 5,0 – 150,0")
+            #expect(sut.ablaufzeile == .frei(satz: 1))
+            #expect(sut.anzeigeSatz == sut.satzNummer)
+        }
+    }
+
+    /// R5: eine Wiederholungsposition, getauscht gegen eine Halteuebung,
+    /// gibt ihre Wiederholungsspanne nicht an das Sekundenrad weiter.
+    @Test func planspanneNurFuerWiederholungen() {
+        let sut = planModell(plan: Self.planMitSechs(an3: "e5"), maschine: GeraetTestdaten.maschineSekunden) {
+            $0.tauschen(positionKey: "A2", ersatz: (exerciseId: "e1", hauptmuskeln: ["chest"]))
+        }
+
+        #expect(sut.planStelle?.positionKey == "A2")
+        #expect(sut.zielspanne == 60...90)
+        #expect(sut.kontextzeileUmfang != "Ziel 8 – 10")
+        #expect(sut.kontextzeileUmfang == "Ziel 1 – 2 min")
+    }
+
+    /// Review Focus 3: satzNummer zaehlt je Geraet, der Plan je Uebung. Die
+    /// Ablaufzeile folgt dem Plan, damit sie mit "2/3" der Plankarte
+    /// uebereinstimmt.
+    @Test func planSatzZaehltUeberGeraete() async {
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let sut = planModell(sessions: sessions)
+        _ = sessions.satzSichern(station: .testGeraet("m2"), exerciseId: "e1",
+                                  einheiten: .kilogrammWiederholungen, load: 40, volume: 10,
+                                  problemFlag: false, problemReason: nil)
+
+        #expect(sut.satzNummer == 1)
+        #expect(sut.planStelle?.satzGemacht == 1)
+        // R4: Radkopf und Hauptknopf zeigen die Planzaehlung.
+        #expect(sut.anzeigeSatz == 2)
+        #expect(sut.ablaufzeile == .plan(uebung: 3, von: 6, satz: 2, saetze: 3))
+
+        // Zwei Saetze hier machen die drei geplanten voll: Abschluss, obwohl
+        // an diesem Geraet erst zwei stehen.
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.phase == .abschluss)
+    }
+
+    @Test func nachDemLetztenPlansatzKommtDerAbschluss() async {
+        let sut = planModell(satzZiel: 4)
+
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.laufendePause != nil)
+        sut.pauseBeenden()
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        #expect(sut.phase == .abschluss)
     }
 
     /// Nur die Hauptmuskeln (role primary) der Uebung entscheiden, welche
@@ -527,6 +769,34 @@ struct GeraetModelTests {
         #expect(neu.body.plan?.stand == 3)
         // Die Reserve-Frage ist keine Momentaufnahme: der Stand im Speicher bleibt.
         #expect(ablauf.stand == 3)
+    }
+
+    /// E4 im Zirkel: die Uebersicht traegt die Reserve ueber den Speicher
+    /// nach. Was dabei rausgeht, ist der Body, den das Modell eingereiht
+    /// hat -- mit Plan-Momentaufnahme und Herkunft --, nur mit rir.
+    @Test func zirkelReserveSchicktDenBodyDesModells() async throws {
+        let verzeichnis = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let erfasser = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         sessions: sessions, enqueue: { erfasser.geschriebene.append($0) },
+                         ablauf: ablaufMitPlan())
+        sut.beiZirkelSatzGesichert = {}
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let satz = try #require(erfasser.geschriebene.last)
+        #expect(satz.body.plan != nil)
+        #expect(satz.body.volumeSource == .eingegeben)
+
+        let blockId = LokalerBlock.kennung(stationSchluessel: sut.station.schluessel, exerciseId: "e1")
+        sessions.reserveNachtragen(blockId: blockId, reserve: .wert(3)) { erfasser.geschriebene.append($0) }
+
+        let neu = try #require(erfasser.geschriebene.last)
+        #expect(erfasser.geschriebene.count == 2)
+        #expect(neu.setId == satz.setId)
+        var ohneRir = neu.body
+        ohneRir.rir = nil
+        #expect(ohneRir == satz.body)
+        #expect(neu.body.rir == 3)
     }
 
     // MARK: - Zirkel (Spec Mini-Zirkel 21.10.)
@@ -737,6 +1007,35 @@ struct GeraetModelTests {
         // rechnet aus der Historie und darf die Vorrunde nicht ersetzen.
         runde2.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
         #expect(runde2.belastung == 14)
+    }
+
+    /// Review Focus 5: das in der Zirkel-Pause gewaehlte Gewicht kommt als
+    /// Startwerte und schlaegt den heutigen Satz der Vorrunde.
+    @Test func startwerteVorHeutigemSatz() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let kurzhantel: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Kurzhantel","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":1,"loadMin":1.0,"loadMax":50.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Bizepscurl","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """)
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+        let runde1 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions)
+        runde1.belastungGewaehlt(40)
+        await runde1.satzSichern(problemFlag: false, problemReason: nil)
+
+        let runde2 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions,
+                            startwerte: Startwerte(belastung: 45, umfang: 10, nebenbelastung: nil),
+                            mitCountdown: false)
+
+        #expect(runde2.belastung == 45)
+        #expect(runde2.phase == .eingabe)
+        runde2.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
+        #expect(runde2.belastung == 45)
     }
 
     /// Der Rueckkehr-Fall ohne Zirkel (Kommentar im init): ueber die

@@ -75,7 +75,12 @@ struct Blockeinheiten: Equatable, Hashable {
 
 /// Eine Station plus eine Uebung, mit ihren Saetzen (M1-Spec SS5.3).
 struct LokalerBlock: Codable, Equatable, Identifiable {
-    var id: String { "\(stationSchluessel):\(exerciseId)" }
+    var id: String { Self.kennung(stationSchluessel: stationSchluessel, exerciseId: exerciseId) }
+
+    /// Die Kennung eines Blocks, auch bevor es ihn gibt (Geraet, Zirkel-Station).
+    static func kennung(stationSchluessel: String, exerciseId: String) -> String {
+        "\(stationSchluessel):\(exerciseId)"
+    }
     /// "geraet:<id>" | "typ:<id>" -- gespeichert statt abgeleitet, damit der
     /// Schluessel einer laufenden Einheit stabil bleibt, auch wenn sich
     /// Bootstrap und Katalog aendern.

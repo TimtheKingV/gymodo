@@ -20,6 +20,16 @@ final class WorkoutSessionStore {
 
     private var gespeicherteSession: LokaleSession?
     private(set) var zuletztBeendet: BeendeteSession?
+    /// Der zuletzt eingereihte Satz je Block (`LokalerBlock.id`) -- die
+    /// Reserve-Frage schickt ihn mit rir erneut, mit allen anderen Feldern
+    /// unveraendert (der PUT ersetzt den ganzen Satz, auch Herkunft,
+    /// Zaehlerereignisse und Plan-Momentaufnahme). Hier statt im
+    /// GeraetModel, weil die Zirkel-Uebersicht je Station fragt, wenn deren
+    /// Modelle laengst verworfen sind (UX-Paket 2, E4). Nur im Speicher:
+    /// nach einem Neustart fragt niemand mehr nach.
+    private var letzteWrites: [String: PendingSetWrite] = [:]
+    /// Die Antwort auf die Reserve-Frage je Block; nil = noch keine.
+    private var reserven: [String: Reserve] = [:]
     private let fileStore: SessionFileStore
 
     init(fileStore: SessionFileStore = SessionFileStore()) {
@@ -230,6 +240,45 @@ final class WorkoutSessionStore {
         }
     }
 
+    /// Reiht einen gesicherten Satz ein und merkt ihn als letzten seines
+    /// Blocks. Der Aufrufer gibt den fertigen Write -- erst er kennt Herkunft
+    /// und Plan-Momentaufnahme. Ein neuer Satz ist der neue letzte: eine
+    /// Antwort galt dem vorigen.
+    func satzEinreihen(_ write: PendingSetWrite, blockId: String, enqueue: (PendingSetWrite) -> Void) {
+        enqueue(write)
+        letzteWrites[blockId] = write
+        reserven[blockId] = nil
+    }
+
+    /// Der zuletzt eingereihte Satz des Blocks, nur in der laufenden Einheit.
+    func letzterWrite(blockId: String) -> PendingSetWrite? {
+        guard let write = letzteWrites[blockId], write.sessionId == aktiveSession()?.id else { return nil }
+        return write
+    }
+
+    func reserve(blockId: String) -> Reserve? {
+        letzterWrite(blockId: blockId) == nil ? nil : reserven[blockId]
+    }
+
+    /// Die Reserve-Frage fuer einen Block, am Geraet wie in der
+    /// Zirkel-Uebersicht: setzt rir lokal am letzten Satz und reiht dessen
+    /// Write mit rir erneut ein.
+    func reserveNachtragen(blockId: String, reserve neu: Reserve, enqueue: (PendingSetWrite) -> Void) {
+        guard let letzter = letzterWrite(blockId: blockId) else { return }
+        let vorher = reserven[blockId]?.rir
+        reserven[blockId] = neu
+        // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
+        // dieselbe Zahl zweimal braucht keinen zweiten PUT.
+        guard neu.rir != (vorher ?? nil) else { return }
+        // Der Body bleibt bis auf rir der alte, auch seine Plan-Momentaufnahme
+        // mit ihrem aelteren Stand: der Server nimmt nur einen hoeheren, so
+        // ueberschreibt dieser PUT keinen neueren Ablauf (Review Focus 1).
+        var body = letzter.body
+        body.rir = neu.rir
+        reserveSetzen(setId: letzter.setId, rir: neu.rir)
+        enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
+    }
+
     /// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete
     /// schicken kann -- oder, ohne Satz, gar nichts (TrainingRootView.beenden
     /// verwirft dann).
@@ -253,6 +302,8 @@ final class WorkoutSessionStore {
         }
         gespeicherteSession = nil
         fileStore.save(nil)
+        letzteWrites = [:]
+        reserven = [:]
         return session?.id
     }
 

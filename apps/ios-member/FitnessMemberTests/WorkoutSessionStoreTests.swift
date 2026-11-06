@@ -44,6 +44,72 @@ struct WorkoutSessionStoreTests {
         #expect(neu.aktiveSession()?.bloecke.first?.saetze.first?.rir == 2)
     }
 
+    /// Der letzte Write je Block (Zirkel-Uebersicht, Rueckkehr ans Geraet):
+    /// die Reserve schickt GENAU den eingereihten Body erneut, nur mit rir --
+    /// auch mit dem, was das Modell nach satzSichern dazugeschrieben hat.
+    @Test func reserveNachtragenReihtDenLetztenWriteMitRirEin() {
+        let (sut, _) = store()
+        let station = Station.testGeraet("m1")
+        let blockId = LokalerBlock.kennung(stationSchluessel: station.schluessel, exerciseId: "e1")
+        var gesendet: [PendingSetWrite] = []
+        for volume in [10, 9] {
+            var geschrieben = sut.satzSichern(station: station, exerciseId: "e1",
+                                              einheiten: .kilogrammWiederholungen, load: 80, volume: volume,
+                                              problemFlag: false, problemReason: nil)
+            geschrieben.body.volumeSource = .korrigiert
+            geschrieben.body.volumeCounted = 11
+            sut.satzEinreihen(PendingSetWrite(sessionId: geschrieben.sessionId, setId: geschrieben.setId,
+                                              body: geschrieben.body),
+                              blockId: blockId) { gesendet.append($0) }
+        }
+        let zweiter = try! #require(gesendet.last)
+        #expect(sut.letzterWrite(blockId: blockId) == zweiter)
+        #expect(sut.letzterWrite(blockId: "geraet:m2:e2") == nil)
+
+        sut.reserveNachtragen(blockId: blockId, reserve: .wert(2)) { gesendet.append($0) }
+
+        #expect(gesendet.count == 3)
+        let neu = try! #require(gesendet.last)
+        #expect(neu.setId == zweiter.setId)
+        #expect(neu.sessionId == zweiter.sessionId)
+        #expect(neu.body.rir == 2)
+        var ohneRir = neu.body
+        ohneRir.rir = nil
+        #expect(ohneRir == zweiter.body)
+        #expect(sut.reserve(blockId: blockId) == .wert(2))
+        #expect(sut.aktiveSession()?.bloecke.first?.saetze.last?.rir == 2)
+        #expect(sut.aktiveSession()?.bloecke.first?.saetze.first?.rir == nil)
+
+        // Dieselbe Antwort schickt nichts; "Weiss nicht" ohne Zahl davor auch nicht.
+        sut.reserveNachtragen(blockId: blockId, reserve: .wert(2)) { gesendet.append($0) }
+        #expect(gesendet.count == 3)
+        // Ein neuer Satz ist der neue letzte: die Antwort galt dem vorigen.
+        let dritter = sut.satzSichern(station: station, exerciseId: "e1", einheiten: .kilogrammWiederholungen,
+                                      load: 80, volume: 8, problemFlag: false, problemReason: nil)
+        sut.satzEinreihen(PendingSetWrite(sessionId: dritter.sessionId, setId: dritter.setId, body: dritter.body),
+                          blockId: blockId) { gesendet.append($0) }
+        #expect(sut.reserve(blockId: blockId) == nil)
+        sut.reserveNachtragen(blockId: blockId, reserve: .unbekannt) { gesendet.append($0) }
+        #expect(gesendet.count == 4)
+    }
+
+    /// Nach dem Beenden gehoert der gemerkte Write zu keiner laufenden Einheit.
+    @Test func nachDemBeendenGibtEsKeinenLetztenWrite() {
+        let (sut, _) = store()
+        let station = Station.testGeraet("m1")
+        let blockId = LokalerBlock.kennung(stationSchluessel: station.schluessel, exerciseId: "e1")
+        let geschrieben = sut.satzSichern(station: station, exerciseId: "e1", einheiten: .kilogrammWiederholungen,
+                                          load: 80, volume: 10, problemFlag: false, problemReason: nil)
+        sut.satzEinreihen(PendingSetWrite(sessionId: geschrieben.sessionId, setId: geschrieben.setId,
+                                          body: geschrieben.body), blockId: blockId) { _ in }
+        sut.beenden()
+
+        #expect(sut.letzterWrite(blockId: blockId) == nil)
+        var gesendet = 0
+        sut.reserveNachtragen(blockId: blockId, reserve: .wert(1)) { _ in gesendet += 1 }
+        #expect(gesendet == 0)
+    }
+
     @Test func setIndexLaeuftInnerhalbDesBlocks() {
         let (sut, _) = store()
         _ = sut.satzSichern(station: .testGeraet("m1"), exerciseId: "e1",

@@ -36,6 +36,17 @@ struct CardioGeraetModelTests {
             enqueue: { _ in })
     }
 
+    /// Review Focus 1 (E4): Cardio hat keine Reserve-Frage -- auch der neue
+    /// Abschlussweg fuehrt nicht hinein, die Uebung wird direkt verlassen.
+    @Test func cardioVerlaesstOhneReserve() async {
+        let modell = cardioModell()
+        modell.cardioSetzen(.watt, 150)
+        await modell.satzSichern(problemFlag: false, problemReason: nil)
+
+        #expect(!modell.abschlussAnfragen())
+        #expect(!modell.zeigtReserveFrage)
+    }
+
     @Test func derLetzteSatzTextNenntCardioWerteOderNichts() {
         let modell = cardioModell()
         #expect(modell.letzterSatzText(fuer: "e1") == "10:00 · 2,1 km · Stufe 7")

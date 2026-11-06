@@ -43,9 +43,12 @@ struct ZirkelUebersichtTests {
         ]
         let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(), bloecke: bloecke, name: name)
         #expect(zeilen == [
-            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: ["14,0 kg × 10", "14,0 kg × 9"]),
-            ZirkelZeile(uebungsname: "Seitheben", saetze: ["8,0 kg × 15", "8,0 kg × 12"]),
-            ZirkelZeile(uebungsname: "Schrägbankdrücken", saetze: ["30,0 kg × 8", "32,5 kg × 8"]),
+            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: ["14,0 kg × 10", "14,0 kg × 9"],
+                        blockId: "geraet:m1:e1", fragtReserve: true),
+            ZirkelZeile(uebungsname: "Seitheben", saetze: ["8,0 kg × 15", "8,0 kg × 12"],
+                        blockId: "geraet:m2:e2", fragtReserve: true),
+            ZirkelZeile(uebungsname: "Schrägbankdrücken", saetze: ["30,0 kg × 8", "32,5 kg × 8"],
+                        blockId: "geraet:m3:e3", fragtReserve: true),
         ])
     }
 
@@ -61,7 +64,8 @@ struct ZirkelUebersichtTests {
         ]
         let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(), bloecke: bloecke, name: name)
         #expect(zeilen.map(\.saetze.count) == [2, 1, 2])
-        #expect(zeilen[1] == ZirkelZeile(uebungsname: "Seitheben", saetze: ["8,0 kg × 15"]))
+        #expect(zeilen[1] == ZirkelZeile(uebungsname: "Seitheben", saetze: ["8,0 kg × 15"],
+                                         blockId: "geraet:m2:e2", fragtReserve: true))
     }
 
     /// Gleich beendet oder alles uebersprungen: jede Uebung steht trotzdem
@@ -69,9 +73,9 @@ struct ZirkelUebersichtTests {
     @Test func ohneSaetzeStehtJedeUebungMitLeererListe() {
         let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(), bloecke: [], name: name)
         #expect(zeilen == [
-            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: []),
-            ZirkelZeile(uebungsname: "Seitheben", saetze: []),
-            ZirkelZeile(uebungsname: "Schrägbankdrücken", saetze: []),
+            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: [], blockId: nil, fragtReserve: false),
+            ZirkelZeile(uebungsname: "Seitheben", saetze: [], blockId: nil, fragtReserve: false),
+            ZirkelZeile(uebungsname: "Schrägbankdrücken", saetze: [], blockId: nil, fragtReserve: false),
         ])
     }
 
@@ -85,8 +89,9 @@ struct ZirkelUebersichtTests {
         let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(2), bloecke: bloecke,
                                              seit: start.addingTimeInterval(5 * 60), name: name)
         #expect(zeilen == [
-            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: ["14,0 kg × 10"]),
-            ZirkelZeile(uebungsname: "Seitheben", saetze: []),
+            ZirkelZeile(uebungsname: "Bizeps-Curls", saetze: ["14,0 kg × 10"],
+                        blockId: "geraet:m1:e1", fragtReserve: true),
+            ZirkelZeile(uebungsname: "Seitheben", saetze: [], blockId: nil, fragtReserve: false),
         ])
     }
 
@@ -96,6 +101,29 @@ struct ZirkelUebersichtTests {
         let bloecke = [LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, load: 14, volume: 10)])]
         let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(2), bloecke: bloecke, seit: start, name: name)
         #expect(zeilen.first?.saetze == ["14,0 kg × 10"])
+    }
+
+    /// E4 im Zirkel: einmal je Station fragt die Uebersicht nach der
+    /// Reserve -- nur bei Wiederholungen und nur mit Satz im Zirkel.
+    @Test func zeileFragtReserveNurBeiKraftMitSatz() {
+        let bloecke = [
+            LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, load: 14, volume: 10, minuten: 10)]),
+            // Nur ein Satz VOR dem Zirkel: im Zirkel keiner.
+            LokalerBlock(machineId: "m2", exerciseId: "e2", saetze: [satz(1, load: 8, volume: 15, minuten: 0)]),
+            LokalerBlock(machineId: "m3", exerciseId: "e3", einheiten: .init(loadUnit: .kg, secondaryUnit: nil, volumeKind: .seconds),
+                         saetze: [satz(1, load: 10, volume: 60, minuten: 10)]),
+        ]
+        let zeilen = ZirkelUebersicht.zeilen(zirkel: zirkel(4), bloecke: bloecke,
+                                             seit: start.addingTimeInterval(5 * 60), name: name)
+        #expect(zeilen.map(\.fragtReserve) == [true, false, false, false])
+        #expect(zeilen.map(\.blockId) == ["geraet:m1:e1", "geraet:m2:e2", "geraet:m3:e3", nil])
+
+        // Ohne gemerkten Write (z. B. nach einem Neustart) fragt sie nicht:
+        // die Antwort kaeme nie beim Server an.
+        let ohneWrite = ZirkelUebersicht.zeilen(zirkel: zirkel(2), bloecke: bloecke,
+                                                seit: start.addingTimeInterval(5 * 60), name: name,
+                                                hatLetztenWrite: { _ in false })
+        #expect(ohneWrite.map(\.fragtReserve) == [false, false])
     }
 
     @Test func kopfUnterscheidetGeschafftUndBeendet() {

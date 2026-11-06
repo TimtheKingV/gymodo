@@ -14,10 +14,14 @@ import SwiftUI
 struct GeraetView: View {
     @Bindable var modell: GeraetModel
     let beiProblem: () -> Void
-    /// "Uebung abschliessen" -- an allen drei Stellen (Raeder, Pause,
-    /// Abschluss). Ob danach gefragt wird oder es gleich zurueck zur Liste
-    /// geht, entscheidet GeraetScreen (Testnotiz 06.10., #10, #12).
+    /// "Uebung abschliessen" unter den Raedern und in der Pause. Ob erst
+    /// der Abschluss mit der Reserve-Frage kommt (E4), gefragt wird oder es
+    /// gleich zurueck zur Liste geht, entscheidet GeraetScreen (Testnotiz
+    /// 06.10., #10, #12).
     let beiUebungAbschliessen: () -> Void
+    /// Der Hauptknopf im Abschluss: "Nächste Übung" bzw. im Plan "Nächste
+    /// Übung: <Name>" (E2, E3). Wohin es geht, entscheidet GeraetScreen.
+    let beiNaechsteUebung: () -> Void
     /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
     /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
     var beiTrainingBeenden: () -> Void = {}
@@ -29,6 +33,16 @@ struct GeraetView: View {
     /// "Zirkel mit weiterem Gerät" in der Pause nach Satz 1 (Task 7). nil,
     /// wo es keinen Zirkel-Einstieg gibt (Preview, Zirkel-Geraet).
     var beiZirkelBeginnen: (() -> Void)?
+    /// Station und Runde, solange das Geraet ein Zirkel-Slot ist: die
+    /// Zirkel-Ebene rechnet sie (`Ablaufzeile.zirkel`), das Modell kennt den
+    /// Zirkel nicht.
+    var zirkelAblaufzeile: Ablaufzeile?
+    /// Die Zeilen des Zirkels fuer das Ablauf-Blatt, aus derselben Quelle
+    /// wie `zirkelAblaufzeile`; nil ausserhalb eines Zirkels.
+    var zirkelAblaufZeilen: [AblaufZeile]?
+
+    /// Am Geraet und in der Pause dieselbe Zeile.
+    private var ablaufzeile: Ablaufzeile? { modell.ablaufzeile ?? zirkelAblaufzeile }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -38,13 +52,16 @@ struct GeraetView: View {
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
     #endif
     @State private var steuerungOffen = false
+    /// Tipp auf die Ablaufzeile: der ganze Ablauf als Blatt (Spec 2.4).
+    @State private var ablaufOffen = false
     /// Beim Erscheinen der Reserve-Frage einmal aus den Einstellungen gelesen.
     @State private var reserveErklaerungZeigen = false
 
-    var body: some View {
+    /// Raeder, Countdown oder Abschluss -- alles ausser der Pause.
+    private var arbeitsflaeche: some View {
         // Die Hoehe des sichtbaren Bereichs, damit der Inhalt sie mindestens
-        // fuellt: dann stehen die Knoepfe unten in der Daumenzone und das
-        // Pausenrad in der Mitte, statt alles oben zu sammeln (Testnotiz
+        // fuellt: dann stehen die Knoepfe unten in der Daumenzone und der
+        // Countdown in der Mitte, statt alles oben zu sammeln (Testnotiz
         // 05.10., #12, #13). Passt der Inhalt nicht, scrollt er wie bisher.
         GeometryReader { sichtbar in
             ScrollView {
@@ -61,7 +78,7 @@ struct GeraetView: View {
                     // Label ueber seinem Titel: Kopfzeile und Geraetename sind
                     // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                        kopfzeile
+                        TrainingKopfzeile(ort: modell.ortsangabe.uppercased()) { steuerungOffen = true }
                         // Unter der Trainingsuhr statt ueber den Raedern
                         // (Testnotiz 16.10., #3): Karte, Zaehlerstand und
                         // Marken gehoeren zum Sensor, nicht zum Satzwert.
@@ -111,10 +128,24 @@ struct GeraetView: View {
                 // tragen den Abstand nach unten schon.
                 .padding(.bottom, DesignSystem.Spacing.s8)
                 .frame(minHeight: sichtbar.size.height, alignment: .top)
-                .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
             }
             .scrollBounceBehavior(.basedOnSize)
         }
+    }
+
+    var body: some View {
+        // Die Pause uebernimmt den ganzen Screen (UX-Paket 2, 2.1): sie
+        // bringt Kopfzeile, Ueberschrift und Ablaufzeile selbst mit, damit
+        // nichts doppelt dasteht.
+        Group {
+            if let pause = modell.laufendePause {
+                pausenScreen(pause)
+                    .transition(.opacity)
+            } else {
+                arbeitsflaeche
+            }
+        }
+        .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Die Trainingsuhr startet nicht hier, sondern mit "Übung starten"
@@ -164,6 +195,10 @@ struct GeraetView: View {
                 }
             },
             beiBeenden: beiTrainingBeenden)
+        // Nur Ansicht (E6), deshalb ganz ausgeklappt und ohne Ziel je Zeile.
+        .sheet(isPresented: $ablaufOffen) {
+            AblaufSheet(zeilen: zirkelAblaufZeilen ?? modell.ablaufZeilen) { ablaufOffen = false }
+        }
     }
 
     private var testnotizKontext: [String: String] {
@@ -180,6 +215,34 @@ struct GeraetView: View {
         return kontext
     }
 
+    /// Die Pause als der eine Pausen-Screen. Frei und Plan unterscheiden
+    /// sich nur im zweiten Knopf und in der Liste; die Satzzahl ist die, die
+    /// der Screen ueberall zeigt (`anzeigeSatz`, R4).
+    private func pausenScreen(_ pause: Resttimer) -> some View {
+        let modus: PausenModus = modell.planStelle != nil
+            ? .plan(naechsterSatz: modell.anzeigeSatz)
+            : .frei(naechsterSatz: modell.anzeigeSatz,
+                    kannZirkel: modell.kannZirkelBeginnen && beiZirkelBeginnen != nil)
+        return PausenScreen(
+            ort: modell.ortsangabe.uppercased(),
+            ueberschrift: "PAUSE · \(modell.station.equipmentModel.name.uppercased())",
+            ablaufzeile: ablaufzeile,
+            timer: pause,
+            zeilen: modell.ablaufZeilen,
+            knoepfe: PausenKnoepfe.fuer(modus),
+            einheit: modell.loadUnit,
+            beiSteuerung: { steuerungOffen = true },
+            beiVerlaengern: modell.pauseVerlaengern,
+            beiHaupt: modell.pauseBeenden,
+            beiGewicht: beiGewichtAendern,
+            // Derselbe Weg wie "Uebung abschliessen" unter den Raedern --
+            // nur ohne den Umweg ueber den naechsten Satz. Der letzte Satz
+            // ist schon gesichert, deshalb ohne die Frage nach dem offenen
+            // Satz (#5); erst der Abschluss mit der Reserve-Frage (E4).
+            beiAbschliessen: beiUebungAbschliessen,
+            beiZirkelBeginnen: { beiZirkelBeginnen?() })
+    }
+
     /// Der letzte Zweig von `inhalt`: kein Countdown, keine Pause, kein
     /// Abschluss -- die Satzeingabe.
     private var zeigtRaeder: Bool {
@@ -192,20 +255,6 @@ struct GeraetView: View {
     private var inhalt: some View {
         if case .bereit(let countdown) = modell.phase {
             startcountdown(countdown)
-                .transition(.opacity)
-        } else if let pause = modell.laufendePause {
-            PausenRad(timer: pause,
-                      beiVerlaengern: modell.pauseVerlaengern,
-                      beiGewicht: beiGewichtAendern,
-                      einheit: modell.loadUnit,
-                      naechsterSatz: modell.satzNummer,
-                      beiWeiter: modell.pauseBeenden,
-                      // Derselbe Weg wie "Uebung abschliessen" unter den
-                      // Raedern -- nur ohne den Umweg ueber den naechsten
-                      // Satz. Der letzte Satz ist schon gesichert, deshalb
-                      // ohne die Frage nach dem offenen Satz (#5).
-                      beiAbschliessen: beiUebungAbschliessen,
-                      beiZirkel: modell.kannZirkelBeginnen ? beiZirkelBeginnen : nil)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
             abschlussEntscheidung
@@ -246,46 +295,6 @@ struct GeraetView: View {
             if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
             guard !Task.isCancelled else { return }
             modell.countdownBeenden()
-        }
-    }
-
-    private var kopfzeile: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(modell.ortsangabe.uppercased())
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textFaint)
-            Spacer(minLength: DesignSystem.Spacing.s12)
-            trainingsuhr
-        }
-    }
-
-    /// Wie lange das Training schon laeuft -- oben rechts, in derselben
-    /// Zeile wie der Ort, mit dem pulsierenden Punkt davor (Testnotiz
-    /// 05.10., #10). Ein Tipp oeffnet "Pausieren / Training beenden" (#11).
-    ///
-    /// Ohne laufende Einheit (die Vier-Stunden-Grenze ist waehrend des
-    /// Screens abgelaufen) steht hier nichts -- eine Uhr auf 00:00 waere
-    /// eine Behauptung ueber ein Training, das nicht mehr laeuft.
-    @ViewBuilder
-    private var trainingsuhr: some View {
-        if let session = sessions.aktiveSession() {
-            Button { steuerungOffen = true } label: {
-                HStack(spacing: 6) {
-                    Laufpunkt(pausiert: session.istPausiert)
-                    TrainingsuhrText(session: session, font: .system(size: 15, weight: .semibold))
-                }
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressButtonStyle())
-            .testnotizElement("geraet.trainingsuhr", typ: "Button")
-            .accessibilityHint("Pausieren oder Training beenden")
-            .fixedSize()
-            // Die 44 pt Trefferflaeche ragen aus der Kopfzeile heraus,
-            // statt sie zu strecken -- dasselbe Hoehenbudget wie bei
-            // "andere Übung".
-            .padding(.vertical, -DesignSystem.Spacing.s12)
         }
     }
 
@@ -339,6 +348,13 @@ struct GeraetView: View {
             Text(modell.aktiveUebung?.name ?? "")
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.textMuted)
+            // Wo im Ablauf man steht (Board "Gerät · Plan · Tracker"): im
+            // Plan Übung und Satz, frei nur der Satz, im Zirkel Station und
+            // Runde (von der Zirkel-Ebene).
+            if let zeile = ablaufzeile {
+                AblaufzeilePille(zeile: zeile) { ablaufOffen = true }
+                    .testnotizElement("geraet.ablaufzeile", typ: "Button")
+            }
         }
     }
 
@@ -430,7 +446,7 @@ struct GeraetView: View {
     }
 
     private var hauptaktion: String {
-        "Satz \(modell.satzNummer) sichern"
+        "Satz \(modell.anzeigeSatz) sichern"
     }
 
     /// Nach dem letzten geplanten Satz. Eine Pause vor einem Satz, der nicht
@@ -438,7 +454,9 @@ struct GeraetView: View {
     /// jetzt wirklich ansteht.
     private var abschlussEntscheidung: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            Text(modell.satzZiel == 1 ? "1 SATZ GESCHAFFT" : "\(modell.satzZiel) SÄTZE GESCHAFFT")
+            // Die gemachten Saetze, nicht das Ziel: wer aus der Pause
+            // abschliesst, hat es nicht erreicht (E4).
+            Text(modell.abschlussTitel)
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
@@ -468,9 +486,11 @@ struct GeraetView: View {
 
             // Wie in der Pause "Nächste Übung" (Testnotiz 12.10. abends,
             // #6, #7): dieselbe Aktion soll nicht an zwei Stellen zwei Namen
-            // tragen.
-            PrimaryButton(title: "Nächste Übung") { beiUebungAbschliessen() }
-                .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
+            // tragen. Im Plan mit dem Namen der naechsten Position (E2).
+            PrimaryButton(title: modell.naechstePlanuebung.map { "Nächste Übung: \($0.name)" } ?? "Nächste Übung") {
+                beiNaechsteUebung()
+            }
+            .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
             // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
             HStack(spacing: DesignSystem.Spacing.s12) {
                 SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
@@ -519,6 +539,14 @@ struct GeraetScreen: View {
     /// "Zirkel beenden". Zurueck fuehrte zur Wurzel und liess den Zirkel
     /// unerreichbar liegen -- ohne Fortsetzen und ohne Hinweis.
     var beiZirkelBeenden: (() -> Void)?
+    /// "Nächste Übung: <Name>" im Abschluss einer Planuebung (E3): die
+    /// Wurzel oeffnet diese Position wie ein Tipp auf ihre Planzeile. nil,
+    /// wo es keine Plankarte gibt.
+    var beiNaechstePlanuebung: ((_ positionKey: String) -> Void)?
+    /// Siehe GeraetView.zirkelAblaufzeile und -AblaufZeilen; nil ausserhalb
+    /// eines Zirkels.
+    var zirkelAblaufzeile: Ablaufzeile?
+    var zirkelAblaufZeilen: [AblaufZeile]?
 
     @State private var uebungWechselnOffen = false
     @State private var zirkelBeendenFrage = false
@@ -562,13 +590,16 @@ struct GeraetScreen: View {
                 if modell.abschlussFragtNachSatz {
                     satzfrageOffen = true
                 } else {
-                    uebungAbschliessen()
+                    uebungVerlassen()
                 }
             },
+            beiNaechsteUebung: naechsteUebung,
             beiTrainingBeenden: beiTrainingBeenden,
             beiGewichtAendern: { gewichtOffen = true },
             beiEinweisung: { einweisungOffen = true },
-            beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } }
+            beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } },
+            zirkelAblaufzeile: zirkelAblaufzeile,
+            zirkelAblaufZeilen: zirkelAblaufZeilen
         )
         // Ohne Zurueck-Knopf auch ohne Wisch-Geste zurueck: beides verwarf den
         // Zirkel stumm. Beenden geht ueber die Uebersicht, die gesicherten
@@ -643,11 +674,11 @@ struct GeraetScreen: View {
         .sheet(isPresented: $satzfrageOffen, onDismiss: {
             if abschlussNachSatzfrage {
                 abschlussNachSatzfrage = false
-                uebungAbschliessen()
+                uebungVerlassen()
             }
         }) {
             SatzOffenSheet(
-                satzNummer: modell.satzNummer,
+                satzNummer: modell.anzeigeSatz,
                 beiSpeichern: {
                     // Abgelehnt (anderes Studio): zurueck auf die Satzseite,
                     // die den Grund zeigt -- nicht still aus der Uebung.
@@ -702,6 +733,23 @@ struct GeraetScreen: View {
         }
     }
 
+    /// "Übung abschließen" aus Pause und Raedern (nach der Satzfrage): mit
+    /// einem Satz erst der Abschluss mit der Reserve-Frage auf diesem Screen
+    /// (E4), sonst -- Cardio, ohne Satz -- der Weg aus der Uebung.
+    private func uebungVerlassen() {
+        if !modell.abschlussAnfragen() { uebungAbschliessen() }
+    }
+
+    /// Der Hauptknopf im Abschluss: im Plan zur naechsten Position, sonst
+    /// der Weg aus der Uebung wie bisher.
+    private func naechsteUebung() {
+        if let naechste = modell.naechstePlanuebung, let beiNaechstePlanuebung {
+            beiNaechstePlanuebung(naechste.positionKey)
+        } else {
+            uebungAbschliessen()
+        }
+    }
+
     /// Der Weg aus der Uebung, wenn kein Satz mehr offen ist: bei mehreren
     /// Uebungen die Frage, sonst zurueck zum Training.
     private func uebungAbschliessen() {
@@ -717,8 +765,9 @@ struct GeraetScreen: View {
 /// (Testnotiz 11.10., #12) -- typischerweise steckt man in der Pause um.
 /// Das Rad schreibt direkt ins Modell: wer den Drawer wegwischt, erwartet
 /// das gedrehte Gewicht (Testnotiz 13.10., #1). Bis dahin galt es erst mit
-/// "Übernehmen".
-private struct GewichtAendernSheet: View {
+/// "Übernehmen". Auch in der Zirkel-Pause, dort am Modell der naechsten
+/// Station (TrainingRootView.zirkelGewichtOeffnen).
+struct GewichtAendernSheet: View {
     @Bindable var modell: GeraetModel
     let beiFertig: () -> Void
 

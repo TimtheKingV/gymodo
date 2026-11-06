@@ -99,6 +99,58 @@ struct ZirkelTests {
         #expect(v.entnehmen(uebung(2), runde: 1) == nil)
     }
 
+    /// Review Focus 5: das in der Pause gewaehlte Gewicht der naechsten
+    /// Station gilt auch ab Runde 2 -- einmal, dann ist der Eintrag weg.
+    @Test func vormerkungGiltAuchAbRundeZwei() {
+        let werte = Startwerte(belastung: 45, umfang: 10, nebenbelastung: nil)
+        var v = ZirkelVormerkung.leer
+        v.vormerken(uebung(2), startwerte: werte)
+        #expect(v.gemerkt(uebung(2), runde: 2) == werte)
+        #expect(v.entnehmen(uebung(2), runde: 2) == werte)
+        #expect(v.entnehmen(uebung(2), runde: 2) == nil)
+    }
+
+    /// Ein Pausen-Gewicht ersetzt die Werte aus dem ersten Drawer.
+    @Test func vormerkungAusDerPauseErsetztDieAusDemDrawer() {
+        let drawer = Startwerte(belastung: 10, umfang: 8, nebenbelastung: nil)
+        let pause = Startwerte(belastung: 12, umfang: 8, nebenbelastung: nil)
+        var v = ZirkelVormerkung(uebung(1), werte: drawer)
+        v.vormerken(uebung(1), startwerte: pause)
+        #expect(v.entnehmen(uebung(1), runde: 1) == pause)
+        #expect(v.entnehmen(uebung(1), runde: 1) == nil)
+    }
+
+    /// Finding T5: ein Gewichts-Drawer, der unveraendert zugeht, merkt
+    /// nichts vor -- sonst entfiele der Drawer von Runde 1 mit einem
+    /// geratenen Gewicht.
+    @Test func unveraenderterGewichtsDrawerMerktNichtsVor() {
+        let offen = Startwerte(belastung: 20, umfang: 10, nebenbelastung: nil)
+        var v = ZirkelVormerkung.leer
+        let gemerkt1 = v.ausPauseUebernehmen(uebung(2), geoeffnetMit: offen, gewaehlt: offen, vomNutzer: false)
+        #expect(!gemerkt1)
+        #expect(v.gemerkt(uebung(2), runde: 1) == nil)
+        // Die Werte aus der Planung bleiben dann unangetastet.
+        let drawer = Startwerte(belastung: 15, umfang: 10, nebenbelastung: nil)
+        var mitDrawer = ZirkelVormerkung(uebung(2), werte: drawer)
+        let gemerkt2 = mitDrawer.ausPauseUebernehmen(uebung(2), geoeffnetMit: drawer, gewaehlt: drawer, vomNutzer: false)
+        #expect(!gemerkt2)
+        #expect(mitDrawer.gemerkt(uebung(2), runde: 1) == drawer)
+    }
+
+    @Test func gewaehltesGewichtWirdVorgemerkt() {
+        let offen = Startwerte(belastung: 20, umfang: 10, nebenbelastung: nil)
+        let neu = Startwerte(belastung: 22.5, umfang: 10, nebenbelastung: nil)
+        var v = ZirkelVormerkung.leer
+        let gemerkt3 = v.ausPauseUebernehmen(uebung(2), geoeffnetMit: offen, gewaehlt: neu, vomNutzer: false)
+        #expect(gemerkt3)
+        #expect(v.gemerkt(uebung(2), runde: 2) == neu)
+        // Hin- und zurueckgedreht: dasselbe Gewicht, aber vom Mitglied gewaehlt.
+        var w = ZirkelVormerkung.leer
+        let gemerkt4 = w.ausPauseUebernehmen(uebung(2), geoeffnetMit: offen, gewaehlt: offen, vomNutzer: true)
+        #expect(gemerkt4)
+        #expect(w.gemerkt(uebung(2), runde: 1) == offen)
+    }
+
     private func staende(_ z: Zirkel) -> [ZirkelStand] {
         z.uebungen.indices.map { z.stand(an: $0) }
     }

@@ -97,7 +97,7 @@ struct ZirkelErweiternTests {
     }
 
     /// Carry-over Task 5: Runde 1 beginnt mit dem Einzelsatz, nicht mit dem
-    /// Start des Zirkels -- sonst fehlte er in der Rundenzusammenfassung.
+    /// Start des Zirkels -- sonst fehlte er in Ablauf-Liste und Zirkel-Uebersicht.
     @Test func derEinzelsatzNenntSeinenZeitpunkt() async {
         let sut = modell()
         #expect(sut.letzterSatzAm == nil)

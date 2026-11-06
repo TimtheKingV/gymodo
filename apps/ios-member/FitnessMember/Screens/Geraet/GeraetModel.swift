@@ -169,33 +169,73 @@ final class GeraetModel {
     var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
     var istCardio: Bool { !cardioListe.isEmpty }
 
-    /// Die Antwort auf die Reserve-Frage dieser Uebung; nil = noch keine.
-    private(set) var reserve: Reserve?
-    /// Der zuletzt eingereihte Satz -- die Reserve-Frage schickt ihn mit
-    /// rir erneut, mit allen anderen Feldern unveraendert (der PUT ersetzt
-    /// den ganzen Satz, auch Herkunft und Zaehlerereignisse).
-    private var letzterWrite: PendingSetWrite?
-
-    /// Nur nach dem Satzziel und nur bei Wiederholungen: an Cardio und
-    /// Zeitsaetzen gibt es keine Wiederholungen in Reserve.
-    var zeigtReserveFrage: Bool {
-        phase == .abschluss && !istCardio && volumeKind == .reps && letzterWrite != nil
+    /// Der Block dieser Uebung an diesem Geraet, auch vor seinem ersten Satz.
+    private var blockId: String {
+        LokalerBlock.kennung(stationSchluessel: station.schluessel, exerciseId: uebungId)
     }
 
+    /// Die Antwort auf die Reserve-Frage dieser Uebung; nil = noch keine.
+    /// Wie der letzte Satz im Speicher der Einheit, nicht hier: kehrt das
+    /// Mitglied ans Geraet zurueck (neues Modell), gilt die Antwort weiter.
+    var reserve: Reserve? { sessions.reserve(blockId: blockId) }
+
+    /// Nur bei Wiederholungen und nur mit einem Satz in diesem Block: an
+    /// Cardio und Zeitsaetzen gibt es keine Wiederholungen in Reserve.
+    private var kannReserveFragen: Bool {
+        !istCardio && volumeKind == .reps && sessions.letzterWrite(blockId: blockId) != nil
+    }
+
+    var zeigtReserveFrage: Bool { phase == .abschluss && kannReserveFragen }
+
+    /// Derselbe Weg wie die Zirkel-Uebersicht: der Speicher schickt den
+    /// letzten Satz mit rir erneut.
     func reserveSetzen(_ neu: Reserve) {
-        guard let letzter = letzterWrite else { return }
-        let vorher = reserve?.rir
-        reserve = neu
-        // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
-        // dieselbe Zahl zweimal braucht keinen zweiten PUT.
-        guard neu.rir != (vorher ?? nil) else { return }
-        // Der Body bleibt bis auf rir der alte, auch seine Plan-Momentaufnahme
-        // mit ihrem aelteren Stand: der Server nimmt nur einen hoeheren, so
-        // ueberschreibt dieser PUT keinen neueren Ablauf (Review Focus 1).
-        var body = letzter.body
-        body.rir = neu.rir
-        sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
-        enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
+        sessions.reserveNachtragen(blockId: blockId, reserve: neu, enqueue: enqueue)
+    }
+
+    /// E4: jeder Weg aus einer Kraftuebung (Pause, Raeder) fuehrt zuerst in
+    /// den Abschluss mit der Reserve-Frage, wenn ein Satz geschrieben wurde.
+    /// false bei Cardio, Zeitsaetzen, ohne Satz und im Zirkel (dort fragt
+    /// die Uebersicht je Station) -- dann verlaesst der Aufrufer wie bisher.
+    func abschlussAnfragen() -> Bool {
+        guard !imZirkel, kannReserveFragen else { return false }
+        guard phase != .abschluss else { return true }
+        // Im Abschluss wird nicht trainiert: ein offener oder fuer die
+        // Automatik vorbereiteter Mitschnitt endet hier wie beim Verlassen
+        // des Screens. "Weiterer Satz" beginnt ihn neu.
+        screenVerlassen()
+        phase = .abschluss
+        return true
+    }
+
+    /// Was der Abschluss zaehlt: im Plan die Saetze der Uebung ueber alle
+    /// Geraete (R3, R4), sonst die dieses Blocks. Dieselbe Zahl entscheidet,
+    /// ob das Satzziel erreicht ist.
+    private var gemachteSaetze: Int { planStelle?.satzGemacht ?? (satzNummer - 1) }
+
+    var abschlussTitel: String { Self.abschlussTitel(saetze: gemachteSaetze) }
+
+    static func abschlussTitel(saetze: Int) -> String {
+        saetze == 1 ? "1 SATZ GESCHAFFT" : "\(saetze) SÄTZE GESCHAFFT"
+    }
+
+    /// "Nächste Übung: <Name>" im Abschluss (E2, E3): die naechste
+    /// Planposition nach der einen Regel der Ablauf-Liste. nil ohne Plan
+    /// oder wenn nichts mehr offen ist.
+    var naechstePlanuebung: (positionKey: String, name: String)? {
+        guard planStelle != nil, let ablauf,
+              let heute = PlanAnzeige.heute(
+                  bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+                  ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+                  ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen)
+        else { return nil }
+        let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
+            .filter { !heute.ausgelassen.contains($0.key) }
+        guard let stelle = AblaufListe.naechstePlanstelle(stellen: stellen, ausgelassen: heute.ausgelassen,
+                                                          aktuelleUebung: uebungId)
+        else { return nil }
+        return (stelle.key,
+                PlanZeilenModell.uebungsname(exerciseId: stelle.wirksam, maschine: nil, bootstrap: bootstrap))
     }
 
     var kannSichern: Bool { !zirkelSatzAbgegeben && (!istCardio || !cardio.istLeer) }
@@ -213,6 +253,9 @@ final class GeraetModel {
     /// Dieselbe Regel fuer die Nebenbelastung, getrennt gefuehrt: wer nur
     /// die Neigung anfasst, soll den Tempo-Vorschlag trotzdem bekommen.
     private var nebenbelastungVomNutzer = false
+    /// Nur lesend, fuer den Gewichts-Drawer der Zirkel-Pause: hat das
+    /// Mitglied an einem der Raeder gedreht?
+    var belastungIstVomNutzer: Bool { belastungVomNutzer || nebenbelastungVomNutzer }
     /// Das Rad steht auf dem Zielgewicht der Planposition aus dem Bootstrap
     /// (Etappe 4, G8). Dann ersetzt auch ein spaeter Kontext es nicht: die
     /// Zahl darf sich nicht unter dem Mitglied aendern, es gilt das zuletzt
@@ -663,16 +706,24 @@ final class GeraetModel {
     /// "Schritt 2,5 kg · 5,0 – 150,0", "Schritt 0,5 km/h · 0,0 – 20,0".
     /// Die Einheit steht hinter der Schrittweite, auch bei Level: "Schritt
     /// 1 Level" ist eine Aenderung um eine Stufe, nicht die Stufe 1.
+    /// Mit Zielgewicht der Planposition stattdessen "Plan 40,0 kg" (E1).
     var kontextzeileBelastung: String {
+        if planStelle != nil, let ziel = positionsziel {
+            return "Plan \(Zahlformat.belastungMitEinheit(ziel.load, loadUnit))"
+        }
         let bereich = modell.max.map {
             "\(Zahlformat.belastung(modell.min, loadUnit)) – \(Zahlformat.belastung($0, loadUnit))"
         } ?? "ab \(Zahlformat.belastung(modell.min, loadUnit))"
         return "Schritt \(Zahlformat.belastung(modell.schritt, loadUnit)) \(loadUnit.kurz) · \(bereich)"
     }
 
-    /// "Ziel 8 – 12", "Ziel 15 – 20 min".
+    /// "Ziel 8 – 12", "Ziel 15 – 20 min" -- bei einer Planposition deren
+    /// Wiederholungen statt des Katalogs (E1).
     var kontextzeileUmfang: String {
         guard let uebung = aktiveUebung else { return "" }
+        if let spanne = planspanne {
+            return "Ziel \(Zahlformat.korridor(spanne.lowerBound, spanne.upperBound, uebung.volumeKind))"
+        }
         return "Ziel \(Zahlformat.korridor(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
@@ -680,8 +731,10 @@ final class GeraetModel {
     /// Mal und bei Cardio-Saetzen ohne volume.
     var letzterUmfang: Int? { letzterSatz(fuer: uebungId)?.volume }
 
-    /// Das Ziel der Uebung als Spanne, im Umfangsrad hervorgehoben.
+    /// Das Ziel der Uebung als Spanne, im Umfangsrad hervorgehoben. Bei
+    /// einer Planposition die Wiederholungen des Plans (E1).
     var zielspanne: ClosedRange<Int>? {
+        if let planspanne { return planspanne }
         guard let uebung = aktiveUebung, uebung.targetMin <= uebung.targetMax else { return nil }
         return uebung.targetMin...uebung.targetMax
     }
@@ -709,7 +762,11 @@ final class GeraetModel {
 
     /// "GERAET 7 - FENSTERSEITE" in den Kopfzeilen. Am Typ leer: sein Label
     /// ist der Typname, und der steht ohnehin gross darunter.
-    var ortsangabe: String {
+    var ortsangabe: String { Self.ortsangabe(station) }
+
+    /// Dieselbe Angabe fuer eine beliebige Station -- die Zirkel-Pause
+    /// nennt so den Ort der naechsten Station.
+    static func ortsangabe(_ station: Station) -> String {
         guard station.machineId != nil else { return "" }
         return [station.label, station.locationNote].compactMap { $0 }.joined(separator: " · ")
     }
@@ -766,7 +823,85 @@ final class GeraetModel {
     /// stattdessen kommt nach dem ersten Satz gleich die Frage "Geraet
     /// abschliessen / Weiterer Satz". Das Profil-Satzziel ist ein Ziel
     /// fuer Wiederholungsuebungen und gilt nur dort.
-    var satzZiel: Int { volumeKind == .reps ? satzZielLesen() : 1 }
+    ///
+    /// Steht die Uebung als Planposition in der Einheit von heute, gelten
+    /// deren Saetze statt des Profils (E1) -- auch fuer den Abschluss.
+    var satzZiel: Int { volumeKind == .reps ? (planStelle?.saetze ?? satzZielLesen()) : 1 }
+
+    /// Die Planposition dieser Uebung in der Einheit von heute, wie die
+    /// Plankarte sie sieht (`PlanAnzeige.heute`, gleiche Reihenfolge, ohne
+    /// ausgelassene). nil ohne Plan, wenn die Uebung dort nicht steht oder
+    /// ihre Position heute ausgelassen ist -- dann gilt alles wie im freien
+    /// Training.
+    var planStelle: PlanStelleAmGeraet? {
+        guard let ablauf,
+              let heute = PlanAnzeige.heute(
+                  bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+                  ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+                  ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen)
+        else { return nil }
+        let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
+            .filter { !heute.ausgelassen.contains($0.key) }
+        guard let index = stellen.firstIndex(where: { $0.wirksam == uebungId }),
+              let vorgabe = stellen[index].vorgabe else { return nil }
+        return PlanStelleAmGeraet(
+            positionKey: stellen[index].key, nummer: index + 1, gesamt: stellen.count,
+            saetze: vorgabe.saetze, wdhVon: vorgabe.wdhVon, wdhBis: vorgabe.wdhBis,
+            satzGemacht: PlanAnzeige.satzzahl(exerciseId: uebungId,
+                                              bloecke: sessions.aktiveSession()?.bloecke ?? []))
+    }
+
+    /// Die Wiederholungen der Planposition, nur wenn beide Grenzen da sind
+    /// und die Uebung Wiederholungen zaehlt: eine Wiederholungsposition,
+    /// getauscht gegen eine Halteuebung, haette sonst "Ziel 8 – 10" an
+    /// einem Sekundenrad.
+    private var planspanne: ClosedRange<Int>? {
+        guard volumeKind == .reps, let stelle = planStelle, let von = stelle.wdhVon, let bis = stelle.wdhBis, von <= bis else {
+            return nil
+        }
+        return von...bis
+    }
+
+    /// Die Satzzahl, die der Screen ueberall zeigt (Radkopf, Hauptknopf,
+    /// Pause, offener Satz): im Plan die Zaehlung der Uebung ueber alle
+    /// Geraete wie Ablaufzeile und Plankarte, frei `satzNummer` (R4).
+    var anzeigeSatz: Int {
+        planStelle.map { $0.satzGemacht + 1 } ?? satzNummer
+    }
+
+    /// "Übung 3 von 6 · Satz 2 von 3" im Plan, "Satz 2" frei. nil im
+    /// Zirkel: dort reicht die Zirkel-Ebene ihre Zeile (Station/Runde,
+    /// `Ablaufzeile.zirkel`) an GeraetView durch.
+    var ablaufzeile: Ablaufzeile? {
+        guard !imZirkel else { return nil }
+        if let stelle = planStelle {
+            // satzZiel statt stelle.saetze: bei Zeit und Strecke ist ein Satz
+            // die ganze Einheit (gleich bei Wiederholungen).
+            return .plan(uebung: stelle.nummer, von: stelle.gesamt, satz: anzeigeSatz,
+                         saetze: satzZiel)
+        }
+        return .frei(satz: satzNummer)
+    }
+
+    /// Die Ablauf-Liste der Pause: im Plan die Positionen der Einheit von
+    /// heute (wie die Plankarte), sonst die Uebungen dieser Einheit. Plan
+    /// heisst wie ueberall am Geraet: die Uebung steht als Planposition
+    /// (`planStelle`).
+    var ablaufZeilen: [AblaufZeile] {
+        let bloecke = sessions.aktiveSession()?.bloecke ?? []
+        if planStelle != nil, let ablauf,
+           let heute = PlanAnzeige.heute(
+               bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+               ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+               ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen) {
+            return AblaufListe.plan(plan: heute.plan, einheitKey: heute.einheit.key, zustand: heute.zustand,
+                                    ausgelassen: heute.ausgelassen, bloecke: bloecke,
+                                    aktuelleUebung: uebungId, bootstrap: bootstrap)
+        }
+        return AblaufListe.frei(bloecke: bloecke, aktuell: (station.schluessel, uebungId)) { [bootstrap] block in
+            PlanZeilenModell.uebungsname(exerciseId: block.exerciseId, maschine: nil, bootstrap: bootstrap)
+        }
+    }
 
     /// Die Pause, solange sie WIRKLICH laeuft.
     ///
@@ -805,7 +940,7 @@ final class GeraetModel {
 
     /// Wann der letzte Satz dieser Uebung in der laufenden Einheit fiel.
     /// Beim Zirkel aus dem Einzelsatz beginnt Runde 1 damit (Carry-over
-    /// Task 5), sonst fehlte er in der Rundenzusammenfassung.
+    /// Task 5), sonst fehlte er in Ablauf-Liste und Zirkel-Uebersicht.
     var letzterSatzAm: Date? {
         sessions.aktiveSession()?.bloecke
             .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?
@@ -1053,10 +1188,9 @@ final class GeraetModel {
         cardio = letzter?.cardio?.nur(cardioListe) ?? CardioWerte()
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
-        // gilt hier nicht mehr. Ebenso die Reserve-Frage.
+        // gilt hier nicht mehr. Die Reserve-Frage haengt am Block und
+        // wechselt mit ihm.
         phase = .eingabe
-        reserve = nil
-        letzterWrite = nil
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
         belastungVomNutzer = false
@@ -1137,10 +1271,9 @@ final class GeraetModel {
         let write = PendingSetWrite(sessionId: geschrieben.sessionId,
                                     setId: geschrieben.setId,
                                     body: geschrieben.body)
-        enqueue(write)
-        letzterWrite = write
-        // Ein neuer Satz ist der neue letzte: die Antwort galt dem vorigen.
-        reserve = nil
+        // Der Speicher merkt ihn als letzten Satz des Blocks -- fuer die
+        // Reserve-Frage hier und in der Zirkel-Uebersicht.
+        sessions.satzEinreihen(write, blockId: blockId, enqueue: enqueue)
         // Nach der Ortspruefung oben wirft sessions.satzSichern() nicht --
         // lokal wird immer geschrieben, auch offline (Spec Abschnitt 8.2).
         // Der Zaehler steigt deshalb hier, nicht hinter einem Erfolgs-Guard.
@@ -1174,7 +1307,9 @@ final class GeraetModel {
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
-        phase = satzNummer > satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
+        // Im Plan zaehlen die Saetze der Uebung ueber alle Geraete, wie in
+        // Ablaufzeile und Plankarte (Review Focus 3).
+        phase = gemachteSaetze >= satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
         if phase != .abschluss { automatikPauseVorbereiten() }
     }
 

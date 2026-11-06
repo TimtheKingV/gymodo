@@ -101,9 +101,9 @@ struct PlanKarte: View {
                                              bloecke: bloecke, bootstrap: bootstrap)
             : []
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            kopf
             Card {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                    kopf
                     zeilenListe(zeilen, beiTipp: beiPosition.map { tipp in
                         { zeile in
                             if let position = heute.einheit.positionen.first(where: { $0.key == zeile.id }) { tipp(position) }
@@ -145,40 +145,34 @@ struct PlanKarte: View {
 
     // MARK: - Kopf
 
-    /// Vor dem Start wie mitten im Training nur "EINHEIT A" als Marke, rechts
-    /// Uebungen und Dauer (vorher) bzw. Fortschritt und Restzeit (laufend).
-    /// Die naechste Einheit steht auf Home ("Nächste Einheit", Spec 1.1, E8);
-    /// hier bleibt die Uebungsliste, an der trainiert wird. Die Uhr steht im
-    /// Kopf "TRAINING LÄUFT" darueber.
+    /// Der gemeinsame Einheiten-Kopf (Name, kleines Maennchen, Meta bzw. Stand)
+    /// ueber der Zeilen-Card, nicht darin. Laufend traegt die Zeile
+    /// Fortschritt und Restzeit, vorher Uebungen und Dauer. Die naechste
+    /// Einheit steht auf Home ("Nächste Einheit", Spec 1.1, E8); hier bleibt
+    /// die Uebungsliste, an der trainiert wird. Die Uhr steht im Kopf
+    /// "TRAINING LÄUFT" darueber.
     private var kopf: some View {
-        let einheit = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(bootstrap)).name(heute.einheitKey)
-        let rechts: String
+        let muskeln = HomeZeilen.muskelnJeUebung(bootstrap)
+        let basis = EinheitKarteModell.einheit(
+            heute.einheit, namen: EinheitNamen(plan: plan, muskeln: muskeln), muskeln: muskeln,
+            tag: nil, zustand: .geplant)
+        // Dieselbe Zeile wie auf Home (PlanAnzeige.standZeile).
+        let stand = PlanAnzeige.standZeile(heute, laeuft: laeuft)
         let gesprochen: String
         if laeuft {
             let fortschritt = PlanAnzeige.fortschritt(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                                       ausgelassen: heute.ausgelassen)
             let rest = PlanAnzeige.restminutenText(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                                    ausgelassen: heute.ausgelassen)
-            rechts = [fortschritt, rest].compactMap { $0 }.joined(separator: " · ")
-            gesprochen = "\(einheit), \(fortschritt) Übungen\(rest.map { ", \($0)" } ?? "")"
+            gesprochen = "\(basis.titel), \(fortschritt) Übungen\(rest.map { ", \($0)" } ?? "")"
         } else {
-            rechts = PlanAnzeige.metaText(heute.einheit)
-            gesprochen = "\(einheit), \(rechts)"
+            gesprochen = "\(basis.titel), \(stand)"
         }
-        return HStack(alignment: .firstTextBaseline) {
-            Text(einheit.uppercased())
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textFaint)
-            Spacer()
-            Text(rechts)
-                .font(.system(size: 13))
-                .monospacedDigit()
-                .foregroundStyle(DesignSystem.Color.textMuted)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(gesprochen)
-        .accessibilityAddTraits(.isHeader)
+        let modell = EinheitKarteModell.laufend(basis, fortschritt: stand)
+        return EinheitKarte(modell: modell, geschlecht: bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(gesprochen)
+            .accessibilityAddTraits(.isHeader)
     }
 
     // MARK: - Zeilen

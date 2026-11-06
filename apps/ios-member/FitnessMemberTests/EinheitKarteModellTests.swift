@@ -68,6 +68,19 @@ struct EinheitKarteModellTests {
         #expect(modell.stufen["pectorals"] == .stark)
     }
 
+    @Test func laufendErsetztZeilen() {
+        let plan = plan()
+        let modell = EinheitKarteModell.einheit(
+            plan.einheiten[0], namen: EinheitNamen(plan: plan, muskeln: katalog()), muskeln: katalog(),
+            tag: nil, zustand: .geplant)
+        let laufend = EinheitKarteModell.laufend(modell, fortschritt: "4 von 7 · noch ca. 35 Min")
+
+        #expect(laufend.zeilen == ["4 von 7 · noch ca. 35 Min"])
+        #expect(laufend.titel == modell.titel)
+        #expect(laufend.stufen == modell.stufen)
+        #expect(EinheitKarteModell.laufend(modell, fortschritt: nil) == modell)
+    }
+
     @Test func einheitModell() {
         let plan = plan()
         let namen = EinheitNamen(plan: plan, muskeln: katalog())

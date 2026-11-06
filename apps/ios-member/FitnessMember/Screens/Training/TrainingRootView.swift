@@ -123,6 +123,13 @@ struct TrainingRootView: View {
     /// Die Startwerte aus dem ersten Drawer, an ihrer Uebung (nicht an
     /// Platz 1) -- siehe ZirkelVormerkung.
     @State private var zirkelVormerkung = ZirkelVormerkung.leer
+    /// "± kg" in der Zirkel-Pause: das Modell der naechsten Station, an
+    /// dem der Gewichts-Drawer dreht. In @State, weil `modell(...)` bei
+    /// jedem Body-Aufbau ein neues baute. Solange es steht, geht der Zirkel
+    /// nicht von selbst weiter (zirkelWeiter); das Gewicht wird beim
+    /// Schliessen vorgemerkt (zirkelGewichtUebernehmen).
+    @State private var zirkelGewicht: ZirkelGewichtAuftrag?
+    @State private var zirkelGewichtOffen = false
     /// "Zirkel mit weiterem Gerät" bzw. "+ Übung zum Zirkel" (Task 7), von
     /// der Wahl des Geraets bis "Übung starten" im Drawer. Solange sie
     /// laeuft, geht der Zirkel nicht von selbst weiter (zirkelWeiter): die
@@ -216,11 +223,6 @@ struct TrainingRootView: View {
             }
             .background(DesignSystem.Color.bg)
             .testnotizScreen()
-            .trainingSteuerung(
-                istOffen: $steuerungOffen,
-                pausiert: sessions.aktiveSession()?.istPausiert ?? false,
-                beiPauseUmschalten: pauseUmschalten,
-                beiBeenden: beenden)
             // .id(route): ersetzt navigiere(zu:) den Pfad in einem Zug, landet
             // die neue Route an derselben Stelle wie die alte -- ohne eigene
             // Identitaet behielte der Screen dort sein @State-Modell und zeigte
@@ -244,7 +246,7 @@ struct TrainingRootView: View {
                 ersatzNachSchliessen = nil
                 ersatzAnwenden(wahl.station, uebungId: wahl.uebungId)
             }) { wahl in
-                ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+                ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                     ersatzNachSchliessen = (wahl.station, uebung.exerciseId)
                     ersatzUebungswahl = nil
                 }
@@ -402,6 +404,16 @@ struct TrainingRootView: View {
             // in einen verschwundenen Zustand hinein schreiben.
             .onDisappear { neuladeVersuch?.cancel() }
         }
+        // Am Stack, nicht am Wurzelinhalt: die Wurzel, die Zirkel-Pause und
+        // die Zirkel-Uebersicht oeffnen sie, die beiden letzten gepusht --
+        // ein Sheet am verdeckten Wurzelinhalt ist dort nicht verlaesslich.
+        // Der Geraete-Screen traegt seine eigene, mit eigenem Schalter: zwei
+        // Sheets haengen so nie am selben Flag.
+        .trainingSteuerung(
+            istOffen: $steuerungOffen,
+            pausiert: sessions.aktiveSession()?.istPausiert ?? false,
+            beiPauseUmschalten: pauseUmschalten,
+            beiBeenden: beenden)
         // Am Stack, nicht an der Wurzel: ein Aufkleber-Tap kommt auch, waehrend
         // ein Geraete-Screen gepusht ist, und ein Dialog an der verdeckten
         // Wurzel erschien erst nach dem Zuruecknavigieren (Sichtcheck Task 11).
@@ -441,8 +453,7 @@ struct TrainingRootView: View {
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
                     PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
-                                                          bloecke: session?.bloecke ?? [])
+                        planPositionAntippen($0, bloecke: session?.bloecke ?? [])
                     }
                 }
             } trainingsinhalt: {
@@ -552,8 +563,7 @@ struct TrainingRootView: View {
                 sensorKarte
                 laufendKopf(mitte, session: session)
                 PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                    planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
-                                                      bloecke: session.bloecke)
+                    planPositionAntippen($0, bloecke: session.bloecke)
                 } beiZusatz: { oeffne($0) }
                 uebungHinzufuegenKnopf
                 // Der Hinweis zeigt auf die Zusatz-Zeilen: ohne eine antippbare keiner.
@@ -838,7 +848,14 @@ struct TrainingRootView: View {
                              // Ein Zirkel-Geraet erweitert ueber die Pause des
                              // Zirkels, nicht ueber sein eigenes Rad.
                              beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) },
-                             beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil)
+                             beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil,
+                             beiNaechstePlanuebung: zirkel != nil ? nil : { naechstePlanuebungOeffnen($0) },
+                             // Der Slot der Route, nicht der Stand des
+                             // Zirkels: nach dem Sichern ist der schon weiter.
+                             zirkelAblaufzeile: zirkel.flatMap { slot in
+                                 zirkelAblauf.zirkel.map { Ablaufzeile.zirkel($0, schritt: slot) }
+                             },
+                             zirkelAblaufZeilen: zirkel != nil ? zirkelAblaufZeilenAmGeraet : nil)
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -846,26 +863,44 @@ struct TrainingRootView: View {
             // zirkelWeiter(), das den doppelten Aufruf vertraegt.
             ZirkelPauseView(ablauf: zirkelAblauf,
                             uebungsname: zirkelUebungsname,
-                            letztesMal: zirkelLetztesMal,
+                            ort: { zirkelStation($0).map(GeraetModel.ortsangabe) ?? "" },
+                            bildModellId: { zirkelStation($0)?.equipmentModel.id },
+                            // Die Steuerung der Wurzel: der Stack traegt
+                            // .trainingSteuerung.
+                            beiSteuerung: { steuerungOffen = true },
                             beiStarten: { zirkelWeiter() },
                             // Nur nach der letzten Uebung von Runde 1: danach
                             // haetten die Runden verschieden viele Uebungen.
                             beiErweitern: ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel)
                                 ? { zirkelErweiternBeginnen() } : nil,
                             beiBeenden: { zirkelBeenden() },
+                            gewicht: zirkelGewichtKnopf,
                             nachUeberspringen: {
                                 zirkelAutomatikFreigeben()
                                 zirkelAutomatikVorbereiten()
                             })
+            .sheet(isPresented: $zirkelGewichtOffen, onDismiss: zirkelGewichtUebernehmen) {
+                if let auftrag = zirkelGewicht {
+                    GewichtAendernSheet(modell: auftrag.modell) { zirkelGewichtOffen = false }
+                }
+            }
         case .zirkelUebersicht:
             // Die Saetze aus der Einheit, die Uebungen aus dem festgehaltenen
             // Abschluss. Fehlt der (nicht vorgesehen), bleibt nur "Weiter".
             ZirkelUebersichtView(
+                beiSteuerung: { steuerungOffen = true },
                 kopf: zirkelAbschluss.map { ZirkelUebersicht.kopf($0.zirkel) } ?? "Zirkel beendet",
                 zeilen: zirkelAbschluss.map {
                     ZirkelUebersicht.zeilen(zirkel: $0.zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
-                                            seit: $0.begann, name: zirkelUebungsname)
+                                            seit: $0.begann, name: zirkelUebungsname,
+                                            hatLetztenWrite: { sessions.letzterWrite(blockId: $0) != nil })
                 } ?? [],
+                // Dieselbe Reserve-Frage wie am Geraet, einmal je Station
+                // (E4); derselbe Weg zum Server wie dort.
+                reserve: { sessions.reserve(blockId: $0) },
+                beiReserve: { blockId, reserve in
+                    sessions.reserveNachtragen(blockId: blockId, reserve: reserve, enqueue: einreihen)
+                },
                 beiWeiter: zirkelUebersichtWeiter)
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
@@ -882,6 +917,34 @@ struct TrainingRootView: View {
                 beiFertig: { pfad.removeAll() }
             )
         }
+    }
+
+    /// Ein Satz-Write in die Warteschlange und gleich der Versuch, sie zu
+    /// leeren -- fuer das Geraet und die Reserve der Zirkel-Uebersicht.
+    private func einreihen(_ write: PendingSetWrite) {
+        katalog.enqueue(write)
+        Task { await katalog.flushPending() }
+    }
+
+    /// Tipp auf eine Planzeile der Plankarte: das Vorgaben- und Tausch-Sheet
+    /// (Task 12). Der eine Weg, eine Position zu oeffnen -- auch fuer
+    /// "Nächste Übung: <Name>" vom Geraet.
+    private func planPositionAntippen(_ position: TrainingsplanPosition, bloecke: [LokalerBlock]) {
+        planPosition = PlanTausch.auftrag(position: position, katalog: katalog, ablauf: planAblauf, bloecke: bloecke)
+    }
+
+    /// "Nächste Übung: <Name>" im Abschluss am Geraet (E3): zurueck zur
+    /// Wurzel und dort die Position oeffnen, genau so, als haette das
+    /// Mitglied ihre Zeile in der Plankarte angetippt. Pfad leeren und
+    /// Sheet setzen in einem Zug, wie nach der Ersatzwahl (`ersatzFertig`).
+    /// Gibt es die Position nicht mehr (Plan inzwischen anders), bleibt nur
+    /// der Weg zur Wurzel.
+    private func naechstePlanuebungOeffnen(_ positionKey: String) {
+        pfad.removeAll()
+        guard let position = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?
+            .einheit.positionen.first(where: { $0.key == positionKey })
+        else { return }
+        planPositionAntippen(position, bloecke: sessions.aktiveSession()?.bloecke ?? [])
     }
 
     /// `zirkel`: das Modell meldet gesicherte Saetze an den ZirkelAblauf,
@@ -918,7 +981,7 @@ struct TrainingRootView: View {
         let modell = GeraetModel(
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
-            enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
+            enqueue: einreihen,
             mitschnitt: mitschnitt,
             zaehler: zaehler,
             startwerte: startwerte,
@@ -1300,7 +1363,8 @@ struct TrainingRootView: View {
                 case .uebungswahl(let wahl):
                     // Die Wahl reist im Pfad: die Closure hier haelt den State
                     // vom Aufbau des Sheets und sah zirkelUebungswahl noch leer.
-                    ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true) { uebung in
+                    ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true,
+                                           bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                         beiWahl(wahl.station, uebung.exerciseId)
                     }
                     .environment(videoVorrat)
@@ -1321,7 +1385,7 @@ struct TrainingRootView: View {
         // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
         // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
         .sheet(item: inStapel ? Binding<ZirkelUebungswahl?>.constant(nil) : $zirkelUebungswahl) { wahl in
-            ZirkelUebungswahlSheet(wahl: wahl) { uebung in
+            ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
                 zirkelUebungswahl = nil
                 beiWahl(wahl.station, uebung.exerciseId)
             }
@@ -1578,7 +1642,7 @@ struct TrainingRootView: View {
     /// Drawer ist schon offen.
     private func zirkelWeiter() {
         guard pfad.last == .zirkelPause, uebungsstart == nil, zirkelErweiterung == nil,
-              let zirkel = zirkelAblauf.zirkel
+              zirkelGewicht == nil, let zirkel = zirkelAblauf.zirkel
         else { return }
         if vorbereiteterSlot == zirkel.schritt, let route = vorbereiteteRoute,
            let neu = ZirkelPfad.ausPause(pfad, zu: route) {
@@ -1620,6 +1684,82 @@ struct TrainingRootView: View {
         if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
+        }
+    }
+
+    // MARK: - Gewicht der naechsten Station (UX-Paket 2, Task 5)
+
+    /// Die Ablauf-Liste des Zirkels am Geraet (Tipp auf die Ablaufzeile):
+    /// dieselbe wie in der Pause, die Station am Geraet als "jetzt".
+    private var zirkelAblaufZeilenAmGeraet: [AblaufZeile]? {
+        guard let zirkel = zirkelAblauf.zirkel else { return nil }
+        return AblaufListe.zirkel(zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                  seit: zirkelAblauf.abschluss?.begann, amGeraet: true,
+                                  name: zirkelUebungsname,
+                                  bildModellId: { zirkelStation($0)?.equipmentModel.id })
+    }
+
+    /// Einheit und Aktion fuer "± kg" in der Zirkel-Pause; nil blendet den
+    /// Knopf aus -- ohne naechste Station, ohne Modell und bei Cardio, wo
+    /// es kein Gewicht gibt. Die Einheit kommt vom Modell der naechsten
+    /// Station: eine Station in km/h zeigt "± km/h".
+    private var zirkelGewichtKnopf: (einheit: LoadUnit, aktion: () -> Void)? {
+        guard let naechste = zirkelAblauf.zirkel?.naechste,
+              let station = zirkelStation(naechste),
+              station.exercises.contains(where: { $0.id == naechste.exerciseId }),
+              station.equipmentModel.cardioWerte.isEmpty
+        else { return nil }
+        // Dieselbe Quelle wie GeraetModel.loadUnit eines frischen Modells
+        // (ohne Kontext gilt die Einheit der Station) -- ohne bei jedem
+        // Body-Aufbau ein Modell zu bauen.
+        let einheit = station.equipmentModel.loadUnit
+        return (einheit, { zirkelGewichtOeffnen() })
+    }
+
+    /// Baut das Modell der naechsten Station einmal und haelt es, solange
+    /// der Drawer offen ist. Es schreibt nichts: GeraetModel.init liest nur
+    /// (heutiger Satz, Bootstrap, Planziel), und ohne Countdown startet es
+    /// weder Mitschnitt noch Phase; gesichert wird an ihm nie. Hat die
+    /// DEBUG-Automatik die Station schon vorbereitet, dreht der Drawer an
+    /// deren Modell -- das ist das, das gleich startet.
+    private func zirkelGewichtOeffnen() {
+        guard pfad.last == .zirkelPause, zirkelGewicht == nil, uebungsstart == nil, zirkelErweiterung == nil,
+              let zirkel = zirkelAblauf.zirkel, let naechste = zirkel.naechste,
+              let modell = modell(station: naechste.station, exerciseId: naechste.exerciseId,
+                                  token: naechste.token,
+                                  startwerte: zirkelVormerkung.gemerkt(naechste, runde: zirkel.runde),
+                                  zirkel: true),
+              !modell.istCardio
+        else { return }
+        zirkelGewicht = ZirkelGewichtAuftrag(uebung: naechste, modell: modell,
+                                             vorbereitet: modell === vorbereitetesModell,
+                                             geoeffnetMit: modell.startwerte,
+                                             vomNutzerBeimOeffnen: modell.belastungIstVomNutzer)
+        zirkelGewichtOffen = true
+    }
+
+    /// onDismiss des Gewichts-Drawers ("Fertig" wie Wegwischen): das
+    /// gedrehte Gewicht gilt beim Start der Station, in jeder Runde. Ist
+    /// die Pause waehrenddessen abgelaufen, hat zirkelWeiter gewartet --
+    /// dann geht es jetzt weiter (wie zirkelErweiterungVerwerfen).
+    private func zirkelGewichtUebernehmen() {
+        guard let auftrag = zirkelGewicht else { return }
+        zirkelGewicht = nil
+        guard pfad.last == .zirkelPause, let zirkel = zirkelAblauf.zirkel,
+              zirkel.naechste == auftrag.uebung
+        else { return }
+        // Das vorbereitete Modell traegt das Gewicht schon selbst; eine
+        // Vormerkung bliebe sonst fuer eine spaetere Runde liegen. Nur was
+        // das Mitglied gewaehlt hat: unveraendert zu laesst den Drawer von
+        // Runde 1 stehen.
+        if !auftrag.vorbereitet,
+           zirkelVormerkung.ausPauseUebernehmen(
+               auftrag.uebung, geoeffnetMit: auftrag.geoeffnetMit, gewaehlt: auftrag.modell.startwerte,
+               vomNutzer: auftrag.modell.belastungIstVomNutzer && !auftrag.vomNutzerBeimOeffnen) {
+            zirkelAutomatikVorbereiten()
+        }
+        if zirkelAblauf.pause?.laeuft() != true {
+            zirkelWeiter()
         }
     }
 
@@ -1798,22 +1938,11 @@ struct TrainingRootView: View {
     }
 
     private func zirkelUebungsname(_ uebung: ZirkelUebung) -> String {
-        katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId)?
-            .exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
+        zirkelStation(uebung)?.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
     }
 
-    /// Dieselbe Quelle wie die Startwerte: ab Runde 2 belegt GeraetModel
-    /// das Gewicht aus dem Satz dieser Einheit vor, also steht dann auch
-    /// der hier. Vorher der letzte Satz aus dem Prefetch, wie im Drawer
-    /// (Rueckblick).
-    private func zirkelLetztesMal(_ uebung: ZirkelUebung) -> String? {
-        if let block = sessions.aktiveSession()?.bloecke.first(where: {
-            $0.stationSchluessel == uebung.station && $0.exerciseId == uebung.exerciseId
-        }), let heute = ZirkelPauseText.satzwerte(block) {
-            return heute
-        }
-        return modell(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token)?
-            .rueckblick?.zuletzt
+    private func zirkelStation(_ uebung: ZirkelUebung) -> Station? {
+        katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId)
     }
 
     /// Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt
@@ -1953,4 +2082,15 @@ private struct PlanModusTitel: ViewModifier {
             content.navigationBarTitleDisplayMode(.inline)
         }
     }
+}
+
+/// Der offene Gewichts-Drawer der Zirkel-Pause: fuer welche Station, an
+/// welchem Modell, und ob das das vorbereitete der DEBUG-Automatik ist.
+private struct ZirkelGewichtAuftrag {
+    let uebung: ZirkelUebung
+    let modell: GeraetModel
+    let vorbereitet: Bool
+    /// Stand beim Oeffnen: vorgemerkt wird nur eine Wahl (Finding T5).
+    let geoeffnetMit: Startwerte
+    let vomNutzerBeimOeffnen: Bool
 }
