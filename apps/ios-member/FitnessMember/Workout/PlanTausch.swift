@@ -174,10 +174,6 @@ enum PlanTausch {
         }
     }
 
-    /// Der Ersatz aus der normalen Auswahl: Station und Uebung -> Kandidat.
-    /// Das Modell ist der Katalogtyp (bei einem Studio-Geraet sein
-    /// `catalogModelId`), den der Server beim Tausch erwartet. nil, wenn die
-    /// Station die Uebung nicht fuehrt.
     /// Die Kandidaten nach Muskelgruppe (E5): Gruppen in fester Reihenfolge,
     /// innerhalb einer Gruppe die Reihenfolge des Servers -- er stellt
     /// "vorsichtig" hinten an, und das bleibt bindend. Ohne darstellbaren
@@ -193,6 +189,10 @@ enum PlanTausch {
         }
     }
 
+    /// Der Ersatz aus der normalen Auswahl: Station und Uebung -> Kandidat.
+    /// Das Modell ist der Katalogtyp (bei einem Studio-Geraet sein
+    /// `catalogModelId`), den der Server beim Tausch erwartet. nil, wenn die
+    /// Station die Uebung nicht fuehrt.
     static func kandidat(station: Station, uebungId: String, bootstrap: BootstrapResponse?) -> TauschKandidat? {
         guard let uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
         let modellId = station.equipmentModel.catalogModelId ?? station.equipmentModel.id

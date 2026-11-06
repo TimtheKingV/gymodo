@@ -940,7 +940,7 @@ final class GeraetModel {
 
     /// Wann der letzte Satz dieser Uebung in der laufenden Einheit fiel.
     /// Beim Zirkel aus dem Einzelsatz beginnt Runde 1 damit (Carry-over
-    /// Task 5), sonst fehlte er in der Rundenzusammenfassung.
+    /// Task 5), sonst fehlte er in Ablauf-Liste und Zirkel-Uebersicht.
     var letzterSatzAm: Date? {
         sessions.aktiveSession()?.bloecke
             .first { $0.stationSchluessel == station.schluessel && $0.exerciseId == uebungId }?

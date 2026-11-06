@@ -164,7 +164,7 @@ struct ZirkelEntwurf: Equatable {
     }
 
     /// Dieselbe Uebung zweimal haette zwei Slots, aber nur einen Block in
-    /// der Einheit -- Rundenzusammenfassung und "Letztes Mal" koennten die
+    /// der Einheit -- Ablauf-Liste und Zirkel-Uebersicht koennten die
     /// beiden nicht auseinanderhalten. Die Liste traegt ausserdem die Uebung
     /// selbst als Identitaet.
     @discardableResult
