@@ -396,9 +396,7 @@ private extension HomeRootView {
             tag: NaechsteEinheitKarte.tagText(naechster.tag, jetzt: jetzt, kalender: planKalender),
             zustand: .geplant)
         guard let laufend, laufend.einheitKey == key else { return modell }
-        return EinheitKarteModell(
-            art: modell.art, titel: modell.titel, tag: modell.tag,
-            zeilen: [PlanAnzeige.heuteDranUntertitel(laufend)], stufen: modell.stufen, zustand: modell.zustand)
+        return EinheitKarteModell.laufend(modell, fortschritt: PlanAnzeige.heuteDranUntertitel(laufend))
     }
 
     @ViewBuilder var kopf: some View {
