@@ -102,8 +102,9 @@ enum AblaufListe {
 
     // MARK: - Zirkel
 
-    /// `abgeschlossen` ist erledigt, `naechste` die naechste Station (in der
-    /// Rundenpause die erste der neuen Runde), alles andere offen. Ein
+    /// `abgeschlossen` und in der laufenden Runde schon dran (`dran`) sind
+    /// erledigt, `naechste` die naechste Station (in der Rundenpause die
+    /// erste der neuen Runde), alles andere offen. Ein
     /// "jetzt" gibt es in der Zirkel-Pause nicht. Erledigt nennt alle Saetze
     /// seit `seit`, naechste/offen den letzten Satz (je einmal).
     static func zirkel(_ zirkel: Zirkel, bloecke: [LokalerBlock], seit: Date?,
@@ -120,9 +121,9 @@ enum AblaufListe {
             } ?? []
             let stand: AblaufZeile.Stand
             switch zirkel.stand(an: index) {
-            case .abgeschlossen: stand = .erledigt
+            case .abgeschlossen, .dran: stand = .erledigt
             case .naechste: stand = .naechste
-            case .dran, .offen: stand = .offen
+            case .offen: stand = .offen
             }
             let detail = stand == .erledigt ? kompakt(werte) : (werte.last ?? "")
             return AblaufZeile(id: "\(uebung.station):\(uebung.exerciseId)", name: name(uebung),

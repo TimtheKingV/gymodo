@@ -117,16 +117,34 @@ struct AblaufListeTests {
         var zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 3, uebungspause: 20, rundenpause: 90)
         zirkel.weiter(); zirkel.weiter(); zirkel.weiter()   // Runde 1 geschafft, Rundenwechsel
         #expect(zirkel.naechsterSchrittIstRundenwechsel)
-        let bloecke = (1...3).map { n in
+        // Station 1 hat zwei Saetze im Block (verschiedene Werte), die
+        // anderen je einen.
+        var bloecke = (1...3).map { n in
             LokalerBlock(machineId: "m\(n)", exerciseId: "e\(n)", saetze: [satz(1, load: Double(n) * 10, volume: 12)])
         }
+        bloecke[0] = LokalerBlock(machineId: "m1", exerciseId: "e1",
+                                  saetze: [satz(1, load: 10, volume: 12), satz(2, load: 15, volume: 8, minuten: 2)])
         let zeilen = AblaufListe.zirkel(zirkel, bloecke: bloecke, seit: start.addingTimeInterval(-60),
                                         name: { "Name \($0.exerciseId)" }, bildModellId: { _ in nil })
+        // Die neue Runde: ihre erste Station ist die naechste, der Rest offen.
         #expect(zeilen.map(\.stand) == [.naechste, .offen, .offen])
-        let werte = ZirkelPauseText.satzwerte(bloecke[0].saetze[0], bloecke[0])
-        #expect(werte != nil)
-        // Der Satz aus Runde 1 steht genau einmal da, nicht doppelt.
-        #expect(zeilen[0].detail == werte)
+        let erster = ZirkelPauseText.satzwerte(bloecke[0].saetze[0], bloecke[0]) ?? "?"
+        let letzter = ZirkelPauseText.satzwerte(bloecke[0].saetze[1], bloecke[0]) ?? "?"
+        #expect(erster != letzter)
+        // Nur der letzte Satz, genau einmal -- nicht beide, nicht doppelt.
+        #expect(zeilen[0].detail == letzter)
+        #expect(zeilen[0].detail.components(separatedBy: letzter).count == 2)
+        #expect(!zeilen[0].detail.contains(erster))
+    }
+
+    @Test func zirkelMitteDerRundeZeigtGemachteStationErledigt() {
+        var zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 3, uebungspause: 20, rundenpause: 90)
+        zirkel.weiter()   // Station 1 in Runde 1 gemacht
+        let bloecke = [LokalerBlock(machineId: "m1", exerciseId: "e1", saetze: [satz(1, load: 10, volume: 12)])]
+        let zeilen = AblaufListe.zirkel(zirkel, bloecke: bloecke, seit: start.addingTimeInterval(-60),
+                                        name: { $0.exerciseId }, bildModellId: { _ in nil })
+        #expect(zeilen.map(\.stand) == [.erledigt, .naechste, .offen])
+        #expect(zeilen[0].detail == ZirkelPauseText.satzwerte(bloecke[0].saetze[0], bloecke[0]))
     }
 
     @Test func zirkelAbgeschlosseneStationIstErledigt() {
