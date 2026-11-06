@@ -21,6 +21,7 @@
 		083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */; };
 		088C3EF95F1FF0FDD01DEFA2 /* PlanMonatsgitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1F48F96C3B26B1E36BF90D /* PlanMonatsgitter.swift */; };
 		0898ECC2787988858B560FF0 /* ZirkelPauseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 997E6C8C1241617E7FCB0B8F /* ZirkelPauseView.swift */; };
+		094F9DA437F9B0483C5E99D0 /* AblaufzeileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */; };
 		0A66C707066A8C209342D669 /* TrainingAbschlussZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05572CBE819B0984F2CACC32 /* TrainingAbschlussZeilenTests.swift */; };
 		0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */; };
 		0C6833990CD8C8820B2F8627 /* Trainingszusammenfassung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8952A80F6F1C1538F040D849 /* Trainingszusammenfassung.swift */; };
@@ -369,6 +370,7 @@
 		E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */; };
 		E50D0C1FBA9DDB8631134313 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = A34961E54EBC121CA386A136 /* Toast.swift */; };
 		E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */; };
+		E61A8795F4C4B77FA8595599 /* Ablaufzeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9299CF3867BDD51F257D81 /* Ablaufzeile.swift */; };
 		E64981273BFE15AE13E3F69C /* TestnotizScreenModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0922864C7B289CC11400B5CB /* TestnotizScreenModifier.swift */; };
 		E77B229BFB49822EB132B48A /* BelegungsleisteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB083ACE9E51B4E98A6065F /* BelegungsleisteView.swift */; };
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
@@ -534,6 +536,7 @@
 		3BF32B8D3E1CBF0B570EEF40 /* PlanKalenderKontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalenderKontext.swift; sourceTree = "<group>"; };
 		3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorDiagnoseBlatt.swift; sourceTree = "<group>"; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
+		3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AblaufzeileTests.swift; sourceTree = "<group>"; };
 		3E67B77D484B574613C4314E /* Herkunftssatz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Herkunftssatz.swift; sourceTree = "<group>"; };
 		3EC5DE4F4A42F0296CF0BA5B /* CardioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioTests.swift; sourceTree = "<group>"; };
 		3F8D7BC3F8D6CFCD55CA53B5 /* TrainingspauseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingspauseTests.swift; sourceTree = "<group>"; };
@@ -831,6 +834,7 @@
 		FC1749C422D74C910CA03FCA /* MemberLadefehlerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberLadefehlerView.swift; sourceTree = "<group>"; };
 		FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursRoute.swift; sourceTree = "<group>"; };
 		FD55A1626F478A9D5D1A0861 /* DTOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DTOTests.swift; sourceTree = "<group>"; };
+		FE9299CF3867BDD51F257D81 /* Ablaufzeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ablaufzeile.swift; sourceTree = "<group>"; };
 		FEA1D35D6540B16A8E6F11C7 /* MuskelFarbenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelFarbenTests.swift; sourceTree = "<group>"; };
 		FEAB5E8D33541765AD0B109B /* Info-Additions-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-Additions-Debug.plist"; sourceTree = "<group>"; };
 		FFDF781E9D2DB3F233B672FA /* ZeitpunktParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZeitpunktParserTests.swift; sourceTree = "<group>"; };
@@ -1168,6 +1172,7 @@
 		5D15656A46C8A3FB04179564 /* FitnessMemberTests */ = {
 			isa = PBXGroup;
 			children = (
+				3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */,
 				D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */,
 				758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */,
 				7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */,
@@ -1351,6 +1356,7 @@
 		9032551F9B527E0B192D842A /* Workout */ = {
 			isa = PBXGroup;
 			children = (
+				FE9299CF3867BDD51F257D81 /* Ablaufzeile.swift */,
 				30418C6B8FF7A6F65873B95A /* Belastung.swift */,
 				7F27A57D86B2B8554A876337 /* Cardio.swift */,
 				7DFA493A0E3D01C9A52BEFD6 /* CardioChecksStore.swift */,
@@ -1656,6 +1662,7 @@
 			files = (
 				0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */,
 				9B358A72607B4F450BF64E0C /* APIError.swift in Sources */,
+				E61A8795F4C4B77FA8595599 /* Ablaufzeile.swift in Sources */,
 				87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */,
 				D73848050F680755E93B0CEB /* AccessibilityBaum.swift in Sources */,
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
@@ -1929,6 +1936,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */,
+				094F9DA437F9B0483C5E99D0 /* AblaufzeileTests.swift in Sources */,
 				BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */,
 				87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */,
 				D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */,

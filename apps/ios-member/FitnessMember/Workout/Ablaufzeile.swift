@@ -1,0 +1,39 @@
+import Foundation
+
+/// Wo im Ablauf das Mitglied steht -- eine Zeile unter dem Uebungsnamen am
+/// Geraet und im Pausen-Screen (UX-Paket 2, Abschnitt 2.4). Im Plan zaehlt
+/// der Satz ueber alle Geraete der Uebung (wie die Plankarte), frei nur
+/// der Satz an diesem Geraet.
+enum Ablaufzeile: Equatable {
+    case plan(uebung: Int, von: Int, satz: Int, saetze: Int)
+    case zirkel(station: Int, von: Int, runde: Int, runden: Int)
+    case frei(satz: Int)
+
+    var text: String {
+        switch self {
+        case .plan(let uebung, let von, let satz, let saetze):
+            "Übung \(uebung) von \(von) · Satz \(satz) von \(saetze)"
+        case .zirkel(let station, let von, let runde, let runden):
+            "Station \(station) von \(von) · Runde \(runde) von \(runden)"
+        case .frei(let satz):
+            "Satz \(satz)"
+        }
+    }
+}
+
+/// Die Planposition, an der die Uebung am Geraet heute steht, mit ihrer
+/// Vorgabe (E1). Gibt es nur, wenn die Uebung in der Einheit von heute als
+/// (nicht ausgelassene) Position steht.
+struct PlanStelleAmGeraet: Equatable {
+    let positionKey: String
+    /// 1-basiert in Ablauf-Reihenfolge, ohne ausgelassene Positionen.
+    let nummer: Int
+    /// Wie der Nenner von `PlanAnzeige.fortschritt`.
+    let gesamt: Int
+    let saetze: Int
+    let wdhVon: Int?
+    let wdhBis: Int?
+    /// Saetze der Uebung ueber alle Geraete der Session
+    /// (`PlanAnzeige.satzzahl`), nicht nur an diesem.
+    let satzGemacht: Int
+}

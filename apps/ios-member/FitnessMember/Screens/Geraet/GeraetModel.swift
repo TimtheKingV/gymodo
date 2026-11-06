@@ -663,16 +663,24 @@ final class GeraetModel {
     /// "Schritt 2,5 kg · 5,0 – 150,0", "Schritt 0,5 km/h · 0,0 – 20,0".
     /// Die Einheit steht hinter der Schrittweite, auch bei Level: "Schritt
     /// 1 Level" ist eine Aenderung um eine Stufe, nicht die Stufe 1.
+    /// Mit Zielgewicht der Planposition stattdessen "Plan 40,0 kg" (E1).
     var kontextzeileBelastung: String {
+        if planStelle != nil, let ziel = positionsziel {
+            return "Plan \(Zahlformat.belastungMitEinheit(ziel.load, loadUnit))"
+        }
         let bereich = modell.max.map {
             "\(Zahlformat.belastung(modell.min, loadUnit)) – \(Zahlformat.belastung($0, loadUnit))"
         } ?? "ab \(Zahlformat.belastung(modell.min, loadUnit))"
         return "Schritt \(Zahlformat.belastung(modell.schritt, loadUnit)) \(loadUnit.kurz) · \(bereich)"
     }
 
-    /// "Ziel 8 – 12", "Ziel 15 – 20 min".
+    /// "Ziel 8 – 12", "Ziel 15 – 20 min" -- bei einer Planposition deren
+    /// Wiederholungen statt des Katalogs (E1).
     var kontextzeileUmfang: String {
         guard let uebung = aktiveUebung else { return "" }
+        if let spanne = planspanne {
+            return "Ziel \(Zahlformat.korridor(spanne.lowerBound, spanne.upperBound, uebung.volumeKind))"
+        }
         return "Ziel \(Zahlformat.korridor(uebung.targetMin, uebung.targetMax, uebung.volumeKind))"
     }
 
@@ -680,8 +688,10 @@ final class GeraetModel {
     /// Mal und bei Cardio-Saetzen ohne volume.
     var letzterUmfang: Int? { letzterSatz(fuer: uebungId)?.volume }
 
-    /// Das Ziel der Uebung als Spanne, im Umfangsrad hervorgehoben.
+    /// Das Ziel der Uebung als Spanne, im Umfangsrad hervorgehoben. Bei
+    /// einer Planposition die Wiederholungen des Plans (E1).
     var zielspanne: ClosedRange<Int>? {
+        if let planspanne { return planspanne }
         guard let uebung = aktiveUebung, uebung.targetMin <= uebung.targetMax else { return nil }
         return uebung.targetMin...uebung.targetMax
     }
@@ -766,7 +776,54 @@ final class GeraetModel {
     /// stattdessen kommt nach dem ersten Satz gleich die Frage "Geraet
     /// abschliessen / Weiterer Satz". Das Profil-Satzziel ist ein Ziel
     /// fuer Wiederholungsuebungen und gilt nur dort.
-    var satzZiel: Int { volumeKind == .reps ? satzZielLesen() : 1 }
+    ///
+    /// Steht die Uebung als Planposition in der Einheit von heute, gelten
+    /// deren Saetze statt des Profils (E1) -- auch fuer den Abschluss.
+    var satzZiel: Int { volumeKind == .reps ? (planStelle?.saetze ?? satzZielLesen()) : 1 }
+
+    /// Die Planposition dieser Uebung in der Einheit von heute, wie die
+    /// Plankarte sie sieht (`PlanAnzeige.heute`, gleiche Reihenfolge, ohne
+    /// ausgelassene). nil ohne Plan, wenn die Uebung dort nicht steht oder
+    /// ihre Position heute ausgelassen ist -- dann gilt alles wie im freien
+    /// Training.
+    var planStelle: PlanStelleAmGeraet? {
+        guard let ablauf,
+              let heute = PlanAnzeige.heute(
+                  bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+                  ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+                  ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen)
+        else { return nil }
+        let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
+            .filter { !heute.ausgelassen.contains($0.key) }
+        guard let index = stellen.firstIndex(where: { $0.wirksam == uebungId }),
+              let vorgabe = stellen[index].vorgabe else { return nil }
+        return PlanStelleAmGeraet(
+            positionKey: stellen[index].key, nummer: index + 1, gesamt: stellen.count,
+            saetze: vorgabe.saetze, wdhVon: vorgabe.wdhVon, wdhBis: vorgabe.wdhBis,
+            satzGemacht: PlanAnzeige.satzzahl(exerciseId: uebungId,
+                                              bloecke: sessions.aktiveSession()?.bloecke ?? []))
+    }
+
+    /// Die Wiederholungen der Planposition, nur wenn beide Grenzen da sind.
+    private var planspanne: ClosedRange<Int>? {
+        guard let stelle = planStelle, let von = stelle.wdhVon, let bis = stelle.wdhBis, von <= bis else {
+            return nil
+        }
+        return von...bis
+    }
+
+    /// "Übung 3 von 6 · Satz 2 von 3" im Plan, "Satz 2" frei. nil im
+    /// Zirkel: dort setzt die Zirkel-Ebene ihre Zeile (Station/Runde).
+    var ablaufzeile: Ablaufzeile? {
+        guard !imZirkel else { return nil }
+        if let stelle = planStelle {
+            // satzZiel statt stelle.saetze: bei Zeit und Strecke ist ein Satz
+            // die ganze Einheit (gleich bei Wiederholungen).
+            return .plan(uebung: stelle.nummer, von: stelle.gesamt, satz: stelle.satzGemacht + 1,
+                         saetze: satzZiel)
+        }
+        return .frei(satz: satzNummer)
+    }
 
     /// Die Pause, solange sie WIRKLICH laeuft.
     ///
@@ -1174,7 +1231,10 @@ final class GeraetModel {
         // oben schon die NAECHSTE Nummer: bei Ziel 3 steht nach dem dritten
         // Satz eine 4 -- an diesem Geraet ist dann nichts mehr geplant, und
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
-        phase = satzNummer > satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
+        // Im Plan zaehlen die Saetze der Uebung ueber alle Geraete, wie in
+        // Ablaufzeile und Plankarte (Review Focus 3).
+        let gemacht = planStelle?.satzGemacht ?? (satzNummer - 1)
+        phase = gemacht >= satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
         if phase != .abschluss { automatikPauseVorbereiten() }
     }
 

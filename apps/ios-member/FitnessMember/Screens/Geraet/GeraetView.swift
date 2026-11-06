@@ -339,6 +339,21 @@ struct GeraetView: View {
             Text(modell.aktiveUebung?.name ?? "")
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.textMuted)
+            // Wo im Ablauf man steht (Board "Gerät · Plan · Tracker"): im
+            // Plan Übung und Satz, frei nur der Satz. Im Zirkel nil -- die
+            // Zirkel-Ebene setzt dort ihre eigene Zeile.
+            if let zeile = modell.ablaufzeile {
+                Text(zeile.text)
+                    .font(.system(size: 13, weight: .bold))
+                    .monospacedDigit()
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .padding(.horizontal, DesignSystem.Spacing.s8)
+                    .padding(.vertical, DesignSystem.Spacing.s4)
+                    .background(DesignSystem.Color.surfaceRaised,
+                                in: RoundedRectangle(cornerRadius: DesignSystem.Radius.pille))
+            }
         }
     }
 
