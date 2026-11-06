@@ -712,8 +712,9 @@ struct GeraetScreen: View {
 /// (Testnotiz 11.10., #12) -- typischerweise steckt man in der Pause um.
 /// Das Rad schreibt direkt ins Modell: wer den Drawer wegwischt, erwartet
 /// das gedrehte Gewicht (Testnotiz 13.10., #1). Bis dahin galt es erst mit
-/// "Übernehmen".
-private struct GewichtAendernSheet: View {
+/// "Übernehmen". Auch in der Zirkel-Pause, dort am Modell der naechsten
+/// Station (TrainingRootView.zirkelGewichtOeffnen).
+struct GewichtAendernSheet: View {
     @Bindable var modell: GeraetModel
     let beiFertig: () -> Void
 

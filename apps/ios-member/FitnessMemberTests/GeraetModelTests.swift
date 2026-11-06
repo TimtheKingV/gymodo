@@ -17,6 +17,7 @@ struct GeraetModelTests {
         mitschnitt: (any SatzMitschnitt)? = nil,
         zaehler: (any SatzZaehler)? = nil,
         startwerte: Startwerte? = nil,
+        mitCountdown: Bool = true,
         ablauf: TrainingsplanAblaufStore? = nil
     ) -> GeraetModel {
         let verzeichnis = FileManager.default.temporaryDirectory
@@ -33,6 +34,7 @@ struct GeraetModelTests {
             mitschnitt: mitschnitt,
             zaehler: zaehler,
             startwerte: startwerte,
+            mitCountdown: mitCountdown,
             ablauf: ablauf
         )
     }
@@ -865,6 +867,35 @@ struct GeraetModelTests {
         // rechnet aus der Historie und darf die Vorrunde nicht ersetzen.
         runde2.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
         #expect(runde2.belastung == 14)
+    }
+
+    /// Review Focus 5: das in der Zirkel-Pause gewaehlte Gewicht kommt als
+    /// Startwerte und schlaegt den heutigen Satz der Vorrunde.
+    @Test func startwerteVorHeutigemSatz() async {
+        let verzeichnis = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(directory: verzeichnis))
+        let kurzhantel: BootstrapResponse.Machine = GeraetTestdaten.dekodiere("""
+        {"id":"m1","studioId":"s1","label":"Gerät 7","locationNote":null,
+         "status":"active","tokenHashes":[],"visitCount":2,
+         "equipmentModel":{"id":"em1","name":"Kurzhantel","manufacturer":null,
+           "category":"kraft","photoPath":null,"loadUnit":"kg","loadStep":1,"loadMin":1.0,"loadMax":50.0,
+           "settingDefinitions":[]},
+         "exercises":[{"id":"e1","name":"Bizepscurl","volumeKind":"reps","targetMin":8,"targetMax":12}]}
+        """)
+        let bootstrap = GeraetTestdaten.bootstrap(lastSets: [])
+        let runde1 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions)
+        runde1.belastungGewaehlt(40)
+        await runde1.satzSichern(problemFlag: false, problemReason: nil)
+
+        let runde2 = modell(maschine: kurzhantel, bootstrap: bootstrap, sessions: sessions,
+                            startwerte: Startwerte(belastung: 45, umfang: 10, nebenbelastung: nil),
+                            mitCountdown: false)
+
+        #expect(runde2.belastung == 45)
+        #expect(runde2.phase == .eingabe)
+        runde2.kontextUebernehmen(GeraetTestdaten.kontext(vorschlag: 90.0))
+        #expect(runde2.belastung == 45)
     }
 
     /// Der Rueckkehr-Fall ohne Zirkel (Kommentar im init): ueber die

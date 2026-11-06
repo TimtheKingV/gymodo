@@ -23,6 +23,10 @@ struct ZirkelPauseView: View {
     /// (Task 7). nil blendet den Knopf aus.
     let beiErweitern: (() -> Void)?
     let beiBeenden: () -> Void
+    /// "± kg" fuer die naechste Station (UX-Paket 2, Task 5): die Einheit
+    /// ihres Modells und der Drawer. nil blendet den Knopf aus (Cardio,
+    /// keine naechste Station).
+    var gewicht: (einheit: LoadUnit, aktion: () -> Void)? = nil
     var nachUeberspringen: (() -> Void)? = nil
 
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -80,12 +84,13 @@ struct ZirkelPauseView: View {
                                        bildModellId: bildModellId),
             knoepfe: PausenKnoepfe.fuer(.zirkel(naechsteUebung: uebungsname(naechste),
                                                 kannErweitern: beiErweitern != nil)),
+            einheit: gewicht?.einheit ?? .kg,
             beiSteuerung: beiSteuerung,
             beiVerlaengern: { ablauf.pauseVerlaengern() },
             beiHaupt: beiStarten,
-            // "± Gewicht" fuer die naechste Station kommt mit Task 5; bis
-            // dahin kein Knopf statt eines ohne Wirkung.
-            beiGewicht: nil,
+            // Das Gewicht der naechsten Station; es gilt bei ihrem Start,
+            // auch ab Runde 2 (ZirkelVormerkung).
+            beiGewicht: gewicht?.aktion,
             // Gilt nur fuer diese Runde und sichert keinen Satz (Spec-
             // Annahme). Danach derselbe Weg wie am Ende der Pause: zur dann
             // naechsten Uebung bzw. zur Uebersicht, wenn keine mehr kommt.

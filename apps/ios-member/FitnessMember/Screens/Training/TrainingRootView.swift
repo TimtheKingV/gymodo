@@ -123,6 +123,13 @@ struct TrainingRootView: View {
     /// Die Startwerte aus dem ersten Drawer, an ihrer Uebung (nicht an
     /// Platz 1) -- siehe ZirkelVormerkung.
     @State private var zirkelVormerkung = ZirkelVormerkung.leer
+    /// "± kg" in der Zirkel-Pause: das Modell der naechsten Station, an
+    /// dem der Gewichts-Drawer dreht. In @State, weil `modell(...)` bei
+    /// jedem Body-Aufbau ein neues baute. Solange es steht, geht der Zirkel
+    /// nicht von selbst weiter (zirkelWeiter); das Gewicht wird beim
+    /// Schliessen vorgemerkt (zirkelGewichtUebernehmen).
+    @State private var zirkelGewicht: ZirkelGewichtAuftrag?
+    @State private var zirkelGewichtOffen = false
     /// "Zirkel mit weiterem Gerät" bzw. "+ Übung zum Zirkel" (Task 7), von
     /// der Wahl des Geraets bis "Übung starten" im Drawer. Solange sie
     /// laeuft, geht der Zirkel nicht von selbst weiter (zirkelWeiter): die
@@ -857,10 +864,16 @@ struct TrainingRootView: View {
                             beiErweitern: ZirkelPfad.kannErweitern(pfad, zirkel: zirkelAblauf.zirkel)
                                 ? { zirkelErweiternBeginnen() } : nil,
                             beiBeenden: { zirkelBeenden() },
+                            gewicht: zirkelGewichtKnopf,
                             nachUeberspringen: {
                                 zirkelAutomatikFreigeben()
                                 zirkelAutomatikVorbereiten()
                             })
+            .sheet(isPresented: $zirkelGewichtOffen, onDismiss: zirkelGewichtUebernehmen) {
+                if let auftrag = zirkelGewicht {
+                    GewichtAendernSheet(modell: auftrag.modell) { zirkelGewichtOffen = false }
+                }
+            }
         case .zirkelUebersicht:
             // Die Saetze aus der Einheit, die Uebungen aus dem festgehaltenen
             // Abschluss. Fehlt der (nicht vorgesehen), bleibt nur "Weiter".
@@ -1583,7 +1596,7 @@ struct TrainingRootView: View {
     /// Drawer ist schon offen.
     private func zirkelWeiter() {
         guard pfad.last == .zirkelPause, uebungsstart == nil, zirkelErweiterung == nil,
-              let zirkel = zirkelAblauf.zirkel
+              zirkelGewicht == nil, let zirkel = zirkelAblauf.zirkel
         else { return }
         if vorbereiteterSlot == zirkel.schritt, let route = vorbereiteteRoute,
            let neu = ZirkelPfad.ausPause(pfad, zu: route) {
@@ -1625,6 +1638,66 @@ struct TrainingRootView: View {
         if let neu = ZirkelPfad.ausPause(pfad, zu: ohneStartwerte) {
             zirkelAblauf.pauseVerlassen()
             pfad = neu
+        }
+    }
+
+    // MARK: - Gewicht der naechsten Station (UX-Paket 2, Task 5)
+
+    /// Einheit und Aktion fuer "± kg" in der Zirkel-Pause; nil blendet den
+    /// Knopf aus -- ohne naechste Station, ohne Modell und bei Cardio, wo
+    /// es kein Gewicht gibt. Die Einheit kommt vom Modell der naechsten
+    /// Station: eine Station in km/h zeigt "± km/h".
+    private var zirkelGewichtKnopf: (einheit: LoadUnit, aktion: () -> Void)? {
+        guard let naechste = zirkelAblauf.zirkel?.naechste,
+              let station = zirkelStation(naechste),
+              station.exercises.contains(where: { $0.id == naechste.exerciseId }),
+              station.equipmentModel.cardioWerte.isEmpty
+        else { return nil }
+        // Dieselbe Quelle wie GeraetModel.loadUnit eines frischen Modells
+        // (ohne Kontext gilt die Einheit der Station) -- ohne bei jedem
+        // Body-Aufbau ein Modell zu bauen.
+        let einheit = station.equipmentModel.loadUnit
+        return (einheit, { zirkelGewichtOeffnen() })
+    }
+
+    /// Baut das Modell der naechsten Station einmal und haelt es, solange
+    /// der Drawer offen ist. Es schreibt nichts: GeraetModel.init liest nur
+    /// (heutiger Satz, Bootstrap, Planziel), und ohne Countdown startet es
+    /// weder Mitschnitt noch Phase; gesichert wird an ihm nie. Hat die
+    /// DEBUG-Automatik die Station schon vorbereitet, dreht der Drawer an
+    /// deren Modell -- das ist das, das gleich startet.
+    private func zirkelGewichtOeffnen() {
+        guard pfad.last == .zirkelPause, zirkelGewicht == nil, uebungsstart == nil, zirkelErweiterung == nil,
+              let zirkel = zirkelAblauf.zirkel, let naechste = zirkel.naechste,
+              let modell = modell(station: naechste.station, exerciseId: naechste.exerciseId,
+                                  token: naechste.token,
+                                  startwerte: zirkelVormerkung.gemerkt(naechste, runde: zirkel.runde),
+                                  zirkel: true),
+              !modell.istCardio
+        else { return }
+        zirkelGewicht = ZirkelGewichtAuftrag(uebung: naechste, modell: modell,
+                                             vorbereitet: modell === vorbereitetesModell)
+        zirkelGewichtOffen = true
+    }
+
+    /// onDismiss des Gewichts-Drawers ("Fertig" wie Wegwischen): das
+    /// gedrehte Gewicht gilt beim Start der Station, in jeder Runde. Ist
+    /// die Pause waehrenddessen abgelaufen, hat zirkelWeiter gewartet --
+    /// dann geht es jetzt weiter (wie zirkelErweiterungVerwerfen).
+    private func zirkelGewichtUebernehmen() {
+        guard let auftrag = zirkelGewicht else { return }
+        zirkelGewicht = nil
+        guard pfad.last == .zirkelPause, let zirkel = zirkelAblauf.zirkel,
+              zirkel.naechste == auftrag.uebung
+        else { return }
+        // Das vorbereitete Modell traegt das Gewicht schon selbst; eine
+        // Vormerkung bliebe sonst fuer eine spaetere Runde liegen.
+        if !auftrag.vorbereitet {
+            zirkelVormerkung.vormerken(auftrag.uebung, startwerte: auftrag.modell.startwerte)
+            zirkelAutomatikVorbereiten()
+        }
+        if zirkelAblauf.pause?.laeuft() != true {
+            zirkelWeiter()
         }
     }
 
@@ -1947,4 +2020,12 @@ private struct PlanModusTitel: ViewModifier {
             content.navigationBarTitleDisplayMode(.inline)
         }
     }
+}
+
+/// Der offene Gewichts-Drawer der Zirkel-Pause: fuer welche Station, an
+/// welchem Modell, und ob das das vorbereitete der DEBUG-Automatik ist.
+private struct ZirkelGewichtAuftrag {
+    let uebung: ZirkelUebung
+    let modell: GeraetModel
+    let vorbereitet: Bool
 }

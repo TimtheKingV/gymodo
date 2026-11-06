@@ -26,8 +26,8 @@ struct PausenScreen: View {
     let beiVerlaengern: () -> Void
     let beiHaupt: () -> Void
     /// Das Gewicht fuer den naechsten Satz -- in der Pause wird umgesteckt
-    /// (Testnotiz 11.10., #12). nil blendet den Knopf aus: im Zirkel gibt
-    /// es noch kein Ziel dafuer (Task 5), und ein Knopf ohne Wirkung waere
+    /// (Testnotiz 11.10., #12); im Zirkel das der naechsten Station. nil
+    /// blendet den Knopf aus (Zirkel-Cardio): ein Knopf ohne Wirkung waere
     /// schlimmer als keiner.
     let beiGewicht: (() -> Void)?
     let beiAbschliessen: () -> Void

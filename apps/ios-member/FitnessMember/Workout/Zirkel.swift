@@ -275,8 +275,15 @@ extension ZirkelAuswahl {
 /// eingegeben wurden -- nicht zu Platz 1 des Zirkels. Wird umsortiert,
 /// gelten sie, sobald diese Uebung in Runde 1 drankommt; ohne sie liefe
 /// eine einfache Uebung ueber den Direktstart ohne das gewaehlte Gewicht.
+///
+/// Dazu das Gewicht, das das Mitglied in der Pause fuer die naechste
+/// Station waehlt ("± kg", UX-Paket 2, Review Focus 5): es gilt in jeder
+/// Runde, beim naechsten Start dieser Station, und vor dem heutigen Satz.
 struct ZirkelVormerkung: Equatable {
+    /// Aus dem Drawer der Planung: nur Runde 1.
     private var werte: [ZirkelUebung: Startwerte]
+    /// Aus der Pause: jede Runde.
+    private var ausPause: [ZirkelUebung: Startwerte] = [:]
 
     init(_ uebung: ZirkelUebung, werte: Startwerte) {
         self.werte = [uebung: werte]
@@ -295,14 +302,33 @@ struct ZirkelVormerkung: Equatable {
     /// Beim Start: nur, was noch im Entwurf steht. Eine entfernte Uebung
     /// nimmt ihre Werte mit.
     func behalten(nur uebungen: [ZirkelUebung]) -> ZirkelVormerkung {
-        ZirkelVormerkung(werte: werte.filter { uebungen.contains($0.key) })
+        var neu = ZirkelVormerkung(werte: werte.filter { uebungen.contains($0.key) })
+        neu.ausPause = ausPause.filter { uebungen.contains($0.key) }
+        return neu
     }
 
-    /// Einmal und nur in Runde 1: ab Runde 2 belegt GeraetModel das Gewicht
-    /// aus der Vorrunde vor. Auch eine Frage aus Runde 2 raeumt den Eintrag
-    /// (wurde die Uebung in Runde 1 uebersprungen, waere er sonst veraltet).
+    /// "± kg" in der Pause: gilt beim naechsten Start dieser Station, auch
+    /// ab Runde 2, und ersetzt die Werte aus dem Drawer.
+    mutating func vormerken(_ uebung: ZirkelUebung, startwerte: Startwerte) {
+        ausPause[uebung] = startwerte
+    }
+
+    /// Was `entnehmen` liefern wuerde, ohne den Eintrag zu raeumen -- der
+    /// Gewichts-Drawer der Pause beginnt damit, wenn er ein zweites Mal
+    /// aufgeht.
+    func gemerkt(_ uebung: ZirkelUebung, runde: Int) -> Startwerte? {
+        ausPause[uebung] ?? (runde == 1 ? werte[uebung] : nil)
+    }
+
+    /// Einmal. Die Drawer-Werte nur in Runde 1: ab Runde 2 belegt
+    /// GeraetModel das Gewicht aus der Vorrunde vor. Auch eine Frage aus
+    /// Runde 2 raeumt den Eintrag (wurde die Uebung in Runde 1
+    /// uebersprungen, waere er sonst veraltet). Ein Pausen-Gewicht gilt in
+    /// jeder Runde.
     mutating func entnehmen(_ uebung: ZirkelUebung, runde: Int) -> Startwerte? {
-        let gemerkt = werte.removeValue(forKey: uebung)
-        return runde == 1 ? gemerkt : nil
+        let wert = gemerkt(uebung, runde: runde)
+        werte.removeValue(forKey: uebung)
+        ausPause.removeValue(forKey: uebung)
+        return wert
     }
 }
