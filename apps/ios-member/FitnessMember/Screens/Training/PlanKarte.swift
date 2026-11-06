@@ -156,17 +156,16 @@ struct PlanKarte: View {
         let basis = EinheitKarteModell.einheit(
             heute.einheit, namen: EinheitNamen(plan: plan, muskeln: muskeln), muskeln: muskeln,
             tag: nil, zustand: .geplant)
-        let stand: String
+        // Dieselbe Zeile wie auf Home (PlanAnzeige.standZeile).
+        let stand = PlanAnzeige.standZeile(heute, laeuft: laeuft)
         let gesprochen: String
         if laeuft {
             let fortschritt = PlanAnzeige.fortschritt(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                                       ausgelassen: heute.ausgelassen)
             let rest = PlanAnzeige.restminutenText(plan: plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
                                                    ausgelassen: heute.ausgelassen)
-            stand = [fortschritt, rest].compactMap { $0 }.joined(separator: " · ")
             gesprochen = "\(basis.titel), \(fortschritt) Übungen\(rest.map { ", \($0)" } ?? "")"
         } else {
-            stand = PlanAnzeige.metaText(heute.einheit)
             gesprochen = "\(basis.titel), \(stand)"
         }
         let modell = EinheitKarteModell.laufend(basis, fortschritt: stand)

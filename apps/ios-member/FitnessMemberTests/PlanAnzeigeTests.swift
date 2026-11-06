@@ -509,16 +509,18 @@ struct PlanAnzeigeTests {
         #expect(nichts.naechstes == "Nächstes Mal ist wieder Einheit A dran.")
     }
 
-    @Test("Home-Zeile: Meta vor dem Start, Fortschritt danach")
-    func heuteDranUntertitel() {
+    @Test("Einheiten-Zeile fuer Home und Plankarte: Meta vor dem Start, Stand und Restzeit, sobald sie laeuft")
+    func standZeile() {
         let plan = Self.plan()
         let vorher = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(), ausgelassen: [])
-        #expect(PlanAnzeige.heuteDranUntertitel(vorher) == "4 Übungen · ca. 60 Min")
+        #expect(PlanAnzeige.standZeile(vorher, laeuft: false) == "4 Übungen · ca. 60 Min")
+        // Laeuft sie, steht auch vor dem ersten Haken der Stand.
+        #expect(PlanAnzeige.standZeile(vorher, laeuft: true) == "0 von 4 · noch ca. 60 Min")
         let mitten = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A0": .erledigt]), ausgelassen: [])
-        #expect(PlanAnzeige.heuteDranUntertitel(mitten) == "1 von 4")
+        #expect(PlanAnzeige.standZeile(mitten, laeuft: true) == "1 von 4 · noch ca. 45 Min")
         // Optional zaehlt mit, deshalb nicht "erledigt".
         let optional = PlanAnzeige.Heute(plan: plan, einheit: plan.einheiten[0], zustand: Self.zustand(["A1": .optional]), ausgelassen: [])
-        #expect(PlanAnzeige.heuteDranUntertitel(optional) == "1 von 4")
+        #expect(PlanAnzeige.standZeile(optional, laeuft: true) == "1 von 4 · noch ca. 45 Min")
     }
 
     @Test("heute nimmt den Ablauf nur, wenn Plan und Einheit passen")

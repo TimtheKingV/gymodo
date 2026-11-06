@@ -198,16 +198,18 @@ enum PlanAnzeige {
         anzahl == 1 ? "1 Übung" : "\(anzahl) Übungen"
     }
 
-    /// Die Zeile auf Home: vor dem ersten Haken wie die Karte ("7 Übungen ·
-    /// ca. 63 Min"), danach der Stand ("3 von 7", wie in der Karte: erledigt
-    /// und optional -- "erledigt" waere fuer optionale falsch).
-    static func heuteDranUntertitel(_ heute: Heute) -> String {
-        let fertig = heute.zustand?.positionen.contains {
-            !heute.ausgelassen.contains($0.key) && ($0.status == .erledigt || $0.status == .optional)
-        } ?? false
-        guard fertig else { return metaText(heute.einheit) }
-        return fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
-                           ausgelassen: heute.ausgelassen)
+    /// Die Zeile unter dem Namen der Einheit von heute -- die eine Quelle
+    /// fuer Home und den Kopf der Plankarte (Spec 2, Praemisse 4: dieselbe
+    /// Einheit, dieselbe Zeile). Vor dem Start "7 Übungen · ca. 63 Min",
+    /// laufend "3 von 7 · noch ca. 35 Min" (erledigt und optional zaehlen,
+    /// ohne Restzeit nur der Stand).
+    static func standZeile(_ heute: Heute, laeuft: Bool) -> String {
+        guard laeuft else { return metaText(heute.einheit) }
+        let stand = fortschritt(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                                ausgelassen: heute.ausgelassen)
+        let rest = restminutenText(plan: heute.plan, einheitKey: heute.einheitKey, zustand: heute.zustand,
+                                   ausgelassen: heute.ausgelassen)
+        return [stand, rest].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// "Danach: Einheit B"; ein Plan mit nur einer Einheit hat kein Danach.

@@ -383,8 +383,9 @@ private extension HomeRootView {
         }
     }
 
-    /// Die Karte der Einheit; laeuft sie, traegt die Zeile den Stand aus
-    /// `PlanAnzeige` ("1 von 4") statt der Uebungszahl.
+    /// Die Karte der Einheit; laeuft sie, traegt die Zeile den Stand wie
+    /// die Plankarte ("1 von 4 · noch ca. 45 Min", `PlanAnzeige.standZeile`)
+    /// statt der Uebungszahl.
     func einheitModell(
         _ naechster: (tag: Date, termin: PlanTermin), plan: Trainingsplan, laufend: PlanAnzeige.Heute?, jetzt: Date
     ) -> EinheitKarteModell? {
@@ -396,7 +397,7 @@ private extension HomeRootView {
             tag: NaechsteEinheitKarte.tagText(naechster.tag, jetzt: jetzt, kalender: planKalender),
             zustand: .geplant)
         guard let laufend, laufend.einheitKey == key else { return modell }
-        return EinheitKarteModell.laufend(modell, fortschritt: PlanAnzeige.heuteDranUntertitel(laufend))
+        return EinheitKarteModell.laufend(modell, fortschritt: PlanAnzeige.standZeile(laufend, laeuft: true))
     }
 
     @ViewBuilder var kopf: some View {
