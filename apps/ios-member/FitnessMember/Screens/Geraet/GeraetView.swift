@@ -61,7 +61,7 @@ struct GeraetView: View {
                     // Label ueber seinem Titel: Kopfzeile und Geraetename sind
                     // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                        kopfzeile
+                        TrainingKopfzeile(ort: modell.ortsangabe.uppercased()) { steuerungOffen = true }
                         // Unter der Trainingsuhr statt ueber den Raedern
                         // (Testnotiz 16.10., #3): Karte, Zaehlerstand und
                         // Marken gehoeren zum Sensor, nicht zum Satzwert.
@@ -246,46 +246,6 @@ struct GeraetView: View {
             if rest > 0 { try? await Task.sleep(for: .seconds(rest)) }
             guard !Task.isCancelled else { return }
             modell.countdownBeenden()
-        }
-    }
-
-    private var kopfzeile: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(modell.ortsangabe.uppercased())
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textFaint)
-            Spacer(minLength: DesignSystem.Spacing.s12)
-            trainingsuhr
-        }
-    }
-
-    /// Wie lange das Training schon laeuft -- oben rechts, in derselben
-    /// Zeile wie der Ort, mit dem pulsierenden Punkt davor (Testnotiz
-    /// 05.10., #10). Ein Tipp oeffnet "Pausieren / Training beenden" (#11).
-    ///
-    /// Ohne laufende Einheit (die Vier-Stunden-Grenze ist waehrend des
-    /// Screens abgelaufen) steht hier nichts -- eine Uhr auf 00:00 waere
-    /// eine Behauptung ueber ein Training, das nicht mehr laeuft.
-    @ViewBuilder
-    private var trainingsuhr: some View {
-        if let session = sessions.aktiveSession() {
-            Button { steuerungOffen = true } label: {
-                HStack(spacing: 6) {
-                    Laufpunkt(pausiert: session.istPausiert)
-                    TrainingsuhrText(session: session, font: .system(size: 15, weight: .semibold))
-                }
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressButtonStyle())
-            .testnotizElement("geraet.trainingsuhr", typ: "Button")
-            .accessibilityHint("Pausieren oder Training beenden")
-            .fixedSize()
-            // Die 44 pt Trefferflaeche ragen aus der Kopfzeile heraus,
-            // statt sie zu strecken -- dasselbe Hoehenbudget wie bei
-            // "andere Übung".
-            .padding(.vertical, -DesignSystem.Spacing.s12)
         }
     }
 
