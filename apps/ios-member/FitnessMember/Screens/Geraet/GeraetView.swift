@@ -33,6 +33,13 @@ struct GeraetView: View {
     /// "Zirkel mit weiterem Gerät" in der Pause nach Satz 1 (Task 7). nil,
     /// wo es keinen Zirkel-Einstieg gibt (Preview, Zirkel-Geraet).
     var beiZirkelBeginnen: (() -> Void)?
+    /// Station und Runde, solange das Geraet ein Zirkel-Slot ist: die
+    /// Zirkel-Ebene rechnet sie (`Ablaufzeile.zirkel`), das Modell kennt den
+    /// Zirkel nicht.
+    var zirkelAblaufzeile: Ablaufzeile?
+
+    /// Am Geraet und in der Pause dieselbe Zeile.
+    private var ablaufzeile: Ablaufzeile? { modell.ablaufzeile ?? zirkelAblaufzeile }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(WorkoutSessionStore.self) private var sessions
@@ -210,7 +217,7 @@ struct GeraetView: View {
         return PausenScreen(
             ort: modell.ortsangabe.uppercased(),
             ueberschrift: "PAUSE · \(modell.station.equipmentModel.name.uppercased())",
-            ablaufzeile: modell.ablaufzeile,
+            ablaufzeile: ablaufzeile,
             timer: pause,
             zeilen: modell.ablaufZeilen,
             knoepfe: PausenKnoepfe.fuer(modus),
@@ -333,9 +340,9 @@ struct GeraetView: View {
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.textMuted)
             // Wo im Ablauf man steht (Board "Gerät · Plan · Tracker"): im
-            // Plan Übung und Satz, frei nur der Satz. Im Zirkel nil -- die
-            // Zirkel-Ebene setzt dort ihre eigene Zeile.
-            if let zeile = modell.ablaufzeile {
+            // Plan Übung und Satz, frei nur der Satz, im Zirkel Station und
+            // Runde (von der Zirkel-Ebene).
+            if let zeile = ablaufzeile {
                 AblaufzeilePille(zeile: zeile)
             }
         }
@@ -526,6 +533,8 @@ struct GeraetScreen: View {
     /// Wurzel oeffnet diese Position wie ein Tipp auf ihre Planzeile. nil,
     /// wo es keine Plankarte gibt.
     var beiNaechstePlanuebung: ((_ positionKey: String) -> Void)?
+    /// Siehe GeraetView.zirkelAblaufzeile; nil ausserhalb eines Zirkels.
+    var zirkelAblaufzeile: Ablaufzeile?
 
     @State private var uebungWechselnOffen = false
     @State private var zirkelBeendenFrage = false
@@ -576,7 +585,8 @@ struct GeraetScreen: View {
             beiTrainingBeenden: beiTrainingBeenden,
             beiGewichtAendern: { gewichtOffen = true },
             beiEinweisung: { einweisungOffen = true },
-            beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } }
+            beiZirkelBeginnen: beiZirkelBeginnen.map { beginnen in { beginnen(modell) } },
+            zirkelAblaufzeile: zirkelAblaufzeile
         )
         // Ohne Zurueck-Knopf auch ohne Wisch-Geste zurueck: beides verwarf den
         // Zirkel stumm. Beenden geht ueber die Uebersicht, die gesicherten

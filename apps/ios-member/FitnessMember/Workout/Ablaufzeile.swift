@@ -19,6 +19,18 @@ enum Ablaufzeile: Equatable {
             "Satz \(satz)"
         }
     }
+
+    /// Die Zirkel-Zeile fuer den Slot `schritt` -- die einzige Rechnung,
+    /// damit Pause und Geraet nicht auseinanderlaufen. Ohne `schritt` der
+    /// naechste Slot des Zirkels (Pause; in der Rundenpause schon die neue
+    /// Runde), am Geraet der Slot der Route: nach dem Sichern ist der
+    /// Zirkel schon weiter, der Screen noch nicht.
+    static func zirkel(_ zirkel: Zirkel, schritt: Int? = nil) -> Ablaufzeile {
+        let schritt = schritt ?? zirkel.schritt
+        let anzahl = zirkel.uebungen.count
+        return .zirkel(station: schritt % anzahl + 1, von: anzahl,
+                       runde: schritt / anzahl + 1, runden: zirkel.runden)
+    }
 }
 
 /// Die Ablaufzeile als kleine Pille (Board "Gerät · Plan · Tracker"): am

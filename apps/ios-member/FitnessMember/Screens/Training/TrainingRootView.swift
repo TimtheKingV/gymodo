@@ -844,7 +844,12 @@ struct TrainingRootView: View {
                              // Zirkels, nicht ueber sein eigenes Rad.
                              beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) },
                              beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil,
-                             beiNaechstePlanuebung: zirkel != nil ? nil : { naechstePlanuebungOeffnen($0) })
+                             beiNaechstePlanuebung: zirkel != nil ? nil : { naechstePlanuebungOeffnen($0) },
+                             // Der Slot der Route, nicht der Stand des
+                             // Zirkels: nach dem Sichern ist der schon weiter.
+                             zirkelAblaufzeile: zirkel.flatMap { slot in
+                                 zirkelAblauf.zirkel.map { Ablaufzeile.zirkel($0, schritt: slot) }
+                             })
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur

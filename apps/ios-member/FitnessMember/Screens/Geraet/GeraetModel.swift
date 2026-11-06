@@ -867,7 +867,8 @@ final class GeraetModel {
     }
 
     /// "Übung 3 von 6 · Satz 2 von 3" im Plan, "Satz 2" frei. nil im
-    /// Zirkel: dort setzt die Zirkel-Ebene ihre Zeile (Station/Runde).
+    /// Zirkel: dort reicht die Zirkel-Ebene ihre Zeile (Station/Runde,
+    /// `Ablaufzeile.zirkel`) an GeraetView durch.
     var ablaufzeile: Ablaufzeile? {
         guard !imZirkel else { return nil }
         if let stelle = planStelle {

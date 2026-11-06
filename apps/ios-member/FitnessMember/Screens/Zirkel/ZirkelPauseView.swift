@@ -74,8 +74,7 @@ struct ZirkelPauseView: View {
             ort: ort.isEmpty ? "MINI-ZIRKEL" : ort.uppercased(),
             ueberschrift: zirkel.naechsterSchrittIstRundenwechsel
                 ? "RUNDENPAUSE · MINI-ZIRKEL" : "PAUSE · MINI-ZIRKEL",
-            ablaufzeile: .zirkel(station: zirkel.position + 1, von: zirkel.uebungen.count,
-                                 runde: zirkel.runde, runden: zirkel.runden),
+            ablaufzeile: Ablaufzeile.zirkel(zirkel),
             // Ohne Pause (nur einen Wimpernschlag vor dem Wechsel) ein
             // abgelaufener Ring statt keiner, damit nichts springt.
             timer: ablauf.pause ?? Resttimer(dauer: 0),
