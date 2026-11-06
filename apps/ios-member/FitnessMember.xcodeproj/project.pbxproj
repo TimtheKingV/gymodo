@@ -152,6 +152,7 @@
 		5B7C293A4A3C2C42F2969ADE /* PendingWriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */; };
 		5BBAED1B018ABE25DBC3B60A /* PlanEinrichtenKarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA443E7FB8DF3C02F909E2E2 /* PlanEinrichtenKarte.swift */; };
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
+		5ECF4403DCDFA21CF0AAE4EE /* AblaufListeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701FCF36D828E6D02DB26856 /* AblaufListeTests.swift */; };
 		5FA3BD7C92614F0620CD804A /* TrainingsplanAblaufStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3619E6B202A8CC96FE44D4 /* TrainingsplanAblaufStore.swift */; };
 		600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */; };
 		604F2EDF6B1BD1F6C0E6B2A5 /* KurseWochenInhalt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810AA944DFBA5CA775A08184 /* KurseWochenInhalt.swift */; };
@@ -177,6 +178,7 @@
 		6EDD58339563E0206F11CC48 /* Medienablage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD2C414143359BA7CE04FAD3 /* Medienablage.swift */; };
 		6F3003FCB4FCB68E265AC28E /* TrainingTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */; };
 		6F40C74FE72F58BD66FE5FAD /* GeraeteFotosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ABCE1755F5D30B517E1502E /* GeraeteFotosTests.swift */; };
+		6FA2B21BCF8845E6A3DDF95C /* AblaufListe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91231D7A14B701157E535036 /* AblaufListe.swift */; };
 		7154595728E9914007ACDBCD /* FortsetzbarkeitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AD532CE7BC4878C4686DD0 /* FortsetzbarkeitTests.swift */; };
 		7187684ABD8BFA3964363E1A /* ZaehlerKoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45FE04BD0F8EF4BCAFD99B7 /* ZaehlerKoordinatorTests.swift */; };
 		72E7D4549F672199CE5DE950 /* Belegungsleiste.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF593B1FA0A81491726D24E0 /* Belegungsleiste.swift */; };
@@ -613,6 +615,7 @@
 		6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiber.swift; sourceTree = "<group>"; };
 		6DEFFFD2670D7A8FAE9624F1 /* muskelmodell.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = muskelmodell.json; sourceTree = "<group>"; };
 		6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungWechselnSheet.swift; sourceTree = "<group>"; };
+		701FCF36D828E6D02DB26856 /* AblaufListeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AblaufListeTests.swift; sourceTree = "<group>"; };
 		7024929DBFAD95EF98F3916C /* ZirkelUebersichtTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelUebersichtTests.swift; sourceTree = "<group>"; };
 		707F099CE279C3111DDD2149 /* ResttimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResttimerTests.swift; sourceTree = "<group>"; };
 		7081B9EFC9138973A8C0D06D /* BluetoothSensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothSensorQuelle.swift; sourceTree = "<group>"; };
@@ -661,6 +664,7 @@
 		9080FBAAFE2BA83283AA40F5 /* EinweisungMedienTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungMedienTests.swift; sourceTree = "<group>"; };
 		90D823D0040288974F755113 /* StationTestdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationTestdaten.swift; sourceTree = "<group>"; };
 		90F1277D374D9CD6444D4452 /* PlanEinheitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEinheitView.swift; sourceTree = "<group>"; };
+		91231D7A14B701157E535036 /* AblaufListe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AblaufListe.swift; sourceTree = "<group>"; };
 		918AEF34456589ED570B0B53 /* SensorAufnahmeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeTests.swift; sourceTree = "<group>"; };
 		927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemSheet.swift; sourceTree = "<group>"; };
 		9356660F927DE0AEC1C66C5D /* GeraetEinstieg.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEinstieg.swift; sourceTree = "<group>"; };
@@ -1172,6 +1176,7 @@
 		5D15656A46C8A3FB04179564 /* FitnessMemberTests */ = {
 			isa = PBXGroup;
 			children = (
+				701FCF36D828E6D02DB26856 /* AblaufListeTests.swift */,
 				3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */,
 				D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */,
 				758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */,
@@ -1356,6 +1361,7 @@
 		9032551F9B527E0B192D842A /* Workout */ = {
 			isa = PBXGroup;
 			children = (
+				91231D7A14B701157E535036 /* AblaufListe.swift */,
 				FE9299CF3867BDD51F257D81 /* Ablaufzeile.swift */,
 				30418C6B8FF7A6F65873B95A /* Belastung.swift */,
 				7F27A57D86B2B8554A876337 /* Cardio.swift */,
@@ -1662,6 +1668,7 @@
 			files = (
 				0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */,
 				9B358A72607B4F450BF64E0C /* APIError.swift in Sources */,
+				6FA2B21BCF8845E6A3DDF95C /* AblaufListe.swift in Sources */,
 				E61A8795F4C4B77FA8595599 /* Ablaufzeile.swift in Sources */,
 				87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */,
 				D73848050F680755E93B0CEB /* AccessibilityBaum.swift in Sources */,
@@ -1936,6 +1943,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A82CD4C097FBBD45ACE7BB6E /* APIClientTests.swift in Sources */,
+				5ECF4403DCDFA21CF0AAE4EE /* AblaufListeTests.swift in Sources */,
 				094F9DA437F9B0483C5E99D0 /* AblaufzeileTests.swift in Sources */,
 				BE586D44AE4DD5FEA6C125AF /* AbspielSensorQuelleTests.swift in Sources */,
 				87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */,
