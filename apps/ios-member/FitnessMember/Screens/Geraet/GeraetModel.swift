@@ -719,7 +719,11 @@ final class GeraetModel {
 
     /// "GERAET 7 - FENSTERSEITE" in den Kopfzeilen. Am Typ leer: sein Label
     /// ist der Typname, und der steht ohnehin gross darunter.
-    var ortsangabe: String {
+    var ortsangabe: String { Self.ortsangabe(station) }
+
+    /// Dieselbe Angabe fuer eine beliebige Station -- die Zirkel-Pause
+    /// nennt so den Ort der naechsten Station.
+    static func ortsangabe(_ station: Station) -> String {
         guard station.machineId != nil else { return "" }
         return [station.label, station.locationNote].compactMap { $0 }.joined(separator: " · ")
     }
@@ -833,6 +837,26 @@ final class GeraetModel {
                          saetze: satzZiel)
         }
         return .frei(satz: satzNummer)
+    }
+
+    /// Die Ablauf-Liste der Pause: im Plan die Positionen der Einheit von
+    /// heute (wie die Plankarte), sonst die Uebungen dieser Einheit. Plan
+    /// heisst wie ueberall am Geraet: die Uebung steht als Planposition
+    /// (`planStelle`).
+    var ablaufZeilen: [AblaufZeile] {
+        let bloecke = sessions.aktiveSession()?.bloecke ?? []
+        if planStelle != nil, let ablauf,
+           let heute = PlanAnzeige.heute(
+               bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+               ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+               ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen) {
+            return AblaufListe.plan(plan: heute.plan, einheitKey: heute.einheit.key, zustand: heute.zustand,
+                                    ausgelassen: heute.ausgelassen, bloecke: bloecke,
+                                    aktuelleUebung: uebungId, bootstrap: bootstrap)
+        }
+        return AblaufListe.frei(bloecke: bloecke, aktuell: (station.schluessel, uebungId)) { [bootstrap] block in
+            PlanZeilenModell.uebungsname(exerciseId: block.exerciseId, maschine: nil, bootstrap: bootstrap)
+        }
     }
 
     /// Die Pause, solange sie WIRKLICH laeuft.

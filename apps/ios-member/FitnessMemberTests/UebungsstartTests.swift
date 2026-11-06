@@ -102,12 +102,4 @@ struct UebungsstartTests {
         #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(6)) == 1)
         #expect(Startcountdown.fortschritt(start: start, jetzt: start.addingTimeInterval(-1)) == 0)
     }
-
-    // MARK: - Pause (Testnotiz 12.10. abends, #4)
-
-    /// "± kg" statt "Gewicht" -- die Einheit kommt vom Geraet.
-    @Test func derGewichtsknopfDerPauseTraegtDieEinheit() {
-        #expect(PausenRad.gewichtTitel(.kg) == "± kg")
-        #expect(PausenRad.gewichtTitel(.kmh) == "± km/h")
-    }
 }

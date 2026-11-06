@@ -8,6 +8,9 @@ import SwiftUI
 /// Bewusst knapp: je Uebung der Name und ihre Saetze, keine Bilanz, kein
 /// Vergleich. Die ausfuehrliche Auswertung kommt mit dem Trainingsende.
 struct ZirkelUebersichtView: View {
+    /// Oeffnet die Trainingssteuerung der Wurzel (Tipp auf die Uhr in der
+    /// Kopfzeile, wie am Geraet und in der Pause).
+    let beiSteuerung: () -> Void
     /// "Zirkel geschafft" bzw. "Zirkel beendet" (ZirkelUebersicht.kopf).
     let kopf: String
     let zeilen: [ZirkelZeile]
@@ -15,6 +18,7 @@ struct ZirkelUebersichtView: View {
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s16) {
+            TrainingKopfzeile(ort: "MINI-ZIRKEL", beiSteuerung: beiSteuerung)
             Text(kopf.uppercased())
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)

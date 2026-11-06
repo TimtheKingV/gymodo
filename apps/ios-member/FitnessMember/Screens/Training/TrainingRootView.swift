@@ -846,7 +846,11 @@ struct TrainingRootView: View {
             // zirkelWeiter(), das den doppelten Aufruf vertraegt.
             ZirkelPauseView(ablauf: zirkelAblauf,
                             uebungsname: zirkelUebungsname,
-                            letztesMal: zirkelLetztesMal,
+                            ort: { zirkelStation($0).map(GeraetModel.ortsangabe) ?? "" },
+                            bildModellId: { zirkelStation($0)?.equipmentModel.id },
+                            // Die Steuerung der Wurzel: sie traegt
+                            // .trainingSteuerung schon.
+                            beiSteuerung: { steuerungOffen = true },
                             beiStarten: { zirkelWeiter() },
                             // Nur nach der letzten Uebung von Runde 1: danach
                             // haetten die Runden verschieden viele Uebungen.
@@ -861,6 +865,7 @@ struct TrainingRootView: View {
             // Die Saetze aus der Einheit, die Uebungen aus dem festgehaltenen
             // Abschluss. Fehlt der (nicht vorgesehen), bleibt nur "Weiter".
             ZirkelUebersichtView(
+                beiSteuerung: { steuerungOffen = true },
                 kopf: zirkelAbschluss.map { ZirkelUebersicht.kopf($0.zirkel) } ?? "Zirkel beendet",
                 zeilen: zirkelAbschluss.map {
                     ZirkelUebersicht.zeilen(zirkel: $0.zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
@@ -1798,22 +1803,11 @@ struct TrainingRootView: View {
     }
 
     private func zirkelUebungsname(_ uebung: ZirkelUebung) -> String {
-        katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId)?
-            .exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
+        zirkelStation(uebung)?.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
     }
 
-    /// Dieselbe Quelle wie die Startwerte: ab Runde 2 belegt GeraetModel
-    /// das Gewicht aus dem Satz dieser Einheit vor, also steht dann auch
-    /// der hier. Vorher der letzte Satz aus dem Prefetch, wie im Drawer
-    /// (Rueckblick).
-    private func zirkelLetztesMal(_ uebung: ZirkelUebung) -> String? {
-        if let block = sessions.aktiveSession()?.bloecke.first(where: {
-            $0.stationSchluessel == uebung.station && $0.exerciseId == uebung.exerciseId
-        }), let heute = ZirkelPauseText.satzwerte(block) {
-            return heute
-        }
-        return modell(station: uebung.station, exerciseId: uebung.exerciseId, token: uebung.token)?
-            .rueckblick?.zuletzt
+    private func zirkelStation(_ uebung: ZirkelUebung) -> Station? {
+        katalog.bootstrap?.station(schluessel: uebung.station, studioId: katalog.activeStudioId)
     }
 
     /// Eine bekannte Cardio-Uebung hat keinen Drawer-Schritt

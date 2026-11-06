@@ -41,10 +41,11 @@ struct GeraetView: View {
     /// Beim Erscheinen der Reserve-Frage einmal aus den Einstellungen gelesen.
     @State private var reserveErklaerungZeigen = false
 
-    var body: some View {
+    /// Raeder, Countdown oder Abschluss -- alles ausser der Pause.
+    private var arbeitsflaeche: some View {
         // Die Hoehe des sichtbaren Bereichs, damit der Inhalt sie mindestens
-        // fuellt: dann stehen die Knoepfe unten in der Daumenzone und das
-        // Pausenrad in der Mitte, statt alles oben zu sammeln (Testnotiz
+        // fuellt: dann stehen die Knoepfe unten in der Daumenzone und der
+        // Countdown in der Mitte, statt alles oben zu sammeln (Testnotiz
         // 05.10., #12, #13). Passt der Inhalt nicht, scrollt er wie bisher.
         GeometryReader { sichtbar in
             ScrollView {
@@ -111,10 +112,24 @@ struct GeraetView: View {
                 // tragen den Abstand nach unten schon.
                 .padding(.bottom, DesignSystem.Spacing.s8)
                 .frame(minHeight: sichtbar.size.height, alignment: .top)
-                .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
             }
             .scrollBounceBehavior(.basedOnSize)
         }
+    }
+
+    var body: some View {
+        // Die Pause uebernimmt den ganzen Screen (UX-Paket 2, 2.1): sie
+        // bringt Kopfzeile, Ueberschrift und Ablaufzeile selbst mit, damit
+        // nichts doppelt dasteht.
+        Group {
+            if let pause = modell.laufendePause {
+                pausenScreen(pause)
+                    .transition(.opacity)
+            } else {
+                arbeitsflaeche
+            }
+        }
+        .animation(reduceMotion ? nil : DesignSystem.Motion.pause, value: modell.phase)
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         // Die Trainingsuhr startet nicht hier, sondern mit "Übung starten"
@@ -180,6 +195,34 @@ struct GeraetView: View {
         return kontext
     }
 
+    /// Die Pause als der eine Pausen-Screen. Frei und Plan unterscheiden
+    /// sich nur im zweiten Knopf und in der Liste; die Satzzahl ist die, die
+    /// der Screen ueberall zeigt (`anzeigeSatz`, R4).
+    private func pausenScreen(_ pause: Resttimer) -> some View {
+        let modus: PausenModus = modell.planStelle != nil
+            ? .plan(naechsterSatz: modell.anzeigeSatz)
+            : .frei(naechsterSatz: modell.anzeigeSatz,
+                    kannZirkel: modell.kannZirkelBeginnen && beiZirkelBeginnen != nil)
+        return PausenScreen(
+            ort: modell.ortsangabe.uppercased(),
+            ueberschrift: "PAUSE · \(modell.station.equipmentModel.name.uppercased())",
+            ablaufzeile: modell.ablaufzeile,
+            timer: pause,
+            zeilen: modell.ablaufZeilen,
+            knoepfe: PausenKnoepfe.fuer(modus),
+            einheit: modell.loadUnit,
+            beiSteuerung: { steuerungOffen = true },
+            beiVerlaengern: modell.pauseVerlaengern,
+            beiHaupt: modell.pauseBeenden,
+            beiGewicht: beiGewichtAendern,
+            // Derselbe Weg wie "Uebung abschliessen" unter den Raedern --
+            // nur ohne den Umweg ueber den naechsten Satz. Der letzte Satz
+            // ist schon gesichert, deshalb ohne die Frage nach dem offenen
+            // Satz (#5).
+            beiAbschliessen: beiUebungAbschliessen,
+            beiZirkelBeginnen: { beiZirkelBeginnen?() })
+    }
+
     /// Der letzte Zweig von `inhalt`: kein Countdown, keine Pause, kein
     /// Abschluss -- die Satzeingabe.
     private var zeigtRaeder: Bool {
@@ -192,20 +235,6 @@ struct GeraetView: View {
     private var inhalt: some View {
         if case .bereit(let countdown) = modell.phase {
             startcountdown(countdown)
-                .transition(.opacity)
-        } else if let pause = modell.laufendePause {
-            PausenRad(timer: pause,
-                      beiVerlaengern: modell.pauseVerlaengern,
-                      beiGewicht: beiGewichtAendern,
-                      einheit: modell.loadUnit,
-                      naechsterSatz: modell.anzeigeSatz,
-                      beiWeiter: modell.pauseBeenden,
-                      // Derselbe Weg wie "Uebung abschliessen" unter den
-                      // Raedern -- nur ohne den Umweg ueber den naechsten
-                      // Satz. Der letzte Satz ist schon gesichert, deshalb
-                      // ohne die Frage nach dem offenen Satz (#5).
-                      beiAbschliessen: beiUebungAbschliessen,
-                      beiZirkel: modell.kannZirkelBeginnen ? beiZirkelBeginnen : nil)
                 .transition(.opacity)
         } else if modell.phase == .abschluss {
             abschlussEntscheidung
