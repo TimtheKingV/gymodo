@@ -91,7 +91,10 @@ struct PausenScreen: View {
                             .tracking(1.5)
                             .foregroundStyle(DesignSystem.Color.textMuted)
                         if let ablaufzeile {
-                            AblaufzeilePille(zeile: ablaufzeile)
+                            // Wie "Alle anzeigen": hier steht die Liste schon
+                            // auf dem Screen, die Pille klappt sie aus.
+                            AblaufzeilePille(zeile: ablaufzeile,
+                                             aktion: zeilen.isEmpty ? nil : { ausgeklappt.toggle() })
                         }
                     }
                     uhr
@@ -153,7 +156,7 @@ struct PausenScreen: View {
                 let sichtbar = AblaufListe.sichtbar(zeilen, ausgeklappt: ausgeklappt)
                 ForEach(Array(sichtbar.enumerated()), id: \.element.id) { index, zeile in
                     if index > 0 { Divider().overlay(DesignSystem.Color.line) }
-                    zeileAnzeigen(zeile)
+                    AblaufZeileAnsicht(zeile: zeile)
                 }
                 if AblaufListe.hatMehr(zeilen) || ausgeklappt {
                     Divider().overlay(DesignSystem.Color.line)
@@ -171,70 +174,6 @@ struct PausenScreen: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .testnotizElement("pause.ablauf", typ: "Card")
-    }
-
-    /// Standbild statt Video (Spec 2.1): die Liste ist zum Lesen da, eine
-    /// Schleife je Zeile zoege den Blick weg.
-    private func zeileAnzeigen(_ zeile: AblaufZeile) -> some View {
-        HStack(spacing: DesignSystem.Spacing.s12) {
-            Group {
-                if let modellId = zeile.bildModellId {
-                    Geraetefoto(modellId: modellId, url: nil, hoehe: 36, breite: 36)
-                } else {
-                    Uebungsbild(kante: 36)
-                }
-            }
-            .overlay {
-                if zeile.stand == .jetzt || zeile.stand == .naechste {
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                        .strokeBorder(DesignSystem.Color.accent, lineWidth: 1.5)
-                }
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(zeile.name)
-                    .font(.system(size: 15, weight: zeile.stand == .offen ? .regular : .semibold))
-                    .foregroundStyle(zeile.stand == .offen ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
-                    .lineLimit(1)
-                if !zeile.detail.isEmpty {
-                    Text(zeile.detail)
-                        .font(.system(size: 12))
-                        .foregroundStyle(zeile.stand == .offen ? DesignSystem.Color.textFaint
-                                                               : DesignSystem.Color.textMuted)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-            }
-            Spacer(minLength: 0)
-            standAnzeige(zeile.stand)
-        }
-        .padding(.vertical, 10)
-        .opacity(zeile.stand == .erledigt ? 0.7 : 1)
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder
-    private func standAnzeige(_ stand: AblaufZeile.Stand) -> some View {
-        switch stand {
-        case .erledigt:
-            Image(systemName: "checkmark")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(DesignSystem.Color.accent)
-                .accessibilityLabel("erledigt")
-        case .jetzt:
-            standMarke("JETZT")
-        case .naechste:
-            standMarke("ALS NÄCHSTES")
-        case .offen:
-            EmptyView()
-        }
-    }
-
-    private func standMarke(_ text: String) -> some View {
-        Text(text)
-            .font(DesignSystem.Typography.label)
-            .tracking(1)
-            .foregroundStyle(DesignSystem.Color.accent)
     }
 
     // MARK: - Knoepfe
@@ -314,5 +253,113 @@ struct PausenScreen: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Eine Zeile der Ablauf-Liste -- dieselbe im Pausen-Screen und im Ablauf
+/// am Geraet (AblaufSheet).
+struct AblaufZeileAnsicht: View {
+    let zeile: AblaufZeile
+
+    /// Standbild statt Video (Spec 2.1): die Liste ist zum Lesen da, eine
+    /// Schleife je Zeile zoege den Blick weg.
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Group {
+                if let modellId = zeile.bildModellId {
+                    Geraetefoto(modellId: modellId, url: nil, hoehe: 36, breite: 36)
+                } else {
+                    Uebungsbild(kante: 36)
+                }
+            }
+            .overlay {
+                if zeile.stand == .jetzt || zeile.stand == .naechste {
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                        .strokeBorder(DesignSystem.Color.accent, lineWidth: 1.5)
+                }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(zeile.name)
+                    .font(.system(size: 15, weight: zeile.stand == .offen ? .regular : .semibold))
+                    .foregroundStyle(zeile.stand == .offen ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
+                    .lineLimit(1)
+                if !zeile.detail.isEmpty {
+                    Text(zeile.detail)
+                        .font(.system(size: 12))
+                        .foregroundStyle(zeile.stand == .offen ? DesignSystem.Color.textFaint
+                                                               : DesignSystem.Color.textMuted)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+            Spacer(minLength: 0)
+            standAnzeige(zeile.stand)
+        }
+        .padding(.vertical, 10)
+        .opacity(zeile.stand == .erledigt ? 0.7 : 1)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func standAnzeige(_ stand: AblaufZeile.Stand) -> some View {
+        switch stand {
+        case .erledigt:
+            Image(systemName: "checkmark")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(DesignSystem.Color.accent)
+                .accessibilityLabel("erledigt")
+        case .jetzt:
+            standMarke("JETZT")
+        case .naechste:
+            standMarke("ALS NÄCHSTES")
+        case .offen:
+            EmptyView()
+        }
+    }
+
+    private func standMarke(_ text: String) -> some View {
+        Text(text)
+            .font(DesignSystem.Typography.label)
+            .tracking(1)
+            .foregroundStyle(DesignSystem.Color.accent)
+    }
+}
+
+/// Der ganze Ablauf als Blatt, vom Tipp auf die Ablaufzeile am Geraet
+/// (Spec 2.4). Nur Ansicht (E6): keine Zeile springt irgendwohin.
+struct AblaufSheet: View {
+    let zeilen: [AblaufZeile]
+    let beiSchliessen: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                Card {
+                    VStack(alignment: .leading, spacing: 0) {
+                        let alle = AblaufListe.sichtbar(zeilen, ausgeklappt: true)
+                        ForEach(Array(alle.enumerated()), id: \.element.id) { index, zeile in
+                            if index > 0 { Divider().overlay(DesignSystem.Color.line) }
+                            AblaufZeileAnsicht(zeile: zeile)
+                        }
+                    }
+                    .padding(.horizontal, DesignSystem.Spacing.s12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, DesignSystem.Spacing.s8)
+            }
+            .background(DesignSystem.Color.bg)
+            .navigationTitle("Ablauf")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig", action: beiSchliessen)
+                        .testnotizElement("geraet.ablauf.fertig", typ: "Button")
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .testnotizScreen()
     }
 }

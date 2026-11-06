@@ -147,6 +147,14 @@ struct AblaufListeTests {
         #expect(zeilen[0].detail == ZirkelPauseText.satzwerte(bloecke[0].saetze[0], bloecke[0]))
     }
 
+    @Test func zirkelAmGeraetIstDieStationJetzt() {
+        var zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 3, uebungspause: 20, rundenpause: 90)
+        zirkel.weiter()   // an Station 2
+        let zeilen = AblaufListe.zirkel(zirkel, bloecke: [], seit: nil, amGeraet: true,
+                                        name: { $0.exerciseId }, bildModellId: { _ in nil })
+        #expect(zeilen.map(\.stand) == [.erledigt, .jetzt, .offen])
+    }
+
     @Test func zirkelAbgeschlosseneStationIstErledigt() {
         var zirkel = Zirkel(uebungen: [uebung(1), uebung(2)], runden: 2, uebungspause: 20, rundenpause: 90)
         for _ in 0..<4 { zirkel.weiter() }

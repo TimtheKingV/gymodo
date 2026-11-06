@@ -34,11 +34,24 @@ enum Ablaufzeile: Equatable {
 }
 
 /// Die Ablaufzeile als kleine Pille (Board "Gerät · Plan · Tracker"): am
-/// Geraet unter dem Uebungsnamen und im Pausen-Screen dieselbe.
+/// Geraet unter dem Uebungsnamen und im Pausen-Screen dieselbe. Mit
+/// `aktion` ist sie ein Knopf, der den Ablauf zeigt (Spec 2.4) -- nur
+/// Ansicht, er springt nirgendwohin (E6).
 struct AblaufzeilePille: View {
     let zeile: Ablaufzeile
+    var aktion: (() -> Void)? = nil
 
     var body: some View {
+        if let aktion {
+            Button(action: aktion) { pille }
+                .buttonStyle(.plain)
+                .accessibilityHint("Zeigt den Ablauf")
+        } else {
+            pille
+        }
+    }
+
+    private var pille: some View {
         Text(zeile.text)
             .font(.system(size: 13, weight: .bold))
             .monospacedDigit()

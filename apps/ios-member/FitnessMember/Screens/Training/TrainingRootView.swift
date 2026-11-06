@@ -849,7 +849,8 @@ struct TrainingRootView: View {
                              // Zirkels: nach dem Sichern ist der schon weiter.
                              zirkelAblaufzeile: zirkel.flatMap { slot in
                                  zirkelAblauf.zirkel.map { Ablaufzeile.zirkel($0, schritt: slot) }
-                             })
+                             },
+                             zirkelAblaufZeilen: zirkel != nil ? zirkelAblaufZeilenAmGeraet : nil)
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -1682,6 +1683,16 @@ struct TrainingRootView: View {
     }
 
     // MARK: - Gewicht der naechsten Station (UX-Paket 2, Task 5)
+
+    /// Die Ablauf-Liste des Zirkels am Geraet (Tipp auf die Ablaufzeile):
+    /// dieselbe wie in der Pause, die Station am Geraet als "jetzt".
+    private var zirkelAblaufZeilenAmGeraet: [AblaufZeile]? {
+        guard let zirkel = zirkelAblauf.zirkel else { return nil }
+        return AblaufListe.zirkel(zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                  seit: zirkelAblauf.abschluss?.begann, amGeraet: true,
+                                  name: zirkelUebungsname,
+                                  bildModellId: { zirkelStation($0)?.equipmentModel.id })
+    }
 
     /// Einheit und Aktion fuer "± kg" in der Zirkel-Pause; nil blendet den
     /// Knopf aus -- ohne naechste Station, ohne Modell und bei Cardio, wo
