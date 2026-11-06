@@ -169,33 +169,73 @@ final class GeraetModel {
     var cardioListe: [CardioWert] { station.equipmentModel.cardioWerte }
     var istCardio: Bool { !cardioListe.isEmpty }
 
-    /// Die Antwort auf die Reserve-Frage dieser Uebung; nil = noch keine.
-    private(set) var reserve: Reserve?
-    /// Der zuletzt eingereihte Satz -- die Reserve-Frage schickt ihn mit
-    /// rir erneut, mit allen anderen Feldern unveraendert (der PUT ersetzt
-    /// den ganzen Satz, auch Herkunft und Zaehlerereignisse).
-    private var letzterWrite: PendingSetWrite?
-
-    /// Nur nach dem Satzziel und nur bei Wiederholungen: an Cardio und
-    /// Zeitsaetzen gibt es keine Wiederholungen in Reserve.
-    var zeigtReserveFrage: Bool {
-        phase == .abschluss && !istCardio && volumeKind == .reps && letzterWrite != nil
+    /// Der Block dieser Uebung an diesem Geraet, auch vor seinem ersten Satz.
+    private var blockId: String {
+        LokalerBlock.kennung(stationSchluessel: station.schluessel, exerciseId: uebungId)
     }
 
+    /// Die Antwort auf die Reserve-Frage dieser Uebung; nil = noch keine.
+    /// Wie der letzte Satz im Speicher der Einheit, nicht hier: kehrt das
+    /// Mitglied ans Geraet zurueck (neues Modell), gilt die Antwort weiter.
+    var reserve: Reserve? { sessions.reserve(blockId: blockId) }
+
+    /// Nur bei Wiederholungen und nur mit einem Satz in diesem Block: an
+    /// Cardio und Zeitsaetzen gibt es keine Wiederholungen in Reserve.
+    private var kannReserveFragen: Bool {
+        !istCardio && volumeKind == .reps && sessions.letzterWrite(blockId: blockId) != nil
+    }
+
+    var zeigtReserveFrage: Bool { phase == .abschluss && kannReserveFragen }
+
+    /// Derselbe Weg wie die Zirkel-Uebersicht: der Speicher schickt den
+    /// letzten Satz mit rir erneut.
     func reserveSetzen(_ neu: Reserve) {
-        guard let letzter = letzterWrite else { return }
-        let vorher = reserve?.rir
-        reserve = neu
-        // "Weiss nicht" ohne vorherige Zahl aendert am Satz nichts, und
-        // dieselbe Zahl zweimal braucht keinen zweiten PUT.
-        guard neu.rir != (vorher ?? nil) else { return }
-        // Der Body bleibt bis auf rir der alte, auch seine Plan-Momentaufnahme
-        // mit ihrem aelteren Stand: der Server nimmt nur einen hoeheren, so
-        // ueberschreibt dieser PUT keinen neueren Ablauf (Review Focus 1).
-        var body = letzter.body
-        body.rir = neu.rir
-        sessions.reserveSetzen(setId: letzter.setId, rir: neu.rir)
-        enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
+        sessions.reserveNachtragen(blockId: blockId, reserve: neu, enqueue: enqueue)
+    }
+
+    /// E4: jeder Weg aus einer Kraftuebung (Pause, Raeder) fuehrt zuerst in
+    /// den Abschluss mit der Reserve-Frage, wenn ein Satz geschrieben wurde.
+    /// false bei Cardio, Zeitsaetzen, ohne Satz und im Zirkel (dort fragt
+    /// die Uebersicht je Station) -- dann verlaesst der Aufrufer wie bisher.
+    func abschlussAnfragen() -> Bool {
+        guard !imZirkel, kannReserveFragen else { return false }
+        guard phase != .abschluss else { return true }
+        // Im Abschluss wird nicht trainiert: ein offener oder fuer die
+        // Automatik vorbereiteter Mitschnitt endet hier wie beim Verlassen
+        // des Screens. "Weiterer Satz" beginnt ihn neu.
+        screenVerlassen()
+        phase = .abschluss
+        return true
+    }
+
+    /// Was der Abschluss zaehlt: im Plan die Saetze der Uebung ueber alle
+    /// Geraete (R3, R4), sonst die dieses Blocks. Dieselbe Zahl entscheidet,
+    /// ob das Satzziel erreicht ist.
+    private var gemachteSaetze: Int { planStelle?.satzGemacht ?? (satzNummer - 1) }
+
+    var abschlussTitel: String { Self.abschlussTitel(saetze: gemachteSaetze) }
+
+    static func abschlussTitel(saetze: Int) -> String {
+        saetze == 1 ? "1 SATZ GESCHAFFT" : "\(saetze) SÄTZE GESCHAFFT"
+    }
+
+    /// "Nächste Übung: <Name>" im Abschluss (E2, E3): die naechste
+    /// Planposition nach der einen Regel der Ablauf-Liste. nil ohne Plan
+    /// oder wenn nichts mehr offen ist.
+    var naechstePlanuebung: (positionKey: String, name: String)? {
+        guard planStelle != nil, let ablauf,
+              let heute = PlanAnzeige.heute(
+                  bootstrap: bootstrap, ablaufPlanId: ablauf.planId, ablaufEinheitKey: ablauf.einheitKey,
+                  ablaufZustand: ablauf.zustand, naechsteEinheitKey: ablauf.naechsteEinheitKey,
+                  ablaufGebunden: ablauf.gebundeneSessionId != nil, ausgelassen: ablauf.ausgelassen)
+        else { return nil }
+        let stellen = PlanAnzeige.planstellen(einheit: heute.einheit, zustand: heute.zustand)
+            .filter { !heute.ausgelassen.contains($0.key) }
+        guard let stelle = AblaufListe.naechstePlanstelle(stellen: stellen, ausgelassen: heute.ausgelassen,
+                                                          aktuelleUebung: uebungId)
+        else { return nil }
+        return (stelle.key,
+                PlanZeilenModell.uebungsname(exerciseId: stelle.wirksam, maschine: nil, bootstrap: bootstrap))
     }
 
     var kannSichern: Bool { !zirkelSatzAbgegeben && (!istCardio || !cardio.istLeer) }
@@ -1144,10 +1184,9 @@ final class GeraetModel {
         cardio = letzter?.cardio?.nur(cardioListe) ?? CardioWerte()
         // Eine andere Uebung hat ihren eigenen Satzzaehler -- eine Pause
         // oder eine Abschlussentscheidung, die zur vorherigen gehoerte,
-        // gilt hier nicht mehr. Ebenso die Reserve-Frage.
+        // gilt hier nicht mehr. Die Reserve-Frage haengt am Block und
+        // wechselt mit ihm.
         phase = .eingabe
-        reserve = nil
-        letzterWrite = nil
         // Neue Uebung, neuer Wert -- ein spaeter fuer diese Uebung
         // eintreffender Vorschlag darf wieder greifen.
         belastungVomNutzer = false
@@ -1228,10 +1267,9 @@ final class GeraetModel {
         let write = PendingSetWrite(sessionId: geschrieben.sessionId,
                                     setId: geschrieben.setId,
                                     body: geschrieben.body)
-        enqueue(write)
-        letzterWrite = write
-        // Ein neuer Satz ist der neue letzte: die Antwort galt dem vorigen.
-        reserve = nil
+        // Der Speicher merkt ihn als letzten Satz des Blocks -- fuer die
+        // Reserve-Frage hier und in der Zirkel-Uebersicht.
+        sessions.satzEinreihen(write, blockId: blockId, enqueue: enqueue)
         // Nach der Ortspruefung oben wirft sessions.satzSichern() nicht --
         // lokal wird immer geschrieben, auch offline (Spec Abschnitt 8.2).
         // Der Zaehler steigt deshalb hier, nicht hinter einem Erfolgs-Guard.
@@ -1267,8 +1305,7 @@ final class GeraetModel {
         // eine Pause vor einem Satz, der nicht kommt, ist nur Wartezeit.
         // Im Plan zaehlen die Saetze der Uebung ueber alle Geraete, wie in
         // Ablaufzeile und Plankarte (Review Focus 3).
-        let gemacht = planStelle?.satzGemacht ?? (satzNummer - 1)
-        phase = gemacht >= satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
+        phase = gemachteSaetze >= satzZiel ? .abschluss : .neuePause(sekunden: pauseSekunden)
         if phase != .abschluss { automatikPauseVorbereiten() }
     }
 

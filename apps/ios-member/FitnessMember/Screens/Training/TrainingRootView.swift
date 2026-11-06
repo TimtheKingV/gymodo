@@ -448,8 +448,7 @@ struct TrainingRootView: View {
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
                     PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                        planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
-                                                          bloecke: session?.bloecke ?? [])
+                        planPositionAntippen($0, bloecke: session?.bloecke ?? [])
                     }
                 }
             } trainingsinhalt: {
@@ -559,8 +558,7 @@ struct TrainingRootView: View {
                 sensorKarte
                 laufendKopf(mitte, session: session)
                 PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                    planPosition = PlanTausch.auftrag(position: $0, katalog: katalog, ablauf: planAblauf,
-                                                      bloecke: session.bloecke)
+                    planPositionAntippen($0, bloecke: session.bloecke)
                 } beiZusatz: { oeffne($0) }
                 uebungHinzufuegenKnopf
                 // Der Hinweis zeigt auf die Zusatz-Zeilen: ohne eine antippbare keiner.
@@ -845,7 +843,8 @@ struct TrainingRootView: View {
                              // Ein Zirkel-Geraet erweitert ueber die Pause des
                              // Zirkels, nicht ueber sein eigenes Rad.
                              beiZirkelBeginnen: zirkel != nil ? nil : { zirkelAusEinzelsatz($0, token: token) },
-                             beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil)
+                             beiZirkelBeenden: zirkel != nil ? { zirkelBeenden() } : nil,
+                             beiNaechstePlanuebung: zirkel != nil ? nil : { naechstePlanuebungOeffnen($0) })
             }
         case .zirkelPause:
             // Der Ablauf-Task der Pause sitzt in der View, und zwar nur
@@ -882,8 +881,15 @@ struct TrainingRootView: View {
                 kopf: zirkelAbschluss.map { ZirkelUebersicht.kopf($0.zirkel) } ?? "Zirkel beendet",
                 zeilen: zirkelAbschluss.map {
                     ZirkelUebersicht.zeilen(zirkel: $0.zirkel, bloecke: sessions.aktiveSession()?.bloecke ?? [],
-                                            seit: $0.begann, name: zirkelUebungsname)
+                                            seit: $0.begann, name: zirkelUebungsname,
+                                            hatLetztenWrite: { sessions.letzterWrite(blockId: $0) != nil })
                 } ?? [],
+                // Dieselbe Reserve-Frage wie am Geraet, einmal je Station
+                // (E4); derselbe Weg zum Server wie dort.
+                reserve: { sessions.reserve(blockId: $0) },
+                beiReserve: { blockId, reserve in
+                    sessions.reserveNachtragen(blockId: blockId, reserve: reserve, enqueue: einreihen)
+                },
                 beiWeiter: zirkelUebersichtWeiter)
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
@@ -900,6 +906,34 @@ struct TrainingRootView: View {
                 beiFertig: { pfad.removeAll() }
             )
         }
+    }
+
+    /// Ein Satz-Write in die Warteschlange und gleich der Versuch, sie zu
+    /// leeren -- fuer das Geraet und die Reserve der Zirkel-Uebersicht.
+    private func einreihen(_ write: PendingSetWrite) {
+        katalog.enqueue(write)
+        Task { await katalog.flushPending() }
+    }
+
+    /// Tipp auf eine Planzeile der Plankarte: das Vorgaben- und Tausch-Sheet
+    /// (Task 12). Der eine Weg, eine Position zu oeffnen -- auch fuer
+    /// "Nächste Übung: <Name>" vom Geraet.
+    private func planPositionAntippen(_ position: TrainingsplanPosition, bloecke: [LokalerBlock]) {
+        planPosition = PlanTausch.auftrag(position: position, katalog: katalog, ablauf: planAblauf, bloecke: bloecke)
+    }
+
+    /// "Nächste Übung: <Name>" im Abschluss am Geraet (E3): zurueck zur
+    /// Wurzel und dort die Position oeffnen, genau so, als haette das
+    /// Mitglied ihre Zeile in der Plankarte angetippt. Pfad leeren und
+    /// Sheet setzen in einem Zug, wie nach der Ersatzwahl (`ersatzFertig`).
+    /// Gibt es die Position nicht mehr (Plan inzwischen anders), bleibt nur
+    /// der Weg zur Wurzel.
+    private func naechstePlanuebungOeffnen(_ positionKey: String) {
+        pfad.removeAll()
+        guard let position = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?
+            .einheit.positionen.first(where: { $0.key == positionKey })
+        else { return }
+        planPositionAntippen(position, bloecke: sessions.aktiveSession()?.bloecke ?? [])
     }
 
     /// `zirkel`: das Modell meldet gesicherte Saetze an den ZirkelAblauf,
@@ -936,7 +970,7 @@ struct TrainingRootView: View {
         let modell = GeraetModel(
             station: station, uebungId: gewaehlt, token: token,
             bootstrap: bootstrap, loader: apiClient, sessions: sessions,
-            enqueue: { katalog.enqueue($0); Task { await katalog.flushPending() } },
+            enqueue: einreihen,
             mitschnitt: mitschnitt,
             zaehler: zaehler,
             startwerte: startwerte,

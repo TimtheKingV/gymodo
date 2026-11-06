@@ -14,10 +14,14 @@ import SwiftUI
 struct GeraetView: View {
     @Bindable var modell: GeraetModel
     let beiProblem: () -> Void
-    /// "Uebung abschliessen" -- an allen drei Stellen (Raeder, Pause,
-    /// Abschluss). Ob danach gefragt wird oder es gleich zurueck zur Liste
-    /// geht, entscheidet GeraetScreen (Testnotiz 06.10., #10, #12).
+    /// "Uebung abschliessen" unter den Raedern und in der Pause. Ob erst
+    /// der Abschluss mit der Reserve-Frage kommt (E4), gefragt wird oder es
+    /// gleich zurueck zur Liste geht, entscheidet GeraetScreen (Testnotiz
+    /// 06.10., #10, #12).
     let beiUebungAbschliessen: () -> Void
+    /// Der Hauptknopf im Abschluss: "Nächste Übung" bzw. im Plan "Nächste
+    /// Übung: <Name>" (E2, E3). Wohin es geht, entscheidet GeraetScreen.
+    let beiNaechsteUebung: () -> Void
     /// "Training beenden" aus dem Dialog an der Uhr (Testnotiz 05.10.,
     /// #11). Den Abschluss zeigt die Wurzel des Training-Tabs.
     var beiTrainingBeenden: () -> Void = {}
@@ -218,7 +222,7 @@ struct GeraetView: View {
             // Derselbe Weg wie "Uebung abschliessen" unter den Raedern --
             // nur ohne den Umweg ueber den naechsten Satz. Der letzte Satz
             // ist schon gesichert, deshalb ohne die Frage nach dem offenen
-            // Satz (#5).
+            // Satz (#5); erst der Abschluss mit der Reserve-Frage (E4).
             beiAbschliessen: beiUebungAbschliessen,
             beiZirkelBeginnen: { beiZirkelBeginnen?() })
     }
@@ -433,7 +437,9 @@ struct GeraetView: View {
     /// jetzt wirklich ansteht.
     private var abschlussEntscheidung: some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
-            Text(modell.satzZiel == 1 ? "1 SATZ GESCHAFFT" : "\(modell.satzZiel) SÄTZE GESCHAFFT")
+            // Die gemachten Saetze, nicht das Ziel: wer aus der Pause
+            // abschliesst, hat es nicht erreicht (E4).
+            Text(modell.abschlussTitel)
                 .font(DesignSystem.Typography.label)
                 .tracking(1.5)
                 .foregroundStyle(DesignSystem.Color.textMuted)
@@ -463,9 +469,11 @@ struct GeraetView: View {
 
             // Wie in der Pause "Nächste Übung" (Testnotiz 12.10. abends,
             // #6, #7): dieselbe Aktion soll nicht an zwei Stellen zwei Namen
-            // tragen.
-            PrimaryButton(title: "Nächste Übung") { beiUebungAbschliessen() }
-                .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
+            // tragen. Im Plan mit dem Namen der naechsten Position (E2).
+            PrimaryButton(title: modell.naechstePlanuebung.map { "Nächste Übung: \($0.name)" } ?? "Nächste Übung") {
+                beiNaechsteUebung()
+            }
+            .testnotizElement("geraet.naechste-uebung", typ: "PrimaryButton")
             // Dieselbe Zeile wie unter den Raedern (Sammelstelle Punkt 12).
             HStack(spacing: DesignSystem.Spacing.s12) {
                 SecondaryButton(title: "Weiterer Satz") { modell.weitererSatz() }
@@ -514,6 +522,10 @@ struct GeraetScreen: View {
     /// "Zirkel beenden". Zurueck fuehrte zur Wurzel und liess den Zirkel
     /// unerreichbar liegen -- ohne Fortsetzen und ohne Hinweis.
     var beiZirkelBeenden: (() -> Void)?
+    /// "Nächste Übung: <Name>" im Abschluss einer Planuebung (E3): die
+    /// Wurzel oeffnet diese Position wie ein Tipp auf ihre Planzeile. nil,
+    /// wo es keine Plankarte gibt.
+    var beiNaechstePlanuebung: ((_ positionKey: String) -> Void)?
 
     @State private var uebungWechselnOffen = false
     @State private var zirkelBeendenFrage = false
@@ -557,9 +569,10 @@ struct GeraetScreen: View {
                 if modell.abschlussFragtNachSatz {
                     satzfrageOffen = true
                 } else {
-                    uebungAbschliessen()
+                    uebungVerlassen()
                 }
             },
+            beiNaechsteUebung: naechsteUebung,
             beiTrainingBeenden: beiTrainingBeenden,
             beiGewichtAendern: { gewichtOffen = true },
             beiEinweisung: { einweisungOffen = true },
@@ -638,7 +651,7 @@ struct GeraetScreen: View {
         .sheet(isPresented: $satzfrageOffen, onDismiss: {
             if abschlussNachSatzfrage {
                 abschlussNachSatzfrage = false
-                uebungAbschliessen()
+                uebungVerlassen()
             }
         }) {
             SatzOffenSheet(
@@ -694,6 +707,23 @@ struct GeraetScreen: View {
             ) {
                 modell.kalibrierungOffen = false
             }
+        }
+    }
+
+    /// "Übung abschließen" aus Pause und Raedern (nach der Satzfrage): mit
+    /// einem Satz erst der Abschluss mit der Reserve-Frage auf diesem Screen
+    /// (E4), sonst -- Cardio, ohne Satz -- der Weg aus der Uebung.
+    private func uebungVerlassen() {
+        if !modell.abschlussAnfragen() { uebungAbschliessen() }
+    }
+
+    /// Der Hauptknopf im Abschluss: im Plan zur naechsten Position, sonst
+    /// der Weg aus der Uebung wie bisher.
+    private func naechsteUebung() {
+        if let naechste = modell.naechstePlanuebung, let beiNaechstePlanuebung {
+            beiNaechstePlanuebung(naechste.positionKey)
+        } else {
+            uebungAbschliessen()
         }
     }
 

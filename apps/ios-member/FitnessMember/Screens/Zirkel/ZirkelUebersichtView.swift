@@ -14,7 +14,16 @@ struct ZirkelUebersichtView: View {
     /// "Zirkel geschafft" bzw. "Zirkel beendet" (ZirkelUebersicht.kopf).
     let kopf: String
     let zeilen: [ZirkelZeile]
+    /// Die Reserve-Antwort je Block (E4: einmal je Station hier statt am
+    /// Geraet) und der Weg, sie nachzutragen.
+    let reserve: (_ blockId: String) -> Reserve?
+    let beiReserve: (_ blockId: String, Reserve) -> Void
     let beiWeiter: () -> Void
+
+    /// Beim Erscheinen einmal aus den Einstellungen gelesen, wie am Geraet.
+    @State private var reserveErklaerungZeigen = false
+
+    private var fragtReserve: Bool { zeilen.contains(where: \.fragtReserve) }
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s16) {
@@ -25,6 +34,7 @@ struct ZirkelUebersichtView: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
             ScrollView {
+                if fragtReserve { reserveFrage }
                 Card {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
                         ForEach(Array(zeilen.enumerated()), id: \.offset) { _, zeile in
@@ -53,20 +63,52 @@ struct ZirkelUebersichtView: View {
         .testnotizScreen()
     }
 
-    private func zeileAnzeigen(_ zeile: ZirkelZeile) -> some View {
+    /// Die Frage steht einmal ueber der Liste, je Station nur die Chips
+    /// (jede Information nur einmal pro Screen).
+    private var reserveFrage: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-            Text(zeile.uebungsname)
+            Text(ReserveSkala.frage)
                 .font(DesignSystem.Typography.uebungsname)
                 .foregroundStyle(DesignSystem.Color.text)
-            // Ein Satz je Runde, nebeneinander gelesen wie eine Reihe.
-            // Ohne Satz (immer uebersprungen) ein ruhiges Wort statt einer
-            // leeren Stelle, die wie ein Ladefehler aussaehe.
-            Text(zeile.saetze.isEmpty ? "Kein Satz" : zeile.saetze.joined(separator: "  ·  "))
-                .font(DesignSystem.Typography.fliesstext)
-                .foregroundStyle(zeile.saetze.isEmpty ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
-                .monospacedDigit()
+            if reserveErklaerungZeigen {
+                Text(ReserveSkala.erklaerung)
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+            }
         }
-        .accessibilityElement(children: .combine)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, DesignSystem.Spacing.s12)
+        .onAppear {
+            reserveErklaerungZeigen = !UserDefaults.standard.bool(forKey: Einstellungen.reserveErklaertKey)
+            UserDefaults.standard.set(true, forKey: Einstellungen.reserveErklaertKey)
+        }
+    }
+
+    private func zeileAnzeigen(_ zeile: ZirkelZeile) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(zeile.uebungsname)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.text)
+                // Ein Satz je Runde, nebeneinander gelesen wie eine Reihe.
+                // Ohne Satz (immer uebersprungen) ein ruhiges Wort statt einer
+                // leeren Stelle, die wie ein Ladefehler aussaehe.
+                Text(zeile.saetze.isEmpty ? "Kein Satz" : zeile.saetze.joined(separator: "  ·  "))
+                    .font(DesignSystem.Typography.fliesstext)
+                    .foregroundStyle(zeile.saetze.isEmpty ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
+                    .monospacedDigit()
+            }
+            .accessibilityElement(children: .combine)
+            // Ausserhalb des kombinierten Elements: die Chips bleiben
+            // einzeln bedienbar.
+            if zeile.fragtReserve, let blockId = zeile.blockId {
+                ReserveSkala(auswahl: reserve(blockId), mitErklaerung: false, kompakt: true) {
+                    beiReserve(blockId, $0)
+                }
+                .testnotizElement("zirkel.uebersicht.reserve", typ: "ReserveSkala")
+            }
+        }
     }
 }
 
@@ -74,6 +116,11 @@ struct ZirkelUebersichtView: View {
 struct ZirkelZeile: Equatable {
     let uebungsname: String
     let saetze: [String]
+    /// Der Block der Station in der Einheit; nil, solange sie keinen hat.
+    let blockId: String?
+    /// Ob die Zeile nach der Reserve fragt (E4): nur Wiederholungen, nur mit
+    /// Satz im Zirkel, nur mit gemerktem letzten Satz.
+    let fragtReserve: Bool
 }
 
 /// Die Uebersicht als reine Rechnung, damit sie ohne View pruefbar ist.
@@ -86,18 +133,24 @@ enum ZirkelUebersicht {
     ///
     /// `seit`: Beginn des Zirkels. Lief die Uebung vorher schon einzeln,
     /// traegt ihr Block diese Saetze mit -- sie gehoeren nicht hierher.
+    ///
+    /// `hatLetztenWrite`: ob der Speicher den letzten Satz des Blocks noch
+    /// kennt -- ohne ihn kaeme eine Reserve-Antwort nie beim Server an.
     static func zeilen(zirkel: Zirkel, bloecke: [LokalerBlock], seit: Date? = nil,
-                       name: (ZirkelUebung) -> String) -> [ZirkelZeile] {
+                       name: (ZirkelUebung) -> String,
+                       hatLetztenWrite: (_ blockId: String) -> Bool = { _ in true }) -> [ZirkelZeile] {
         zirkel.uebungen.map { uebung in
             let block = bloecke.first {
                 $0.stationSchluessel == uebung.station && $0.exerciseId == uebung.exerciseId
             }
-            let saetze = block.map { block in
-                block.saetze
-                    .filter { satz in seit.map { satz.performedAt >= $0 } ?? true }
-                    .compactMap { ZirkelPauseText.satzwerte($0, block) }
-            } ?? []
-            return ZirkelZeile(uebungsname: name(uebung), saetze: saetze)
+            let imZirkel = block?.saetze.filter { satz in seit.map { satz.performedAt >= $0 } ?? true } ?? []
+            let saetze = block.map { block in imZirkel.compactMap { ZirkelPauseText.satzwerte($0, block) } } ?? []
+            let fragtReserve = block.map { block in
+                block.volumeKind == .reps && imZirkel.last.map { $0.cardio == nil } == true
+                    && hatLetztenWrite(block.id)
+            } ?? false
+            return ZirkelZeile(uebungsname: name(uebung), saetze: saetze, blockId: block?.id,
+                               fragtReserve: fragtReserve)
         }
     }
 
