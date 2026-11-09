@@ -77,5 +77,39 @@ struct TrackerAnzeigeTests {
         defaults.set(UUID().uuidString, forKey: "sensor.peripheralId")
         #expect(!quelle.hatGemerktenSensor)
     }
+
+    // MARK: - Einrichtung im Profil (Review Focus 4)
+
+    @Test func aktionBeiMehrerenFunden() {
+        let a = SensorFund(id: UUID(), name: "WT901BLE67", rssi: -50)
+        let b = SensorFund(id: UUID(), name: "WT901BLE12", rssi: -70)
+        #expect(TrackerAnzeige.einrichtungsAktion(.mehrereGefunden([a, b]), hatGemerktenSensor: false)
+            == .auswaehlen([a, b]))
+    }
+
+    @Test func aktionBeiVerweigert() {
+        #expect(TrackerAnzeige.einrichtungsAktion(.bluetoothNichtBereit(.verweigert), hatGemerktenSensor: false)
+            == .einstellungenOeffnen)
+        #expect(TrackerAnzeige.einrichtungsAktion(.bluetoothNichtBereit(.verweigert), hatGemerktenSensor: true)
+            == .einstellungenOeffnen)
+    }
+
+    @Test func aktionOhneGemerkten() {
+        #expect(TrackerAnzeige.einrichtungsAktion(.aus, hatGemerktenSensor: false) == .verbinden)
+        #expect(TrackerAnzeige.einrichtungsAktion(.getrennt(wirdNeuVerbunden: false), hatGemerktenSensor: false)
+            == .verbinden)
+        // Laeuft schon etwas, gibt es nichts zu tippen.
+        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: false) == .keine)
+        #expect(TrackerAnzeige.einrichtungsAktion(.verbindet, hatGemerktenSensor: false) == .keine)
+    }
+
+    @Test func aktionMitGemerktem() {
+        let verbunden = SensorZustand.verbunden(name: "WT901BLE", akkuProzent: 80)
+        #expect(TrackerAnzeige.einrichtungsAktion(verbunden, hatGemerktenSensor: true) == .keine)
+        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: true) == .keine)
+        #expect(TrackerAnzeige.einrichtungsAktion(.getrennt(wirdNeuVerbunden: true), hatGemerktenSensor: true)
+            == .keine)
+        #expect(TrackerAnzeige.einrichtungsAktion(.aus, hatGemerktenSensor: true) == .verbinden)
+    }
 }
 #endif

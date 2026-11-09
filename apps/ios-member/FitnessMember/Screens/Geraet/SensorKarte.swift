@@ -17,7 +17,6 @@ struct SensorKarte: View {
 
     @Environment(ZaehlerKoordinator.self) private var zaehler
     @Environment(SensorAufnahmeKoordinator.self) private var koordinator
-    @State private var diagnoseOffen = false
     /// Kurz nach dem Tipp zeigt die Karte "Wird gesucht" (Testnotiz 17.10.,
     /// #1); sonst steht dort dauerhaft "Nicht verbunden", obwohl im
     /// Hintergrund weiter gesucht und automatisch verbunden wird.
@@ -103,7 +102,6 @@ struct SensorKarte: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(a.titel): \(a.untertitel)\(a.akku.map { ", Akku \($0) Prozent" } ?? "")")
         .testnotizElement("sensor.karte", typ: "Button")
-        .sheet(isPresented: $diagnoseOffen) { SensorDiagnoseBlatt(station: station ?? "") }
         .sheet(isPresented: .constant(auswahl != nil)) { auswahlBlatt }
     }
 
@@ -147,7 +145,8 @@ struct SensorKarte: View {
         case .bluetoothNichtBereit(.verweigert):
             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
         case .bluetoothNichtBereit: koordinator.quelle.verbinden()
-        case .verbunden, .getrennt: if station != nil { diagnoseOffen = true }
+        // Die Diagnose steht seit Paket 3 in der Tracker-Einrichtung im Profil.
+        case .verbunden, .getrennt: break
         case .mehrereGefunden: break
         }
     }

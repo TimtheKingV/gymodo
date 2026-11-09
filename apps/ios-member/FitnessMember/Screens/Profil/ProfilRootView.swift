@@ -296,6 +296,10 @@ struct ProfilRootView: View {
             }
             .testnotizElement("profil.satzziel", typ: "Picker")
             Toggle("Vibration beim Sichern", isOn: $vibrationBeimSichern)
+            #if DEBUG
+            // Paket 3, F4: der Tracker wird hier eingerichtet, nicht im Training.
+            if Funktionen.sensorKarte { TrackerProfilZeile() }
+            #endif
 
             NavigationLink("Passwort ändern") { MemberPasswortAendernView() }
             NavigationLink("Studios") { MemberStudiosView(apiClient: apiClient) }

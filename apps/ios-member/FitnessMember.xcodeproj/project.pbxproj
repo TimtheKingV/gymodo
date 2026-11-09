@@ -45,7 +45,6 @@
 		1885199152297CA6E9277348 /* AudioSitzung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6234F0E183807355625E9C47 /* AudioSitzung.swift */; };
 		18E5DDB042457723094DC266 /* FensterUmschalter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F21C7D80571408B3CF415E1 /* FensterUmschalter.swift */; };
 		1938BBAFBE0B05D0BB9E7471 /* DTOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD55A1626F478A9D5D1A0861 /* DTOTests.swift */; };
-		19509532F1B3C5FC040FB645 /* SensorDiagnoseBlatt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */; };
 		1A11AF9A67AC137B03D64DC9 /* StationTestdaten.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D823D0040288974F755113 /* StationTestdaten.swift */; };
 		1A5F792F17B6BDB868EFADF0 /* KurseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */; };
 		1B36CB1A68A9ACE236B005C0 /* KurseTagesindikatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F72606A30A2CE5C9E3E128 /* KurseTagesindikatorTests.swift */; };
@@ -216,6 +215,7 @@
 		87AF5ECCD9E902B52A1B76C1 /* BeschwerdenSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF637DFBD6453479895418C8 /* BeschwerdenSheet.swift */; };
 		87EEB80060292F83431092AC /* AccessibilityBaumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */; };
 		8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */; };
+		8ABBC7C611A45FC0912C2057 /* TrackerEinrichtungView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67AAD9BD74F403E75A2976A /* TrackerEinrichtungView.swift */; };
 		8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */; };
 		8C1C7D2E198E0CB922AB48BB /* EinheitVerwerfen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20D0098C4EAC5A32B4EA0E /* EinheitVerwerfen.swift */; };
 		8C535331CEE2284DCD2F88CA /* MuskelAuswertung.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1E8C81E65A1D4F315BC214D /* MuskelAuswertung.swift */; };
@@ -543,7 +543,6 @@
 		3AC8938CDFF7F1FDC24D0D81 /* TrackerAnzeige.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerAnzeige.swift; sourceTree = "<group>"; };
 		3B16A62990D2DCAE39041199 /* FitnessMemberTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FitnessMemberTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BF32B8D3E1CBF0B570EEF40 /* PlanKalenderKontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalenderKontext.swift; sourceTree = "<group>"; };
-		3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorDiagnoseBlatt.swift; sourceTree = "<group>"; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
 		3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AblaufzeileTests.swift; sourceTree = "<group>"; };
 		3E67B77D484B574613C4314E /* Herkunftssatz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Herkunftssatz.swift; sourceTree = "<group>"; };
@@ -816,6 +815,7 @@
 		E54956E5E29B287C6E6F7AB3 /* KurseWochenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenView.swift; sourceTree = "<group>"; };
 		E577994CD0351ED04C3D9296 /* SensorProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorProtokoll.swift; sourceTree = "<group>"; };
 		E5B0B75C600727218BE93316 /* KurseTagesindikator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikator.swift; sourceTree = "<group>"; };
+		E67AAD9BD74F403E75A2976A /* TrackerEinrichtungView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerEinrichtungView.swift; sourceTree = "<group>"; };
 		E82F1E9C17FC9A2A3742B15D /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		E8E953EACA62AC14B31001AA /* EinweisungMedien.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinweisungMedien.swift; sourceTree = "<group>"; };
 		E8F9AE3225FDAF3DF8CDF1F7 /* MuskelFarben.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelFarben.swift; sourceTree = "<group>"; };
@@ -1036,7 +1036,6 @@
 				7650558ABB456D6EDF5735C7 /* KalibrierungSchritt.swift */,
 				60D9445D803C7BFB4FE0E3B0 /* OfflineLeiste.swift */,
 				927CF0E8A6C3CD19C832E6FD /* ProblemSheet.swift */,
-				3C280F3A3938A1A778116681 /* SensorDiagnoseBlatt.swift */,
 				13D645B979771FD6347DA4AA /* SensorKarte.swift */,
 				DE9E610D208194A5E3CA6CC9 /* SensorZeile.swift */,
 				A345B4FFB60F21B4B9322675 /* UebungsstartSheet.swift */,
@@ -1506,6 +1505,7 @@
 				3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */,
 				C9BB75027970B636BE5BC23C /* NameSheet.swift */,
 				E0DEE6D2287369CE3EBBECBC /* ProfilRootView.swift */,
+				E67AAD9BD74F403E75A2976A /* TrackerEinrichtungView.swift */,
 				83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */,
 			);
 			path = Profil;
@@ -1883,7 +1883,6 @@
 				91C74D33160FE23B01B7CF08 /* Schleifenvideo.swift in Sources */,
 				E2ECF1FE835571FFD6617303 /* SecondaryButton.swift in Sources */,
 				B03BD4D0AA820DCA7677811A /* SensorAufnahmeKoordinator.swift in Sources */,
-				19509532F1B3C5FC040FB645 /* SensorDiagnoseBlatt.swift in Sources */,
 				4EECF2C855732A79F43D8217 /* SensorKarte.swift in Sources */,
 				8F9C6142B3628C2CB4C681E3 /* SensorProtokoll.swift in Sources */,
 				8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */,
@@ -1917,6 +1916,7 @@
 				042F6324294F8E5E71B29B11 /* TestnotizScreenStapel.swift in Sources */,
 				E50D0C1FBA9DDB8631134313 /* Toast.swift in Sources */,
 				BD0DB1F996B04F9E3C168FCF /* TrackerAnzeige.swift in Sources */,
+				8ABBC7C611A45FC0912C2057 /* TrackerEinrichtungView.swift in Sources */,
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				5D08D45DC839793F623C1736 /* TrainingKopfzeile.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,

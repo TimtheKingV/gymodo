@@ -81,3 +81,17 @@ enum ProfilZeilen {
         aktiv?.targetValue ?? letzterMesswert?.weightKg ?? 75.0
     }
 }
+
+#if DEBUG
+extension ProfilZeilen {
+    // MARK: - Tracker (Paket 3, F4)
+
+    /// Der Wert der Zeile "Tracker" in "BEIM TRAINING": ohne gemerkten
+    /// Tracker "Nicht eingerichtet", sonst kurz verbunden oder nicht --
+    /// Akku und Suche stehen erst in der Einrichtung.
+    static func trackerWert(hatGemerktenSensor: Bool, zustand: SensorZustand) -> String {
+        guard hatGemerktenSensor else { return "Nicht eingerichtet" }
+        return TrackerAnzeige.symbol(zustand) == .verbunden ? "Verbunden" : "Nicht verbunden"
+    }
+}
+#endif

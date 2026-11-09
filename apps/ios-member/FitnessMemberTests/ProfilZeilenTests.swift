@@ -137,4 +137,20 @@ struct ProfilZeilenTests {
     @Test func zielgewichtVorgabeFaelltOhneAllesAufFuenfundsiebzig() {
         #expect(ProfilZeilen.zielgewichtVorgabe(aktiv: nil, letzterMesswert: nil) == 75.0)
     }
+
+    // MARK: - Tracker (Paket 3)
+
+    #if DEBUG
+    @Test func trackerWertOhneGemerkten() {
+        #expect(ProfilZeilen.trackerWert(hatGemerktenSensor: false, zustand: .aus) == "Nicht eingerichtet")
+        #expect(ProfilZeilen.trackerWert(hatGemerktenSensor: false, zustand: .sucht) == "Nicht eingerichtet")
+    }
+
+    @Test func trackerWertVerbunden() {
+        let zustand = SensorZustand.verbunden(name: "WT901BLE", akkuProzent: 80)
+        #expect(ProfilZeilen.trackerWert(hatGemerktenSensor: true, zustand: zustand) == "Verbunden")
+        #expect(ProfilZeilen.trackerWert(hatGemerktenSensor: true, zustand: .sucht) == "Nicht verbunden")
+        #expect(ProfilZeilen.trackerWert(hatGemerktenSensor: true, zustand: .aus) == "Nicht verbunden")
+    }
+    #endif
 }
