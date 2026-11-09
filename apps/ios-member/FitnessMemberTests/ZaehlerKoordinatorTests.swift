@@ -411,5 +411,14 @@ extension ZaehlerKoordinatorTests {
         let (neu, _, _, _) = aufbau(einstellungen: defaults)
         #expect(!neu.automatikAktiv)
     }
+
+    /// GeraetModel liest den Schalter ueber die Naht, nicht ueber den Debug-Typ.
+    @Test func automatikSchalterIstUeberDieNahtLesbar() {
+        let (sut, _, _, _) = aufbau()
+        let naht: any SatzZaehler = sut
+        #expect(naht.automatikAktiv)
+        sut.automatikAktiv = false
+        #expect(!naht.automatikAktiv)
+    }
 }
 #endif

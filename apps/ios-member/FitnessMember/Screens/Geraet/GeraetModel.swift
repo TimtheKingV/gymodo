@@ -116,6 +116,10 @@ final class GeraetModel {
             mitschnitt?.screenVerlassen()
             zaehler?.satzVerworfen()
             zaehlerZustand = .aus
+        } else {
+            // Im laufenden Satz (Review Focus 2): das Rad bleibt beim
+            // aktuellen Wert, der Zaehler zaehlt nur noch fuer die Aufnahme.
+            zaehlerZustand = .aus
         }
     }
 
@@ -132,7 +136,7 @@ final class GeraetModel {
     }
 
     private func automatikEreignis(_ ereignis: SatzAutomatik.Ereignis) {
-        guard !anZirkelAbgegeben, !zirkelSatzAbgegeben, phase != .abschluss,
+        guard automatikAn, !anZirkelAbgegeben, !zirkelSatzAbgegeben, phase != .abschluss,
               sessions.aktiveSession()?.istPausiert == false, hatAutomatikStartwerte else { return }
         switch ereignis {
         case .begonnen(let kennung, let beginn, _):
@@ -1248,10 +1252,14 @@ final class GeraetModel {
         // Kurzhantel zaehlt der Takt am Satzende ueber alle Messwerte und
         // kann von dem abweichen, was das Rad zuletzt zeigte. Gedreht
         // bleibt die Hand.
-        if let ergebnis, !zaehlerZustand.istVonHand {
-            umfang = Rastwerte.naechster(zu: ergebnis.gezaehlt, in: umfangsWerte)
+        // Automatik aus (F2): der Satz ist von Hand wie ohne Tracker; die
+        // Zaehlung geht nur in die lokale Aufnahme, nicht an den Server
+        // (herkunftPruefen: eingegeben ohne volumeCounted/repEvents).
+        let serverErgebnis = automatikAn ? ergebnis : nil
+        if let serverErgebnis, !zaehlerZustand.istVonHand {
+            umfang = Rastwerte.naechster(zu: serverErgebnis.gezaehlt, in: umfangsWerte)
         }
-        let herkunft = Self.herkunft(umfang: umfang, ergebnis: ergebnis)
+        let herkunft = Self.herkunft(umfang: umfang, ergebnis: serverErgebnis)
         var geschrieben = sessions.satzSichern(
             station: station, exerciseId: uebungId,
             einheiten: einheiten,
@@ -1262,8 +1270,8 @@ final class GeraetModel {
             problemFlag: problemFlag, problemReason: problemReason
         )
         geschrieben.body.volumeSource = herkunft
-        geschrieben.body.volumeCounted = ergebnis?.gezaehlt
-        geschrieben.body.repEvents = ergebnis?.repEvents
+        geschrieben.body.volumeCounted = serverErgebnis?.gezaehlt
+        geschrieben.body.repEvents = serverErgebnis?.repEvents
         geschrieben.body.plan = planMomentaufnahme(sessionId: geschrieben.sessionId)
         // Immer ueber die Warteschlange, nie direkt: so ist "gespeichert,
         // wird gesendet" nie gelogen, und der Offline-Pfad ist derselbe, der
@@ -1430,7 +1438,12 @@ final class GeraetModel {
         zaehler?.automatikBeobachten { [weak self] in self?.automatikEreignis($0) }
     }
 
+    /// Ohne Zaehler (Release) gibt es keinen Schalter; dann ist nichts aus.
+    private var automatikAn: Bool { zaehler?.automatikAktiv ?? true }
+
     private func zaehlerMeldung(_ meldung: ZaehlerMeldung) {
+        // Automatik aus: kein Rad-Feed, keine Haptik, kein "Zahl pruefen".
+        guard automatikAn else { return }
         // Nach dem Drehen gehoert das Rad der Hand: keine Spruenge mehr.
         if case .vonHand = zaehlerZustand { return }
         switch meldung {
