@@ -68,7 +68,7 @@ private struct TrackerBlatt: View {
             .accessibilityElement(children: .combine)
             Toggle("Sätze automatisch starten und sichern", isOn: Binding(
                 get: { zaehler.automatikAktiv }, set: { zaehler.automatikAktiv = $0 }))
-                .font(.system(size: 15))
+                .font(DesignSystem.Typography.fliesstext)
                 .foregroundStyle(DesignSystem.Color.text)
                 .tint(DesignSystem.Color.accent)
                 .testnotizElement("geraet.tracker.automatik", typ: "Toggle")
@@ -77,7 +77,8 @@ private struct TrackerBlatt: View {
         .padding(.top, DesignSystem.Spacing.s24)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(DesignSystem.Color.bg)
-        .presentationDetents([.height(220)])
+        // .medium dazu: bei grosser Schrift schneidet 220 pt sonst ab.
+        .presentationDetents([.height(220), .medium])
         .presentationDragIndicator(.visible)
         .testnotizScreen()
     }

@@ -136,13 +136,29 @@ struct TrackerAnzeigeTests {
     @Test func ruheTextNurBeiLaufendemSatz() {
         let laeuft = Self.laufenderSatz()
         #expect(laeuft.zustand == .laeuft)
-        #expect(TrackerAnzeige.ruheText(laeuft, aktiv: true) == "Sichern nach Ruhe · 5 s")
+        #expect(TrackerAnzeige.ruheText(laeuft, aktiv: true, verbunden: true) == "Sichern nach Ruhe · 5 s")
         // Wartet noch auf den Satzstart: keine Zeile.
-        #expect(TrackerAnzeige.ruheText(SatzAutomatik(), aktiv: true) == nil)
+        #expect(TrackerAnzeige.ruheText(SatzAutomatik(), aktiv: true, verbunden: true) == nil)
+    }
+
+    /// Abriss mitten im Satz: kein eingefrorener Countdown.
+    @Test func ruheTextNichtWennNichtVerbunden() {
+        let verbunden = TrackerAnzeige.ruheVerbunden(.getrennt(wirdNeuVerbunden: true), hatGemerktenSensor: true)
+        #expect(!verbunden)
+        #expect(TrackerAnzeige.ruheText(Self.laufenderSatz(), aktiv: true, verbunden: verbunden) == nil)
+    }
+
+    /// "Tracker vergessen" mitten im Satz: auch die Zeile verschwindet.
+    @Test func ruheTextNichtOhneGemerktenTracker() {
+        let zustand = SensorZustand.verbunden(name: "WT901BLE", akkuProzent: 80)
+        #expect(TrackerAnzeige.ruheVerbunden(zustand, hatGemerktenSensor: true))
+        let verbunden = TrackerAnzeige.ruheVerbunden(zustand, hatGemerktenSensor: false)
+        #expect(!verbunden)
+        #expect(TrackerAnzeige.ruheText(Self.laufenderSatz(), aktiv: true, verbunden: verbunden) == nil)
     }
 
     @Test func ruheTextNichtBeiAutomatikAus() {
-        #expect(TrackerAnzeige.ruheText(Self.laufenderSatz(), aktiv: false) == nil)
+        #expect(TrackerAnzeige.ruheText(Self.laufenderSatz(), aktiv: false, verbunden: true) == nil)
     }
 }
 #endif

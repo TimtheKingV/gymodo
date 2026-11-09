@@ -34,13 +34,21 @@ enum TrackerAnzeige {
     /// Im Training sichtbar? Nur mit gemerktem Tracker.
     static func sichtbar(hatGemerktenSensor: Bool) -> Bool { hatGemerktenSensor }
 
-    /// Die eine Automatik-Zeile am Geraet (F5): nur bei Automatik an und
-    /// laufendem Satz. `aktiv` wird eigens geprueft -- das Ausschalten setzt
-    /// die Automatik zwar neu auf, die Zeile soll aber auch dann nicht
-    /// stehen, wenn sie noch einen alten Stand traegt (Review Focus 2).
-    static func ruheText(_ automatik: SatzAutomatik, aktiv: Bool) -> String? {
-        guard aktiv, automatik.zustand == .laeuft, let rest = automatik.speichernIn else { return nil }
+    /// Die eine Automatik-Zeile am Geraet (F5): nur bei Automatik an,
+    /// verbundenem Tracker und laufendem Satz. `aktiv` wird eigens geprueft --
+    /// das Ausschalten setzt die Automatik zwar neu auf, die Zeile soll aber
+    /// auch dann nicht stehen, wenn sie noch einen alten Stand traegt (Review
+    /// Focus 2). Ebenso `verbunden`: ein Abriss setzt die Automatik nicht
+    /// zurueck, `speichernIn` stuende sonst eingefroren beim letzten Messwert.
+    static func ruheText(_ automatik: SatzAutomatik, aktiv: Bool, verbunden: Bool) -> String? {
+        guard aktiv, verbunden, automatik.zustand == .laeuft, let rest = automatik.speichernIn else { return nil }
         return "Sichern nach Ruhe · \(Int(rest.rounded(.up))) s"
+    }
+
+    /// Fuer `ruheText`: nur ein gemerkter und gerade verbundener Tracker
+    /// zaehlt. Nach "Tracker vergessen" steht im Training nichts mehr.
+    static func ruheVerbunden(_ zustand: SensorZustand, hatGemerktenSensor: Bool) -> Bool {
+        hatGemerktenSensor && zustand.istVerbunden
     }
 
     /// Was der Knopf in der Einrichtung im Profil tut (Paket 3, F4). Die

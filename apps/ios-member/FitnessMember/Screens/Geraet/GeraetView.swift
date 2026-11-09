@@ -86,7 +86,11 @@ struct GeraetView: View {
                         // dem Symbol in der Kopfzeile.
                         #if DEBUG
                         if modell.phase != .abschluss,
-                           let ruhe = TrackerAnzeige.ruheText(satzZaehler.automatik, aktiv: satzZaehler.automatikAktiv) {
+                           let ruhe = TrackerAnzeige.ruheText(
+                               satzZaehler.automatik, aktiv: satzZaehler.automatikAktiv,
+                               verbunden: TrackerAnzeige.ruheVerbunden(
+                                   sensorAufnahme.quelle.zustand,
+                                   hatGemerktenSensor: sensorAufnahme.quelle.hatGemerktenSensor)) {
                             Text(ruhe)
                                 .font(DesignSystem.Typography.fliesstext.monospacedDigit())
                                 .foregroundStyle(DesignSystem.Color.textMuted)
