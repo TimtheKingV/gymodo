@@ -85,7 +85,7 @@ struct GeraetView: View {
                         // und laufendem Satz. Status und Schalter stehen hinter
                         // dem Symbol in der Kopfzeile.
                         #if DEBUG
-                        if modell.phase != .abschluss,
+                        if Funktionen.sensorKarte, modell.phase != .abschluss,
                            let ruhe = TrackerAnzeige.ruheText(
                                satzZaehler.automatik, aktiv: satzZaehler.automatikAktiv,
                                verbunden: TrackerAnzeige.ruheVerbunden(

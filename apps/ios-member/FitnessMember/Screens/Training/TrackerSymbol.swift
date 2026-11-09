@@ -14,7 +14,7 @@ struct TrackerSymbol: View {
 
     var body: some View {
         let quelle = koordinator.quelle
-        if TrackerAnzeige.sichtbar(hatGemerktenSensor: quelle.hatGemerktenSensor) {
+        if Funktionen.sensorKarte, TrackerAnzeige.sichtbar(hatGemerktenSensor: quelle.hatGemerktenSensor) {
             let verbunden = TrackerAnzeige.symbol(quelle.zustand) == .verbunden
             Button { blattOffen = true } label: {
                 // Dasselbe Symbol wie in der Einrichtung im Profil; das
