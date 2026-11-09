@@ -31,6 +31,21 @@ struct PlanEinheitBearbeitungTests {
         #expect(!b.geaendert)
     }
 
+    @Test func mehrfachVerschiebenWieArrayMove() {
+        var b = PlanEinheitBearbeitung(einheit: einheit(["0", "1", "2", "3"]))
+        b.verschieben(von: [0, 2], nach: 4)
+        var referenz = ["0", "1", "2", "3"]
+        referenz.move(fromOffsets: [0, 2], toOffset: 4)
+        #expect(b.keys == ["1", "3", "0", "2"])
+        #expect(b.keys == referenz)
+    }
+
+    @Test func verschiebenIgnoriertUngueltigeOffsets() {
+        var b = PlanEinheitBearbeitung(einheit: einheit(["0", "1"]))
+        b.verschieben(von: [5], nach: 0)
+        #expect(b.keys == ["0", "1"])
+    }
+
     @Test func entfernenLetzteBleibtVerweigert() {
         var b = PlanEinheitBearbeitung(einheit: einheit(["0"]))
         #expect(!b.darfEntfernen)

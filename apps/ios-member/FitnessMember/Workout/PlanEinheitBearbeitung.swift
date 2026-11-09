@@ -18,7 +18,9 @@ struct PlanEinheitBearbeitung: Equatable {
 
     /// Semantik wie `Array.move(fromOffsets:toOffset:)`.
     mutating func verschieben(von: IndexSet, nach: Int) {
-        let verschoben = von.filter { keys.indices.contains($0) }.map { keys[$0] }
+        let von = IndexSet(von.filter { keys.indices.contains($0) })
+        guard !von.isEmpty else { return }
+        let verschoben = von.map { keys[$0] }
         let davor = von.filter { $0 < nach }.count
         var rest = keys
         rest.remove(atOffsets: von)
