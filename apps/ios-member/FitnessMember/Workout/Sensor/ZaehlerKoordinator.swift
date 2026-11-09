@@ -44,7 +44,8 @@ final class ZaehlerKoordinator: SatzZaehler {
     }
 
     let quelle: any SensorQuelle
-    /// Fuer die Sensor-Zeile. nil, solange kein Satz offen ist.
+    /// Letzte Meldung des Zaehlers (liest auch `neuStarten`). nil, solange
+    /// kein Satz offen ist.
     private(set) var meldung: ZaehlerMeldung?
     private(set) var befestigung: BefestigungsWahl?
     /// Paket 3, F3: die Befestigung kommt aus der Uebung (Vorschlag) oder aus
@@ -158,7 +159,8 @@ final class ZaehlerKoordinator: SatzZaehler {
 
     func satzVerworfen() { beenden() }
 
-    /// Ein Tipp in der Sensor-Zeile. Mit der neuen Art beginnt die Zaehlung
+    /// Interne Schnittstelle (Tests, Ueberschreiben der Befestigung aus der
+    /// Uebung). Mit der neuen Art beginnt die Zaehlung
     /// von vorn: was bisher gezaehlt wurde, lief mit dem falschen Profil.
     func befestigungWaehlen(_ art: Befestigungsart) {
         guard let kontext else { return }

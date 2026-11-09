@@ -4,7 +4,7 @@ import Foundation
 /// Mitglieder gelten. Eine Stelle, ein Name je Funktion -- freischalten heisst
 /// hier den Wert aendern, nicht Screens anfassen.
 enum Funktionen {
-    /// Die Sensor-Karte auf der Geraeteauswahl und an jeder Uebung
+    /// Das Tracker-Symbol im Training und die Einrichtung im Profil
     /// (Testnotiz 15.10., #5). Vorerst nur im Debug-Build, also nur fuer den
     /// Entwickler.
     ///

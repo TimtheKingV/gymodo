@@ -19,7 +19,8 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     let quelle: any SensorQuelle
     private(set) var aufnahmeLaeuft = false
-    /// Marken des laufenden Satzes, fuer die Knoepfe in der Sensor-Zeile.
+    /// Marken des laufenden Satzes. Bleibt fuer Aufnahmen und Tests; die
+    /// Knoepfe dazu sind weg (Spec 3.2).
     private(set) var marken: Set<SatzMarke> = []
     private(set) var fehler: String?
     /// Einmal je Sekunde aktualisiert, nicht je Messwert: bei 50 Hz wuerde

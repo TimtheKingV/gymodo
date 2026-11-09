@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Kopfzeile des Trainingsablaufs: links der Ort, rechts die laufende
-/// Trainingsuhr, davor (nur im Debug-Build) das Tracker-Symbol. Gemeinsam fuer Geraet, Pause und Zirkel-Uebersicht, damit
-/// alle denselben Kopf zeigen.
+/// Trainingsuhr, davor (nur im Debug-Build) das Tracker-Symbol. Gemeinsam
+/// fuer Geraet, Pause und Zirkel-Uebersicht, damit alle denselben Kopf
+/// zeigen.
 struct TrainingKopfzeile: View {
     /// Bereits grossgeschrieben uebergeben.
     let ort: String
