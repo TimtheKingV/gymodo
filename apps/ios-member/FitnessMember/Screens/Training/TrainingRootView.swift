@@ -447,7 +447,6 @@ struct TrainingRootView: View {
         } else if katalog.bootstrap != nil {
             GeraeteAuswahlView(fotoLader: apiClient, vorschauLader: vorschauLader) {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
-                    sensorKarte
                     if let mitte, let session {
                         laufendKopf(mitte, session: session)
                     }
@@ -477,9 +476,6 @@ struct TrainingRootView: View {
                 titel
                     .padding(.horizontal, 20)
                     .padding(.top, DesignSystem.Spacing.s24)
-                sensorKarte
-                    .padding(.horizontal, 20)
-                    .padding(.top, DesignSystem.Spacing.s16)
                 if let mitte, let session {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                         laufendKopf(mitte, session: session)
@@ -493,15 +489,6 @@ struct TrainingRootView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-    }
-
-    /// Die Sensor-Karte vor dem ersten Satz (Testnotiz 15.10., #5). Nur mit
-    /// eingeschaltetem Schalter (`Funktionen.sensorKarte`).
-    @ViewBuilder
-    private var sensorKarte: some View {
-        #if DEBUG
-        if Funktionen.sensorKarte { SensorKarte(station: nil) }
-        #endif
     }
 
     private var titel: some View {
@@ -560,7 +547,6 @@ struct TrainingRootView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
                 if #unavailable(iOS 26.0) { titel }
-                sensorKarte
                 laufendKopf(mitte, session: session)
                 PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
                     planPositionAntippen($0, bloecke: session.bloecke)

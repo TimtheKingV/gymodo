@@ -23,6 +23,10 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
 
     private(set) var zustand: SensorZustand = .aus
     private(set) var rate: SensorRate = .hz50
+    /// Gespeichert statt bei jedem Zugriff aus UserDefaults gelesen: nur so
+    /// beobachten Views `hatGemerktenSensor` und ziehen nach waehlen/vergessen
+    /// sofort nach.
+    private(set) var gemerkt: UUID?
     /// Ueber Wiederverbindungen hinweg aufsummiert: der Koordinator rechnet
     /// mit der Differenz seit Aufnahmestart, die darf nie rueckwaerts laufen.
     var verworfeneBytes: Int { verworfenFrueher + parser.verworfeneBytes }
@@ -53,6 +57,7 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
 
     init(einstellungen: UserDefaults = .standard) {
         self.einstellungen = einstellungen
+        gemerkt = einstellungen.string(forKey: Self.merkSchluessel).flatMap(UUID.init(uuidString:))
     }
 
     func ereignisse() -> AsyncStream<SensorEreignis> { verteiler.strom() }
@@ -71,6 +76,7 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     func waehlen(_ fund: SensorFund) {
         guard let gewaehlt = funde[fund.id] else { return }
         einstellungen.set(fund.id.uuidString, forKey: Self.merkSchluessel)
+        gemerkt = fund.id
         verbindeMit(gewaehlt)
     }
 
@@ -87,6 +93,7 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
 
     func vergessen() {
         einstellungen.removeObject(forKey: Self.merkSchluessel)
+        gemerkt = nil
         trennen()
     }
 
@@ -114,10 +121,6 @@ final class BluetoothSensorQuelle: NSObject, SensorQuelle {
     // MARK: - Ablauf
 
     var hatGemerktenSensor: Bool { gemerkt != nil }
-
-    private var gemerkt: UUID? {
-        einstellungen.string(forKey: Self.merkSchluessel).flatMap(UUID.init(uuidString:))
-    }
 
     private func zustandPruefen(_ zentrale: CBCentralManager) {
         guard gewollt else { return }

@@ -44,9 +44,15 @@ final class ZaehlerKoordinator: SatzZaehler {
     }
 
     let quelle: any SensorQuelle
-    /// Fuer die Sensor-Zeile. nil, solange kein Satz offen ist.
+    /// Letzte Meldung des Zaehlers (liest auch `neuStarten`). nil, solange
+    /// kein Satz offen ist.
     private(set) var meldung: ZaehlerMeldung?
     private(set) var befestigung: BefestigungsWahl?
+    /// Paket 3, F3: die Befestigung kommt aus der Uebung (Vorschlag) oder aus
+    /// einer frueheren Wahl. Fehlt beides, zaehlt der Tracker still nicht;
+    /// hoechstens einmal je Station und Uebung und App-Lauf wird das gemeldet.
+    @ObservationIgnored var beiKeinerBefestigung: ((SatzZaehlerKontext) -> Void)?
+    @ObservationIgnored private var ohneBefestigungGemeldet: Set<String> = []
 
     @ObservationIgnored private let speicher: Befestigungsspeicher
     @ObservationIgnored private let uhr: () -> TimeInterval
@@ -153,7 +159,8 @@ final class ZaehlerKoordinator: SatzZaehler {
 
     func satzVerworfen() { beenden() }
 
-    /// Ein Tipp in der Sensor-Zeile. Mit der neuen Art beginnt die Zaehlung
+    /// Interne Schnittstelle (Tests, Ueberschreiben der Befestigung aus der
+    /// Uebung). Mit der neuen Art beginnt die Zaehlung
     /// von vorn: was bisher gezaehlt wurde, lief mit dem falschen Profil.
     func befestigungWaehlen(_ art: Befestigungsart) {
         guard let kontext else { return }
@@ -254,7 +261,12 @@ final class ZaehlerKoordinator: SatzZaehler {
         taktZuruecksetzen()
         guard let kontext else { return }
         guard kontext.volumeKind == .reps else { return senden(.zaehltNicht(.keineWiederholungen)) }
-        guard let art = befestigung?.art else { return senden(.zaehltNicht(.keineBefestigung)) }
+        guard let art = befestigung?.art else {
+            if ohneBefestigungGemeldet.insert("\(kontext.station.schluessel).\(kontext.exerciseId)").inserted {
+                beiKeinerBefestigung?(kontext)
+            }
+            return senden(.zaehltNicht(.keineBefestigung))
+        }
         guard quelle.zustand.istVerbunden else { return senden(.zaehltNicht(.keinSensor)) }
         // Debug zaehlt jede Art, auch nicht freigegebene (Nachtrag 14.10. Punkt 4).
         zaehler = Zaehler(profil: .fuer(art), rateHz: Double(quelle.rate.rawValue))

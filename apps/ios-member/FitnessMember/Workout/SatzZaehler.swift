@@ -43,6 +43,10 @@ struct ZaehlerErgebnis: Equatable, Sendable {
 @MainActor
 protocol SatzZaehler: AnyObject {
     func automatikBeobachten(_ melde: (@MainActor (SatzAutomatik.Ereignis) -> Void)?)
+    /// Der Schalter "Saetze automatisch starten und sichern". Aus heisst
+    /// (Paket 3, F2): kein Rad-Feed, kein Auto-Start, kein Auto-Sichern;
+    /// der Satz geht als eingegeben raus, gezaehlt wird nur fuer die Aufnahme.
+    var automatikAktiv: Bool { get }
     /// Die Art des laufenden oder eben beendeten Satzes. Bleibt nach
     /// ergebnis() stehen, damit die Aufnahme sie noch lesen kann.
     var befestigung: BefestigungsWahl? { get }

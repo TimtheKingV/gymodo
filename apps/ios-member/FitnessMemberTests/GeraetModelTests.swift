@@ -2303,6 +2303,58 @@ struct GeraetModelTests {
         #expect(satz.befestigung == BefestigungsWahl(art: .stapel, quelle: .vorschlag))
     }
 
+    // MARK: Automatik aus (Paket 3, F2)
+
+    @Test func automatikAusDrehtDasRadNicht() {
+        let double = ZaehlerDouble()
+        double.automatikAktiv = false
+        let sut = mitZaehler(double)
+        let vorher = sut.umfang
+        double.melde?(.bereit)
+        double.melde?(.stand(7))
+        double.melde?(.pruefen(7, .luecke))
+        #expect(sut.umfang == vorher)
+        #expect(sut.zaehlerZustand == .aus)
+    }
+
+    /// F2: der Server-Satz ist eingegeben ohne Zaehlung (herkunftPruefen),
+    /// die lokale Aufnahme bekommt das Ergebnis trotzdem.
+    @Test func automatikAusSichertAlsEingegeben() async {
+        let double = ZaehlerDouble()
+        double.automatikAktiv = false
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        let spion = MitschnittSpion()
+        var geschrieben: [PendingSetWrite] = []
+        let sut = mitZaehler(double, enqueue: { geschrieben.append($0) }, mitschnitt: spion)
+        sut.umfangGedreht(10)
+        double.melde?(.stand(8))
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let body = geschrieben.first?.body
+        #expect(body?.volume == 10)
+        #expect(body?.volumeSource == .eingegeben)
+        #expect(body?.volumeCounted == nil)
+        #expect(body?.repEvents == nil)
+        guard case .gesichert(let satz)? = spion.ereignisse.last else { Issue.record("nichts gesichert"); return }
+        #expect(satz.zaehler?.gezaehlt == 8)
+        #expect(satz.volumeSource == .eingegeben)
+        #expect(satz.reps == 10)
+    }
+
+    /// Review Focus 2: im laufenden Satz ausgeschaltet bleibt das Rad stehen.
+    @Test func automatikAusschaltenImSatz() {
+        let double = ZaehlerDouble()
+        let sut = mitZaehler(double)
+        double.melde?(.stand(5))
+        #expect(sut.umfang == 5)
+        double.automatikAktiv = false
+        sut.automatikUmschalten(aktiv: false)
+        #expect(sut.zaehlerZustand == .aus)
+        #expect(sut.umfang == 5)
+        double.melde?(.stand(6))
+        #expect(sut.umfang == 5)
+        #expect(sut.zaehlerZustand == .aus)
+    }
+
     /// Review Focus 4: ein abgelehnter Satz holt kein Ergebnis ab, die
     /// Zaehlung laeuft weiter. Aufbau wie der Ortskonflikt-Test oben
     /// (laufende Einheit in einem anderen Studio).
@@ -2434,6 +2486,7 @@ final class ZaehlerDouble: SatzZaehler {
     var ergebnisAufrufe = 0
     var ergebnisWert: ZaehlerErgebnis?
     var befestigung: BefestigungsWahl? = BefestigungsWahl(art: .stapel, quelle: .vorschlag)
+    var automatikAktiv = true
 
     func satzBeginnt(_ kontext: SatzZaehlerKontext, melde: @escaping @MainActor (ZaehlerMeldung) -> Void) {
         kontexte.append(kontext)
@@ -2824,6 +2877,27 @@ extension GeraetModelTests {
         if case .pause = sut.phase {} else { Issue.record("Fehlende Startwerte brauchen die manuelle Eingabe") }
     }
 
+    /// Auch wenn ein Ereignis durchrutscht: bei Automatik aus startet und
+    /// sichert das Modell nichts selbst.
+    @Test func automatikAusStartetUndSichertNicht() async {
+        let double = ZaehlerDouble()
+        double.automatikAktiv = false
+        double.ergebnisWert = ZaehlerDouble.ergebnis(8)
+        let (sut, _, writes) = automatikModell(double)
+        double.automatikMelde?(.begonnen(kennung: UUID(), beginn: 10, bewegung: 14))
+        if case .pause = sut.phase {} else { Issue.record("Automatik aus darf keinen Satz starten") }
+        // Automatisch begonnen, dann aus: das Ende sichert nicht mehr.
+        double.automatikAktiv = true
+        let kennung = UUID()
+        double.automatikMelde?(.begonnen(kennung: kennung, beginn: 20, bewegung: 24))
+        #expect(sut.phase == .eingabe)
+        double.automatikAktiv = false
+        double.automatikMelde?(.beendet(kennung: kennung, bewegung: 36))
+        await Task.yield()
+        #expect(sut.phase == .eingabe)
+        #expect(writes.geschriebene.isEmpty)
+    }
+
     @Test func satzzielUndAlteKennungVerhindernWeitereAutomatischeSaetze() async {
         let double = ZaehlerDouble()
         double.ergebnisWert = ZaehlerDouble.ergebnis(8)
@@ -2888,6 +2962,40 @@ extension GeraetModelTests {
         #expect(writes.geschriebene.map(\.body.load) == [42.5, 42.5])
         #expect(writes.geschriebene.map(\.body.volumeCounted) == [5, 5])
         #expect(sessions.aktiveSession()?.bloecke.first?.saetze.count == 2)
+        sut.screenVerlassen()
+    }
+
+    /// Review Focus 2 ueber den echten Schalter: ZaehlerKoordinator.automatikAktiv
+    /// erreicht das laufende Modell, das Rad bleibt stehen, der Satz geht
+    /// von Hand als eingegeben raus.
+    @Test func automatikSchalterImSatzStelltDasRadStill() async throws {
+        let quelle = AttrappenQuelle()
+        quelle.zustand = ZaehlerKoordinatorTests.verbunden
+        let uhr = ZaehlerKoordinatorTests.Uhr()
+        let zaehler = ZaehlerKoordinator(quelle: quelle,
+            einstellungen: UserDefaults(suiteName: UUID().uuidString)!, uhr: { uhr.t })
+        let writes = Erfassungswarteschlange()
+        let sut = modell(maschine: GeraetTestdaten.maschine,
+            bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+            enqueue: { writes.geschriebene.append($0) }, zaehler: zaehler)
+        sut.geraetGeoeffnet()
+        zaehler.befestigungWaehlen(.stapel)
+        #expect(sut.zaehlerZustand == .bereit)
+        zaehler.automatikAktiv = false
+        #expect(sut.zaehlerZustand == .aus)
+        let vorher = sut.umfang
+        for wert in ZaehlerKoordinatorTests.stapelSatz(wiederholungen: 5, ab: uhr.t + 0.02) {
+            uhr.t = wert.t
+            zaehler.empfangen(.messwert(wert))
+        }
+        #expect(sut.umfang == vorher)
+        #expect(sut.zaehlerZustand == .aus)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+        let body = try #require(writes.geschriebene.first).body
+        #expect(body.volumeSource == .eingegeben)
+        #expect(body.volume == vorher)
+        #expect(body.volumeCounted == nil)
+        #expect(body.repEvents == nil)
         sut.screenVerlassen()
     }
 }

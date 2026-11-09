@@ -321,6 +321,33 @@ struct ZaehlerKoordinatorTests {
         #expect(m.liste == [.zaehltNicht(.keineBefestigung)])
     }
 
+    /// Paket 3, F3: ohne Vorschlag zaehlt der Tracker still nicht; je Station
+    /// und Uebung steht das genau einmal im Protokoll.
+    @Test func ohneVorschlagWirdEinmalProtokolliert() {
+        let (sut, _, _, m) = aufbau()
+        var gemeldet: [SatzZaehlerKontext] = []
+        sut.beiKeinerBefestigung = { gemeldet.append($0) }
+        let kontext = SatzZaehlerKontext(station: GeraetTestdaten.cardioTyp, exerciseId: "e9", volumeKind: .reps)
+        beginnen(sut, m, kontext)
+        beginnen(sut, m, kontext)
+        #expect(gemeldet == [kontext])
+        #expect(m.liste == [.zaehltNicht(.keineBefestigung), .zaehltNicht(.keineBefestigung)])
+        // Andere Uebung am selben Geraet: eigener Eintrag.
+        let andere = SatzZaehlerKontext(station: GeraetTestdaten.cardioTyp, exerciseId: "e10", volumeKind: .reps)
+        beginnen(sut, m, andere)
+        #expect(gemeldet == [kontext, andere])
+    }
+
+    @Test func gespeicherteWahlGiltWeiter() {
+        let einstellungen = UserDefaults(suiteName: UUID().uuidString)!
+        let kontext = BefestigungsspeicherTests.kontext()
+        Befestigungsspeicher(einstellungen: einstellungen).merken(.kurzhantel, fuer: kontext)
+        let (sut, _, _, m) = aufbau(einstellungen: einstellungen)
+        beginnen(sut, m, kontext)
+        #expect(sut.befestigung == BefestigungsWahl(art: .kurzhantel, quelle: .gewaehlt))
+        #expect(m.liste == [.bereit])
+    }
+
     /// Spec 9: der Sensor verbindet sich mitten in der Eingabe -- ab da zaehlt er.
     @Test func ohneSensorZaehltNichtUndStartetBeimVerbinden() {
         let (sut, quelle, _, m) = aufbau(zustand: .aus)
@@ -410,6 +437,15 @@ extension ZaehlerKoordinatorTests {
         sut.automatikAktiv = false
         let (neu, _, _, _) = aufbau(einstellungen: defaults)
         #expect(!neu.automatikAktiv)
+    }
+
+    /// GeraetModel liest den Schalter ueber die Naht, nicht ueber den Debug-Typ.
+    @Test func automatikSchalterIstUeberDieNahtLesbar() {
+        let (sut, _, _, _) = aufbau()
+        let naht: any SatzZaehler = sut
+        #expect(naht.automatikAktiv)
+        sut.automatikAktiv = false
+        #expect(!naht.automatikAktiv)
     }
 }
 #endif

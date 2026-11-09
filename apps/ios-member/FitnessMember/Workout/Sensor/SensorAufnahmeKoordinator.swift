@@ -19,7 +19,8 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
 
     let quelle: any SensorQuelle
     private(set) var aufnahmeLaeuft = false
-    /// Marken des laufenden Satzes, fuer die Knoepfe in der Sensor-Zeile.
+    /// Marken des laufenden Satzes. Bleibt fuer Aufnahmen und Tests; die
+    /// Knoepfe dazu sind weg (Spec 3.2).
     private(set) var marken: Set<SatzMarke> = []
     private(set) var fehler: String?
     /// Einmal je Sekunde aktualisiert, nicht je Messwert: bei 50 Hz wuerde
@@ -73,6 +74,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         // ihn ueber aufbau(zustand: verbunden) so auf), muss die erste
         // Trennung noch als Kante erkennen -- sonst faellt sie unter den Tisch.
         self.warVerbunden = quelle.zustand.istVerbunden
+    }
+
+    /// Eine Zeile ins Sensor-Protokoll (z. B. aus dem ZaehlerKoordinator).
+    func protokollieren(_ text: String) {
+        protokoll.schreiben(text)
     }
 
     /// Einmal beim App-Start. Getrennt vom init, damit Tests `empfangen`

@@ -121,6 +121,9 @@ private extension View {
     #if DEBUG
     func sensorInstallieren(_ koordinator: SensorAufnahmeKoordinator, zaehler: ZaehlerKoordinator) -> some View {
         environment(koordinator).environment(zaehler).task {
+            zaehler.beiKeinerBefestigung = { [weak koordinator] kontext in
+                koordinator?.protokollieren("Keine Befestigung: \(kontext.station.label) / \(kontext.exerciseId)")
+            }
             // Zaehler zuerst: verbindet der Aufnahme-Koordinator beim Start
             // den gemerkten Sensor, soll der Zaehler die Kante schon hoeren.
             zaehler.starten()
