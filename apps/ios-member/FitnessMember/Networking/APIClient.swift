@@ -280,6 +280,15 @@ actor APIClient {
             grund: grund, ortId: ortId))
     }
 
+    /// Neue Reihenfolge einer Einheit; fehlende Schluessel sind entfernt (mindestens einer bleibt).
+    func ordnePlanEinheit(
+        planId: String, einheitKey: String, positionKeys: [String]
+    ) async throws(APIError) -> Trainingsplan {
+        struct Rumpf: Encodable { let einheitKey: String; let positionKeys: [String] }
+        return try await send("me/plans/\(planId)/ordnen", method: "POST", body: Rumpf(
+            einheitKey: einheitKey, positionKeys: positionKeys))
+    }
+
     // MARK: - Cardio-Checks
 
     /// Die abgehakten Cardio-Tage von `from` bis `to` (je "YYYY-MM-DD", eingeschlossen).
