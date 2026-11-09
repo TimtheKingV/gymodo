@@ -75,6 +75,11 @@ final class SensorAufnahmeKoordinator: SatzMitschnitt {
         self.warVerbunden = quelle.zustand.istVerbunden
     }
 
+    /// Eine Zeile ins Sensor-Protokoll (z. B. aus dem ZaehlerKoordinator).
+    func protokollieren(_ text: String) {
+        protokoll.schreiben(text)
+    }
+
     /// Einmal beim App-Start. Getrennt vom init, damit Tests `empfangen`
     /// direkt und in fester Reihenfolge rufen koennen.
     func starten() {
