@@ -6,6 +6,8 @@ import {
   aktiverKatalogPlan,
   erzeugePlanVorschlag,
   listPlaene,
+  minutenNachOrdnen,
+  ordnePlanEinheit,
   saveTrainingLimits,
   type TrainingPlan,
 } from "@fitretro/domain";
@@ -354,5 +356,96 @@ describe("listPlaene", () => {
     const e = await fehlerVon(acceptPlan(b.client, b.userId, plan.id));
     expect(e.code).toBe("conflict");
     expect((await zeilen(a.userId))[0]!.status).toBe("vorschlag");
+  });
+});
+
+describe("ordnePlanEinheit", () => {
+  async function aktiverPlan(prefix: string) {
+    const m = await legeMitgliedAn(prefix, { studios: [s.voll], weeklyDays: 3 });
+    const v = await erzeugePlanVorschlag(m.client, m.userId, s.voll);
+    const plan = await acceptPlan(m.client, m.userId, v.id);
+    const einheit = plan.einheiten.find((e) => e.positionen.length >= 3) ?? plan.einheiten[0]!;
+    return { m, plan, einheit };
+  }
+
+  it("ordnet um: neue aktive Version, alte ersetzt, Positionen unveraendert in neuer Reihenfolge", async () => {
+    const { m, plan, einheit } = await aktiverPlan("ordnen-reihe");
+    const keys = einheit.positionen.map((p) => p.key);
+    expect(keys.length).toBeGreaterThanOrEqual(3);
+    const neu = [...keys].reverse();
+    const ergebnis = await ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey: einheit.key, positionKeys: neu });
+    expect(ergebnis).toMatchObject({ version: plan.version + 1, status: "aktiv" });
+    const e = ergebnis.einheiten.find((x) => x.key === einheit.key)!;
+    expect(e.positionen.map((p) => p.key)).toEqual(neu);
+    for (const p of e.positionen) {
+      expect(p).toEqual(einheit.positionen.find((q) => q.key === p.key));
+    }
+    expect(e.geschaetzteMinuten).toBe(einheit.geschaetzteMinuten);
+    expect((await zeilen(m.userId)).map((z) => z.status)).toEqual(["ersetzt", "aktiv"]);
+  });
+
+  it("entfernt Positionen und rechnet die Minuten neu; andere Einheiten und Raster bleiben", async () => {
+    const { m, plan, einheit } = await aktiverPlan("ordnen-loeschen");
+    const bleibt = [einheit.positionen[0]!.key];
+    const ergebnis = await ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey: einheit.key, positionKeys: bleibt });
+    const e = ergebnis.einheiten.find((x) => x.key === einheit.key)!;
+    expect(e.positionen.map((p) => p.key)).toEqual(bleibt);
+    expect(e.geschaetzteMinuten).toBe(minutenNachOrdnen(einheit, bleibt));
+    expect(ergebnis.einheiten.filter((x) => x.key !== einheit.key)).toEqual(
+      plan.einheiten.filter((x) => x.key !== einheit.key),
+    );
+    expect(ergebnis.einheiten.map((x) => x.key)).toEqual(plan.einheiten.map((x) => x.key));
+    expect(ergebnis.wochenraster).toEqual(plan.wochenraster);
+  });
+
+  it("Fehlerfaelle: leer, doppelt, unbekannter Schluessel, unbekannte Einheit", async () => {
+    const { m, plan, einheit } = await aktiverPlan("ordnen-fehler");
+    const k0 = einheit.positionen[0]!.key;
+    const fall = (einheitKey: string, positionKeys: string[]) =>
+      fehlerVon(ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey, positionKeys }));
+    expect((await fall(einheit.key, [])).code).toBe("validation_failed");
+    expect((await fall(einheit.key, [k0, k0])).code).toBe("validation_failed");
+    expect((await fall(einheit.key, [k0, "gibt-es-nicht"])).code).toBe("validation_failed");
+    expect((await fall("gibt-es-nicht", [k0])).code).toBe("validation_failed");
+    // Nichts wurde geschrieben.
+    expect((await zeilen(m.userId)).map((z) => z.status)).toEqual(["aktiv"]);
+  });
+
+  it("fremder und nicht aktiver Plan sind ein Konflikt", async () => {
+    const { m, plan, einheit } = await aktiverPlan("ordnen-eigen");
+    const fremd = await legeMitgliedAn("ordnen-fremd", { studios: [s.voll] });
+    const keys = einheit.positionen.map((p) => p.key);
+    const e1 = await fehlerVon(
+      ordnePlanEinheit(fremd.client, fremd.userId, plan.id, { einheitKey: einheit.key, positionKeys: keys }),
+    );
+    expect(e1.code).toBe("conflict");
+    await ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey: einheit.key, positionKeys: keys });
+    // plan.id ist jetzt ersetzt.
+    const e2 = await fehlerVon(
+      ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey: einheit.key, positionKeys: keys }),
+    );
+    expect(e2.code).toBe("conflict");
+  });
+
+  it("eine verbleibende Position behaelt ihr Ziel (G9)", async () => {
+    const { m, plan, einheit } = await aktiverPlan("ordnen-ziel");
+    const p0 = einheit.positionen[0]!;
+    const { error } = await admin
+      .from("plan_gewichte")
+      .upsert(
+        { plan_id: plan.id, user_id: m.userId, einheit_key: einheit.key, position_key: p0.key, load: 77.5, algo_version: "1.0.0" },
+        { onConflict: "plan_id,einheit_key,position_key" },
+      );
+    if (error) throw error;
+    const neu = await ordnePlanEinheit(m.client, m.userId, plan.id, { einheitKey: einheit.key, positionKeys: [p0.key] });
+    const { data, error: e2 } = await admin
+      .from("plan_gewichte")
+      .select("load")
+      .eq("plan_id", neu.id)
+      .eq("einheit_key", einheit.key)
+      .eq("position_key", p0.key)
+      .single();
+    if (e2) throw e2;
+    expect(Number(data.load)).toBe(77.5);
   });
 });
