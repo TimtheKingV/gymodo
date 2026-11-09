@@ -31,6 +31,10 @@ enum TrackerAnzeige {
         }
     }
 
+    /// Die Zeile "Letzter Fehler" unter "Für Entwickler": der Text der
+    /// Aufnahme, nil ohne Fehler. Bewusst neutral, kein Rot.
+    static func fehlerZeile(_ fehler: String?) -> String? { fehler }
+
     /// Im Training sichtbar? Nur mit gemerktem Tracker.
     static func sichtbar(hatGemerktenSensor: Bool) -> Bool { hatGemerktenSensor }
 
@@ -53,12 +57,14 @@ enum TrackerAnzeige {
 
     /// Was der Knopf in der Einrichtung im Profil tut (Paket 3, F4). Die
     /// Auswahl bei mehreren Funden gibt es nur hier, nie im Training
-    /// (Review Focus 4). Laeuft schon eine Suche oder Verbindung, oder ist
-    /// der gemerkte Tracker nur gerade weg, gibt es nichts zu tippen.
+    /// (Review Focus 4). Laeuft eine Suche oder Verbindung, bleibt nur das
+    /// Abbrechen; ist der gemerkte Tracker nur gerade weg, gibt es nichts
+    /// zu tippen.
     enum Aktion: Equatable {
         case verbinden
         case auswaehlen([SensorFund])
         case einstellungenOeffnen
+        case abbrechen
         case keine
     }
 
@@ -66,7 +72,8 @@ enum TrackerAnzeige {
         switch zustand {
         case let .mehrereGefunden(funde): return .auswaehlen(funde)
         case .bluetoothNichtBereit(.verweigert): return .einstellungenOeffnen
-        case .bluetoothNichtBereit, .sucht, .verbindet, .verbunden: return .keine
+        case .sucht, .verbindet: return .abbrechen
+        case .bluetoothNichtBereit, .verbunden: return .keine
         case .aus, .getrennt(wirdNeuVerbunden: false): return .verbinden
         case .getrennt(wirdNeuVerbunden: true): return hatGemerktenSensor ? .keine : .verbinden
         }

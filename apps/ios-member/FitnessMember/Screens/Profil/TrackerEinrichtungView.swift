@@ -112,6 +112,9 @@ struct TrackerEinrichtungView: View {
                 if let url = URL(string: UIApplication.openSettingsURLString) { oeffnen(url) }
             }
             .testnotizElement("tracker.einstellungen", typ: "Button")
+        case .abbrechen:
+            Button("Abbrechen") { koordinator.quelle.trennen() }
+                .testnotizElement("tracker.abbrechen", typ: "Button")
         case .auswaehlen, .keine:
             EmptyView()
         }
@@ -134,6 +137,11 @@ struct TrackerEinrichtungView: View {
             zeile("Pakete", "\(s.pakete)")
             zeile("Lücken", "\(s.luecken)")
             zeile("Verworfene Bytes", "\(s.verworfeneBytes)")
+            if let fehler = TrackerAnzeige.fehlerZeile(koordinator.fehler) {
+                LabeledContent("Letzter Fehler") {
+                    Text(fehler).foregroundStyle(DesignSystem.Color.textMuted)
+                }
+            }
         } header: {
             Text("Für Entwickler")
         } footer: {

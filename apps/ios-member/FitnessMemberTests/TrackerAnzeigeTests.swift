@@ -98,18 +98,29 @@ struct TrackerAnzeigeTests {
         #expect(TrackerAnzeige.einrichtungsAktion(.aus, hatGemerktenSensor: false) == .verbinden)
         #expect(TrackerAnzeige.einrichtungsAktion(.getrennt(wirdNeuVerbunden: false), hatGemerktenSensor: false)
             == .verbinden)
-        // Laeuft schon etwas, gibt es nichts zu tippen.
-        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: false) == .keine)
-        #expect(TrackerAnzeige.einrichtungsAktion(.verbindet, hatGemerktenSensor: false) == .keine)
+        // Laeuft schon etwas, bleibt nur das Abbrechen.
+        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: false) == .abbrechen)
+        #expect(TrackerAnzeige.einrichtungsAktion(.verbindet, hatGemerktenSensor: false) == .abbrechen)
     }
 
     @Test func aktionMitGemerktem() {
         let verbunden = SensorZustand.verbunden(name: "WT901BLE", akkuProzent: 80)
         #expect(TrackerAnzeige.einrichtungsAktion(verbunden, hatGemerktenSensor: true) == .keine)
-        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: true) == .keine)
+        #expect(TrackerAnzeige.einrichtungsAktion(.sucht, hatGemerktenSensor: true) == .abbrechen)
+        #expect(TrackerAnzeige.einrichtungsAktion(.verbindet, hatGemerktenSensor: true) == .abbrechen)
         #expect(TrackerAnzeige.einrichtungsAktion(.getrennt(wirdNeuVerbunden: true), hatGemerktenSensor: true)
             == .keine)
         #expect(TrackerAnzeige.einrichtungsAktion(.aus, hatGemerktenSensor: true) == .verbinden)
+    }
+
+    // MARK: - Letzter Fehler (Für Entwickler)
+
+    @Test func fehlerZeileOhneFehlerIstNil() {
+        #expect(TrackerAnzeige.fehlerZeile(nil) == nil)
+    }
+
+    @Test func fehlerZeileGibtDenTextUnveraendert() {
+        #expect(TrackerAnzeige.fehlerZeile("Aufnahme fehlgeschlagen: x") == "Aufnahme fehlgeschlagen: x")
     }
 
     // MARK: - Sichern nach Ruhe (F5, Review Focus 2)
