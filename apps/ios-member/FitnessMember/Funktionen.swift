@@ -9,7 +9,7 @@ enum Funktionen {
     /// Entwickler.
     ///
     /// Live schalten braucht mehr als diesen Wert: der Sensor-Unterbau
-    /// (Workout/Sensor, SensorZeile, SensorKarte) ist selbst noch `#if DEBUG`
+    /// (Workout/Sensor, TrackerSymbol, Tracker-Einrichtung) ist selbst noch `#if DEBUG`
     /// und die Bluetooth-Texte stehen nur in Info-Additions-Debug.plist.
     static var sensorKarte: Bool {
         #if DEBUG

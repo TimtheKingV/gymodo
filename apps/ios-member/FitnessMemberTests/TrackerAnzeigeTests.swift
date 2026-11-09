@@ -111,5 +111,38 @@ struct TrackerAnzeigeTests {
             == .keine)
         #expect(TrackerAnzeige.einrichtungsAktion(.aus, hatGemerktenSensor: true) == .verbinden)
     }
+
+    // MARK: - Sichern nach Ruhe (F5, Review Focus 2)
+
+    private static func wert(_ t: Double) -> SensorMesswert {
+        SensorMesswert(t: t, beschleunigung: .init(x: 0, y: 0, z: 1),
+                       drehrate: .init(x: 0, y: 0, z: 0), winkel: .init(x: 0, y: 0, z: 0))
+    }
+
+    private static func wiederholung(_ n: Int, _ von: Double, _ bis: Double) -> Wiederholung {
+        Wiederholung(nummer: n, beginn: von, umkehr: (von + bis) / 2, ende: bis,
+                     ausschlag: 1, sicherheit: 1, pauseDavor: nil)
+    }
+
+    /// Zwei Wiederholungen bis 4 s, dann Ruhe bis 7 s: noch 5 s bis zum Sichern.
+    private static func laufenderSatz() -> SatzAutomatik {
+        var a = SatzAutomatik()
+        for tick in 0...40 { a.empfangen(wert(Double(tick) / 10)) }
+        _ = a.wiederholungen([wiederholung(1, 0, 2), wiederholung(2, 2, 4)])
+        for tick in 41...70 { a.empfangen(wert(Double(tick) / 10)) }
+        return a
+    }
+
+    @Test func ruheTextNurBeiLaufendemSatz() {
+        let laeuft = Self.laufenderSatz()
+        #expect(laeuft.zustand == .laeuft)
+        #expect(TrackerAnzeige.ruheText(laeuft, aktiv: true) == "Sichern nach Ruhe · 5 s")
+        // Wartet noch auf den Satzstart: keine Zeile.
+        #expect(TrackerAnzeige.ruheText(SatzAutomatik(), aktiv: true) == nil)
+    }
+
+    @Test func ruheTextNichtBeiAutomatikAus() {
+        #expect(TrackerAnzeige.ruheText(Self.laufenderSatz(), aktiv: false) == nil)
+    }
 }
 #endif

@@ -50,6 +50,7 @@ struct GeraetView: View {
     @Environment(CatalogStore.self) private var katalog
     #if DEBUG
     @Environment(SensorAufnahmeKoordinator.self) private var sensorAufnahme
+    @Environment(ZaehlerKoordinator.self) private var satzZaehler
     #endif
     @State private var steuerungOffen = false
     /// Tipp auf die Ablaufzeile: der ganze Ablauf als Blatt (Spec 2.4).
@@ -79,13 +80,16 @@ struct GeraetView: View {
                     // eine Einheit und stehen deshalb 8 auseinander, nicht 16.
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
                         TrainingKopfzeile(ort: modell.ortsangabe.uppercased()) { steuerungOffen = true }
-                        // Unter der Trainingsuhr statt ueber den Raedern
-                        // (Testnotiz 16.10., #3): Karte, Zaehlerstand und
-                        // Marken gehoeren zum Sensor, nicht zum Satzwert.
-                        // Sichtbar wie zuvor nur, solange die Raeder stehen.
+                        // Vom Tracker bleibt hier nur die Ruhe-Zeile (Paket 3,
+                        // F5): direkt unter der Kopfzeile, nur bei Automatik an
+                        // und laufendem Satz. Status und Schalter stehen hinter
+                        // dem Symbol in der Kopfzeile.
                         #if DEBUG
-                        if modell.phase != .abschluss {
-                            SensorZeile(station: modell.station.schluessel)
+                        if modell.phase != .abschluss,
+                           let ruhe = TrackerAnzeige.ruheText(satzZaehler.automatik, aktiv: satzZaehler.automatikAktiv) {
+                            Text(ruhe)
+                                .font(DesignSystem.Typography.fliesstext.monospacedDigit())
+                                .foregroundStyle(DesignSystem.Color.textMuted)
                         }
                         #endif
                         // Sichtbarkeit hier entschieden, nicht in den Komponenten

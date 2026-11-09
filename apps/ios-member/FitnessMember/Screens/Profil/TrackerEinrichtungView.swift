@@ -117,7 +117,7 @@ struct TrackerEinrichtungView: View {
         }
     }
 
-    // MARK: - Für Entwickler (frueher SensorDiagnoseBlatt)
+    // MARK: - Für Entwickler (frueher das Diagnoseblatt im Training)
 
     @ViewBuilder
     private func fuerEntwickler(_ zustand: SensorZustand) -> some View {
