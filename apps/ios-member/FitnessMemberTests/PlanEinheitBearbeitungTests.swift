@@ -81,4 +81,10 @@ struct PlanEinheitBearbeitungTests {
         c.uebernehmen(neueEinheit: einheit(["0", "2", "9"]))
         #expect(c.keys == ["2", "0", "9"])
     }
+
+    @Test func darfBearbeitenNichtWaehrendDieseEinheitLaeuft() {
+        #expect(!PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "A", laufEinheitKey: "A", gebunden: true))
+        #expect(PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "A", laufEinheitKey: "A", gebunden: false))
+        #expect(PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "B", laufEinheitKey: "A", gebunden: true))
+    }
 }

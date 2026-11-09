@@ -10,11 +10,20 @@ import SwiftUI
 /// andere Einheit zu starten, als er zeigt.
 struct PlanEinheitView: View {
     let einheitKey: String
+    let apiClient: APIClient
     let beiTrainingStarten: () -> Void
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @State private var warumOffen = false
+    @State private var bearbeitenOffen = false
+
+    /// E7: nicht, solange an genau dieser Einheit eine Session haengt.
+    private var darfBearbeiten: Bool {
+        PlanEinheitBearbeitung.darfBearbeiten(
+            einheitKey: einheitKey, laufEinheitKey: planAblauf.einheitKey,
+            gebunden: planAblauf.gebundeneSessionId != nil)
+    }
 
     private var plan: Trainingsplan? { PlanAnzeige.plan(bootstrap: katalog.bootstrap) }
 
@@ -34,11 +43,29 @@ struct PlanEinheitView: View {
         .background(DesignSystem.Color.bg)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if darfBearbeiten, plan?.einheiten.contains(where: { $0.key == einheitKey }) == true {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Bearbeiten") { bearbeitenOffen = true }
+                        .foregroundStyle(DesignSystem.Color.text)
+                        .testnotizElement("einheit.bearbeiten", typ: "Button")
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $bearbeitenOffen) {
+            if let einheit = plan?.einheiten.first(where: { $0.key == einheitKey }) {
+                PlanEinheitBearbeitenView(einheit: einheit, apiClient: apiClient) { bearbeitenOffen = false }
+                    .environment(katalog)
+                    .environment(planAblauf)
+                    .environment(videoVorrat)
+            }
+        }
         .testnotizScreen()
     }
 
     @Environment(VerlaufStore.self) private var verlauf
     @Environment(KurseStore.self) private var kurse
+    @Environment(UebungsVideoVorrat.self) private var videoVorrat
 
     /// Wie der Plan-Tab: Zeitzone der Kurswoche, sonst die des ersten Studios.
     private var kalender: Calendar {
@@ -88,7 +115,7 @@ struct PlanEinheitView: View {
                         geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                        Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · REIHENFOLGE EGAL")
+                        Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · IN DIESER REIHENFOLGE")
                             .font(DesignSystem.Typography.label)
                             .tracking(1.5)
                             .foregroundStyle(DesignSystem.Color.textMuted)

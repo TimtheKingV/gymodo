@@ -45,7 +45,7 @@ struct MainTabView: View {
                     case .detail(let sessionId):
                         KursDetailView(sessionId: sessionId)
                     case .einheit(let key):
-                        PlanEinheitView(einheitKey: key, beiTrainingStarten: trainingZeigen)
+                        PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: trainingZeigen)
                     case .sessionDetail(let id):
                         // Fortgesetzt wird im Training-Tab, wie von Home.
                         SessionDetailView(

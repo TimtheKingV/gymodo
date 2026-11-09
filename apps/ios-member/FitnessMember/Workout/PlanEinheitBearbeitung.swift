@@ -13,6 +13,11 @@ struct PlanEinheitBearbeitung: Equatable {
         self.keys = keys
     }
 
+    /// E7: Solange an genau dieser Einheit eine Session hängt, bleibt sie, wie sie ist.
+    static func darfBearbeiten(einheitKey: String, laufEinheitKey: String?, gebunden: Bool) -> Bool {
+        !(gebunden && laufEinheitKey == einheitKey)
+    }
+
     var geaendert: Bool { keys != ausgang }
     var darfEntfernen: Bool { keys.count > 1 }
 
