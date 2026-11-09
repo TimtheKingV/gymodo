@@ -2,6 +2,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/v1/me/plans/route";
 import { POST as acceptPOST } from "@/app/api/v1/me/plans/[id]/accept/route";
 import { POST as swapPOST } from "@/app/api/v1/me/plans/[id]/swap/route";
+import { POST as ordnenPOST } from "@/app/api/v1/me/plans/[id]/ordnen/route";
 import { POST as completePOST } from "@/app/api/v1/workout-sessions/[sessionId]/complete/route";
 import { fromDomainError } from "@/lib/api/respond";
 import { DomainError, zielSchluessel } from "@fitretro/domain";
@@ -20,6 +21,11 @@ const accept = (auth: string | undefined, id: string) =>
 
 const swap = (auth: string | undefined, id: string, rumpf: unknown) =>
   swapPOST(new Request(`${BASIS}/${id}/swap`, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }), {
+    params: Promise.resolve({ id }),
+  });
+
+const ordnen = (auth: string | undefined, id: string, rumpf: unknown) =>
+  ordnenPOST(new Request(`${BASIS}/${id}/ordnen`, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }), {
     params: Promise.resolve({ id }),
   });
 
@@ -315,6 +321,59 @@ describe("/me/plans/[id]/swap", () => {
     const text = String(fehler.mock.calls[0]![0]);
     expect(text).toContain("Merkliste");
     for (const nicht of [pos.exerciseId, "nicht_vorhanden", "gefaellt_nicht", s.voll2]) expect(text).not.toContain(nicht);
+  });
+});
+
+describe("/me/plans/[id]/ordnen", () => {
+  async function aktiverPlan() {
+    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as { id: string };
+    const angenommen = await accept(bearer, plan.id);
+    return (await angenommen.json()) as {
+      id: string;
+      version: number;
+      einheiten: Array<{ key: string; positionen: Array<{ key: string }> }>;
+    };
+  }
+
+  it("401 ohne Token", async () => {
+    expect((await ordnen(undefined, crypto.randomUUID(), {})).status).toBe(401);
+  });
+
+  it("200 mit status aktiv, version +1 und neuer Reihenfolge", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    const neueFolge = einheit.positionen.map((p) => p.key).reverse();
+    const antwort = await ordnen(bearer, plan.id, { einheitKey: einheit.key, positionKeys: neueFolge });
+    expect(antwort.status).toBe(200);
+    const neu = (await antwort.json()) as typeof plan & { status: string };
+    expect(neu).toMatchObject({ status: "aktiv", version: plan.version + 1 });
+    expect(neu.id).not.toBe(plan.id);
+    expect(neu.einheiten.find((e) => e.key === einheit.key)!.positionen.map((p) => p.key)).toEqual(neueFolge);
+  });
+
+  it("422 bei leerer Liste, unbekanntem Schluessel und kaputtem Rumpf", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    for (const positionKeys of [[], ["gibt-es-nicht"]]) {
+      const antwort = await ordnen(bearer, plan.id, { einheitKey: einheit.key, positionKeys });
+      expect(antwort.status).toBe(422);
+      expect(((await antwort.json()) as Fehler).error.code).toBe("validation_failed");
+    }
+    expect((await ordnen(bearer, plan.id, { einheitKey: "A" })).status).toBe(422);
+  });
+
+  it("422 bei ungueltiger Plan-ID", async () => {
+    expect((await ordnen(bearer, "abc", {})).status).toBe(422);
+  });
+
+  it("409 fuer fremden Plan", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    const antwort = await ordnen(fremd, plan.id, {
+      einheitKey: einheit.key,
+      positionKeys: einheit.positionen.map((p) => p.key),
+    });
+    expect(antwort.status).toBe(409);
   });
 });
 
