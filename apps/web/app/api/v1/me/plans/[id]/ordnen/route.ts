@@ -13,20 +13,20 @@ const ordnenSchema = z.object({
 });
 
 /**
- * Ordnet die Positionen einer Einheit neu; fehlende Schluessel werden entfernt. Antwort ist
+ * Ordnet die Positionen einer Einheit neu; fehlende Schlüssel werden entfernt. Antwort ist
  * die neue aktive Version. Fremder oder nicht aktiver Plan: 409 (wie swap, damit fremde IDs
- * nichts verraten); leere, doppelte oder unbekannte Schluessel: 422.
+ * nichts verraten); leere, doppelte oder unbekannte Schlüssel: 422.
  */
 export async function POST(request: Request, { params }: Context): Promise<Response> {
   const client = bearerClientFrom(request);
   if (!client) return errorResponse("unauthorized", "Anmeldung erforderlich.");
   const id = z.string().uuid().safeParse((await params).id);
-  if (!id.success) return errorResponse("validation_failed", "Die Plan-ID ist ungueltig.");
+  if (!id.success) return errorResponse("validation_failed", "Die Plan-ID ist ungültig.");
   let payload: unknown;
   try {
     payload = await request.json();
   } catch {
-    return errorResponse("validation_failed", "Der Rumpf ist kein gueltiges JSON.");
+    return errorResponse("validation_failed", "Der Rumpf ist kein gültiges JSON.");
   }
   const input = ordnenSchema.safeParse(payload);
   if (!input.success) return errorResponse("validation_failed", "Die Reihenfolge ist unvollständig oder ungültig.");

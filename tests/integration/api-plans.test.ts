@@ -331,7 +331,7 @@ describe("/me/plans/[id]/ordnen", () => {
     return (await angenommen.json()) as {
       id: string;
       version: number;
-      einheiten: Array<{ key: string; positionen: Array<{ key: string }> }>;
+      einheiten: Array<{ key: string; geschaetzteMinuten: number; positionen: Array<{ key: string }> }>;
     };
   }
 
@@ -349,6 +349,20 @@ describe("/me/plans/[id]/ordnen", () => {
     expect(neu).toMatchObject({ status: "aktiv", version: plan.version + 1 });
     expect(neu.id).not.toBe(plan.id);
     expect(neu.einheiten.find((e) => e.key === einheit.key)!.positionen.map((p) => p.key)).toEqual(neueFolge);
+  });
+
+  it("200 mit Teilmenge entfernt die fehlende Position und senkt die geschaetzten Minuten", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten.find((e) => e.positionen.length >= 2)!;
+    const keys = einheit.positionen.map((p) => p.key);
+    const behalten = keys.slice(1).reverse();
+    const antwort = await ordnen(bearer, plan.id, { einheitKey: einheit.key, positionKeys: behalten });
+    expect(antwort.status).toBe(200);
+    const neu = (await antwort.json()) as typeof plan;
+    const nachher = neu.einheiten.find((e) => e.key === einheit.key)!;
+    expect(nachher.positionen.map((p) => p.key)).toEqual(behalten);
+    expect(nachher.positionen.map((p) => p.key)).not.toContain(keys[0]);
+    expect(nachher.geschaetzteMinuten).toBeLessThan(einheit.geschaetzteMinuten);
   });
 
   it("422 bei leerer Liste, unbekanntem Schluessel und kaputtem Rumpf", async () => {
