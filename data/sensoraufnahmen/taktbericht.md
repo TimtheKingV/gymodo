@@ -2,7 +2,7 @@
 
 Ziel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSchreiben`.
 
-**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und fünf Trainingstagen (14., 16., 18. und 26.10., 3.11.); die Aussage gilt nur dafür. Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).
+**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und sechs Trainingstagen (14., 16., 18. und 26.10., 3. und 10.11.); die Aussage gilt nur dafür. Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).
 
 Seit der Lückenbehandlung werden Empfangsabstände über 0,5 s und explizite Abrisse getrennt ausgewertet. Hintergrund-Bündelung lässt sich anhand der Empfangszeiten nicht sicher von fehlenden Paketen unterscheiden. Solche Sätze bleiben unsicher; auch zuvor richtige Zahlen können sich ändern. Schwellen und Profile wurden unverändert gelassen.
 
@@ -114,6 +114,30 @@ Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintrag
 | 2026-11-03-1809-01 | kurzhantel | 7 | 7 | 7 | signalSchwach |
 | 2026-11-03-1810-01 | kurzhantel | 4 | 4 | 4 | – |
 
+### Gegenprobe 10.11. – aktuell neu berechnet
+
+| Art | Sätze | exakt | ±1 |
+|---|---|---|---|
+| kurzhantel | 12 | 42 % | 83 % |
+| **gepoolt** | 12 | 42 % | 83 % |
+
+Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintragen eingefroren. Wahrheit sind die in der App gespeicherten Werte (`gemessen` = Live-Zahl bestätigt, `korrigiert` = geändert); eine ausdrückliche Zählbestätigung wie am 26.10. gibt es nicht.
+
+| Ordner | Art | wahr (gespeichert) | App live | Replay aktuell | unsicher |
+|---|---|---|---|---|---|
+| 2026-11-10-1820-01 | kurzhantel | 12 | 12 | 12 | – |
+| 2026-11-10-1822-01 | kurzhantel | 10 | 9 | 9 | – |
+| 2026-11-10-1822-03 | kurzhantel | 5 | 6 | 6 | signalSchwach |
+| 2026-11-10-1823-02 | kurzhantel | 10 | 10 | 10 | – |
+| 2026-11-10-1824-01 | kurzhantel | 9 | 9 | 9 | – |
+| 2026-11-10-1825-02 | kurzhantel | 4 | 3 | 3 | signalSchwach |
+| 2026-11-10-1825-04 | kurzhantel | 10 | 8 | 8 | signalSchwach |
+| 2026-11-10-1826-02 | kurzhantel | 10 | 7 | 7 | – |
+| 2026-11-10-1827-02 | kurzhantel | 4 | 3 | 3 | signalSchwach |
+| 2026-11-10-1828-01 | kurzhantel | 16 | 15 | 15 | – |
+| 2026-11-10-1830-01 | kurzhantel | 16 | 16 | 16 | – |
+| 2026-11-10-1830-03 | kurzhantel | 16 | 16 | 16 | luecke |
+
 ### Sätze außerhalb ±1
 
 | Ordner | Art | Gruppe | wahr | gezählt |
@@ -130,3 +154,5 @@ Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintrag
 | 2026-10-26-1747-04 | kurzhantel | gegenprobe | 16 | 20 |
 | 2026-11-03-1800-01 | kurzhantel | gegenprobe | 20 | 22 |
 | 2026-11-03-1804-01 | kurzhantel | gegenprobe | 15 | 12 |
+| 2026-11-10-1825-04 | kurzhantel | gegenprobe | 10 | 8 |
+| 2026-11-10-1826-02 | kurzhantel | gegenprobe | 10 | 7 |
