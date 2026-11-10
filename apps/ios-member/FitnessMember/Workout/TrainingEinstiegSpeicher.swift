@@ -2,7 +2,8 @@ import Foundation
 
 /// Haelt den Einstieg (E8) der laufenden Session fest, damit ein Neustart
 /// mitten im freien Training nicht wieder an den Plan bindet (Review Focus 5).
-/// Ein Eintrag gilt nur fuer die Session, unter deren ID er steht.
+/// Ein Eintrag gilt nur fuer die Session, unter deren ID er steht; er wird
+/// am Ende nicht geloescht, damit "Fortsetzen" ihn wiederfindet.
 struct TrainingEinstiegSpeicher {
     let defaults: UserDefaults
 
@@ -22,10 +23,5 @@ struct TrainingEinstiegSpeicher {
         guard defaults.string(forKey: Self.schluesselSession) == sessionId.uuidString,
               let roh = defaults.string(forKey: Self.schluesselEinstieg) else { return nil }
         return TrainingEinstieg(rawValue: roh)
-    }
-
-    func loeschen() {
-        defaults.removeObject(forKey: Self.schluesselSession)
-        defaults.removeObject(forKey: Self.schluesselEinstieg)
     }
 }

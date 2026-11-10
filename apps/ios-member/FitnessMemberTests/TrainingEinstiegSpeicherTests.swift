@@ -23,11 +23,13 @@ struct TrainingEinstiegSpeicherTests {
         #expect(sut.laden(sessionId: UUID()) == nil)
     }
 
-    @Test func loeschenVergisstDenEinstieg() {
+    @Test func eineNeueSessionUeberschreibtDenAltenEintrag() {
+        // Am Ende wird nicht geloescht: ein alter Eintrag ist harmlos.
         let sut = speicher()
-        let id = UUID()
-        sut.speichern(.frei, sessionId: id)
-        sut.loeschen()
-        #expect(sut.laden(sessionId: id) == nil)
+        let alt = UUID(), neu = UUID()
+        sut.speichern(.frei, sessionId: alt)
+        sut.speichern(.plan, sessionId: neu)
+        #expect(sut.laden(sessionId: neu) == .plan)
+        #expect(sut.laden(sessionId: alt) == nil)
     }
 }

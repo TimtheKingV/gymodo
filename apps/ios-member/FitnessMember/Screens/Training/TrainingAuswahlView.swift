@@ -143,6 +143,9 @@ struct TrainingAuswahlView: View {
                         meta: "Kurs · \(KursZeit.uhrzeit(beginn, zeitzone: kalender.timeZone.identifier))",
                         kalender: kalender, beiStarten: nil)
                 .opacity(0.5)
+                // Ohne Knopf eine Zeile fuer VoiceOver, mit dem Grund fuers Grau.
+                .accessibilityElement(children: .combine)
+                .accessibilityHint("Kurs – startet nicht hier")
         }
     }
 

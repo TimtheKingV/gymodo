@@ -89,6 +89,12 @@ struct TrainingAuswahlTests {
     @Test func idsSindStabil() {
         #expect(TrainingAuswahlOption.einheit(key: "B", tag: tag(11)).id == "einheit-B")
         #expect(TrainingAuswahlOption.cardio(tag: tag(13)).id == "cardio-2026-11-13")
+        // Final-Review 6: zwei Kurse zur selben Zeit bleiben unterscheidbar.
+        let beginn = Date(timeIntervalSince1970: 1_763_110_800)
+        let yoga = TrainingAuswahlOption.kurs(titel: "Yoga", beginn: beginn, tag: tag(14))
+        let spin = TrainingAuswahlOption.kurs(titel: "Spin", beginn: beginn, tag: tag(14))
+        #expect(yoga.id == "kurs-\(beginn.formatted(.iso8601))-Yoga")
+        #expect(yoga.id != spin.id)
     }
 
     @Test func danachIstNachfolger() {

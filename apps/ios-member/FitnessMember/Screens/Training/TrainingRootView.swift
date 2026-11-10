@@ -337,7 +337,7 @@ struct TrainingRootView: View {
                 if let eingang = pendingTag.consume() { verarbeite(eingang) }
             }
             // Der Einstieg der laufenden Session: beim Erscheinen (Neustart)
-            // zurueckholen, bei einer neuen Session festhalten, am Ende loeschen.
+            // und beim Fortsetzen zurueckholen, bei einer neuen festhalten.
             .onAppear {
                 einstiegAbgleichen(sessionId: sessions.aktiveSession()?.id)
                 wunschVerbrauchen()
@@ -454,17 +454,12 @@ struct TrainingRootView: View {
     // MARK: - Einstieg
 
     /// Gibt es zur Session einen gespeicherten Einstieg, gilt er; sonst wird
-    /// ein gewaehlter (Plan, frei) fuer sie festgehalten. Ohne Session weg damit.
+    /// ein gewaehlter (Plan, frei) fuer sie festgehalten. Endet die Session,
+    /// bleibt der Eintrag stehen: "Fortsetzen" bringt dieselbe ID zurueck und
+    /// mit ihr den Einstieg (TrainingTab.einstiegAbgleichen).
     private func einstiegAbgleichen(sessionId: UUID?) {
-        guard let sessionId else {
-            einstiegSpeicher.loeschen()
-            return
-        }
-        if let gespeichert = einstiegSpeicher.laden(sessionId: sessionId) {
-            einstieg = gespeichert
-        } else if einstieg != .auswahl {
-            einstiegSpeicher.speichern(einstieg, sessionId: sessionId)
-        }
+        einstieg = TrainingTab.einstiegAbgleichen(sessionId: sessionId, aktuell: einstieg,
+                                                  speicher: einstiegSpeicher)
     }
 
     private func wunschVerbrauchen() {
@@ -537,7 +532,12 @@ struct TrainingRootView: View {
                 // Zurueck in die Auswahl, solange noch kein Training laeuft.
                 if plan != nil, session == nil, einstieg != .auswahl {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button { einstieg = .auswahl } label: {
+                        Button {
+                            // Ohne Satz zurueck: ein Vorziehen aus dieser
+                            // Auswahl gilt nicht weiter, auch nicht auf Home/Plan.
+                            planAblauf.vorziehenZuruecknehmen()
+                            einstieg = .auswahl
+                        } label: {
                             Label("Auswahl", systemImage: "chevron.left")
                                 .labelStyle(.titleAndIcon)
                         }

@@ -71,6 +71,27 @@ enum TrainingTab {
         einstieg != .frei
     }
 
+    /// Wechselt die Session-ID (Start, Ende, Fortsetzen, Neustart): ein fuer
+    /// diese ID gespeicherter Einstieg geht vor, sonst bleibt der aktuelle.
+    static func einstiegFuerSession(gespeichert: TrainingEinstieg?,
+                                    aktuell: TrainingEinstieg) -> TrainingEinstieg {
+        gespeichert ?? aktuell
+    }
+
+    /// Der Abgleich beim Wechsel der Session-ID. Ohne Session bleibt der
+    /// Speicher unberuehrt -- "Fortsetzen" holt dieselbe ID zurueck, und mit
+    /// ihr muss `.frei` oder `.plan` wiederkommen. Ein veralteter Eintrag
+    /// schadet nicht: `laden` prueft die ID, `speichern` ueberschreibt.
+    static func einstiegAbgleichen(sessionId: UUID?, aktuell: TrainingEinstieg,
+                                   speicher: TrainingEinstiegSpeicher) -> TrainingEinstieg {
+        guard let sessionId else { return aktuell }
+        let gespeichert = speicher.laden(sessionId: sessionId)
+        if gespeichert == nil, aktuell != .auswahl {
+            speicher.speichern(aktuell, sessionId: sessionId)
+        }
+        return einstiegFuerSession(gespeichert: gespeichert, aktuell: aktuell)
+    }
+
     /// Ein Wunsch von aussen ("Training starten" auf Home oder im Plan) gilt
     /// nur vor einem Training; ein laufendes behaelt seinen Einstieg.
     static func einstiegNachWunsch(_ wunsch: TrainingEinstieg?, aktuell: TrainingEinstieg,

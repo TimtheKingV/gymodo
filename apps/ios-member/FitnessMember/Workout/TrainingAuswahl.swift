@@ -14,7 +14,8 @@ enum TrainingAuswahlOption: Equatable, Identifiable {
         switch self {
         case .einheit(let key, _): "einheit-\(key)"
         case .cardio(let tag): "cardio-\(Self.tagFormat.string(from: tag))"
-        case .kurs(_, let beginn, _): "kurs-\(beginn.formatted(.iso8601))"
+        // Mit Titel: zwei Kurse zur selben Zeit kollidieren sonst im ForEach.
+        case .kurs(let titel, let beginn, _): "kurs-\(beginn.formatted(.iso8601))-\(titel)"
         }
     }
 

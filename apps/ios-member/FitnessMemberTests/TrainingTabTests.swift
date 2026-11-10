@@ -110,4 +110,41 @@ struct TrainingTabTests {
         #expect(TrainingTab.einstiegNachWunsch(nil, aktuell: .auswahl, laeuft: false) == .auswahl)
         #expect(TrainingTab.einstiegNachWunsch(nil, aktuell: .plan, laeuft: true) == .plan)
     }
+
+    @Test func gespeicherterEinstiegGehtVor() {
+        #expect(TrainingTab.einstiegFuerSession(gespeichert: .frei, aktuell: .auswahl) == .frei)
+        #expect(TrainingTab.einstiegFuerSession(gespeichert: .plan, aktuell: .auswahl) == .plan)
+        #expect(TrainingTab.einstiegFuerSession(gespeichert: nil, aktuell: .frei) == .frei)
+        #expect(TrainingTab.einstiegFuerSession(gespeichert: nil, aktuell: .auswahl) == .auswahl)
+    }
+
+    /// Final-Review Finding 1: Ende, dann "Fortsetzen" mit derselben ID --
+    /// das freie Training bindet danach nicht an den Plan.
+    @Test func fortsetzenHoltDenFreienEinstiegZurueck() {
+        let speicher = TrainingEinstiegSpeicher(
+            defaults: UserDefaults(suiteName: "einstieg-tab-\(UUID().uuidString)")!)
+        let id = UUID()
+        // Start im freien Training: festgehalten.
+        var einstieg = TrainingTab.einstiegAbgleichen(sessionId: id, aktuell: .frei, speicher: speicher)
+        #expect(einstieg == .frei)
+        // Session endet: die Wurzel springt auf die Auswahl, die ID wird nil.
+        einstieg = .auswahl
+        einstieg = TrainingTab.einstiegAbgleichen(sessionId: nil, aktuell: einstieg, speicher: speicher)
+        #expect(einstieg == .auswahl)
+        // Fortsetzen: dieselbe ID kommt zurueck -- und mit ihr .frei.
+        einstieg = TrainingTab.einstiegAbgleichen(sessionId: id, aktuell: einstieg, speicher: speicher)
+        #expect(einstieg == .frei)
+        #expect(TrainingTab.zeigtPlankarte(einstieg: einstieg) == false)
+    }
+
+    @Test func eineNeueSessionNimmtDenGewaehltenEinstieg() {
+        let speicher = TrainingEinstiegSpeicher(
+            defaults: UserDefaults(suiteName: "einstieg-tab-\(UUID().uuidString)")!)
+        let alt = UUID(), neu = UUID()
+        _ = TrainingTab.einstiegAbgleichen(sessionId: alt, aktuell: .frei, speicher: speicher)
+        _ = TrainingTab.einstiegAbgleichen(sessionId: nil, aktuell: .auswahl, speicher: speicher)
+        // Der alte Eintrag stoert die neue Session nicht.
+        #expect(TrainingTab.einstiegAbgleichen(sessionId: neu, aktuell: .plan, speicher: speicher) == .plan)
+        #expect(speicher.laden(sessionId: neu) == .plan)
+    }
 }
