@@ -600,4 +600,122 @@ struct TrainingsplanAblaufStoreTests {
         #expect(geladen.ausgelassen == [])
         #expect(geladen.einheitKey == "A")
     }
+
+    // MARK: - Einheit vorziehen
+
+    @Test func vorziehenStartetGewaehlteEinheit() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+
+        let ok = sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(ok)
+        #expect(sut.einheitKey == "B")
+        #expect(sut.naechsteEinheitKey == "B")
+        #expect(sut.vorgezogenerKey == "B")
+        #expect(sut.zustand?.positionen.map(\.key) == ["B0"])
+    }
+
+    @Test func vorziehenMitGebundenerSessionVerweigert() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
+
+        let ok = sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(!ok)
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func vorziehenUnbekannterKey() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+
+        #expect(!sut.vorziehen(einheitKey: "Z", jetzt: Self.jetzt))
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func nachBeendetGiltFolgeDesVorgezogenen() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: AblaufSatz(exerciseId: "e3", hauptmuskeln: ["quads"], cardio: false),
+                         jetzt: Self.jetzt)
+
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.naechsteEinheitKey == "A")
+    }
+
+    @Test func vorzugVerfaellt() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorbereiten(plan: Self.plan(naechste: "A"),
+                        jetzt: Self.jetzt.addingTimeInterval(TrainingsplanAblaufStore.verfallOhneSatz + 1))
+
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func neueVersionBehaeltVorzug() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, naechste: "A"),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.planId == "p2")
+        #expect(sut.einheitKey == "B")
+        #expect(sut.zustand?.positionen.map(\.key) == ["B0"])
+    }
+
+    @Test func vorziehenZuruecknehmenKehrtZurFolgeZurueck() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorziehenZuruecknehmen(jetzt: Self.jetzt)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.einheitKey == "A")
+    }
+
+    @Test func resetLeertDenVorzug() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.reset()
+
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func vorzugUeberlebtNeustart() {
+        let verzeichnis = Self.verzeichnis()
+        let sut = Self.store(verzeichnis)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(Self.store(verzeichnis).vorgezogenerKey == "B")
+    }
+
+    @Test func alteDateiOhneVorzugLesbar() throws {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(), jetzt: Self.jetzt)
+        let datei = PlanAblaufDatei(vorlage: PlanVorlage(Self.plan()), lauf: nil, lokalZuletzt: nil, zuletztBeendet: nil)
+        var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(datei)) as? [String: Any])
+        json.removeValue(forKey: "vorgezogen")
+        let alt = try JSONSerialization.data(withJSONObject: json)
+
+        let geladen = try JSONDecoder().decode(PlanAblaufDatei.self, from: alt)
+
+        #expect(geladen.vorgezogen == nil)
+        #expect(geladen.vorlage?.planId == "p1")
+    }
 }
