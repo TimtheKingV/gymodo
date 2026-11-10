@@ -50,10 +50,12 @@ struct PlanEinheitBearbeitung: Equatable {
     }
 
     /// Nach einem Tausch: Reihenfolge behalten, verschwundene Schlüssel raus,
-    /// neue hinten an. Der Ausgangsstand bleibt, sodass `geaendert` ehrlich bleibt.
+    /// neue hinten an. Hier entfernte Schlüssel führt der Server bis "Fertig"
+    /// noch -- sie sind nicht neu und bleiben draußen. Der Ausgangsstand bleibt,
+    /// sodass `geaendert` ehrlich bleibt.
     mutating func uebernehmen(neueEinheit: TrainingsplanEinheit) {
         let neu = neueEinheit.positionen.map(\.key)
         let behalten = keys.filter(neu.contains)
-        keys = behalten + neu.filter { !behalten.contains($0) }
+        keys = behalten + neu.filter { !behalten.contains($0) && !ausgang.contains($0) }
     }
 }

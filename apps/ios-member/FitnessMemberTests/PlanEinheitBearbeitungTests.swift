@@ -82,6 +82,16 @@ struct PlanEinheitBearbeitungTests {
         #expect(c.keys == ["2", "0", "9"])
     }
 
+    /// Der Server führt eine entfernte Position bis "Fertig" noch; ein Tausch
+    /// dazwischen darf sie nicht zurückholen.
+    @Test func uebernehmenHoltEntfernteNichtZurueck() {
+        var b = PlanEinheitBearbeitung(einheit: einheit(["0", "1", "2"]))
+        b.entfernen([1])
+        b.uebernehmen(neueEinheit: einheit(["0", "1", "2"]))
+        #expect(b.keys == ["0", "2"])
+        #expect(b.geaendert)
+    }
+
     @Test func darfBearbeitenNichtWaehrendDieseEinheitLaeuft() {
         #expect(!PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "A", laufEinheitKey: "A", gebunden: true))
         #expect(PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "A", laufEinheitKey: "A", gebunden: false))
