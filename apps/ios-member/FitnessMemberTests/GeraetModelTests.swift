@@ -2965,6 +2965,70 @@ extension GeraetModelTests {
         sut.screenVerlassen()
     }
 
+    // MARK: - Zirkel: der Sensor gehoert der Station, die dran ist (Testnotiz 10.11. #2)
+
+    private func echterZaehler() -> ZaehlerKoordinator {
+        let quelle = AttrappenQuelle()
+        quelle.zustand = ZaehlerKoordinatorTests.verbunden
+        return ZaehlerKoordinator(quelle: quelle, einstellungen: UserDefaults(suiteName: UUID().uuidString)!)
+    }
+
+    /// 10.11.: nach jedem Stationswechsel lief das .task des alten Screens
+    /// erneut. Dessen Modell stand noch in .eingabe, nahm Zaehler und
+    /// Aufnahme zurueck und verwarf danach jedes Automatik-Ereignis.
+    @Test func gesicherteZirkelStationNimmtDenZaehlerNichtZurueck() async {
+        let zaehler = echterZaehler()
+        let spionA = MitschnittSpion()
+        let a = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                       mitschnitt: spionA, zaehler: zaehler,
+                       startwerte: Startwerte(belastung: 40, umfang: 10, nebenbelastung: nil), mitCountdown: false)
+        a.beiZirkelSatzGesichert = {}
+        a.geraetGeoeffnet()
+        await a.satzSichern(problemFlag: false, problemReason: nil)
+        let b = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                       mitschnitt: MitschnittSpion(), zaehler: zaehler,
+                       startwerte: Startwerte(belastung: 40, umfang: 10, nebenbelastung: nil), mitCountdown: false)
+        b.beiZirkelSatzGesichert = {}
+        b.geraetGeoeffnet()
+
+        a.geraetGeoeffnet()
+
+        #expect(zaehler.aktivesModell === b)
+        #expect(spionA.eingaben == 1)
+    }
+
+    /// Ein im ViewBuilder neu gebautes Modell einer alten Zirkel-Route hat
+    /// noch nichts gesichert -- nur der Slot sagt, dass es nicht dran ist.
+    @Test func zirkelStationAusserhalbIhresSlotsBeginntKeinenMitschnitt() {
+        let zaehler = echterZaehler()
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         mitschnitt: spion, zaehler: zaehler,
+                         startwerte: Startwerte(belastung: 40, umfang: 10, nebenbelastung: nil), mitCountdown: false)
+        sut.beiZirkelSatzGesichert = {}
+        sut.zirkelSlotAktiv = { false }
+
+        sut.geraetGeoeffnet()
+
+        #expect(spion.eingaben == 0)
+        #expect(zaehler.aktivesModell == nil)
+    }
+
+    @Test func zirkelStationImSlotBeginntWieBisher() {
+        let zaehler = echterZaehler()
+        let spion = MitschnittSpion()
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: GeraetTestdaten.bootstrap(lastSets: []),
+                         mitschnitt: spion, zaehler: zaehler,
+                         startwerte: Startwerte(belastung: 40, umfang: 10, nebenbelastung: nil), mitCountdown: false)
+        sut.beiZirkelSatzGesichert = {}
+        sut.zirkelSlotAktiv = { true }
+
+        sut.geraetGeoeffnet()
+
+        #expect(spion.eingaben == 1)
+        #expect(zaehler.aktivesModell === sut)
+    }
+
     /// Review Focus 2 ueber den echten Schalter: ZaehlerKoordinator.automatikAktiv
     /// erreicht das laufende Modell, das Rad bleibt stehen, der Satz geht
     /// von Hand als eingegeben raus.
