@@ -17,9 +17,9 @@ enum HomeSerieAuswahl: Equatable {
 ///
 /// **Antippbar ist, was etwas zu zeigen hat** (`HomeSerie.tippZiel`): ein
 /// vergangener Tag oder heute mit Einheit oder eigenem Kurs klappt ihn
-/// darunter auf (und wieder zu); ein kuenftiger Tag mit Planmarke, oder
-/// heute mit Marke und ohne Inhalt, fuehrt in den Plan-Tab auf genau diesen
-/// Tag. Ein Tag ohne beides tut nichts.
+/// darunter auf (und wieder zu); ein kuenftiger Tag mit Planmarke zeigt
+/// seine Plantermine darunter (`beiPlanAuswahl`, E1) -- Home bleibt Home,
+/// in den Plan geht es nur ueber "Im Plan". Ein Tag ohne beides tut nichts.
 ///
 /// **Er ist der Zugang zum Verlauf.** Die fruehere Liste "Letzte
 /// Trainings" ist weggefallen: sie zeigte dieselben Karten noch einmal,
@@ -66,9 +66,10 @@ struct HomeSerieView: View {
     var beiKursAuswahl: (String) -> Void = { _ in }
     /// Planmarken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`); leer ohne Plan.
     var geplant: [String: PlanTagMarke.Art] = [:]
-    /// Tipp auf heute oder einen kuenftigen Tag mit Marke: die Tages-Id, der
-    /// Aufrufer springt in den Plan-Tab (`PlanSprung.tag`).
-    var beiPlanTag: (String) -> Void = { _ in }
+    /// Der gewaehlte Plantag (`HomeSerieTipp.planZeigen`): seine Tages-Id,
+    /// der Aufrufer zeigt darunter dessen Termine. nil beim Zuklappen, bei
+    /// Auswahl eines anderen Tages oder wenn der Tag seine Marke verliert.
+    var beiPlanAuswahl: (String?) -> Void = { _ in }
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
 
@@ -108,6 +109,11 @@ struct HomeSerieView: View {
             }
         }
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
+        // Faellt die Auswahl zurueck (der Tag verliert seine Marke, die
+        // Woche wechselt), steht sonst unten noch der alte Plantag.
+        .onChange(of: planTag(gewaehlt, wochentage: wochentage)) { _, neu in
+            if neu == nil { beiPlanAuswahl(nil) }
+        }
     }
 }
 
@@ -126,7 +132,9 @@ private extension HomeSerieView {
         case .keiner:
             return nil
         case .tag(let id):
-            return hatInhalt(id) ? id : vorgabe(wochentage)
+            // Ein Plantag bleibt gewaehlt auch ohne Trainings oder Kurse:
+            // er zeigt seine Termine unter dem Streifen (HomeRootView).
+            return hatInhalt(id) || geplant[id] != nil ? id : vorgabe(wochentage)
         case .vorgabe:
             return vorgabe(wochentage)
         }
@@ -160,14 +168,20 @@ private extension HomeSerieView {
         HomeSerie.tippZiel(tag, heute: stand.today, hatInhalt: hatInhalt(tag.id))
     }
 
-    /// Derselbe Tag noch einmal klappt ihn wieder zu; ein Plantag springt
-    /// in den Plan-Tab.
+    /// Derselbe Tag noch einmal klappt ihn wieder zu. Ein Plantag meldet
+    /// sich beim Aufrufer, jeder andere Tipp (zuklappen, vergangener Tag)
+    /// meldet nil.
     func auswaehlen(_ tag: HomeSerieTag, gewaehlt: String?) {
-        if tippZiel(tag) == .planTag {
-            beiPlanTag(tag.id)
-            return
-        }
-        auswahl = gewaehlt == tag.id ? .keiner : .tag(tag.id)
+        let zuklappen = gewaehlt == tag.id
+        auswahl = zuklappen ? .keiner : .tag(tag.id)
+        beiPlanAuswahl(!zuklappen && tippZiel(tag) == .planZeigen ? tag.id : nil)
+    }
+
+    /// Die gewaehlte Tages-Id, wenn sie ein Plantag ist; sonst nil.
+    func planTag(_ gewaehlt: String?, wochentage: [HomeSerieTag]) -> String? {
+        guard let gewaehlt, let tag = wochentage.first(where: { $0.id == gewaehlt }),
+              tippZiel(tag) == .planZeigen else { return nil }
+        return gewaehlt
     }
 }
 
@@ -244,7 +258,7 @@ private extension HomeSerieView {
                     }
                     .buttonStyle(PressButtonStyle())
                     .accessibilityLabel(tagLabel(tag))
-                    .accessibilityHint(ziel == .planTag ? "Öffnet den Tag im Plan." : "Zeigt Trainings und Kurse des Tages.")
+                    .accessibilityHint(ziel == .planZeigen ? "Zeigt die geplanten Termine des Tages." : "Zeigt Trainings und Kurse des Tages.")
                     .accessibilityAddTraits(tag.id == gewaehlt ? .isSelected : [])
                 } else {
                     wochenzelle(tag, gewaehlt: gewaehlt)

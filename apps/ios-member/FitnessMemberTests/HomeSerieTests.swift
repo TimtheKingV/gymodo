@@ -449,11 +449,12 @@ struct HomeSerieTests {
         ])
     }
 
-    @Test func kuenftigerTagMitMarkeWaehlbar() {
+    /// E1: ein kuenftiger Tag mit Marke bleibt auf Home und zeigt seine Termine.
+    @Test func kuenftigerTagMitMarkeZeigtPlan() {
         let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-06": .einheit, "2026-11-05": .einheit])
-        // Freitag (kuenftig) mit Marke: Sprung in den Plan, auch mit eigenem Kurs.
-        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planTag)
-        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planTag)
+        // Freitag (kuenftig) mit Marke: Termine darunter, auch mit eigenem Kurs.
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planZeigen)
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planZeigen)
     }
 
     /// R8: die Trainings von heute bleiben auf Home erreichbar.
@@ -462,9 +463,20 @@ struct HomeSerieTests {
         #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
     }
 
-    @Test func heuteMitMarkeOhneInhaltSpringtInDenPlan() {
+    /// Heute steht schon in "Nächste Einheit" -- keine doppelte Information.
+    @Test func heuteMitMarkeOhneInhaltNichtAntippbar() {
         let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .einheit])
-        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == .planTag)
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == nil)
+    }
+
+    @Test func naechsteEinheitNurOhneGewaehltenPlantag() {
+        #expect(HomeSerie.zeigtNaechsteEinheit(planTagId: nil) == true)
+        #expect(HomeSerie.zeigtNaechsteEinheit(planTagId: "2026-11-06") == false)
+    }
+
+    @Test func plantagKopfNenntTagUndGeplant() {
+        #expect(HomePlanTagAbschnitt.kopfText(Self.planTag(11, 11), kalender: Self.planKalender)
+            == "MITTWOCH, 11. NOV · GEPLANT")
     }
 
     @Test func kuenftigerTagOhneMarkeNicht() {

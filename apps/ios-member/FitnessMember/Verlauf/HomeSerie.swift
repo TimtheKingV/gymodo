@@ -36,8 +36,9 @@ struct HomeSerieTag: Identifiable, Equatable {
 enum HomeSerieTipp: Equatable {
     /// Die Trainings und Kurse des Tages darunter zeigen.
     case ausklappen
-    /// In den Plan-Tab auf genau diesen Tag springen (`PlanSprung.tag`).
-    case planTag
+    /// Die Plantermine des Tages darunter zeigen (`HomePlanTagAbschnitt`).
+    /// Home bleibt Home; in den Plan geht es nur ueber "Im Plan" (E1).
+    case planZeigen
 }
 
 /// Die reinen Ableitungen des Home-Kalenders -- getrennt vom View,
@@ -159,16 +160,22 @@ enum HomeSerie {
         return ergebnis
     }
 
-    /// Ein Tag mit Inhalt (Einheit oder eigener Kurs) klappt ihn auf -- auch
-    /// heute, sonst waeren die Trainings von heute auf Home nicht mehr zu
-    /// erreichen (R8). Ohne Inhalt fuehrt heute oder ein kuenftiger Tag mit
-    /// Planmarke in den Plan-Tab; kuenftige Tage mit Marke immer.
+    /// Ein kuenftiger Tag mit Planmarke zeigt seine Termine darunter (E1),
+    /// auch mit eigenem Kurs. Sonst klappt ein Tag mit Inhalt (Einheit oder
+    /// eigener Kurs) ihn auf -- auch heute, sonst waeren die Trainings von
+    /// heute auf Home nicht mehr zu erreichen (R8). Heute ohne Inhalt ist
+    /// kein Knopf: was heute dran ist, steht schon in "Nächste Einheit".
     /// nil = kein Knopf. Die Ids sind "yyyy-MM-dd" und vergleichen sich als Text.
     static func tippZiel(_ tag: HomeSerieTag, heute: String, hatInhalt: Bool) -> HomeSerieTipp? {
         guard !tag.ausserhalb else { return nil }
-        if tag.id > heute, tag.geplant != nil { return .planTag }
-        if hatInhalt { return .ausklappen }
-        return tag.id == heute && tag.geplant != nil ? .planTag : nil
+        if tag.id > heute, tag.geplant != nil { return .planZeigen }
+        return hatInhalt ? .ausklappen : nil
+    }
+
+    /// "Nächste Einheit" steht nur, solange kein Plantag gewaehlt ist --
+    /// sonst steht an ihrer Stelle der Abschnitt dieses Tages.
+    static func zeigtNaechsteEinheit(planTagId: String?) -> Bool {
+        planTagId == nil
     }
 
     /// Das Monatsgitter um einen Tag herum -- volle Wochen von Montag bis

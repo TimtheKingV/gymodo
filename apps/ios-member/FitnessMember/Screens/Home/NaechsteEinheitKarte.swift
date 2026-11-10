@@ -3,8 +3,9 @@ import SwiftUI
 /// "NÄCHSTE EINHEIT" auf Home (Spec 1.1): der naechste Termin des Plans mit
 /// Name und Tag. Ersetzt "Heute dran" und "Als nächstes". Eine Einheit steht
 /// als `EinheitKarte`, ein Kurs oder Cardio als die kurze Zeile des Plan-Tabs
-/// (`PlanTerminZeile`). Tippen fuehrt in den Plan-Tab; "Training starten" gibt
-/// es nur am geplanten Tag -- Vorziehen geht ueber Plan- oder Training-Tab.
+/// (`PlanTerminZeile`). Tippen auf die Einheit oeffnet sie im Home-Stack (E2),
+/// Kurs und Cardio fuehren in den Plan-Tab; "Training starten" gibt es nur am
+/// geplanten Tag -- Vorziehen geht ueber die Einheit oder den Training-Tab.
 struct NaechsteEinheitKarte: View {
     let termin: (tag: Date, termin: PlanTermin)
     /// Fuer eine Einheit; nil bei Kurs und Cardio.
@@ -37,7 +38,7 @@ struct NaechsteEinheitKarte: View {
             if let modell {
                 EinheitKarte(
                     modell: modell, geschlecht: geschlecht, kalender: kalender,
-                    beiTipp: beiTippen, hinweis: "Zeigt die Einheit im Plan",
+                    beiTipp: beiTippen, hinweis: "Zeigt die Übungen der Einheit",
                     aktion: istHeute
                         ? (titel: laeuft ? "Weiter trainieren" : "Training starten",
                            label: "\(modell.titel) \(laeuft ? "weiter trainieren" : "starten")",
