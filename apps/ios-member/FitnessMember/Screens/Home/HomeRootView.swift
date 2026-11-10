@@ -409,6 +409,8 @@ private extension HomeRootView {
                 muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap), geschlecht: geschlecht,
                 kalender: kalender,
                 cardioArten: katalog.bootstrap?.member.trainingProfile?.cardioArten ?? [],
+                eigeneKurse: eigeneKurse?.termine ?? [],
+                beiKurs: { pfad.append(.kursDetail(sessionId: $0)) },
                 beiEinheit: { pfad.append(.einheit(key: $0)) },
                 beiPlanZeigen: beiPlanZeigen)
         } else {

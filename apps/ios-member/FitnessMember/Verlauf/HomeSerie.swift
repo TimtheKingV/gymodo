@@ -178,6 +178,14 @@ enum HomeSerie {
         planTagId == nil
     }
 
+    /// Eine Stelle je Tag: am gewaehlten kuenftigen Tag mit Planmarke zeigt
+    /// nur `HomePlanTagAbschnitt` die Termine (auch eigene Kurse), die
+    /// Tagesliste unter dem Streifen entfaellt. Vergangene Tage und heute
+    /// behalten sie.
+    static func zeigtTagesliste(tagId: String, heute: String, geplant: [String: PlanTagMarke.Art]) -> Bool {
+        !(tagId > heute && geplant[tagId] != nil)
+    }
+
     /// Das Monatsgitter um einen Tag herum -- volle Wochen von Montag bis
     /// Sonntag, so viele Zeilen wie der Monat braucht (vier bis sechs).
     ///

@@ -22,9 +22,16 @@ struct HomePlanTagAbschnitt: View {
     /// Die Cardio-Arten aus dem Trainingsprofil -- `PlanKalender.termine`
     /// laesst sie leer, wie im Plan-Tab reicht sie der Aufrufer nach.
     var cardioArten: [String] = []
+    /// Die eigenen Kursbuchungen (`GespeicherteBuchungen.termine`): ein Kurs
+    /// des Plans oeffnet so sein Detail im Home-Stack (`beiKurs`).
+    var eigeneKurse: [GespeicherterTermin] = []
+    /// Tipp auf einen Kurs mit gefundener Buchung: die sessionId, der
+    /// Aufrufer pusht `HomeRoute.kursDetail`.
+    var beiKurs: (String) -> Void = { _ in }
     /// Tipp auf eine Einheitenkarte: der Aufrufer pusht `HomeRoute.einheit`.
     let beiEinheit: (String) -> Void
-    /// "Im Plan", Kurs und Cardio: in den Plan-Tab auf genau diesen Tag.
+    /// "Im Plan", Cardio und ein Kurs ohne eigene Buchung: in den Plan-Tab
+    /// auf genau diesen Tag.
     let beiPlanZeigen: (PlanSprung) -> Void
 
     var body: some View {
@@ -39,8 +46,18 @@ struct HomePlanTagAbschnitt: View {
 
     /// "MITTWOCH, 11. NOV · GEPLANT" -- derselbe Tagestext wie "Nächste
     /// Einheit" und "Als nächstes" im Plan-Tab (`PlanRootView.tagKurz`).
-    static func kopfText(_ tag: Date, kalender: Calendar) -> String {
+    nonisolated static func kopfText(_ tag: Date, kalender: Calendar) -> String {
         "\(PlanRootView.tagKurz(tag, kalender: kalender).uppercased()) · GEPLANT"
+    }
+
+    /// Die eigene Buchung zu einem Kurs des Plans: gleicher Beginn, bei
+    /// mehreren der gleiche Name. Das Modell (`PlanTermin.kurs`) traegt keine
+    /// sessionId. nil = keine eindeutige Buchung, dann geht es in den Plan.
+    /// `nonisolated`: reine Rechnung, auch ausserhalb des Main Actors (Tests).
+    nonisolated static func kursSessionId(titel: String, beginn: Date, eigene: [GespeicherterTermin]) -> String? {
+        let gleichzeitig = eigene.filter { Zeitpunkt.parse($0.startsAt) == beginn }
+        if let genau = gleichzeitig.first(where: { $0.name == titel }) { return genau.sessionId }
+        return gleichzeitig.count == 1 ? gleichzeitig[0].sessionId : nil
     }
 
     private var kopf: some View {
@@ -83,13 +100,16 @@ struct HomePlanTagAbschnitt: View {
                     hinweis: "Zeigt die Übungen der Einheit")
             }
         case .kurs(let titel, let beginn, _, _):
-            Button { beiPlanZeigen(.tag(tag)) } label: {
+            let sessionId = Self.kursSessionId(titel: titel, beginn: beginn, eigene: eigeneKurse)
+            Button {
+                if let sessionId { beiKurs(sessionId) } else { beiPlanZeigen(.tag(tag)) }
+            } label: {
                 PlanTerminZeile(
                     kaestchen: AnyView(PlanKursKaestchen()), titel: titel,
                     tag: KursZeit.uhrzeit(beginn, zeitzone: kalender.timeZone.identifier))
             }
             .buttonStyle(PressButtonStyle())
-            .accessibilityHint("Öffnet den Tag im Plan")
+            .accessibilityHint(sessionId != nil ? "Zeigt den Kurs" : "Öffnet den Tag im Plan")
         case .cardio:
             Button { beiPlanZeigen(.tag(tag)) } label: {
                 PlanTerminZeile(kaestchen: AnyView(PlanCardioKaestchen()), titel: "Cardio", tag: CardioArtName.zeile(cardioArten))

@@ -474,6 +474,41 @@ struct HomeSerieTests {
         #expect(HomeSerie.zeigtNaechsteEinheit(planTagId: "2026-11-06") == false)
     }
 
+    /// Eine Stelle je Tag: am gewaehlten kuenftigen Plantag zeigt nur der
+    /// Plan-Abschnitt die Termine, nicht zusaetzlich die Tagesliste.
+    @Test func tageslisteNichtAmKuenftigenPlantag() {
+        let geplant: [String: PlanTagMarke.Art] = ["2026-11-06": .kurs, "2026-11-05": .einheit, "2026-11-03": .verpasst]
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-06", heute: "2026-11-05", geplant: geplant) == false)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-07", heute: "2026-11-05", geplant: geplant) == true)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-05", heute: "2026-11-05", geplant: geplant) == true)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-03", heute: "2026-11-05", geplant: geplant) == true)
+    }
+
+    private static func eigenerKurs(_ id: String, name: String, beginn: Date) -> GespeicherterTermin {
+        GespeicherterTermin(CourseWeekSession(
+            sessionId: id, templateId: "t", name: name, description: nil,
+            startsAt: ISO8601DateFormatter().string(from: beginn),
+            localDay: "2026-11-06", durationMin: 60, capacity: 16, room: nil, instructorName: nil,
+            status: "planned", bookedCount: 1, waitlistCount: 0, freeSeats: 15,
+            ownStatus: "booked", ownBookingId: "b-\(id)", ownWaitlistPosition: nil))
+    }
+
+    @Test func kursZeileFindetEigeneBuchungUeberBeginn() {
+        let neun = Self.planKalender.date(byAdding: .hour, value: 9, to: Self.planTag(11, 6))!
+        let achtzehn = Self.planKalender.date(byAdding: .hour, value: 18, to: Self.planTag(11, 6))!
+        let eigene = [
+            Self.eigenerKurs("k1", name: "Zirkel", beginn: neun),
+            Self.eigenerKurs("k2", name: "Yoga", beginn: achtzehn),
+        ]
+        #expect(HomePlanTagAbschnitt.kursSessionId(titel: "Yoga", beginn: achtzehn, eigene: eigene) == "k2")
+        // Gleicher Beginn, anderer Name: der Name entscheidet.
+        let doppelt = eigene + [Self.eigenerKurs("k3", name: "Pilates", beginn: achtzehn)]
+        #expect(HomePlanTagAbschnitt.kursSessionId(titel: "Pilates", beginn: achtzehn, eigene: doppelt) == "k3")
+        // Keine passende Buchung: kein Treffer, der Aufrufer springt in den Plan.
+        #expect(HomePlanTagAbschnitt.kursSessionId(
+            titel: "Yoga", beginn: achtzehn.addingTimeInterval(3600), eigene: eigene) == nil)
+    }
+
     @Test func plantagKopfNenntTagUndGeplant() {
         #expect(HomePlanTagAbschnitt.kopfText(Self.planTag(11, 11), kalender: Self.planKalender)
             == "MITTWOCH, 11. NOV · GEPLANT")

@@ -102,17 +102,21 @@ struct HomeSerieView: View {
                 zielzeile(wochentage, ziel: wochenziel)
             }
 
-            if let gewaehlt, hatInhalt(gewaehlt) {
+            if let gewaehlt, hatInhalt(gewaehlt),
+               HomeSerie.zeigtTagesliste(tagId: gewaehlt, heute: stand.today, geplant: geplant) {
                 tagesliste(tagId: gewaehlt,
                            einheiten: einheitenJeTag[gewaehlt] ?? [],
                            kurse: kurseJeTag[gewaehlt] ?? [])
             }
         }
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
-        // Faellt die Auswahl zurueck (der Tag verliert seine Marke, die
-        // Woche wechselt), steht sonst unten noch der alte Plantag.
+        // Der Aufrufer folgt der Auswahl in beide Richtungen: faellt sie
+        // zurueck (der Tag verliert seine Marke, die Woche wechselt), stuende
+        // sonst unten noch der alte Plantag; kommt die Marke eines schon
+        // gewaehlten Tages spaeter (Plan oder Kurse nachgeladen), fehlte der
+        // Abschnitt.
         .onChange(of: planTag(gewaehlt, wochentage: wochentage)) { _, neu in
-            if neu == nil { beiPlanAuswahl(nil) }
+            beiPlanAuswahl(neu)
         }
     }
 }
