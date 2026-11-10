@@ -1005,9 +1005,7 @@ final class GeraetModel {
     /// Cardio-Werte oder die Belastung mit Einheit. nil nur ohne Historie
     /// (ein Cardio-Satz hat keine Belastung, ist aber keine "Noch nie").
     func letzterSatzText(fuer uebungId: String) -> String? {
-        guard let letzter = letzterSatz(fuer: uebungId) else { return nil }
-        if let cardio = letzter.cardio { return Zahlformat.cardio(cardio) }
-        return letzter.load.map { Zahlformat.belastungMitEinheit($0, loadUnit) }
+        letzterSatz(fuer: uebungId).flatMap { UebungsHistorie.wert($0, loadUnit: loadUnit) }
     }
 
     func letzteBelastung(fuer uebungId: String) -> Double? {
@@ -1019,9 +1017,7 @@ final class GeraetModel {
     /// Scheiben auflegt. nil ohne Historie oder wenn performedAt sich nicht
     /// parsen laesst; die Zeile zeigt dann nur die Belastung.
     func letzteNutzungInTagen(fuer uebungId: String) -> Int? {
-        guard let letzter = letzterSatz(fuer: uebungId),
-              let datum = ISO8601DateFormatter().date(from: letzter.performedAt) else { return nil }
-        return Calendar.current.dateComponents([.day], from: datum, to: Date()).day
+        letzterSatz(fuer: uebungId).flatMap { UebungsHistorie.tage(seit: $0, jetzt: Date()) }
     }
 
     /// Der Dreischritt laeuft genau einmal je Geraet UND Uebung -- deshalb
@@ -1153,16 +1149,7 @@ final class GeraetModel {
     /// Statisch, weil init sie braucht, bevor alle Eigenschaften stehen.
     private static func letzterSatz(an station: Station, uebungId: String,
                                     in bootstrap: BootstrapResponse) -> LetzterSatz? {
-        switch station.art {
-        case .geraet(let machineId):
-            bootstrap.lastSets.first { $0.machineId == machineId && $0.exerciseId == uebungId }
-                .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
-        case .typ(let equipmentModelId):
-            bootstrap.lastTypeSets.first { $0.equipmentModelId == equipmentModelId && $0.exerciseId == uebungId }
-                .map { LetzterSatz(load: $0.load, secondaryLoad: $0.secondaryLoad,
-                                   volume: $0.volume, cardio: $0.cardio, performedAt: $0.performedAt) }
-        }
+        UebungsHistorie.letzterSatz(an: station, uebungId: uebungId, in: bootstrap)
     }
 
     /// Der juengste Satz dieser Uebung an DIESER Station in der laufenden
