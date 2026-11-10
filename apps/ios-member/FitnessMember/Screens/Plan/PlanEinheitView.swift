@@ -61,6 +61,20 @@ struct PlanEinheitView: View {
                     .environment(katalog)
                     .environment(planAblauf)
                     .environment(videoVorrat)
+            } else {
+                // Die Einheit ist weg (neuer Plan): nie ein leeres Cover ohne Ausweg.
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                    Text("Diese Einheit gibt es in deinem Plan nicht mehr.")
+                        .font(.system(size: 15))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Schließen") { bearbeitenOffen = false }
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.accent)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(DesignSystem.Color.bg)
             }
         }
         .testnotizScreen()

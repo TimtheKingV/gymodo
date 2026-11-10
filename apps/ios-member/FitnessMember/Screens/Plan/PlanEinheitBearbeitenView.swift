@@ -20,6 +20,9 @@ struct PlanEinheitBearbeitenView: View {
     @State private var schreibt = false
     @State private var fehler: APIError?
     @State private var verwerfenFragen = false
+    /// Ein Tausch ist schon geschrieben (E5) -- "Abbrechen" nimmt ihn nicht
+    /// zurueck, deshalb heisst der Knopf danach "Schließen" (Final-Review 3).
+    @State private var hatGetauscht = false
     @State private var ersetzen: ErsatzZiel?
     @State private var vorschauLader = VorschauLader(ablage: .fotos)
     @State private var fotos: [String: URL] = [:]
@@ -45,10 +48,21 @@ struct PlanEinheitBearbeitenView: View {
                 .background(DesignSystem.Color.bg)
                 .navigationTitle("Einheit bearbeiten")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(DesignSystem.Color.bg, for: .navigationBar)
                 .toolbar {
+                    // Der Titel selbst gezeichnet: mit eigener Leistenfarbe
+                    // fiel er auf die dunkle Systemschrift zurueck und war
+                    // auf dem dunklen Grund unsichtbar (Final-Review 4).
+                    ToolbarItem(placement: .principal) {
+                        Text("Einheit bearbeiten")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(DesignSystem.Color.text)
+                            // Neben "Abbrechen" knapp: lieber etwas kleiner als "bearbeit…".
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .accessibilityAddTraits(.isHeader)
+                    }
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Abbrechen") { abbrechen() }
+                        Button(PlanEinheitBearbeitung.schliessenTitel(hatGetauscht: hatGetauscht)) { abbrechen() }
                             .foregroundStyle(DesignSystem.Color.textMuted)
                             .disabled(schreibt)
                     }
@@ -71,6 +85,10 @@ struct PlanEinheitBearbeitenView: View {
         .confirmationDialog("Änderungen verwerfen?", isPresented: $verwerfenFragen, titleVisibility: .visible) {
             Button("Verwerfen", role: .destructive) { beiSchliessen() }
             Button("Weiter bearbeiten", role: .cancel) {}
+        } message: {
+            if let hinweis = PlanEinheitBearbeitung.verwerfenHinweis(hatGetauscht: hatGetauscht) {
+                Text(hinweis)
+            }
         }
         .sheet(item: $ersetzen) { ziel in
             ersatzSheet(positionKey: ziel.id)
@@ -211,6 +229,7 @@ struct PlanEinheitBearbeitenView: View {
             return error
         }
         await neuLadenUndUebernehmen()
+        hatGetauscht = true
         fehler = nil
         ersetzen = nil
         return nil

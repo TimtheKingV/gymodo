@@ -97,4 +97,12 @@ struct PlanEinheitBearbeitungTests {
         #expect(PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "A", laufEinheitKey: "A", gebunden: false))
         #expect(PlanEinheitBearbeitung.darfBearbeiten(einheitKey: "B", laufEinheitKey: "A", gebunden: true))
     }
+
+    /// Final-Review 3: nach einem Tausch verspricht der linke Knopf kein Rueckgaengig.
+    @Test func nachEinemTauschHeisstAbbrechenSchliessen() {
+        #expect(PlanEinheitBearbeitung.schliessenTitel(hatGetauscht: false) == "Abbrechen")
+        #expect(PlanEinheitBearbeitung.schliessenTitel(hatGetauscht: true) == "Schließen")
+        #expect(PlanEinheitBearbeitung.verwerfenHinweis(hatGetauscht: false) == nil)
+        #expect(PlanEinheitBearbeitung.verwerfenHinweis(hatGetauscht: true) == "Ersetzte Übungen bleiben ersetzt.")
+    }
 }

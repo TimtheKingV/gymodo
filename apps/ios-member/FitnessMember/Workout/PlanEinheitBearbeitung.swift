@@ -19,6 +19,17 @@ struct PlanEinheitBearbeitung: Equatable {
     }
 
     var geaendert: Bool { keys != ausgang }
+
+    /// Ein Tausch ist sofort geschrieben (E5), "Abbrechen" nimmt ihn nicht
+    /// zurueck -- danach heisst der linke Knopf ehrlich "Schließen".
+    static func schliessenTitel(hatGetauscht: Bool) -> String {
+        hatGetauscht ? "Schließen" : "Abbrechen"
+    }
+
+    /// Unter "Änderungen verwerfen?": verworfen wird nur Ziehen und Entfernen.
+    static func verwerfenHinweis(hatGetauscht: Bool) -> String? {
+        hatGetauscht ? "Ersetzte Übungen bleiben ersetzt." : nil
+    }
     var darfEntfernen: Bool { keys.count > 1 }
 
     /// Semantik wie `Array.move(fromOffsets:toOffset:)`.
