@@ -296,7 +296,7 @@ enum GeraeteAuswahl {
 
     /// Klein, ohne Diakritika, ohne Rand -- damit "RÜCKEN" und "rucken"
     /// dasselbe treffen.
-    private static func normalisiert(_ text: String) -> String {
+    static func normalisiert(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
