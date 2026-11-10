@@ -57,4 +57,17 @@ enum TrainingTab {
                 > ($1.saetze.map(\.performedAt).max() ?? .distantPast)
         }
     }
+
+    // MARK: - Einstieg (E8)
+
+    /// Die Auswahl steht nur vor einem Training und nur mit Plan. Laeuft eine
+    /// Session, gibt es keine Auswahl; ohne Plan bleibt der Tab wie bisher.
+    static func zeigtAuswahl(einstieg: TrainingEinstieg, laeuft: Bool, hatPlan: Bool) -> Bool {
+        einstieg == .auswahl && !laeuft && hatPlan
+    }
+
+    /// Das freie Training zeigt die Geraeteliste ohne Plankarte.
+    static func zeigtPlankarte(einstieg: TrainingEinstieg) -> Bool {
+        einstieg != .frei
+    }
 }

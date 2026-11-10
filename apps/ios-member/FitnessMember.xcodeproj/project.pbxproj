@@ -41,6 +41,7 @@
 		15230A9868C0F909306DACBD /* HomeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD0B70AC6B9D5C40460B59C /* HomeRoute.swift */; };
 		15EB89F78CC97D38D44F1C40 /* PlanSchritte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15843762BAFA2910E65B6DD3 /* PlanSchritte.swift */; };
 		17521A5C607CCB27AB2DDB0F /* PlanWarumTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB28EFAF66D89AAA6CDE17F8 /* PlanWarumTextTests.swift */; };
+		176E99C3BF4F987E9F215328 /* TrainingVorziehenSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BB36BBF04EC9E3AD6E1001E /* TrainingVorziehenSheet.swift */; };
 		187B66242C280ADBE3234946 /* PlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C292EFD7E692D12EAD9B3A /* PlaceholderView.swift */; };
 		1885199152297CA6E9277348 /* AudioSitzung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6234F0E183807355625E9C47 /* AudioSitzung.swift */; };
 		18E5DDB042457723094DC266 /* FensterUmschalter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F21C7D80571408B3CF415E1 /* FensterUmschalter.swift */; };
@@ -155,6 +156,7 @@
 		5BBAED1B018ABE25DBC3B60A /* PlanEinrichtenKarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA443E7FB8DF3C02F909E2E2 /* PlanEinrichtenKarte.swift */; };
 		5CC058FDF3D698829231E5DE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33AEE94B0EDB5593285596C /* RootView.swift */; };
 		5D08D45DC839793F623C1736 /* TrainingKopfzeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E6D59DB0556927B37DAE993 /* TrainingKopfzeile.swift */; };
+		5DAAC04CF1F04CE8FC093632 /* TrainingAuswahlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1FAF157EB2A28C0B73123B /* TrainingAuswahlView.swift */; };
 		5ECF4403DCDFA21CF0AAE4EE /* AblaufListeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701FCF36D828E6D02DB26856 /* AblaufListeTests.swift */; };
 		5FA3BD7C92614F0620CD804A /* TrainingsplanAblaufStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3619E6B202A8CC96FE44D4 /* TrainingsplanAblaufStore.swift */; };
 		600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */; };
@@ -510,6 +512,7 @@
 		2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiberTests.swift; sourceTree = "<group>"; };
 		2AD3299523732B253EF5E226 /* PlanKalender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalender.swift; sourceTree = "<group>"; };
 		2B3C314BC75FFB1D3DC52BF8 /* PlanPositionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanPositionSheet.swift; sourceTree = "<group>"; };
+		2BB36BBF04EC9E3AD6E1001E /* TrainingVorziehenSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingVorziehenSheet.swift; sourceTree = "<group>"; };
 		2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeKoordinatorTests.swift; sourceTree = "<group>"; };
 		2DC3378D45751B2BE6267611 /* AuthCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCopy.swift; sourceTree = "<group>"; };
 		2E80C62D7C18C643E429AA9A /* ZirkelErweiternTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelErweiternTests.swift; sourceTree = "<group>"; };
@@ -711,6 +714,7 @@
 		9DBCB339999903CCAC2AE5DB /* NotizBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotizBlatt.swift; sourceTree = "<group>"; };
 		9E3967B3A1429E241D76B5B5 /* PlanTagListe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTagListe.swift; sourceTree = "<group>"; };
 		9E6DCA4E4FAD5D5B706EE9F4 /* PlanWarumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanWarumView.swift; sourceTree = "<group>"; };
+		9F1FAF157EB2A28C0B73123B /* TrainingAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAuswahlView.swift; sourceTree = "<group>"; };
 		A0A1ECDFB1937B39B38E3EA2 /* TestnotizKnopf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizKnopf.swift; sourceTree = "<group>"; };
 		A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaeufigkeitTests.swift; sourceTree = "<group>"; };
 		A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustandTests.swift; sourceTree = "<group>"; };
@@ -1449,9 +1453,11 @@
 				32AEC77DD991564A4F6B0478 /* PlanZeile.swift */,
 				2649BC7BF1FBB612071FC3FA /* TrackerSymbol.swift */,
 				D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */,
+				9F1FAF157EB2A28C0B73123B /* TrainingAuswahlView.swift */,
 				6E6D59DB0556927B37DAE993 /* TrainingKopfzeile.swift */,
 				42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */,
 				ECD3248CAD211A17B23D8826 /* Trainingsuhr.swift */,
+				2BB36BBF04EC9E3AD6E1001E /* TrainingVorziehenSheet.swift */,
 				09FAC63CC9144EB0A1BC6148 /* ZirkelUebungswahlSheet.swift */,
 			);
 			path = Training;
@@ -1937,9 +1943,11 @@
 				76AA35DBF95AFA3373EABB1F /* TrackerSymbol.swift in Sources */,
 				B90035F502BFCB437C290355 /* TrainingAbschlussView.swift in Sources */,
 				BE0C48DE216DC110E3BBB892 /* TrainingAuswahl.swift in Sources */,
+				5DAAC04CF1F04CE8FC093632 /* TrainingAuswahlView.swift in Sources */,
 				5D08D45DC839793F623C1736 /* TrainingKopfzeile.swift in Sources */,
 				42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */,
 				237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */,
+				176E99C3BF4F987E9F215328 /* TrainingVorziehenSheet.swift in Sources */,
 				FFBA4D6E06D3C027545D75BC /* TrainingsProfil.swift in Sources */,
 				20BA347A9EFBEBAE5C3AA9EA /* Trainingsplan.swift in Sources */,
 				20DE500918004D2A5DF556D1 /* TrainingsplanAblauf.swift in Sources */,

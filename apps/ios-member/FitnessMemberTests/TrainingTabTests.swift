@@ -79,4 +79,24 @@ struct TrainingTabTests {
         ])
         #expect(try #require(TrainingTab.mitte(session)).zahlen?.geraete == 2)
     }
+
+    // MARK: - Einstieg (E8)
+
+    @Test func auswahlNurOhneSessionMitPlan() {
+        for einstieg in [TrainingEinstieg.auswahl, .plan, .frei] {
+            for laeuft in [false, true] {
+                for hatPlan in [false, true] {
+                    let erwartet = einstieg == .auswahl && !laeuft && hatPlan
+                    #expect(TrainingTab.zeigtAuswahl(einstieg: einstieg, laeuft: laeuft, hatPlan: hatPlan) == erwartet,
+                            "\(einstieg) laeuft=\(laeuft) hatPlan=\(hatPlan)")
+                }
+            }
+        }
+    }
+
+    @Test func freiOhnePlankarte() {
+        #expect(TrainingTab.zeigtPlankarte(einstieg: .frei) == false)
+        #expect(TrainingTab.zeigtPlankarte(einstieg: .plan) == true)
+        #expect(TrainingTab.zeigtPlankarte(einstieg: .auswahl) == true)
+    }
 }
