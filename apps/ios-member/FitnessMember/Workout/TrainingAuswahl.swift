@@ -1,7 +1,8 @@
 import Foundation
 
 /// Womit der Training-Tab startet (E8).
-enum TrainingEinstieg: Equatable { case auswahl, plan, frei }
+/// String-Rohwerte: `TrainingEinstiegSpeicher` legt ihn je Session ab.
+enum TrainingEinstieg: String, Equatable { case auswahl, plan, frei }
 
 /// Ein weiterer Plantermin dieser Woche in der Auswahl.
 enum TrainingAuswahlOption: Equatable, Identifiable {

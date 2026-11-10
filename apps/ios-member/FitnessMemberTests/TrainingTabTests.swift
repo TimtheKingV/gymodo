@@ -99,4 +99,15 @@ struct TrainingTabTests {
         #expect(TrainingTab.zeigtPlankarte(einstieg: .plan) == true)
         #expect(TrainingTab.zeigtPlankarte(einstieg: .auswahl) == true)
     }
+
+    /// Ein Start von Home oder aus dem Plan fuehrt ohne zweiten Tipp in den Plan.
+    @Test func wunschGiltNurOhneLaufendeSession() {
+        #expect(TrainingTab.einstiegNachWunsch(.plan, aktuell: .auswahl, laeuft: false) == .plan)
+        #expect(TrainingTab.einstiegNachWunsch(.plan, aktuell: .frei, laeuft: false) == .plan)
+        // Laeuft schon ein Training, bleibt es, wie es ist.
+        #expect(TrainingTab.einstiegNachWunsch(.plan, aktuell: .frei, laeuft: true) == .frei)
+        // Ohne Wunsch keine Aenderung.
+        #expect(TrainingTab.einstiegNachWunsch(nil, aktuell: .auswahl, laeuft: false) == .auswahl)
+        #expect(TrainingTab.einstiegNachWunsch(nil, aktuell: .plan, laeuft: true) == .plan)
+    }
 }

@@ -29,11 +29,15 @@ struct TrainingRootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
+    /// Der Wunsch von Home oder Plan ("Training starten"); wird hier verbraucht.
+    var einstiegWunsch: Binding<TrainingEinstieg?> = .constant(nil)
 
     @State private var pfad: [GeraetRoute] = []
     /// Womit der Tab vor einem Training startet (E8). Endet die Session,
     /// steht wieder die Auswahl da (onChange unten).
     @State private var einstieg: TrainingEinstieg = .auswahl
+    /// Haelt den Einstieg der laufenden Session ueber einen Neustart.
+    private let einstiegSpeicher = TrainingEinstiegSpeicher()
     @State private var scannerOffen = false
     @State private var scanFehler: String?
     /// Lebt an der Wurzel, nicht in GeraeteAuswahlView: "Geraet waehlen"
@@ -332,6 +336,14 @@ struct TrainingRootView: View {
             .task {
                 if let eingang = pendingTag.consume() { verarbeite(eingang) }
             }
+            // Der Einstieg der laufenden Session: beim Erscheinen (Neustart)
+            // zurueckholen, bei einer neuen Session festhalten, am Ende loeschen.
+            .onAppear {
+                einstiegAbgleichen(sessionId: sessions.aktiveSession()?.id)
+                wunschVerbrauchen()
+            }
+            .onChange(of: sessions.aktiveSession()?.id) { _, neu in einstiegAbgleichen(sessionId: neu) }
+            .onChange(of: einstiegWunsch.wrappedValue) { _, _ in wunschVerbrauchen() }
             // Verlaesst die Ersatzwahl den Pfad (Zurueck, Scan,
             // Pfadbereinigung), gehoert ihr Zustand mit weg.
             .onChange(of: pfad) { _, _ in
@@ -437,6 +449,29 @@ struct TrainingRootView: View {
         } message: { _ in
             Text("Danach wechselst du den Ort.")
         }
+    }
+
+    // MARK: - Einstieg
+
+    /// Gibt es zur Session einen gespeicherten Einstieg, gilt er; sonst wird
+    /// ein gewaehlter (Plan, frei) fuer sie festgehalten. Ohne Session weg damit.
+    private func einstiegAbgleichen(sessionId: UUID?) {
+        guard let sessionId else {
+            einstiegSpeicher.loeschen()
+            return
+        }
+        if let gespeichert = einstiegSpeicher.laden(sessionId: sessionId) {
+            einstieg = gespeichert
+        } else if einstieg != .auswahl {
+            einstiegSpeicher.speichern(einstieg, sessionId: sessionId)
+        }
+    }
+
+    private func wunschVerbrauchen() {
+        guard einstiegWunsch.wrappedValue != nil else { return }
+        einstieg = TrainingTab.einstiegNachWunsch(einstiegWunsch.wrappedValue, aktuell: einstieg,
+                                                  laeuft: sessions.aktiveSession() != nil)
+        einstiegWunsch.wrappedValue = nil
     }
 
     // MARK: - Wurzel
@@ -936,6 +971,9 @@ struct TrainingRootView: View {
             PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: {
                 if !pfad.isEmpty { pfad.removeLast() }
                 einstieg = .plan
+            }, beiZumTraining: {
+                // Nicht dran: zurueck in die Auswahl.
+                if !pfad.isEmpty { pfad.removeLast() }
             })
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):

@@ -70,4 +70,12 @@ enum TrainingTab {
     static func zeigtPlankarte(einstieg: TrainingEinstieg) -> Bool {
         einstieg != .frei
     }
+
+    /// Ein Wunsch von aussen ("Training starten" auf Home oder im Plan) gilt
+    /// nur vor einem Training; ein laufendes behaelt seinen Einstieg.
+    static func einstiegNachWunsch(_ wunsch: TrainingEinstieg?, aktuell: TrainingEinstieg,
+                                   laeuft: Bool) -> TrainingEinstieg {
+        guard let wunsch, !laeuft else { return aktuell }
+        return wunsch
+    }
 }

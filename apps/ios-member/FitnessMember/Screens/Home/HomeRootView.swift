@@ -22,6 +22,8 @@ struct HomeRootView: View {
     /// Wechselt auf den Training-Tab -- derselbe Ort wie ein Tipp auf
     /// "Training" unten (Testnotiz 05.10., #8).
     var beiTrainingZeigen: () -> Void = {}
+    /// "Training starten" fuer die naechste Einheit: Training-Tab im Plan-Einstieg.
+    var beiPlanStarten: () -> Void = {}
     /// Wechselt auf den Plan-Tab: "Im Plan" am gewaehlten Plantag auf diesen
     /// Tag, "Nächste Einheit" als Kurs oder Cardio auf den Tag, ohne
     /// Trainingstage auf die Woche. Eine Einheit bleibt im Home-Stack (E2).
@@ -213,6 +215,9 @@ struct HomeRootView: View {
                 case .einheit(let key):
                     PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: {
                         pfad.removeAll()
+                        beiPlanStarten()
+                    }, beiZumTraining: {
+                        pfad.removeAll()
                         beiTrainingZeigen()
                     })
                 }
@@ -391,7 +396,7 @@ private extension HomeRootView {
                             beiPlanZeigen(.tag(naechster.tag))
                         }
                     },
-                    beiStart: beiTrainingZeigen)
+                    beiStart: beiPlanStarten)
             }
         }
     }

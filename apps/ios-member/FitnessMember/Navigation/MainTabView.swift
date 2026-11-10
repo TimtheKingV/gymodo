@@ -18,17 +18,21 @@ struct MainTabView: View {
     @State private var planPfad: [KursRoute] = []
     /// Der Tag, auf den der Plan-Tab springen soll (von Home, "Als nächstes").
     @State private var planTagWunsch: Date?
+    /// "Training starten" auf Home oder im Plan: der Training-Tab geht dann
+    /// gleich in den Plan statt in die Auswahl. Der Tab setzt ihn zurueck.
+    @State private var trainingEinstiegWunsch: TrainingEinstieg?
 
     var body: some View {
         TabView(selection: $ausgewaehlterTab) {
             HomeRootView(
                 apiClient: apiClient,
                 beiTrainingZeigen: { ausgewaehlterTab = 1 },
+                beiPlanStarten: planStarten,
                 beiPlanZeigen: planZeigen)
                 .tabItem { Label("Home", systemImage: "house") }
                 .tag(0)
 
-            TrainingRootView(apiClient: apiClient)
+            TrainingRootView(apiClient: apiClient, einstiegWunsch: $trainingEinstiegWunsch)
                 .tabItem { Label("Training", systemImage: "figure.strengthtraining.traditional") }
                 .tag(1)
 
@@ -38,14 +42,15 @@ struct MainTabView: View {
                     beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
                     beiEinheit: { key in planPfad.append(.einheit(key: key)) },
                     beiTraining: { id in planPfad.append(.sessionDetail(id: id)) },
-                    beiTrainingStarten: trainingZeigen,
+                    beiTrainingStarten: planStarten,
                     tagWunsch: $planTagWunsch)
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {
                     case .detail(let sessionId):
                         KursDetailView(sessionId: sessionId)
                     case .einheit(let key):
-                        PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: trainingZeigen)
+                        PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: planStarten,
+                                        beiZumTraining: trainingZeigen)
                     case .sessionDetail(let id):
                         // Fortgesetzt wird im Training-Tab, wie von Home.
                         SessionDetailView(
@@ -88,6 +93,13 @@ struct MainTabView: View {
     private func trainingZeigen() {
         planPfad.removeAll()
         ausgewaehlterTab = 1
+    }
+
+    /// Die Startknoepfe fuer die naechste Einheit: ohne Umweg ueber die
+    /// Auswahl in den Plan-Einstieg.
+    private func planStarten() {
+        trainingEinstiegWunsch = .plan
+        trainingZeigen()
     }
 
     /// Von Home in den Plan (Spec 1.1): die Woche, eine Einheit (derselbe

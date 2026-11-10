@@ -12,6 +12,9 @@ struct PlanEinheitView: View {
     let einheitKey: String
     let apiClient: APIClient
     let beiTrainingStarten: () -> Void
+    /// "Zum Training" bei einer Einheit, die nicht dran ist: fuehrt in die
+    /// Auswahl statt in den Plan. nil = derselbe Weg wie `beiTrainingStarten`.
+    var beiZumTraining: (() -> Void)? = nil
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -177,9 +180,9 @@ struct PlanEinheitView: View {
                         beiTrainingStarten()
                     }
                         .accessibilityLabel(ProfilKopf.startKnopfText(istGeplanterTag: istGeplanterTag))
-                        .accessibilityHint("Wechselt in den Tab Training, dort startet die Einheit")
+                        .accessibilityHint("Startet die Einheit")
                 } else {
-                    SecondaryButton(title: "Zum Training") { beiTrainingStarten() }
+                    SecondaryButton(title: "Zum Training") { (beiZumTraining ?? beiTrainingStarten)() }
                 }
             }
             .padding(.horizontal, 20)
