@@ -20,9 +20,13 @@ export async function setCardioCheck(client: SupabaseClient, userId: string, day
   pruefeTag(day);
   pruefeTag(heute);
   if (day > heute) throw new DomainError("validation_failed", "Cardio laesst sich nicht fuer die Zukunft abhaken.");
-  const { error } = await client
-    .from("cardio_checks")
-    .upsert({ user_id: userId, day }, { onConflict: "user_id,day", ignoreDuplicates: true });
+  // Seit 0072 ist (user_id, day) nicht mehr eindeutig (ein Tag kann mehrere Haken
+  // haben), also kein upsert: erst nachsehen, dann einfuegen. Ein Rennen zwischen
+  // zwei Aufrufen ergibt hoechstens eine zweite Zeile, die listCardioChecks buendelt.
+  const vorhanden = await client.from("cardio_checks").select("id").eq("user_id", userId).eq("day", day).limit(1);
+  if (vorhanden.error) throw new DomainError("internal", "Cardio konnte nicht abgehakt werden.");
+  if ((vorhanden.data ?? []).length > 0) return;
+  const { error } = await client.from("cardio_checks").insert({ user_id: userId, day });
   if (error) throw new DomainError("internal", "Cardio konnte nicht abgehakt werden.");
 }
 
@@ -46,5 +50,6 @@ export async function listCardioChecks(client: SupabaseClient, userId: string, v
     .lte("day", bis)
     .order("day", { ascending: true });
   if (error) throw new DomainError("internal", "Die Cardio-Tage konnten nicht geladen werden.");
-  return (data ?? []).map((zeile) => zeile.day as string);
+  // Mehrere Haken am selben Tag (seit 0072) ergeben einen Tag.
+  return [...new Set((data ?? []).map((zeile) => zeile.day as string))];
 }
