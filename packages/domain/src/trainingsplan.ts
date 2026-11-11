@@ -26,7 +26,7 @@ export type PlanStatus = "vorschlag" | "aktiv" | "ersetzt" | "verworfen";
  */
 export type PlanEingabe = Omit<
   GeneratorEingabe,
-  "kandidaten" | "beschwerden" | "kursTage" | "cardioTage" | "kraftTage"
+  "kandidaten" | "beschwerden" | "kraftProWoche"
 > & {
   beschwerdenBeruecksichtigt: boolean;
 };
@@ -167,10 +167,7 @@ export async function erzeugePlanVorschlag(
     erfahrung: profil.experience,
     anfaengerBeendet,
     beschwerden,
-    // Feste Termine und Krafttage kommen aus dem Profil; das Ergebnis haelt das Raster fest.
-    kursTage: profil.kursTage,
-    cardioTage: profil.cardioTage,
-    kraftTage: profil.kraftTage,
+    ...(profil.kraftProWoche !== null ? { kraftProWoche: profil.kraftProWoche } : {}),
     kandidaten: await ladeKandidaten(client, await ladeMerkliste(client, userId, ort)),
   });
 

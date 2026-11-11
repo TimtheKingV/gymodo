@@ -8,9 +8,7 @@ export {
 } from "./tag-scan.js";
 export { naechsteGeraeteNummer } from "./nummern.js";
 export {
-  kraftAnzahl,
   pruefeWoche,
-  verteileKraft,
   type Wochentag,
 } from "./trainingsplan-woche.js";
 export {
