@@ -29,6 +29,9 @@ describe("pruefeTrainingsprofil: Wochenraster", () => {
       cardioTage: [],
       cardioArten: [],
       kraftTage: [],
+      kraftProWoche: null,
+      cardioProWoche: 0,
+      cardioMinuten: 30,
     });
   });
   it("nimmt gueltige Wochentage und Cardio-Arten", () => {
@@ -60,6 +63,31 @@ describe("pruefeTrainingsprofil: Wochenraster", () => {
   });
   it("lehnt Wochentag 8 ab", () => {
     expect(() => pruefeTrainingsprofil({ ...gueltig, kursTage: [8] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+});
+
+describe("pruefeTrainingsprofil: Wochenzaehler", () => {
+  it("nimmt Zaehler und liefert die Werte", () => {
+    const p = pruefeTrainingsprofil({ ...gueltig, kraftProWoche: 2, cardioProWoche: 1, cardioMinuten: 30 });
+    expect(p).toMatchObject({ kraftProWoche: 2, cardioProWoche: 1, cardioMinuten: 30 });
+  });
+  it.each([
+    { kraftProWoche: 0 },
+    { kraftProWoche: 8 },
+    { kraftProWoche: 1.5 },
+    { cardioProWoche: -1 },
+    { cardioProWoche: 8 },
+    { cardioMinuten: 9 },
+    { cardioMinuten: 181 },
+  ])("lehnt %o ab", (felder) => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, ...felder })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+  it("Tagesfelder ohne Zaehler laufen weiter durch pruefeWoche", () => {
+    expect(() => pruefeTrainingsprofil({ ...gueltig, kursTage: [2], kraftTage: [2] })).toThrow(
       expect.objectContaining({ code: "validation_failed" }),
     );
   });

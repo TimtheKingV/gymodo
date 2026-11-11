@@ -147,7 +147,7 @@ describe("planFuerApp", () => {
     einheiten: [{ key: "A", positionen: [], geschaetzteMinuten: 50 }, { key: "B", positionen: [], geschaetzteMinuten: 50 }],
     gruende: [], wochenraster: [], createdAt: "", acceptedAt: null,
   } as TrainingPlan;
-  const neu: TrainingProfile = { minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [] };
+  const neu: TrainingProfile = { minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [], kraftProWoche: null, cardioProWoche: 0, cardioMinuten: 30 };
   const einheiten = (n: number) =>
     Array.from({ length: n }, (_, i) => ({ sessionId: `s${i}`, einheitKey: i % 2 ? "B" : "A", startedAt: vor(1000 - i) }));
 

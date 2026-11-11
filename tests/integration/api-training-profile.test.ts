@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET, PUT } from "@/app/api/v1/me/training-profile/route";
-import { accessTokenFor, createTestUser, uniqueEmail } from "./helpers/clients.js";
+import { accessTokenFor, createTestUser, serviceClient, uniqueEmail } from "./helpers/clients.js";
 
 const URL_ = "http://localhost/api/v1/me/training-profile";
 const req = (method: string, auth?: string, rumpf?: unknown): Request =>
@@ -19,7 +19,8 @@ async function bearerFuer(prefix: string): Promise<string> {
 
 const profil = { minutes: 60, experience: "unregelmaessig", focus: ["po", "beine"] };
 // Ohne Wochenfelder gesendet, kommen leere Listen zurueck.
-const leereWoche = { kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [] };
+const zaehler0 = { kraftProWoche: null, cardioProWoche: 0, cardioMinuten: 30 };
+const leereWoche = { kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [], ...zaehler0 };
 
 describe("/me/training-profile", () => {
   let a: string;
@@ -54,15 +55,15 @@ describe("/me/training-profile", () => {
     const woche = { kursTage: [1], cardioTage: [7], cardioArten: ["laufen"], kraftTage: [3, 5] };
     const put = await PUT(req("PUT", a, { ...profil, ...woche }));
     expect(put.status).toBe(200);
-    expect(await (await GET(req("GET", a))).json()).toEqual({ ...profil, ...woche });
+    expect(await (await GET(req("GET", a))).json()).toEqual({ ...profil, ...woche, ...zaehler0 });
 
     const ohne = { minutes: 45, experience: "neu", focus: [] };
     expect((await PUT(req("PUT", a, ohne))).status).toBe(200);
-    expect(await (await GET(req("GET", a))).json()).toEqual({ ...ohne, ...woche });
+    expect(await (await GET(req("GET", a))).json()).toEqual({ ...ohne, ...woche, ...zaehler0 });
 
     // Ein Feld allein senden: nur dieses aendert sich.
     expect((await PUT(req("PUT", a, { ...ohne, kraftTage: [2] }))).status).toBe(200);
-    expect(await (await GET(req("GET", a))).json()).toEqual({ ...ohne, ...woche, kraftTage: [2] });
+    expect(await (await GET(req("GET", a))).json()).toEqual({ ...ohne, ...woche, ...zaehler0, kraftTage: [2] });
   });
 
   it("422 bei Wochenraster-Ueberschneidung, auch mit gespeicherten Werten", async () => {
@@ -80,6 +81,34 @@ describe("/me/training-profile", () => {
   it("422 bei ungueltigen Werten", async () => {
     expect((await PUT(req("PUT", a, { ...profil, minutes: 50 }))).status).toBe(422);
     expect((await PUT(req("PUT", a, { ...profil, focus: ["po", "po"] }))).status).toBe(422);
+  });
+
+  it("speichert die Zaehler und gleicht das weekly_days-Ziel ab", async () => {
+    const email = uniqueEmail("tp-c");
+    const uid = await createTestUser(email);
+    const c = await accessTokenFor(email);
+    const ziel = async (): Promise<number | undefined> => {
+      const { data } = await serviceClient()
+        .from("member_goals")
+        .select("target_value")
+        .eq("user_id", uid)
+        .eq("kind", "weekly_days")
+        .eq("status", "active");
+      return data?.[0]?.target_value;
+    };
+    const basis = { minutes: 60, experience: "neu", focus: [] };
+    expect((await PUT(req("PUT", c, { ...basis, kraftProWoche: 3, cardioProWoche: 1 }))).status).toBe(200);
+    expect(await (await GET(req("GET", c))).json()).toMatchObject({ kraftProWoche: 3, cardioProWoche: 1, cardioMinuten: 30 });
+    expect(await ziel()).toBe(4);
+
+    // nur minutes: Zaehler und Ziel unveraendert
+    expect((await PUT(req("PUT", c, { ...basis, minutes: 45 }))).status).toBe(200);
+    expect(await (await GET(req("GET", c))).json()).toMatchObject({ kraftProWoche: 3, cardioProWoche: 1 });
+    expect(await ziel()).toBe(4);
+
+    // Summe wird bei 7 gedeckelt
+    expect((await PUT(req("PUT", c, { ...basis, kraftProWoche: 6, cardioProWoche: 3 }))).status).toBe(200);
+    expect(await ziel()).toBe(7);
   });
 
   it("ein zweiter Nutzer sieht die Daten nicht", async () => {

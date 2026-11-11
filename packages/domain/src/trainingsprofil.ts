@@ -13,6 +13,7 @@ import {
   type FokusBereich,
   type Minuten,
 } from "./trainingsplan-typen.js";
+import { setGoal } from "./goals.js";
 import { pruefeWoche, type Wochentag } from "./trainingsplan-woche.js";
 
 export type TrainingProfile = {
@@ -24,6 +25,16 @@ export type TrainingProfile = {
   cardioTage: Wochentag[];
   cardioArten: CardioArt[];
   kraftTage: Wochentag[];
+  // Wochenziel als Zaehler (0072): wie oft, nicht wann. kraftProWoche null = noch nicht gesetzt.
+  kraftProWoche: number | null;
+  cardioProWoche: number;
+  cardioMinuten: number;
+};
+type Zaehler = Pick<TrainingProfile, "kraftProWoche" | "cardioProWoche" | "cardioMinuten">;
+const ZAEHLER_SPALTEN: Record<keyof Zaehler, string> = {
+  kraftProWoche: "kraft_pro_woche",
+  cardioProWoche: "cardio_pro_woche",
+  cardioMinuten: "cardio_minuten",
 };
 type WochenFelder = Pick<TrainingProfile, "kursTage" | "cardioTage" | "cardioArten" | "kraftTage">;
 const WOCHEN_FELDER = ["kursTage", "cardioTage", "cardioArten", "kraftTage"] as const;
@@ -56,6 +67,10 @@ const profilSchema = z.object({
     .refine((a) => new Set(a).size === a.length, "Eine Cardio-Art nur einmal.")
     .optional(),
   kraftTage: z.array(z.number()).optional(),
+  // Zaehler (0072): fehlend = unveraendert bzw. Standard; kraftProWoche null = nicht gesetzt.
+  kraftProWoche: z.number().int().min(1).max(7).nullable().optional(),
+  cardioProWoche: z.number().int().min(0).max(7).optional(),
+  cardioMinuten: z.number().int().min(10).max(180).optional(),
 });
 
 // .strict(): ein unbekannter Bereich ist ein Fehler, kein stilles Verwerfen;
@@ -78,7 +93,9 @@ function pruefe<T>(schema: z.ZodType<T>, roh: unknown): T {
 }
 
 /** Geprueftes Profil, die gesendeten Wochenfelder bleiben als solche erkennbar (fehlend = undefined). */
-type TeilProfil = Omit<TrainingProfile, keyof WochenFelder> & Partial<WochenFelder>;
+type TeilProfil = Omit<TrainingProfile, keyof WochenFelder | keyof Zaehler> &
+  Partial<WochenFelder> &
+  Partial<Zaehler>;
 
 function pruefeTeilprofil(roh: unknown): TeilProfil {
   const p = pruefe(profilSchema, roh) as TeilProfil;
@@ -89,7 +106,11 @@ function pruefeTeilprofil(roh: unknown): TeilProfil {
 
 export function pruefeTrainingsprofil(roh: unknown): TrainingProfile {
   const p = pruefeTeilprofil(roh);
-  return { ...p, kursTage: p.kursTage ?? [], cardioTage: p.cardioTage ?? [], cardioArten: p.cardioArten ?? [], kraftTage: p.kraftTage ?? [] };
+  return { ...p, kursTage: p.kursTage ?? [], cardioTage: p.cardioTage ?? [], cardioArten: p.cardioArten ?? [], kraftTage: p.kraftTage ?? [],
+    kraftProWoche: p.kraftProWoche ?? null,
+    cardioProWoche: p.cardioProWoche ?? 0,
+    cardioMinuten: p.cardioMinuten ?? 30,
+  };
 }
 
 /** Liefert nur die bereinigten areas; die Einwilligung ist damit bestaetigt. */
@@ -101,7 +122,7 @@ export function pruefeTrainingsLimits(roh: unknown): { areas: TrainingLimits["ar
 export async function getTrainingProfile(client: SupabaseClient, userId: string): Promise<TrainingProfile | null> {
   const { data, error } = await client
     .from("training_profiles")
-    .select("minutes, experience, focus, kurs_tage, cardio_tage, cardio_arten, kraft_tage")
+    .select("minutes, experience, focus, kurs_tage, cardio_tage, cardio_arten, kraft_tage, kraft_pro_woche, cardio_pro_woche, cardio_minuten")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw new DomainError("internal", "Das Trainingsprofil konnte nicht gelesen werden.");
@@ -114,6 +135,9 @@ export async function getTrainingProfile(client: SupabaseClient, userId: string)
     cardioTage: data.cardio_tage,
     cardioArten: data.cardio_arten,
     kraftTage: data.kraft_tage,
+    kraftProWoche: data.kraft_pro_woche,
+    cardioProWoche: data.cardio_pro_woche,
+    cardioMinuten: data.cardio_minuten,
   };
 }
 
@@ -133,11 +157,17 @@ export async function saveTrainingProfile(
     cardioTage: teil.cardioTage ?? alt?.cardioTage ?? [],
     cardioArten: teil.cardioArten ?? alt?.cardioArten ?? [],
     kraftTage: teil.kraftTage ?? alt?.kraftTage ?? [],
+    kraftProWoche: teil.kraftProWoche !== undefined ? teil.kraftProWoche : (alt?.kraftProWoche ?? null),
+    cardioProWoche: teil.cardioProWoche ?? alt?.cardioProWoche ?? 0,
+    cardioMinuten: teil.cardioMinuten ?? alt?.cardioMinuten ?? 30,
   };
   pruefeWoche(profil);
   // Upsert nur mit gesendeten Wochenspalten; die uebrigen bleiben, wie sie sind.
   const wochen: Record<string, unknown> = {};
   for (const feld of WOCHEN_FELDER) if (teil[feld] !== undefined) wochen[WOCHEN_SPALTEN[feld]] = teil[feld];
+  for (const feld of Object.keys(ZAEHLER_SPALTEN) as (keyof Zaehler)[]) {
+    if (teil[feld] !== undefined) wochen[ZAEHLER_SPALTEN[feld]] = teil[feld];
+  }
   const { error } = await client.from("training_profiles").upsert(
     {
       user_id: userId,
@@ -150,6 +180,13 @@ export async function saveTrainingProfile(
     { onConflict: "user_id" },
   );
   if (error) throw new DomainError("internal", "Das Trainingsprofil konnte nicht gespeichert werden.");
+  // Wochenziel abgleichen: nur wenn kraftProWoche gesendet wurde und nicht null ist.
+  if (teil.kraftProWoche != null) {
+    await setGoal(client, {
+      kind: "weekly_days",
+      targetValue: Math.min(7, teil.kraftProWoche + profil.cardioProWoche),
+    });
+  }
   return profil;
 }
 
