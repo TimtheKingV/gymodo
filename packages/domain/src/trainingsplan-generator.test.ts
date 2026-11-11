@@ -588,6 +588,7 @@ describe("gefaelltNicht (Merkliste)", () => {
 describe("generierePlan: Kraft pro Woche (1.4.0)", () => {
   // Ausgabe von 1.2.0 fuer sechs Tagezahlen und zwei Ziele (ohne regelVersion). Struktur,
   // Einheiten und Gruende bleiben gleich; seit 1.4.0 ist das Raster immer leer.
+  // Bewusst nicht neu geschrieben: die Datei kennt weder regelVersion noch wochenraster.
   const bestand = JSON.parse(
     readFileSync(new URL("./trainingsplan-generator.bestand.json", import.meta.url), "utf8"),
   ) as { eingabe: Partial<GeneratorEingabe>; erwartet: Record<string, unknown> }[];
@@ -609,6 +610,16 @@ describe("generierePlan: Kraft pro Woche (1.4.0)", () => {
 
   it("kraftProWoche fehlt, tage 3: Struktur gk_ab", () => {
     expect(generierePlan(eingabe({ tage: 3 })).struktur).toBe("gk_ab");
+  });
+
+  it("kraftProWoche 1 bei tage 3: Struktur gk_eine, eine Einheit", () => {
+    const plan = generierePlan(eingabe({ tage: 3, kraftProWoche: 1 }));
+    expect(plan.struktur).toBe("gk_eine");
+    expect(plan.einheiten.map((e) => e.key)).toEqual(["A"]);
+  });
+
+  it("kraftProWoche 4 bei tage 2: Struktur ober_unter", () => {
+    expect(generierePlan(eingabe({ tage: 2, kraftProWoche: 4 })).struktur).toBe("ober_unter");
   });
 
   it("kraftProWoche 2 bei tage 3: Struktur des Zwei-Tage-Falls", () => {

@@ -136,6 +136,17 @@ describe("Kraft pro Woche im Plan (1.4.0)", () => {
     expect(plan.regelVersion).toBe("1.4.0");
   });
 
+  it("kraft_pro_woche 1 bei weekly_days 3: gk_eine mit Einheit A (Profil wird durchgereicht)", async () => {
+    const m = await legeMitgliedAn("api-plan-kpw1", {
+      studios: [s.voll],
+      weeklyDays: 3,
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_pro_woche: 1 },
+    });
+    const plan = (await (await post(await accessTokenFor(m.email), { studioId: s.voll })).json()) as PlanNeu;
+    expect(plan.struktur).toBe("gk_eine");
+    expect(plan.einheiten.map((e) => e.key)).toEqual(["A"]);
+  });
+
   it("Bestandsprofil ohne kraft_pro_woche: Struktur folgt weekly_days, Raster leer, kein Grund kraft_tage_auf_eins", async () => {
     const plan = (await (await post(bearer, { studioId: s.voll })).json()) as PlanNeu;
     expect(plan.struktur).toBe("gk_ab");
