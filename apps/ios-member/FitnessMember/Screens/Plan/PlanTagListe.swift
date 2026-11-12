@@ -71,28 +71,25 @@ struct PlanKursKaestchen: View {
     }
 }
 
-/// Die Marken unter einem Tag im Streifen und in der Legende: Punkt (Einheit),
-/// Ring (Kurs), Raute (Cardio), gestrichelter Ring (verpasst) -- Formen,
-/// nicht nur Farben.
+/// Die Marke unter einem Tag im Home-Streifen: gefuellter Punkt (Kraft),
+/// Raute (Cardio), Ring (Kurs besucht) und gestrichelter Ring (Kurs gebucht)
+/// -- Formen, nicht nur Farben. Geleistetes ist gedeckt, nichts ist rot.
 struct PlanTagMarke: View {
-    enum Art: CaseIterable { case einheit, kurs, cardio, verpasst }
-    let art: Art
-    /// Gedeckt fuer Erledigtes.
-    var gedeckt = false
+    let marke: TagMarke
 
     var body: some View {
         Group {
-            switch art {
-            case .einheit:
-                Circle().fill(gedeckt ? DesignSystem.Color.textFaint : DesignSystem.Color.accent)
+            switch marke {
+            case .kraft:
+                Circle().fill(DesignSystem.Color.textFaint)
             case .kurs:
                 Circle().strokeBorder(DesignSystem.Color.textMuted, lineWidth: 2)
             case .cardio:
                 Rectangle()
-                    .fill(gedeckt ? DesignSystem.Color.textFaint : DesignSystem.Color.text)
+                    .fill(DesignSystem.Color.textFaint)
                     .frame(width: 6, height: 6)
                     .rotationEffect(.degrees(45))
-            case .verpasst:
+            case .kursGebucht:
                 Circle().strokeBorder(
                     DesignSystem.Color.textFaint, style: StrokeStyle(lineWidth: 1.5, dash: [2, 2]))
             }

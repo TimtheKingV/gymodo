@@ -25,11 +25,10 @@ struct HomeSerieTag: Identifiable, Equatable {
     /// der eine Zeile auffuellt. Er wird gezeigt, damit das Gitter keine
     /// Loecher hat, aber nicht bedient.
     var ausserhalb: Bool = false
-    /// Nur in der Streak-Woche belegt: die Planmarke des Tages (Einheit,
-    /// Cardio, Kurs, verpasst) aus `PlanKalender.termine`, dieselbe wie im
-    /// Plan-Tab. nil = nichts geplant oder schon erledigt (dann traegt die
-    /// Hantel den Tag).
-    var geplant: PlanTagMarke.Art? = nil
+    /// Nur in der Streak-Woche belegt: die Marke des Tages (Kraft, Cardio,
+    /// Kurs, gebuchter Kurs) aus `PlanWochenStand.marken`, dieselbe wie im
+    /// Plan-Tab. nil = nichts geleistet und kein Kurs gebucht.
+    var geplant: TagMarke? = nil
 }
 
 /// Was ein Tipp auf einen Tag der Streak-Woche tut (Spec 1.1).
@@ -119,7 +118,7 @@ enum HomeSerie {
     /// Server fuer diese Woche nennt. `geplant` (Tagesschluessel -> Marke,
     /// aus `planMarken`) legt die Planmarken auf die Tage.
     static func tage(
-        _ stand: Serienstand, trainingstage: Set<String>? = nil, geplant: [String: PlanTagMarke.Art] = [:]
+        _ stand: Serienstand, trainingstage: Set<String>? = nil, geplant: [String: TagMarke] = [:]
     ) -> [HomeSerieTag] {
         guard let montag = datumsFormatter.date(from: stand.weekStart) else { return [] }
 
@@ -134,35 +133,32 @@ enum HomeSerie {
         }
     }
 
-    /// Die Termine des Plans (`PlanKalender.termine`) als eine Marke je Tag:
-    /// verpasst vor allem anderen (der gestrichelte Ring wie im Plan-Tab),
-    /// sonst der erste geplante Termin. Erledigtes bekommt keine Marke --
-    /// dort steht schon die Hantel. Schluessel "yyyy-MM-dd" im Kalender des
-    /// Plans, dasselbe Format wie `HomeSerieTag.id`.
-    static func planMarken(_ termine: [Date: [PlanTermin]], kalender: Calendar) -> [String: PlanTagMarke.Art] {
-        var ergebnis: [String: PlanTagMarke.Art] = [:]
-        for (tag, liste) in termine {
-            let art: PlanTagMarke.Art?
-            if liste.contains(where: { if case .verpasst = $0.zustand { true } else { false } }) {
-                art = .verpasst
-            } else {
-                art = liste.first { $0.zustand == .geplant }.map { termin in
-                    switch termin {
-                    case .einheit: .einheit
-                    case .kurs: .kurs
-                    case .cardio: .cardio
-                    }
-                }
-            }
-            if let art { ergebnis[PlanWoche.tagesSchluessel(tag, kalender)] = art }
+    /// Die Marken der Woche (`PlanWochenStand.marken`, je Tag nach Rang
+    /// sortiert) als eine Marke je Tag: die erste, also Kraft vor Kurs. Tage
+    /// ohne Marke bekommen keinen Eintrag. Schluessel "yyyy-MM-dd" im Kalender
+    /// des Plans, dasselbe Format wie `HomeSerieTag.id`.
+    static func planMarken(_ marken: [Date: [TagMarke]], kalender: Calendar) -> [String: TagMarke] {
+        var ergebnis: [String: TagMarke] = [:]
+        for (tag, liste) in marken {
+            if let erste = liste.first { ergebnis[PlanWoche.tagesSchluessel(tag, kalender)] = erste }
         }
         return ergebnis
+    }
+
+    /// "Kraft 1/2 · Cardio 0/1" -- die Zeile unter der Serie. Der Cardio-Teil
+    /// steht nur mit Cardio-Ziel (Auto-Cardio zaehlt auch ohne, wird aber
+    /// nicht gezeigt). nil, wenn gar kein Ziel steht.
+    static func zielZeile(stand: PlanWochenStand, ziel: Wochenziel) -> String? {
+        guard ziel.kraft > 0 || ziel.cardio > 0 else { return nil }
+        var teile = ["Kraft \(stand.kraftErledigt)/\(ziel.kraft)"]
+        if ziel.cardio > 0 { teile.append("Cardio \(stand.cardioErledigt)/\(ziel.cardio)") }
+        return teile.joined(separator: " · ")
     }
 
     /// Ein Tag mit Inhalt (Einheit oder eigener Kurs) klappt ihn auf -- auch
     /// heute, sonst waeren die Trainings von heute auf Home nicht mehr zu
     /// erreichen (R8). Ohne Inhalt fuehrt heute oder ein kuenftiger Tag mit
-    /// Planmarke in den Plan-Tab; kuenftige Tage mit Marke immer.
+    /// Marke (gebuchter Kurs) in den Plan-Tab; kuenftige Tage mit Marke immer.
     /// nil = kein Knopf. Die Ids sind "yyyy-MM-dd" und vergleichen sich als Text.
     static func tippZiel(_ tag: HomeSerieTag, heute: String, hatInhalt: Bool) -> HomeSerieTipp? {
         guard !tag.ausserhalb else { return nil }

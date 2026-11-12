@@ -115,13 +115,9 @@ struct EinheitKarteModellTests {
         #expect(EinheitKarteModell.zustandsText(.geplant, kalender: kalender) == nil)
     }
 
-    @Test func ueberzeileGeplant() {
+    @Test func ueberzeileTrainiert() {
         let freitag = kalender.date(from: DateComponents(year: 2026, month: 11, day: 6))!
-        #expect(ProfilKopf.ueberzeile(geplantAm: freitag, kalender: kalender)
-            == "GEPLANT · FREITAG, 6. NOV")
         #expect(ProfilKopf.ueberzeile(trainiertAm: freitag, kalender: kalender)
             == "FREITAG, 6. NOV")
-        #expect(ProfilKopf.startKnopfText(istGeplanterTag: true) == "Training starten")
-        #expect(ProfilKopf.startKnopfText(istGeplanterTag: false) == "Jetzt starten (vorziehen)")
     }
 }
