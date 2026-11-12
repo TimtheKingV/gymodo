@@ -222,9 +222,8 @@ struct PlanAntworten: Equatable {
         return nil
     }
 
-    /// Schaltet `tag` fuer Kurs oder Cardio um. Anders als im Einplanen-Sheet
-    /// (`PlanWochentage.umschalten`) nimmt das Onboarding einen Tag nie einer
-    /// anderen Art weg: die steht in einem frueheren Schritt fest. nil =
+    /// Schaltet `tag` fuer Kurs oder Cardio um. Das Onboarding nimmt einen Tag
+    /// nie einer anderen Art weg: die steht in einem frueheren Schritt fest. nil =
     /// umgeschaltet, sonst der Grund der Ablehnung fuer den Hinweis.
     @discardableResult
     mutating func tagUmschalten(_ tag: Int, fuer art: Wochenart) -> TagSperre? {

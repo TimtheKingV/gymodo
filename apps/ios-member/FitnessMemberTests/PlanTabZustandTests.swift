@@ -185,29 +185,42 @@ struct PlanTabZustandTests {
         #expect(naechste.first?.termin == .einheit(key: "B", zustand: .geplant))
     }
 
-    // MARK: - Einplanen (PlanWochentage)
+    // MARK: - Woche anpassen (WochenAuswahl)
 
-    @Test func einTagGehoertHoechstensEinerArt() {
-        var tage = PlanWochentage(raster: planRaster)
-        tage.umschalten(3, fuer: .kurs) // Mi war Kraft A
-        #expect(tage.kurs == [1, 3])
-        #expect(tage.kraft == [5])
-        tage.umschalten(3, fuer: .kurs) // zurueck: Mi frei
-        #expect(tage.kurs == [1])
-        #expect(tage.art(an: 3) == nil)
+    private static let basis = TrainingsplanProfil(minutes: 45, experience: "neu", focus: ["po"])
+
+    @Test func wochenAuswahlSendetNurDieZaehler() throws {
+        let auswahl = WochenAuswahl(ziel: Wochenziel(kraft: 2, cardio: 1, cardioMinuten: 30), profil: nil)
+        let json = try JSONSerialization.jsonObject(
+            with: JSONEncoder().encode(auswahl.profil(aus: Self.basis))) as! [String: Any]
+        #expect(json["kraftProWoche"] as? Int == 2)
+        #expect(json["cardioProWoche"] as? Int == 1)
+        #expect(json["cardioMinuten"] as? Int == 30)
+        #expect(json["minutes"] as? Int == 45)
+        #expect(json["kraftTage"] == nil)
+        #expect(json["kursTage"] == nil)
+        #expect(json["cardioTage"] == nil)
     }
 
-    @Test func ohneKrafttagUngueltigUndProfilSendetAlleTage() {
-        var tage = PlanWochentage(kraft: [2], kurs: [], cardio: [7])
-        tage.umschalten(2, fuer: .cardio)
-        #expect(!tage.istGueltig)
-        let alt = TrainingsplanProfil(minutes: 45, experience: "neu", focus: ["po"], cardioArten: ["laufen"])
-        let neu = PlanWochentage(kraft: [4, 2], kurs: [1], cardio: [7]).profil(aus: alt)
-        #expect(neu.kraftTage == [2, 4])
-        #expect(neu.kursTage == [1])
-        #expect(neu.cardioTage == [7])
-        #expect(neu.cardioArten == ["laufen"])
-        #expect(neu.minutes == 45)
+    @Test func wochenAuswahlKlemmtAnDenGrenzen() {
+        let tief = WochenAuswahl(ziel: Wochenziel(kraft: 0, cardio: -1, cardioMinuten: 5), profil: nil)
+        #expect(tief.kraft == 1 && tief.cardio == 0 && tief.cardioMinuten == 10)
+        let hoch = WochenAuswahl(ziel: Wochenziel(kraft: 9, cardio: 9, cardioMinuten: 95), profil: nil)
+        #expect(hoch.kraft == 7 && hoch.cardio == 7 && hoch.cardioMinuten == 90)
+        let krumm = WochenAuswahl(ziel: Wochenziel(kraft: 2, cardio: 1, cardioMinuten: 33), profil: nil)
+        #expect(krumm.cardioMinuten == 35)
+    }
+
+    @Test func wochenAuswahlUebernimmtCardioArtenAusDemProfil() {
+        let profil = TrainingsplanProfil(
+            minutes: 45, experience: "neu", focus: ["po"], cardioArten: ["laufen"], kraftTage: [1, 3])
+        var auswahl = WochenAuswahl(ziel: Wochenziel(kraft: 2, cardio: 1, cardioMinuten: 30), profil: profil)
+        #expect(auswahl.cardioArten == ["laufen"])
+        auswahl.cardioArtUmschalten("schwimmen")
+        auswahl.cardioArtUmschalten("laufen")
+        let neu = auswahl.profil(aus: profil)
+        #expect(neu.cardioArten == ["schwimmen"])
+        #expect(neu.kraftTage == nil)
     }
 
     // MARK: - Ansicht und Woche

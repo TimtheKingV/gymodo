@@ -175,16 +175,10 @@ struct PlanRootView: View {
                     InlineBanner(tone: .muted, message: speicherHinweis)
                 }
                 if let profil {
-                    // Task 10 ersetzt das Sheet durch die Zaehler (Spec P2 §4).
                     SecondaryButton(title: "Woche anpassen") { einplanenOffen = true }
                         .sheet(isPresented: $einplanenOffen) {
-                            PlanEinplanenSheet(
-                                profil: profil,
-                                raster: PlanTabZustand.anzeigeRaster(
-                                    planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
-                                    profil: profil),
-                                einheiten: plan.einheiten.map(\.key),
-                                hatKurse: hatStudio, namen: kontext.namen,
+                            WocheAnpassenSheet(
+                                ziel: ziel, profil: profil,
                                 speichern: { neu in await profilSpeichern(neu) })
                         }
                 }
