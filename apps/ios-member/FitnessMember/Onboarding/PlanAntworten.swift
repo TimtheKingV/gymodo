@@ -44,11 +44,17 @@ struct PlanAntworten: Equatable {
     var wochenGefragt = false
     /// Der Stand aus dem Profil, fuer "Überspringen" (wie `beschwerdenVorher`).
     private let wocheVorher: WochenAuswahl
+    /// Ob das Profil schon ein Kraft-Ziel hat: dann gilt es, und keine
+    /// Vorbelegung ueberschreibt es.
+    private let kraftAusProfil: Bool
 
     /// Vorbelegung aus `Member.trainingProfile`. Beschwerden stehen dort nie
     /// (Gesundheitsdaten, nicht im Bootstrap-Cache) -- die kommen ueber
     /// `beschwerdenUebernehmen` aus dem eigenen Abruf.
-    init(profil: TrainingsplanProfil?) {
+    ///
+    /// Kraft pro Woche, in dieser Rangfolge: das Profil, die Antwort auf "Wie
+    /// oft?" in diesem Flow (`wieOft`), das Wochenziel aus dem Bootstrap, 2.
+    init(profil: TrainingsplanProfil?, wieOft: Int? = nil, wochenziel: Wochenziel? = nil) {
         minuten = profil?.minutes
         erfahrung = profil?.experience
         schwerpunkt = Array((profil?.focus ?? []).prefix(2))
@@ -63,10 +69,20 @@ struct PlanAntworten: Equatable {
         auswahl.cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(auswahl.cardioArten.contains)
         woche = auswahl
         wocheVorher = auswahl
+        kraftAusProfil = profil?.kraftProWoche != nil
+        kraftVorbelegen(wieOft: wieOft, wochenziel: wochenziel)
     }
 
-    /// Ohne gesetztes Kraft-Ziel im Profil (neues Konto) beginnt "Deine Woche"
-    /// bei zweimal Kraft; Cardio beginnt bei 0.
+    /// Setzt Kraft neu, solange das Profil keines hat -- der Flow ruft es,
+    /// sobald "Wie oft?" beantwortet ist (die Vorbelegung beim Start kennt die
+    /// Antwort noch nicht).
+    mutating func kraftVorbelegen(wieOft: Int?, wochenziel: Wochenziel?) {
+        guard !kraftAusProfil else { return }
+        woche.kraft = WochenAuswahl.klemmen(
+            wieOft ?? wochenziel?.kraft ?? Self.kraftVorgabe, WochenAuswahl.kraftGrenzen)
+    }
+
+    /// Letzter Rueckfall fuer Kraft; Cardio beginnt bei 0.
     static let kraftVorgabe = 2
     static let cardioMinutenVorgabe = 30
 
@@ -144,8 +160,9 @@ struct PlanAntworten: Equatable {
 
     /// Schluessel aus CARDIO_ARTEN, in Anzeigereihenfolge.
     mutating func cardioArtUmschalten(_ art: String) {
-        woche.cardioArtUmschalten(art)
-        woche.cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(woche.cardioArten.contains)
+        var neu = Set(woche.cardioArten)
+        if neu.contains(art) { neu.remove(art) } else { neu.insert(art) }
+        woche.cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(neu.contains)
     }
 
     /// "Überspringen" auf dem Cardio-Schritt: zurueck auf den Stand aus dem

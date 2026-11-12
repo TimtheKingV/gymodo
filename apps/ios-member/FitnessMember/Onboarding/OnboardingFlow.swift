@@ -314,6 +314,13 @@ struct OnboardingFlow: View {
 
     /// Index -> Pfad: der Stack zeigt Wurzel (0) plus je einen Push.
     private func gehe(zu index: Int) {
+        // Beim Betreten der Woche ist "Wie oft?" beantwortet: Kraft folgt der
+        // Antwort (ein Kraft-Ziel im Profil gewinnt, siehe `PlanAntworten`).
+        // Nur hier, nicht spaeter: "Deine Woche" darf der Nutzer danach aendern.
+        if index < schritte.count, schritte[index] == .planCardio {
+            plan.kraftVorbelegen(
+                wieOft: antworten.tageProWoche, wochenziel: catalogStore.bootstrap?.member.wochenziel)
+        }
         pfad = index <= 0 ? [] : Array(1...index)
     }
 
@@ -345,7 +352,9 @@ struct OnboardingFlow: View {
     private func planVorbelegen() async {
         guard !planVorbelegt else { return }
         planVorbelegt = true
-        plan = PlanAntworten(profil: catalogStore.bootstrap?.member.trainingProfile)
+        let member = catalogStore.bootstrap?.member
+        plan = PlanAntworten(
+            profil: member?.trainingProfile, wieOft: antworten.tageProWoche, wochenziel: member?.wochenziel)
         plan.wochenGefragt = schritte.contains(.planCardio)
         let vorher = (plan.beschwerden, plan.einwilligung)
         guard let areas = try? await apiClient.trainingLimits() else { return }
@@ -390,7 +399,7 @@ struct OnboardingFlow: View {
             // dieses Ziel" -- das widerspricht der Spec (die Serie ist vom
             // Wochenziel unabhaengig, nicht-verhandelbare Regel 1). Dieser
             // Satz ersetzt ihn, alles andere bleibt woertlich.
-            "Trainingstage pro Woche. Auf Home steht es als eigene Zeile unter deiner Serie."
+            "Wie oft pro Woche willst du Kraft trainieren? Nicht an welchen Tagen — nur wie oft."
         case .zielgewicht:
             "Heute \(Zahlformat.gewichtMitEinheit(antworten.gewichtKg ?? 0)). Wohin soll es gehen?"
         // Entwurf 1.1 hat keinen Lead; 1.2 nur "Bis zu zwei." (Korrektur
@@ -412,7 +421,7 @@ struct OnboardingFlow: View {
         case .ueberDich: "Nichts gewählt heißt: keine Angabe."
         case .koerper: "Beides freiwillig. Änderbar und löschbar im Profil."
         case .ziel: nil
-        case .wieOft: "Zwei Einheiten an einem Tag sind ein Tag. Erreichbar ist besser als ehrgeizig — du kannst es jederzeit im Profil verschieben."
+        case .wieOft: "Erreichbar ist besser als ehrgeizig — du kannst es jederzeit ändern."
         case .zielgewicht: "Braucht Verbindung. „Später“ beendet ohne Zielgewicht."
         case .planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau: nil
         }

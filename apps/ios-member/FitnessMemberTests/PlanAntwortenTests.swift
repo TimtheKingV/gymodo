@@ -228,6 +228,35 @@ struct PlanAntwortenTests {
         #expect(antworten.woche.cardioArten == ["laufen"])
     }
 
+    @Test("Kraft folgt der Wie-oft-Antwort, sonst dem Wochenziel, sonst 2")
+    func kraftVorbelegungAusWieOft() {
+        #expect(PlanAntworten(profil: nil, wieOft: 4).woche.kraft == 4)
+        // Geklemmt auf 1...7.
+        #expect(PlanAntworten(profil: nil, wieOft: 9).woche.kraft == 7)
+        let ziel = Wochenziel(kraft: 3, cardio: 1, cardioMinuten: 30)
+        #expect(PlanAntworten(profil: nil, wieOft: nil, wochenziel: ziel).woche.kraft == 3)
+        #expect(PlanAntworten(profil: nil, wieOft: 4, wochenziel: ziel).woche.kraft == 4)
+        #expect(PlanAntworten(profil: nil).woche.kraft == 2)
+    }
+
+    @Test("ein Kraft-Ziel im Profil gewinnt gegen die Wie-oft-Antwort")
+    func profilKraftGewinnt() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kraftProWoche: 5, cardioProWoche: 0, cardioMinuten: 30)
+        var antworten = PlanAntworten(profil: profil, wieOft: 4)
+        #expect(antworten.woche.kraft == 5)
+        antworten.kraftVorbelegen(wieOft: 3, wochenziel: Wochenziel(kraft: 6, cardio: 0, cardioMinuten: 30))
+        #expect(antworten.woche.kraft == 5)
+    }
+
+    @Test("die spaete Antwort auf Wie oft setzt Kraft nach")
+    func kraftVorbelegenNachtraeglich() {
+        var antworten = PlanAntworten(profil: nil)
+        #expect(antworten.woche.kraft == 2)
+        antworten.kraftVorbelegen(wieOft: 4, wochenziel: nil)
+        #expect(antworten.woche.kraft == 4)
+    }
+
     @Test("Zusammenfassung nennt Zaehler und Minuten, der Cardio-Teil entfaellt bei 0")
     func zusammenfassung() {
         var antworten = PlanAntworten(profil: nil)
