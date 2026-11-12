@@ -535,10 +535,15 @@ describe("getSessions -- Serie mit Cardio-Haken und Kursen", () => {
     // Training diese Woche (gerade eben), Cardio-Haken vor 7 Tagen, begonnener
     // Kurs vor 14 Tagen. In der Woche davor (21 Tage): nur ein abgesagter Kurs,
     // eine Warteliste und eine Stornierung -- die duerfen nichts verlaengern.
-    await seedSession({ userId, startedAt: isoAgo(0.5), completedAt: isoAgo(0.1), completedReason: "manual" });
+    // Das Training liegt nur eine Minute zurueck, und der Cardio-Tag ist das Datum in
+    // Studiozeit (Europe/Berlin): ein UTC-Datum laege Mo 00:00-02:00 Berlin noch auf dem
+    // Sonntag davor, die Woche dazwischen waere leer und die Serie risse ab.
+    await seedSession({ userId, startedAt: isoAgo(1 / 60), completedAt: isoAgo(1 / 120), completedReason: "manual" });
+    const berlinTag = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date(iso));
     const { error: cardioError } = await admin
       .from("cardio_checks")
-      .insert({ user_id: userId, day: tage(7).slice(0, 10) });
+      .insert({ user_id: userId, day: berlinTag(tage(7)) });
     if (cardioError) throw cardioError;
     await buchung(await termin(tage(14), "planned"), "booked");
     await buchung(await termin(tage(21), "cancelled"), "booked");

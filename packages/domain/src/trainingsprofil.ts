@@ -93,11 +93,11 @@ function pruefe<T>(schema: z.ZodType<T>, roh: unknown): T {
 }
 
 /** Geprueftes Profil, die gesendeten Wochenfelder bleiben als solche erkennbar (fehlend = undefined). */
-type TeilProfil = Omit<TrainingProfile, keyof WochenFelder | keyof Zaehler> &
+export type TeilProfil = Omit<TrainingProfile, keyof WochenFelder | keyof Zaehler> &
   Partial<WochenFelder> &
   Partial<Zaehler>;
 
-function pruefeTeilprofil(roh: unknown): TeilProfil {
+export function pruefeTeilprofil(roh: unknown): TeilProfil {
   const p = pruefe(profilSchema, roh) as TeilProfil;
   // Nur die gesendeten Felder pruefen; Ueberschneidung mit Gespeichertem prueft saveTrainingProfile.
   pruefeWoche({ kursTage: p.kursTage ?? [], cardioTage: p.cardioTage ?? [], kraftTage: p.kraftTage ?? [] });
@@ -141,33 +141,63 @@ export async function getTrainingProfile(client: SupabaseClient, userId: string)
   };
 }
 
-export async function saveTrainingProfile(
-  client: SupabaseClient,
-  userId: string,
-  input: unknown,
-): Promise<TrainingProfile> {
-  const teil = pruefeTeilprofil(input);
-  // Gespeicherte Wochenfelder dazuholen: ein PUT ohne sie laesst sie unveraendert, und ein
-  // PUT mit nur einem Feld darf mit den gespeicherten anderen nichts ueberschneiden --
-  // sonst kaeme statt validation_failed erst der Check der Datenbank (internal).
-  const alt = await getTrainingProfile(client, userId);
+/**
+ * Fuehrt das gesendete Teilprofil mit dem gespeicherten zusammen und liefert die zu
+ * schreibenden Wochen- und Zaehlerspalten (nur Gesendetes bzw. daraus Abgeleitetes).
+ *
+ * Alte App (nur Tagesfelder, ohne Zaehler): kraftProWoche = Anzahl Krafttage (nur wenn > 0,
+ * sonst unveraendert -- leer hiess dort "Generator verteilt"), cardioProWoche = Anzahl
+ * Cardiotage. So bleiben die Zaehler nach der Migration nicht stehen.
+ *
+ * pruefeWoche laeuft nur, wenn Tagesfelder mitkommen (Spec 7): ein PUT mit nur Zaehlern
+ * darf nicht an gespeicherten Alt-Tagen scheitern. Mit Tagesfeldern wird gegen die
+ * gespeicherten geprueft -- sonst kaeme statt validation_failed erst der DB-Check (internal).
+ */
+export function fuehreProfilZusammen(
+  teil: TeilProfil,
+  alt: TrainingProfile | null,
+): { profil: TrainingProfile; spalten: Record<string, unknown> } {
+  const abgeleitet: Partial<Zaehler> = {};
+  if (teil.kraftProWoche === undefined && teil.kraftTage !== undefined && teil.kraftTage.length > 0) {
+    abgeleitet.kraftProWoche = teil.kraftTage.length;
+  }
+  if (teil.cardioProWoche === undefined && teil.cardioTage !== undefined) {
+    abgeleitet.cardioProWoche = teil.cardioTage.length;
+  }
+  const z: Partial<Zaehler> = { ...abgeleitet };
+  for (const feld of Object.keys(ZAEHLER_SPALTEN) as (keyof Zaehler)[]) {
+    if (teil[feld] !== undefined) (z as Record<string, unknown>)[feld] = teil[feld];
+  }
   const profil: TrainingProfile = {
     ...teil,
     kursTage: teil.kursTage ?? alt?.kursTage ?? [],
     cardioTage: teil.cardioTage ?? alt?.cardioTage ?? [],
     cardioArten: teil.cardioArten ?? alt?.cardioArten ?? [],
     kraftTage: teil.kraftTage ?? alt?.kraftTage ?? [],
-    kraftProWoche: teil.kraftProWoche !== undefined ? teil.kraftProWoche : (alt?.kraftProWoche ?? null),
-    cardioProWoche: teil.cardioProWoche ?? alt?.cardioProWoche ?? 0,
-    cardioMinuten: teil.cardioMinuten ?? alt?.cardioMinuten ?? 30,
+    kraftProWoche: z.kraftProWoche !== undefined ? z.kraftProWoche : (alt?.kraftProWoche ?? null),
+    cardioProWoche: z.cardioProWoche ?? alt?.cardioProWoche ?? 0,
+    cardioMinuten: z.cardioMinuten ?? alt?.cardioMinuten ?? 30,
   };
-  pruefeWoche(profil);
-  // Upsert nur mit gesendeten Wochenspalten; die uebrigen bleiben, wie sie sind.
-  const wochen: Record<string, unknown> = {};
-  for (const feld of WOCHEN_FELDER) if (teil[feld] !== undefined) wochen[WOCHEN_SPALTEN[feld]] = teil[feld];
-  for (const feld of Object.keys(ZAEHLER_SPALTEN) as (keyof Zaehler)[]) {
-    if (teil[feld] !== undefined) wochen[ZAEHLER_SPALTEN[feld]] = teil[feld];
+  if (teil.kursTage !== undefined || teil.cardioTage !== undefined || teil.kraftTage !== undefined) {
+    pruefeWoche(profil);
   }
+  const spalten: Record<string, unknown> = {};
+  for (const feld of WOCHEN_FELDER) if (teil[feld] !== undefined) spalten[WOCHEN_SPALTEN[feld]] = teil[feld];
+  for (const feld of Object.keys(ZAEHLER_SPALTEN) as (keyof Zaehler)[]) {
+    if (z[feld] !== undefined) spalten[ZAEHLER_SPALTEN[feld]] = z[feld];
+  }
+  return { profil, spalten };
+}
+
+export async function saveTrainingProfile(
+  client: SupabaseClient,
+  userId: string,
+  input: unknown,
+): Promise<TrainingProfile> {
+  const teil = pruefeTeilprofil(input);
+  // Gespeicherte Felder dazuholen: ein PUT ohne sie laesst sie unveraendert.
+  const alt = await getTrainingProfile(client, userId);
+  const { profil, spalten: wochen } = fuehreProfilZusammen(teil, alt);
   const { error } = await client.from("training_profiles").upsert(
     {
       user_id: userId,
@@ -180,7 +210,9 @@ export async function saveTrainingProfile(
     { onConflict: "user_id" },
   );
   if (error) throw new DomainError("internal", "Das Trainingsprofil konnte nicht gespeichert werden.");
-  // Wochenziel abgleichen: nur wenn kraftProWoche gesendet wurde und nicht null ist.
+  // Wochenziel abgleichen: nur wenn kraftProWoche ausdruecklich gesendet wurde und nicht null
+  // ist. Aus Krafttagen abgeleitete Zaehler (alte App) gleichen nicht ab -- die alte App
+  // setzt weekly_days selbst.
   if (teil.kraftProWoche != null) {
     await setGoal(client, {
       kind: "weekly_days",

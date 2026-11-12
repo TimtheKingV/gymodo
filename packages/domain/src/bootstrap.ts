@@ -402,21 +402,20 @@ export async function ladeTrainingsteil(
     melde(`bootstrap: Trainingsprofil nicht geladen (${grund(e)})`);
     return null;
   });
-  let planTage: number | null = null;
-  const plaeneAnfrage = (async () => {
+  const plaeneAnfrage = (async (): Promise<{ plans: PlanFuerApp[]; planTage: number | null }> => {
     const [profil, limits, aktiver] = await Promise.all([
       profilAnfrage,
       getTrainingLimits(client, userId),
       aktiverKatalogPlan(client, userId),
     ]);
     const tage = aktiver?.eingabe?.tage;
-    planTage = typeof tage === "number" ? tage : null;
-    return ladePlaeneFuerApp(client, userId, aktiver, profil, limits, jetzt, melde);
+    const plans = await ladePlaeneFuerApp(client, userId, aktiver, profil, limits, jetzt, melde);
+    return { plans, planTage: typeof tage === "number" ? tage : null };
   })().catch((e: unknown) => {
     melde(`bootstrap: Plaene nicht geladen (${grund(e)})`);
-    return [] as PlanFuerApp[];
+    return { plans: [] as PlanFuerApp[], planTage: null };
   });
-  const [trainingProfile, plans] = await Promise.all([profilAnfrage, plaeneAnfrage]);
+  const [trainingProfile, { plans, planTage }] = await Promise.all([profilAnfrage, plaeneAnfrage]);
   return { trainingProfile, plans, planTage };
 }
 

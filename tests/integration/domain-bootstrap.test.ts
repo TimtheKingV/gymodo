@@ -655,6 +655,21 @@ describe("getBootstrap -- Trainingsplan", () => {
     expect((await getBootstrap(o.client)).member.wochenziel).toEqual({ kraft: 2, cardio: 0, cardioMinuten: 30 });
   });
 
+  it("wochenziel ohne Profil-Zaehler nimmt die Tage des aktiven Plans vor weekly_days", async () => {
+    // Profil ohne kraft_pro_woche (null), weekly_days 3, aktiver Plan mit eingabe.tage 5
+    const m = await legeMitgliedAn("boot-wz-plan", { studios: [ps.voll], weeklyDays: 3 });
+    const plan = await aktiverPlan(m);
+    const { error } = await admin
+      .from("training_plans")
+      .update({ eingabe: { ...plan.eingabe, tage: 5 } })
+      .eq("id", plan.id);
+    if (error) throw error;
+    const b = await getBootstrap(m.client);
+    expect(b.member.trainingProfile?.kraftProWoche).toBeNull();
+    expect(b.member.goals.weeklyDays?.targetValue).toBe(3);
+    expect(b.member.wochenziel.kraft).toBe(5);
+  });
+
   it("trainingProfile ist null ohne Profil", async () => {
     const m = await legeMitgliedAn("boot-plan-ohne-tp", { studios: [ps.voll], profil: null });
     const b = await getBootstrap(m.client);

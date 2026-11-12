@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { pruefeTrainingsLimits, pruefeTrainingsprofil } from "./trainingsprofil.js";
+import {
+  fuehreProfilZusammen,
+  pruefeTeilprofil,
+  pruefeTrainingsLimits,
+  pruefeTrainingsprofil,
+  type TrainingProfile,
+} from "./trainingsprofil.js";
 
 const gueltig = { minutes: 60, experience: "neu", focus: ["brust"] };
 
@@ -88,6 +94,56 @@ describe("pruefeTrainingsprofil: Wochenzaehler", () => {
   });
   it("Tagesfelder ohne Zaehler laufen weiter durch pruefeWoche", () => {
     expect(() => pruefeTrainingsprofil({ ...gueltig, kursTage: [2], kraftTage: [2] })).toThrow(
+      expect.objectContaining({ code: "validation_failed" }),
+    );
+  });
+});
+
+describe("fuehreProfilZusammen", () => {
+  const gespeichert: TrainingProfile = {
+    ...(gueltig as Pick<TrainingProfile, "minutes" | "experience" | "focus">),
+    kursTage: [],
+    cardioTage: [],
+    cardioArten: [],
+    kraftTage: [],
+    kraftProWoche: 3,
+    cardioProWoche: 2,
+    cardioMinuten: 30,
+  };
+  it("alte App: Krafttage ohne Zaehler setzen kraftProWoche auf die Anzahl", () => {
+    const { profil, spalten } = fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, kraftTage: [1, 4] }), gespeichert);
+    expect(profil.kraftProWoche).toBe(2);
+    expect(spalten).toMatchObject({ kraft_tage: [1, 4], kraft_pro_woche: 2 });
+  });
+  it("alte App: leere Krafttage lassen kraftProWoche unveraendert", () => {
+    const { profil, spalten } = fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, kraftTage: [] }), gespeichert);
+    expect(profil.kraftProWoche).toBe(3);
+    expect(spalten).not.toHaveProperty("kraft_pro_woche");
+  });
+  it("alte App: Cardiotage ohne Zaehler setzen cardioProWoche auf die Anzahl, auch 0", () => {
+    const eins = fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, cardioTage: [6] }), gespeichert);
+    expect(eins.profil.cardioProWoche).toBe(1);
+    expect(eins.spalten).toMatchObject({ cardio_pro_woche: 1 });
+    const null_ = fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, cardioTage: [] }), gespeichert);
+    expect(null_.profil.cardioProWoche).toBe(0);
+    expect(null_.spalten).toMatchObject({ cardio_pro_woche: 0 });
+  });
+  it("gesendete Zaehler gehen vor den Tagesfeldern", () => {
+    const { profil } = fuehreProfilZusammen(
+      pruefeTeilprofil({ ...gueltig, kraftTage: [1, 4], kraftProWoche: 5, cardioTage: [6], cardioProWoche: 0 }),
+      gespeichert,
+    );
+    expect(profil).toMatchObject({ kraftProWoche: 5, cardioProWoche: 0 });
+  });
+  it("nur Zaehler: gespeicherte Alt-Tage, die pruefeWoche nicht bestuenden, stoeren nicht", () => {
+    const kaputt: TrainingProfile = { ...gespeichert, kursTage: [2], kraftTage: [2] };
+    const { profil, spalten } = fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, kraftProWoche: 2 }), kaputt);
+    expect(profil.kraftProWoche).toBe(2);
+    expect(spalten).not.toHaveProperty("kraft_tage");
+  });
+  it("mit Tagesfeldern prueft pruefeWoche gegen die gespeicherten Tage", () => {
+    const mitKurs: TrainingProfile = { ...gespeichert, kursTage: [1] };
+    expect(() => fuehreProfilZusammen(pruefeTeilprofil({ ...gueltig, kraftTage: [1] }), mitKurs)).toThrow(
       expect.objectContaining({ code: "validation_failed" }),
     );
   });
