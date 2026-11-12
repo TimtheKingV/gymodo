@@ -207,10 +207,12 @@ struct PlanKalenderTests {
     /// Aus HomeWocheKarteTests: Home laedt nur die laufende Woche, der Plan-Tab
     /// mehr -- Laden ersetzt nur den geladenen Bereich.
     @Test func cardioLadenErsetztNurDenGeladenenBereich() {
-        let alt: Set<String> = ["2026-10-20", "2026-10-27", "2026-11-03"]
+        let alt = [
+            CardioCheck(id: "1", day: "2026-10-20", minuten: nil), CardioCheck(id: "2", day: "2026-10-27", minuten: nil),
+            CardioCheck(id: "3", day: "2026-11-03", minuten: nil)]
         let neu = CardioChecksStore.zusammenfuehren(
-            alt: alt, neu: ["2026-10-28"], von: "2026-10-26", bis: "2026-11-01")
-        #expect(neu == ["2026-10-20", "2026-10-28", "2026-11-03"])
+            alt: alt, neu: [CardioCheck(id: "4", day: "2026-10-28", minuten: 30)], von: "2026-10-26", bis: "2026-11-01")
+        #expect(neu.map(\.id).sorted() == ["1", "3", "4"])
     }
 
     // MARK: - Verlauf gedeckelt (R7)

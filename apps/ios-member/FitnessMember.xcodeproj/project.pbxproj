@@ -334,6 +334,7 @@
 		CBC840D3961E54257CE0525F /* GeraeteAuswahl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CBC9B358BECD950CD5B0381 /* GeraeteAuswahl.swift */; };
 		CCCF27D0544C08BABCEE5F51 /* AuswahlOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3586E79E1C18C3841DF9E3CB /* AuswahlOverlay.swift */; };
 		CDB7565B4DD9F52B822642E2 /* GeraeteGruppierungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B3C9D4E64E63C38BBE2D69 /* GeraeteGruppierungTests.swift */; };
+		CDFAAA852F981253E1B2E93D /* Wochenziel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EECFF12454CB307B8142444 /* Wochenziel.swift */; };
 		CE044ED38AF73A53DC3B0449 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B992AC22F100D1FF9BE1737 /* SessionDetailView.swift */; };
 		CE20B943DBE9C21746B7C572 /* KurseWochenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E54956E5E29B287C6E6F7AB3 /* KurseWochenView.swift */; };
 		CE8023C2CAB29C86CA8F0C9A /* Vorschaubild.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */; };
@@ -596,6 +597,7 @@
 		5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZeitachseTests.swift; sourceTree = "<group>"; };
 		5E86C2CE1222506D926E3290 /* PlanTabZustandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTabZustandTests.swift; sourceTree = "<group>"; };
 		5EB0A74AED76277EDA61C783 /* PlanTabZustand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTabZustand.swift; sourceTree = "<group>"; };
+		5EECFF12454CB307B8142444 /* Wochenziel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wochenziel.swift; sourceTree = "<group>"; };
 		5F4B265225A09FA6EF146C6E /* PlanNamen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanNamen.swift; sourceTree = "<group>"; };
 		5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FitnessMember.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F9AF02FA591F55A7D09403B /* JoinResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinResult.swift; sourceTree = "<group>"; };
@@ -1163,6 +1165,7 @@
 				19832BC95D12C1DCBEFF10E9 /* SessionSummary.swift */,
 				8A0756570D91BAD9173DC82B /* TagContextResponse.swift */,
 				84E77689A1801FF48C88046D /* Trainingsplan.swift */,
+				5EECFF12454CB307B8142444 /* Wochenziel.swift */,
 				ACA345A636C594A2D95A59FD /* WorkoutSet.swift */,
 				B76CEB6D3CEED5662117CF5E /* Ziel.swift */,
 			);
@@ -1931,6 +1934,7 @@
 				446F01DC2B037EBD87014F20 /* VerlaufStore.swift in Sources */,
 				CE8023C2CAB29C86CA8F0C9A /* Vorschaubild.swift in Sources */,
 				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
+				CDFAAA852F981253E1B2E93D /* Wochenziel.swift in Sources */,
 				3D434A9FDCC360100D327428 /* WorkoutSessionStore+Ortswechsel.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,
 				F7EE8A3131BCD293674276A2 /* WorkoutSet.swift in Sources */,
