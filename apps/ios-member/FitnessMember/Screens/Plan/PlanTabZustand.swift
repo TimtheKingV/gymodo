@@ -70,62 +70,6 @@ struct PlanTabZustand: Equatable {
         return gewaehlterFilter
     }
 
-    // MARK: - Anzeige-Raster
-
-    /// Das Raster, das der Tab zeigt.
-    ///
-    /// Der Plan bleibt stabil (F14): eine Profilaenderung ("Einplanen") schreibt
-    /// nur die Wochentage ins Profil, `plan.wochenraster` bleibt, wie es beim
-    /// Erzeugen war. Weichen die Profil-Tage davon ab, gelten fuer die Anzeige
-    /// die Profil-Tage -- sonst haette "Einplanen" keine sichtbare Wirkung.
-    /// Je Art gilt: nicht leeres Profilfeld vor Raster (Regel siehe unten).
-    ///
-    /// Die Einheiten auf den Krafttagen folgen der Folge, nicht dem Kalender:
-    /// erste Einheit des Rasters (sonst die erste des Plans), dann weiter in
-    /// Planreihenfolge im Kreis. Gleiche Tage ergeben damit genau das Raster.
-    static func anzeigeRaster(
-        planRaster: [Rasterplatz], einheiten: [String], profil: TrainingsplanProfil?
-    ) -> [Rasterplatz] {
-        // Der Server liefert die Felder nie als nil, sondern leer (DB-Default
-        // '{}'): leer heisst "nicht gesetzt". Sind Kraft-Tage gesetzt, ist das
-        // Profil durch "Einplanen" vollstaendig -- dann heissen leere Kurs-
-        // oder Cardio-Tage "keine" (Ruling Fix-Runde 1).
-        let kraftProfil = profil?.kraftTage ?? []
-        let kursProfil = profil?.kursTage ?? []
-        let cardioProfil = profil?.cardioTage ?? []
-        let vollstaendig = !kraftProfil.isEmpty
-        guard vollstaendig || !kursProfil.isEmpty || !cardioProfil.isEmpty else { return planRaster }
-
-        func rasterTage(_ art: Wochenart) -> [Int] {
-            planRaster.filter { $0.art == art }.map(\.tag)
-        }
-        let kurs = vollstaendig || !kursProfil.isEmpty ? kursProfil : rasterTage(.kurs)
-        let cardio = vollstaendig || !cardioProfil.isEmpty ? cardioProfil : rasterTage(.cardio)
-        let kraft = vollstaendig ? kraftProfil : rasterTage(.kraft)
-
-        let ersteRasterEinheit = planRaster.sorted { $0.tag < $1.tag }.first { $0.art == .kraft }?.einheitKey
-        let start = ersteRasterEinheit.flatMap { einheiten.firstIndex(of: $0) } ?? 0
-
-        var ergebnis: [Rasterplatz] = []
-        for (i, tag) in Set(kraft).sorted().enumerated() {
-            let key = einheiten.isEmpty ? nil : einheiten[(start + i) % einheiten.count]
-            ergebnis.append(Rasterplatz(tag: tag, art: .kraft, einheitKey: key))
-        }
-        ergebnis += Set(kurs).map { Rasterplatz(tag: $0, art: .kurs, einheitKey: nil) }
-        ergebnis += Set(cardio).map { Rasterplatz(tag: $0, art: .cardio, einheitKey: nil) }
-        // Nach Tag, an einem Tag Kraft vor Kurs vor Cardio (wie der Server sortiert).
-        let rang: [Wochenart: Int] = [.kraft: 0, .kurs: 1, .cardio: 2]
-        return ergebnis.sorted { ($0.tag, rang[$0.art] ?? 0) < ($1.tag, rang[$1.art] ?? 0) }
-    }
-
-    /// Steht im Anzeige-Raster ein Kraft-Platz? Aktive Plaene von vor 1.3.0
-    /// haben kein Wochenraster; ohne Profil-Tage gibt es dann keinen Tag fuer
-    /// die Einheiten. Die App waehlt keine Tage selbst (F15) -- der Plan-Tab
-    /// bittet darum, sie festzulegen, Home zeigt statt der Woche den Weg dahin.
-    static func hatKrafttage(anzeigeRaster: [Rasterplatz]) -> Bool {
-        anzeigeRaster.contains { $0.art == .kraft }
-    }
-
     // MARK: - Woche
 
     /// "KW 44 · 26. Okt – 1. Nov" -- ISO-Kalenderwoche, Monate ohne Punkt.
@@ -148,17 +92,6 @@ struct PlanTabZustand: Equatable {
             return "KW \(kw) · \(kalender.component(.day, from: erster)).–\(text(letzter))"
         }
         return "KW \(kw) · \(text(erster)) – \(text(letzter))"
-    }
-
-    /// Die naechsten Termine NACH `nach` (der Tag selbst zaehlt nicht), fuer
-    /// "Als nächstes" auf einem leeren Tag.
-    static func alsNaechstes(
-        termine: [Date: [PlanTermin]], nach: Date, anzahl: Int
-    ) -> [(tag: Date, termin: PlanTermin)] {
-        termine.keys.filter { $0 > nach }.sorted()
-            .flatMap { tag in (termine[tag] ?? []).map { (tag: tag, termin: $0) } }
-            .prefix(anzahl)
-            .map { $0 }
     }
 }
 

@@ -16,7 +16,6 @@ struct PlanRootView: View {
     let beiEinheit: (String) -> Void
     /// Session-Id eines vergangenen Trainings -> Training-Detail im Plan-Stack.
     let beiTraining: (String) -> Void
-    let beiTrainingStarten: () -> Void
     /// Ein Tag, den Home zeigen will (ein Tag der Streak-Woche, "Nächste Einheit"
     /// als Kurs oder Cardio, Spec 1.1). Wird beim Uebernehmen geleert, damit derselbe
     /// Tag ein zweites Mal ankommt.

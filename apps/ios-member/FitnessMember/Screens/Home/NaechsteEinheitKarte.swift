@@ -8,7 +8,6 @@ struct NaechsteEinheitKarte: View {
     let modell: EinheitKarteModell
     /// Der Ablauf dieser Einheit laeuft schon: "Weiter trainieren".
     var laeuft = false
-    let kalender: Calendar
     let geschlecht: Geschlecht?
     let beiTippen: () -> Void
     let beiStart: () -> Void
@@ -21,7 +20,7 @@ struct NaechsteEinheitKarte: View {
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .accessibilityAddTraits(.isHeader)
             EinheitKarte(
-                modell: modell, geschlecht: geschlecht, kalender: kalender,
+                modell: modell, geschlecht: geschlecht,
                 beiTipp: beiTippen, hinweis: "Zeigt die Einheit im Plan",
                 aktion: (titel: Self.startText(laeuft: laeuft),
                          label: "\(modell.titel) \(laeuft ? "weiter trainieren" : "starten")",

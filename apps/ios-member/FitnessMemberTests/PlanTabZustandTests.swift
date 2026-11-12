@@ -62,108 +62,7 @@ struct PlanTabZustandTests {
         #expect(PlanTabZustand(gewaehlterFilter: .kraft).geltenderFilter(sichtbar: []) == .alle)
     }
 
-    // MARK: - Anzeige-Raster (Profil-Tage vor Planraster)
-
-    private let planRaster: [Rasterplatz] = [
-        Rasterplatz(tag: 1, art: .kurs, einheitKey: nil),
-        Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-        Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
-        Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-    ]
-
-    private func profil(kurs: [Int]? = nil, cardio: [Int]? = nil, kraft: [Int]? = nil) -> TrainingsplanProfil {
-        TrainingsplanProfil(minutes: 60, experience: "neu", focus: [],
-                            kursTage: kurs, cardioTage: cardio, kraftTage: kraft)
-    }
-
-    // MARK: - Bestandsplaene ohne Wochenraster (I3)
-
-    @Test func bestandsplanOhneRasterUndLeeresProfilHatKeineKrafttage() {
-        // Plaene von vor 1.3.0: wochenraster = [], Profilfelder leer.
-        let raster = PlanTabZustand.anzeigeRaster(
-            planRaster: [], einheiten: ["A", "B"], profil: profil(kurs: [], cardio: [], kraft: []))
-        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: raster) == false)
-        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: []) == false)
-    }
-
-    @Test func nurKursUndCardioSindKeineKrafttage() {
-        let raster = PlanTabZustand.anzeigeRaster(
-            planRaster: [], einheiten: ["A", "B"], profil: profil(kurs: [1], cardio: [7], kraft: []))
-        #expect(raster.map(\.art) == [.kurs, .cardio])
-        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: raster) == false)
-    }
-
-    @Test func normalesRasterHatKrafttage() {
-        #expect(PlanTabZustand.hatKrafttage(anzeigeRaster: planRaster))
-    }
-
-    @Test func ohneProfilTageGiltDasPlanraster() {
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: nil) == planRaster)
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: profil())
-            == planRaster)
-    }
-
-    @Test func leereProfilfelderGeltenAlsNichtGesetzt() {
-        // So liefert der Server ein Profil ohne Einplanen (DB-Default '{}').
-        let p = profil(kurs: [], cardio: [], kraft: [])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == planRaster)
-    }
-
-    @Test func nurKursTageGesetztRestAusDemRaster() {
-        let p = profil(kurs: [2], cardio: [], kraft: [])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
-            Rasterplatz(tag: 2, art: .kurs, einheitKey: nil),
-            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
-            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-        ])
-    }
-
-    @Test func kraftTageGesetztMachenLeereKursTageZuKeinen() {
-        let p = profil(kurs: [], cardio: [7], kraft: [3, 5])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
-            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
-            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-        ])
-    }
-
-    @Test func gleicheProfilTageAendernNichts() {
-        let p = profil(kurs: [1], cardio: [7], kraft: [3, 5])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == planRaster)
-    }
-
-    @Test func abweichendeProfilTageGeltenUndBehaltenDieFolge() {
-        // Kraft auf Di/Do/Sa verlegt, Kurs auf Mi: die Folge A, B laeuft weiter (A, B, A).
-        let p = profil(kurs: [3], cardio: [7], kraft: [2, 4, 6])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
-            Rasterplatz(tag: 2, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 3, art: .kurs, einheitKey: nil),
-            Rasterplatz(tag: 4, art: .kraft, einheitKey: "B"),
-            Rasterplatz(tag: 6, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-        ])
-    }
-
-    @Test func nurEinFeldGesetztDieAnderenKommenAusDemRaster() {
-        let p = profil(cardio: [6])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: planRaster, einheiten: ["A", "B"], profil: p) == [
-            Rasterplatz(tag: 1, art: .kurs, einheitKey: nil),
-            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
-            Rasterplatz(tag: 6, art: .cardio, einheitKey: nil),
-        ])
-    }
-
-    @Test func altplanOhneRasterFolgtDenEinheiten() {
-        let p = profil(kraft: [1, 4])
-        #expect(PlanTabZustand.anzeigeRaster(planRaster: [], einheiten: ["OK_A", "UK_A"], profil: p) == [
-            Rasterplatz(tag: 1, art: .kraft, einheitKey: "OK_A"),
-            Rasterplatz(tag: 4, art: .kraft, einheitKey: "UK_A"),
-        ])
-    }
-
-    // MARK: - Woche, Als naechstes
+    // MARK: - Woche
 
     @Test func wochenTitelNenntKalenderwocheUndSpanne() {
         #expect(PlanTabZustand.wochenTitel(tage: woche, kalender: Self.kalender) == "KW 44 · 26. Okt – 1. Nov")
@@ -172,17 +71,6 @@ struct PlanTabZustandTests {
     @Test func wochenTitelImSelbenMonatNenntDenMonatEinmal() {
         let tage = (0..<7).map { Self.kalender.date(from: DateComponents(year: 2026, month: 11, day: 9 + $0))! }
         #expect(PlanTabZustand.wochenTitel(tage: tage, kalender: Self.kalender) == "KW 46 · 9.–15. Nov")
-    }
-
-    @Test func alsNaechstesSindDieZweiFolgendenTermine() {
-        let termine: [Date: [PlanTermin]] = [
-            Self.tag(2026, 10, 28): [.einheit(key: "A", zustand: .geplant)],
-            Self.tag(2026, 10, 30): [.einheit(key: "B", zustand: .geplant)],
-            Self.tag(2026, 11, 1): [.cardio(arten: [], zustand: .geplant)],
-        ]
-        let naechste = PlanTabZustand.alsNaechstes(termine: termine, nach: Self.tag(2026, 10, 29), anzahl: 2)
-        #expect(naechste.map(\.tag) == [Self.tag(2026, 10, 30), Self.tag(2026, 11, 1)])
-        #expect(naechste.first?.termin == .einheit(key: "B", zustand: .geplant))
     }
 
     // MARK: - Woche anpassen (WochenAuswahl)

@@ -28,8 +28,7 @@ enum PlanFilter: CaseIterable {
     }
 }
 
-/// Reine Darstellungslogik des Plan-Tabs. Die Termine je Tag legt
-/// `PlanKalender` an.
+/// Reine Darstellungslogik des Plan-Tabs.
 enum PlanWoche {
     /// Filter nur, wenn es neben Kraft Kurse oder Cardio gibt; sonst keine
     /// Leiste (Leinwand 2g).

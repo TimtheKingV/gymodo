@@ -65,7 +65,6 @@
 		235337FF6CD63761130A93E5 /* KurseAnsichtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */; };
 		237A06E179CE2F8B3650E80C /* ProfilKopf.swift in Sources */ = {isa = PBXBuildFile; fileRef = B348F9FA951580D3C3D178EF /* ProfilKopf.swift */; };
 		237F44B99D39C2A8A006D31D /* TrainingTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0891F265EBB3E05C805211B8 /* TrainingTab.swift */; };
-		237F577BE2292F3ACD8ECD42 /* PlanKalender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD3299523732B253EF5E226 /* PlanKalender.swift */; };
 		23E350E22AA8410C99DF73CA /* EinheitVerwerfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */; };
 		2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A00954754396E772B78770 /* HomeKurseTests.swift */; };
 		252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3572D3614535C8EE4621C5E1 /* ProfilWrite.swift */; };
@@ -107,7 +106,6 @@
 		3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A2D02E4D28E39A0B02C8AA0 /* Funktionen.swift */; };
 		3D88489EE677ECE6088E4860 /* OnboardingSchreiber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */; };
 		3E81E42F2530109B113C5F05 /* PausenKnoepfe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D94FBAD16BC92BA99E252C /* PausenKnoepfe.swift */; };
-		3EF49755DEFD18FA28B2397C /* PlanKalenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0CB91C0BF08BFD791C2E14 /* PlanKalenderTests.swift */; };
 		3FC052B589C402381A71036E /* HomeSerieTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35520B42726A403ECBA04A24 /* HomeSerieTests.swift */; };
 		3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
@@ -507,7 +505,6 @@
 		28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilZeilenTests.swift; sourceTree = "<group>"; };
 		28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetModelTests.swift; sourceTree = "<group>"; };
 		2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchreiberTests.swift; sourceTree = "<group>"; };
-		2AD3299523732B253EF5E226 /* PlanKalender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalender.swift; sourceTree = "<group>"; };
 		2B3C314BC75FFB1D3DC52BF8 /* PlanPositionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanPositionSheet.swift; sourceTree = "<group>"; };
 		2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeKoordinatorTests.swift; sourceTree = "<group>"; };
 		2DC3378D45751B2BE6267611 /* AuthCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCopy.swift; sourceTree = "<group>"; };
@@ -646,7 +643,6 @@
 		77CD8F083B18A9C6710DF1C0 /* UebungsGruppierungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsGruppierungTests.swift; sourceTree = "<group>"; };
 		7A002F7E06C2F02619FC4F14 /* WochenZaehler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WochenZaehler.swift; sourceTree = "<group>"; };
 		7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vorschaubild.swift; sourceTree = "<group>"; };
-		7C0CB91C0BF08BFD791C2E14 /* PlanKalenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalenderTests.swift; sourceTree = "<group>"; };
 		7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorQuelle.swift; sourceTree = "<group>"; };
 		7D036BE10720B20565F673DA /* Testnotiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Testnotiz.swift; sourceTree = "<group>"; };
 		7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pfadbereinigung.swift; sourceTree = "<group>"; };
@@ -1276,7 +1272,6 @@
 				35AA5E5DD9ECEB4933E8FFA8 /* PlanAntwortenTests.swift */,
 				B1E92E5D724516E5B3B5E702 /* PlanAnzeigeTests.swift */,
 				1C12F36DF8FBF55FBEE99533 /* PlanKalenderKontextTests.swift */,
-				7C0CB91C0BF08BFD791C2E14 /* PlanKalenderTests.swift */,
 				56687DDC4FFF0F3570211A36 /* PlanReihenfolgeTests.swift */,
 				FB2E6516B6605A752592FA1A /* PlanStartAuswahlTests.swift */,
 				5E86C2CE1222506D926E3290 /* PlanTabZustandTests.swift */,
@@ -1408,7 +1403,6 @@
 				32F3B0CC650812BA5EF42DDE /* Ortswechsel.swift */,
 				A4D94FBAD16BC92BA99E252C /* PausenKnoepfe.swift */,
 				76B45F293755B9D5DEA1E3CF /* PlanAnzeige.swift */,
-				2AD3299523732B253EF5E226 /* PlanKalender.swift */,
 				5F4B265225A09FA6EF146C6E /* PlanNamen.swift */,
 				87E160BA1DBAB41DA0DEFE60 /* PlanReihenfolge.swift */,
 				266C991825FF8AFC68628908 /* PlanStart.swift */,
@@ -1855,7 +1849,6 @@
 				6D9BB0F3300A962F99BA3266 /* PlanEinheitView.swift in Sources */,
 				5BBAED1B018ABE25DBC3B60A /* PlanEinrichtenKarte.swift in Sources */,
 				C3F1D156B8AAC82EB371D31F /* PlanErsatzKopf.swift in Sources */,
-				237F577BE2292F3ACD8ECD42 /* PlanKalender.swift in Sources */,
 				EAAD1E9DE594A3109314751F /* PlanKalenderKontext.swift in Sources */,
 				FA4F66AC2F156DE1AEC17CFB /* PlanKarte.swift in Sources */,
 				088C3EF95F1FF0FDD01DEFA2 /* PlanMonatsgitter.swift in Sources */,
@@ -2060,7 +2053,6 @@
 				822FA371ED6E300CF55B7A61 /* PlanAntwortenTests.swift in Sources */,
 				F95D68E54EEAB37AB723314C /* PlanAnzeigeTests.swift in Sources */,
 				7ACC4048050758A43D241A3B /* PlanKalenderKontextTests.swift in Sources */,
-				3EF49755DEFD18FA28B2397C /* PlanKalenderTests.swift in Sources */,
 				CB6614C63C3A5E94C4197CD7 /* PlanReihenfolgeTests.swift in Sources */,
 				84DCFBE63AF84780BF44520D /* PlanStartAuswahlTests.swift in Sources */,
 				F14604FCBA9586B5962BF956 /* PlanTabZustandTests.swift in Sources */,

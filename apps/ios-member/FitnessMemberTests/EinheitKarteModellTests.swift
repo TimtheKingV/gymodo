@@ -103,16 +103,11 @@ struct EinheitKarteModellTests {
             muskeln: katalog(), tag: nil, zustand: .erledigt)
 
         #expect(modell.zeilen == ["2 Übungen · ca. 50 Min"])
-        #expect(EinheitKarteModell.zustandsText(.erledigt, kalender: kalender) == "Erledigt")
+        #expect(EinheitKarteModell.zustandsText(.erledigt) == "Erledigt")
     }
 
-    @Test func verpasstText() {
-        let freitag = kalender.date(from: DateComponents(year: 2026, month: 11, day: 6))!
-        #expect(EinheitKarteModell.zustandsText(.verpasst(verschobenAuf: freitag), kalender: kalender)
-            == "verpasst · verschoben auf Fr")
-        #expect(EinheitKarteModell.zustandsText(.verpasst(verschobenAuf: nil), kalender: kalender)
-            == "verpasst")
-        #expect(EinheitKarteModell.zustandsText(.geplant, kalender: kalender) == nil)
+    @Test func zustandsTextNurBeiErledigt() {
+        #expect(EinheitKarteModell.zustandsText(.geplant) == nil)
     }
 
     @Test func ueberzeileTrainiert() {

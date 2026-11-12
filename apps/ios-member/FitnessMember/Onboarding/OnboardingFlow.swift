@@ -161,6 +161,7 @@ struct OnboardingFlow: View {
             schrittNummer: index + 1,
             gesamtSchritte: gesamt,
             beschwerden: plan.beschwerden,
+            wochenText: plan.zusammenfassung,
             beiUebernommen: {
                 await catalogStore.load()
                 beiFertig()

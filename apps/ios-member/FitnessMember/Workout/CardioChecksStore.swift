@@ -11,13 +11,9 @@ import Observation
 @Observable
 final class CardioChecksStore {
     private(set) var checks: [CardioCheck] = []
-    /// Vorlaeufig fuer die bestehenden Aufrufer (Tage mit mindestens einem
-    /// Haken); entfaellt mit Task 13.
-    var erledigtTage: Set<String> { Set(checks.map(\.day)) }
     /// Die erfolgreich geladenen Bereiche ("YYYY-MM-DD", eingeschlossen). Nur
     /// darin heisst ein fehlender Haken "nicht gemacht"; ausserhalb (noch nicht
-    /// geladen, Abruf fehlgeschlagen) weiss die App es nicht -- der Plan-Kalender
-    /// laesst vergangene Cardio-Slots dort neutral statt "verpasst".
+    /// geladen, Abruf fehlgeschlagen) weiss die App es nicht.
     private(set) var geladen: [ClosedRange<String>] = []
     /// Jede Aenderung am Haken zaehlt hoch; eine GET-Antwort, die vor ihr
     /// losging, wird verworfen (wie `KurseStore.generation`) -- sonst
@@ -61,16 +57,6 @@ final class CardioChecksStore {
         } catch {
             return error.servertext
         }
-    }
-
-    /// Vorlaeufig fuer den bisherigen Tages-Schalter im Plan-Tab (ein Haken je
-    /// Tag); entfaellt mit Task 13.
-    func setzen(tagId: String, erledigt neu: Bool, apiClient: APIClient) async -> String? {
-        if neu { return await abhaken(tagId: tagId, apiClient: apiClient) }
-        for check in checks where check.day == tagId {
-            if let fehler = await zuruecknehmen(id: check.id, apiClient: apiClient) { return fehler }
-        }
-        return nil
     }
 
     /// Ersetzt nur den geladenen Bereich: Home laedt eine Woche, der Plan-Tab

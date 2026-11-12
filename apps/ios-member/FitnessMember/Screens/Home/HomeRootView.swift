@@ -368,7 +368,7 @@ private extension HomeRootView {
         let key = laufend?.einheitKey ?? heute?.einheitKey ?? plan.naechsteEinheitKey
         if let key, let modell = einheitModell(key: key, plan: plan, laufend: laufend) {
             NaechsteEinheitKarte(
-                modell: modell, laeuft: laufend != nil, kalender: planKalender, geschlecht: geschlecht,
+                modell: modell, laeuft: laufend != nil, geschlecht: geschlecht,
                 beiTippen: { beiPlanZeigen(.einheit(key: key)) },
                 beiStart: beiTrainingZeigen)
         }

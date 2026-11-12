@@ -15,62 +15,6 @@ enum EinheitKuerzel {
     }
 }
 
-// Die Tagesliste des Plan-Tabs ist den Wochenkarten gewichen
-// (`PlanWochenKarten.swift`, Spec P2 §3). Was hier bleibt, nutzt Home noch
-// (`NaechsteEinheitKarte`, `HomeSerieView`); Task 13 raeumt auf.
-
-/// Die kurze Zeile fuer einen Kurs oder Cardio-Termin mit Tag: Kaestchen,
-/// Titel, Tag. "Als nächstes" im Plan-Tab und "Nächste Einheit" auf Home.
-struct PlanTerminZeile: View {
-    let kaestchen: AnyView
-    let titel: String
-    let tag: String
-
-    var body: some View {
-        HStack(spacing: DesignSystem.Spacing.s12) {
-            kaestchen
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text(titel)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.text)
-                Text(tag)
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(DesignSystem.Spacing.s12)
-        .frame(minHeight: 44)
-        .background(DesignSystem.Color.surface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .accessibilityElement(children: .combine)
-    }
-}
-
-struct PlanCardioKaestchen: View {
-    var body: some View {
-        Image(systemName: "waveform.path.ecg")
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.text)
-            .frame(width: 40, height: 40)
-            .background(DesignSystem.Color.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .accessibilityHidden(true)
-    }
-}
-
-struct PlanKursKaestchen: View {
-    var body: some View {
-        Image(systemName: "person.3")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(DesignSystem.Color.textMuted)
-            .frame(width: 40, height: 40)
-            .background(DesignSystem.Color.surfaceRaised)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .accessibilityHidden(true)
-    }
-}
-
 /// Die Marke unter einem Tag im Home-Streifen: gefuellter Punkt (Kraft),
 /// Raute (Cardio), Ring (Kurs besucht) und gestrichelter Ring (Kurs gebucht)
 /// -- Formen, nicht nur Farben. Geleistetes ist gedeckt, nichts ist rot.

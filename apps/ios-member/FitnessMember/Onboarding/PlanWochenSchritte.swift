@@ -9,12 +9,6 @@ import SwiftUI
 
 /// Die Texte des Wochenblocks -- rein, damit sie ohne UI pruefbar bleiben.
 enum PlanWochenText {
-    static let kurzname = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
-    static let vollname = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
-
-    static func kurz(_ tag: Int) -> String { kurzname[(tag - 1) % 7] }
-    static func voll(_ tag: Int) -> String { vollname[(tag - 1) % 7] }
-
     /// Lead von 2c3: die Woche als Zaehler, nicht als Tage.
     static let wochenLead = "So viel pro Woche nimmst du dir vor. Kurse zählen, sobald du sie buchst."
 
@@ -86,60 +80,6 @@ struct PlanWochenSchritt: View {
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Color.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-}
-
-/// Die Woche in einer Zeile fuer die Vorschau 1.4: Tag und Marke, wie der
-/// Server das Raster vorschlaegt.
-struct PlanWochenZeile: View {
-    let raster: [Rasterplatz]
-    let namen: EinheitNamen
-
-    var body: some View {
-        HStack(spacing: DesignSystem.Spacing.s4) {
-            ForEach(1...7, id: \.self) { tag in
-                let platz = raster.first { $0.tag == tag }
-                VStack(spacing: DesignSystem.Spacing.s4) {
-                    Text(PlanWochenText.kurz(tag))
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                    marke(platz)
-                        .font(.system(size: 12, weight: .black))
-                        .foregroundStyle(platz?.art == .kraft ? DesignSystem.Color.onAccent : DesignSystem.Color.text)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                        .frame(maxWidth: .infinity, minHeight: 28)
-                        .background(platz?.art == .kraft ? DesignSystem.Color.accent : DesignSystem.Color.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(PlanWochenText.voll(tag)), \(beschreibung(platz))")
-            }
-        }
-    }
-
-    /// Kraft neutral (Hantel) wie auf Home: die Einheit hat keinen Buchstaben mehr.
-    @ViewBuilder
-    private func marke(_ platz: Rasterplatz?) -> some View {
-        if let platz {
-            switch platz.art {
-            case .kraft: Image(systemName: "dumbbell.fill")
-            case .kurs: Text("Kurs")
-            case .cardio: Text("Cardio")
-            }
-        } else {
-            Text("–")
-        }
-    }
-
-    private func beschreibung(_ platz: Rasterplatz?) -> String {
-        guard let platz else { return "frei" }
-        switch platz.art {
-        case .kraft: return platz.einheitKey.map(namen.name) ?? "Krafttraining"
-        case .kurs: return "Kurs"
-        case .cardio: return "Cardio"
         }
     }
 }
