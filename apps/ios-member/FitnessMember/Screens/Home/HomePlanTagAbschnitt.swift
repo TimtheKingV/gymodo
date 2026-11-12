@@ -1,63 +1,51 @@
 import SwiftUI
 
-/// Die Plantermine eines gewaehlten kuenftigen Tages unter dem Streifen
+/// Die gebuchten Kurse eines gewaehlten kuenftigen Tages unter dem Streifen
 /// (E1, Entwurf 1b). Steht an der Stelle von "Nächste Einheit", solange
 /// der Tag gewaehlt ist.
 ///
 /// **Home bleibt Home.** Ein Tipp auf den Tag wechselte frueher in den
 /// Plan-Tab, und weil beide Screens oben gleich aussehen, merkte niemand
-/// den Wechsel. Jetzt fuehrt nur der Link "Im Plan" dorthin. Die
-/// Einheitenkarte oeffnet die Einheit im Home-Stack (E2); gestartet wird
-/// hier nichts -- am kuenftigen Tag gibt es keinen Start, und Vorziehen
-/// geht ueber die Einheit selbst. Kein Hinweistext unter der Karte (Tim
-/// zu 1b).
+/// den Wechsel. Jetzt fuehrt nur der Link "Im Plan" dorthin. Seit der Woche
+/// ohne feste Tage (Spec P2 §2 #5) traegt ein kuenftiger Tag nur noch
+/// gebuchte Kurse -- keine geplanten Einheiten, kein Cardio. Ein Kurs oeffnet
+/// sein Detail im Home-Stack. Kein Hinweistext unter den Karten (Tim zu 1b).
 struct HomePlanTagAbschnitt: View {
     /// `startOfDay` des Tages im Kalender des Plans.
     let tag: Date
-    let termine: [PlanTermin]
-    let plan: Trainingsplan
-    let muskeln: [String: [GeraetMuskel]]
-    let geschlecht: Geschlecht?
+    /// Die Kurs-Karten des Tages aus `PlanWochenStand.karten`.
+    let kurse: [CourseWeekSession]
     let kalender: Calendar
-    /// Die Cardio-Arten aus dem Trainingsprofil -- `PlanKalender.termine`
-    /// laesst sie leer, wie im Plan-Tab reicht sie der Aufrufer nach.
-    var cardioArten: [String] = []
-    /// Die eigenen Kursbuchungen (`GespeicherteBuchungen.termine`): ein Kurs
-    /// des Plans oeffnet so sein Detail im Home-Stack (`beiKurs`).
-    var eigeneKurse: [GespeicherterTermin] = []
-    /// Tipp auf einen Kurs mit gefundener Buchung: die sessionId, der
-    /// Aufrufer pusht `HomeRoute.kursDetail`.
-    var beiKurs: (String) -> Void = { _ in }
-    /// Tipp auf eine Einheitenkarte: der Aufrufer pusht `HomeRoute.einheit`.
-    let beiEinheit: (String) -> Void
-    /// "Im Plan", Cardio und ein Kurs ohne eigene Buchung: in den Plan-Tab
-    /// auf genau diesen Tag.
+    /// Tipp auf einen Kurs: die sessionId, der Aufrufer pusht `HomeRoute.kursDetail`.
+    let beiKurs: (String) -> Void
+    /// "Im Plan": in den Plan-Tab auf genau diesen Tag.
     let beiPlanZeigen: (PlanSprung) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             kopf
-            ForEach(Array(termine.enumerated()), id: \.offset) { _, termin in
-                zeile(termin)
+            ForEach(kurse, id: \.sessionId) { kurs in
+                zeile(kurs)
             }
         }
         .testnotizElement("home.plantag", typ: "Section")
     }
 
-    /// "MITTWOCH, 11. NOV · GEPLANT" -- derselbe Tagestext wie "Nächste
-    /// Einheit" und "Als nächstes" im Plan-Tab (`PlanRootView.tagKurz`).
+    /// "MITTWOCH, 11. NOV · GEPLANT" -- derselbe Tagestext wie im Plan-Tab
+    /// (`PlanRootView.tagKurz`).
     nonisolated static func kopfText(_ tag: Date, kalender: Calendar) -> String {
         "\(PlanRootView.tagKurz(tag, kalender: kalender).uppercased()) · GEPLANT"
     }
 
-    /// Die eigene Buchung zu einem Kurs des Plans: gleicher Beginn, bei
-    /// mehreren der gleiche Name. Das Modell (`PlanTermin.kurs`) traegt keine
-    /// sessionId. nil = keine eindeutige Buchung, dann geht es in den Plan.
-    /// `nonisolated`: reine Rechnung, auch ausserhalb des Main Actors (Tests).
-    nonisolated static func kursSessionId(titel: String, beginn: Date, eigene: [GespeicherterTermin]) -> String? {
-        let gleichzeitig = eigene.filter { Zeitpunkt.parse($0.startsAt) == beginn }
-        if let genau = gleichzeitig.first(where: { $0.name == titel }) { return genau.sessionId }
-        return gleichzeitig.count == 1 ? gleichzeitig[0].sessionId : nil
+    /// Die gebuchten, nicht abgesagten Kurse eines Tages aus den Wochenkarten,
+    /// nach Beginn -- dieselben, die der Streifen als Marke zeigt.
+    nonisolated static func kurse(am tag: Date, karten: [WochenKarte], kalender: Calendar) -> [CourseWeekSession] {
+        karten.compactMap { karte -> CourseWeekSession? in
+            guard case .kurs(let kurs) = karte.art,
+                  let start = Zeitpunkt.parse(kurs.startsAt),
+                  kalender.isDate(start, inSameDayAs: tag) else { return nil }
+            return kurs
+        }
     }
 
     private var kopf: some View {
@@ -86,36 +74,18 @@ struct HomePlanTagAbschnitt: View {
         }
     }
 
-    @ViewBuilder
-    private func zeile(_ termin: PlanTermin) -> some View {
-        switch termin {
-        case .einheit(let key, let zustand):
-            if let einheit = plan.einheiten.first(where: { $0.key == key }) {
-                EinheitKarte(
-                    modell: .einheit(
-                        einheit, namen: EinheitNamen(plan: plan, muskeln: muskeln), muskeln: muskeln,
-                        tag: nil, zustand: zustand),
-                    geschlecht: geschlecht, kalender: kalender,
-                    beiTipp: { beiEinheit(key) },
-                    hinweis: "Zeigt die Übungen der Einheit")
-            }
-        case .kurs(let titel, let beginn, _, _):
-            let sessionId = Self.kursSessionId(titel: titel, beginn: beginn, eigene: eigeneKurse)
-            Button {
-                if let sessionId { beiKurs(sessionId) } else { beiPlanZeigen(.tag(tag)) }
-            } label: {
-                PlanTerminZeile(
-                    kaestchen: AnyView(PlanKursKaestchen()), titel: titel,
-                    tag: KursZeit.uhrzeit(beginn, zeitzone: kalender.timeZone.identifier))
-            }
-            .buttonStyle(PressButtonStyle())
-            .accessibilityHint(sessionId != nil ? "Zeigt den Kurs" : "Öffnet den Tag im Plan")
-        case .cardio:
-            Button { beiPlanZeigen(.tag(tag)) } label: {
-                PlanTerminZeile(kaestchen: AnyView(PlanCardioKaestchen()), titel: "Cardio", tag: CardioArtName.zeile(cardioArten))
-            }
-            .buttonStyle(PressButtonStyle())
-            .accessibilityHint("Öffnet den Tag im Plan")
-        }
+    private func zeile(_ kurs: CourseWeekSession) -> some View {
+        let start = Zeitpunkt.parse(kurs.startsAt) ?? tag
+        let karte = WochenKarte(
+            id: "kurs-\(kurs.sessionId)", art: .kurs(kurs), erledigtAm: nil,
+            quelle: .keine, istNaechste: false, minuten: kurs.durationMin)
+        return PlanWochenKarte(
+            kachel: .kurs(
+                wochentag: PlanWochenKarten.wochentagKachel(start, kalender: kalender),
+                tag: kalender.component(.day, from: start), begonnen: false),
+            titel: kurs.name,
+            untertitel: PlanWochenKarten.untertitel(karte, einheiten: [], kalender: kalender),
+            rechts: .keins,
+            beiTipp: { beiKurs(kurs.sessionId) }, tippHinweis: "Zeigt den Kurs")
     }
 }

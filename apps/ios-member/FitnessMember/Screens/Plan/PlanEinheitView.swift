@@ -7,7 +7,8 @@ import SwiftUI
 /// dorthin, wo die Plankarte die Einheit fuehrt und die Stationen ueber
 /// `PlanStart` die Uebung anbieten. Die Folge haengt nicht am Kalender (F5):
 /// ist diese Einheit nicht die naechste, sagt der Screen das, statt eine
-/// andere Einheit zu starten, als er zeigt.
+/// andere Einheit zu starten, als er zeigt. Einen geplanten Tag gibt es
+/// nicht mehr (Spec P2): gestartet wird nur die naechste Einheit.
 struct PlanEinheitView: View {
     let einheitKey: String
     let apiClient: APIClient
@@ -80,53 +81,22 @@ struct PlanEinheitView: View {
         .testnotizScreen()
     }
 
-    @Environment(VerlaufStore.self) private var verlauf
-    @Environment(KurseStore.self) private var kurse
+    /// Fuer das Bearbeiten-Cover (Videos der Ersatz-Kandidaten).
     @Environment(UebungsVideoVorrat.self) private var videoVorrat
-
-    /// Wie der Plan-Tab: Zeitzone der Kurswoche, sonst die des ersten Studios.
-    private var kalender: Calendar {
-        PlanKalenderKontext.kalender(zeitzone: PlanKalenderKontext.zeitzone(
-            bootstrap: katalog.bootstrap, aktivesStudioId: katalog.activeStudioId, wochenZone: kurse.woche?.timezone))
-    }
-
-    /// Der Tag, auf dem die Folge diese Einheit als naechste liegt (heute oder
-    /// spaeter); nil, wenn sie im Fenster nicht drankommt. Dieselbe Rechnung wie
-    /// der Plan-Tab (`PlanKalenderKontext.termine`), ohne Kurse und Cardio.
-    private func geplanterTag(
-        plan: Trainingsplan, einheitKey: String, naechsteEinheitKey: String?, kalender: Calendar
-    ) -> Date? {
-        let jetzt = Date()
-        let termine = PlanKalenderKontext.termine(
-            plan: plan, tage: PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender), kalender: kalender,
-            profil: katalog.bootstrap?.member.trainingProfile, heuteEinheitKey: naechsteEinheitKey,
-            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
-            heute: jetzt, kurse: [], cardioErledigt: [], cardioGeladen: [],
-            filter: .einheiten)
-        return PlanKalenderKontext.geplanterTag(
-            einheitKey: einheitKey, termine: termine, heute: jetzt, kalender: kalender)
-    }
 
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
         let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: einheit.key, zustand: nil,
                                         bloecke: [], bootstrap: katalog.bootstrap)
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let namen = EinheitNamen(plan: plan, muskeln: muskeln)
-        let kalender = kalender
         let naechste = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
-        let geplanterTag = geplanterTag(
-            plan: plan, einheitKey: einheit.key, naechsteEinheitKey: naechste, kalender: kalender)
-        let istGeplanterTag = PlanKalenderKontext.istGeplanterTag(
-            geplanterTag, heute: Date(), kalender: kalender)
         let istNaechste = naechste == nil || naechste == einheit.key
 
         return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                     ProfilKopf(
-                        ueberzeile: geplanterTag.map {
-                            ProfilKopf.ueberzeile(geplantAm: $0, kalender: kalender)
-                        } ?? "EINHEIT",
+                        ueberzeile: "EINHEIT",
                         modell: .einheit(
                             einheit, namen: namen, muskeln: muskeln, tag: nil, zustand: .geplant),
                         geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
@@ -190,11 +160,11 @@ struct PlanEinheitView: View {
 
             VStack {
                 if istNaechste {
-                    PrimaryButton(title: ProfilKopf.startKnopfText(istGeplanterTag: istGeplanterTag)) {
+                    PrimaryButton(title: "Training starten") {
                         beiTrainingStarten()
                     }
-                        .accessibilityLabel(ProfilKopf.startKnopfText(istGeplanterTag: istGeplanterTag))
-                        .accessibilityHint("Startet die Einheit")
+                        .accessibilityLabel("Training starten")
+                        .accessibilityHint("Wechselt in den Tab Training und startet die Einheit")
                 } else {
                     SecondaryButton(title: "Zum Training") { (beiZumTraining ?? beiTrainingStarten)() }
                 }

@@ -27,7 +27,7 @@ export type PlanStatus = "vorschlag" | "aktiv" | "ersetzt" | "verworfen";
  */
 export type PlanEingabe = Omit<
   GeneratorEingabe,
-  "kandidaten" | "beschwerden" | "kursTage" | "cardioTage" | "kraftTage"
+  "kandidaten" | "beschwerden" | "kraftProWoche"
 > & {
   beschwerdenBeruecksichtigt: boolean;
 };
@@ -168,10 +168,7 @@ export async function erzeugePlanVorschlag(
     erfahrung: profil.experience,
     anfaengerBeendet,
     beschwerden,
-    // Feste Termine und Krafttage kommen aus dem Profil; das Ergebnis haelt das Raster fest.
-    kursTage: profil.kursTage,
-    cardioTage: profil.cardioTage,
-    kraftTage: profil.kraftTage,
+    ...(profil.kraftProWoche !== null ? { kraftProWoche: profil.kraftProWoche } : {}),
     kandidaten: await ladeKandidaten(client, await ladeMerkliste(client, userId, ort)),
   });
 
@@ -337,7 +334,7 @@ export function minutenNachOrdnen(einheit: PlanEinheit, positionKeys: string[]):
 
 /**
  * Ordnet die Positionen einer Einheit neu und entfernt die, die in positionKeys fehlen (mindestens eine bleibt):
- * order_training_plan_einheit legt sofort eine neue aktive Version an (0072). Fremd oder nicht aktiv ist ein
+ * order_training_plan_einheit legt sofort eine neue aktive Version an (0073). Fremd oder nicht aktiv ist ein
  * Konflikt (plan_nicht_annehmbar), alles andere Ungueltige validation_failed.
  */
 export async function ordnePlanEinheit(

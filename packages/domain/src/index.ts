@@ -8,9 +8,7 @@ export {
 } from "./tag-scan.js";
 export { naechsteGeraeteNummer } from "./nummern.js";
 export {
-  kraftAnzahl,
   pruefeWoche,
-  verteileKraft,
   type Wochentag,
 } from "./trainingsplan-woche.js";
 export {
@@ -303,6 +301,8 @@ export {
   saveTrainingProfile,
 } from "./trainingsprofil.js";
 export type { LimitStufe, TrainingLimits, TrainingProfile } from "./trainingsprofil.js";
+export { berechneWochenziel } from "./wochenziel.js";
+export type { Wochenziel } from "./wochenziel.js";
 export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoal, zielprofil } from "./trainingsplan-regeln.js";
 export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
 export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
@@ -382,4 +382,13 @@ export {
   type Melde,
   type PositionsZiel,
 } from "./plangewichte.js";
-export { deleteCardioCheck, listCardioChecks, pruefeTag as pruefeKalendertag, setCardioCheck } from "./cardio-checks.js";
+export {
+  addCardioCheck,
+  deleteCardioCheck,
+  deleteCardioCheckById,
+  listCardioCheckEintraege,
+  listCardioChecks,
+  pruefeTag as pruefeKalendertag,
+  setCardioCheck,
+} from "./cardio-checks.js";
+export type { CardioCheck } from "./cardio-checks.js";

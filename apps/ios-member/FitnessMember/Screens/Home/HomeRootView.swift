@@ -105,11 +105,12 @@ struct HomeRootView: View {
     }
 
     var body: some View {
-        // Einmal je Aufbau: Marken der Woche und "Nächste Einheit" lesen
-        // dieselben Termine wie der Plan-Tab.
+        // Einmal je Aufbau: Marken und Zielzeile der Woche kommen aus
+        // derselben Rechnung wie der Plan-Tab.
         let jetzt = Date()
         let plan = PlanAnzeige.plan(bootstrap: katalog.bootstrap)
-        let termine = plan.map { planTermine($0, jetzt: jetzt) } ?? [:]
+        let woche = wochenStand(jetzt: jetzt)
+        let zielZeile = zielZeile(woche)
         NavigationStack(path: $pfad) {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
@@ -141,8 +142,18 @@ struct HomeRootView: View {
                             muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap),
                             geschlecht: geschlecht,
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) },
-                            geplant: HomeSerie.planMarken(termine, kalender: planKalender),
-                            beiPlanAuswahl: { planTagId = $0 })
+                            geplant: HomeSerie.planMarken(woche.marken, kalender: planKalender),
+                            beiPlanAuswahl: { planTagId = $0 },
+                            zielZeile: zielZeile?.text,
+                            zielVorlesetext: zielZeile?.vorlesen,
+                            // Die Hantel nur an Tagen mit Sitzung: Cardio-Handhaken
+                            // und begonnene Kurse fuellen `trainedDays` nur fuer die Serie.
+                            sitzungstage: HomeSerie.sitzungstage(
+                                verlauf.sessions, laufendSeit: sessions.aktiveSession(jetzt: jetzt)?.startedAt,
+                                zeitzone: zeitzone),
+                            cardioOderKursTage: HomeSerie.cardioOderKursTage(woche.marken, kalender: planKalender),
+                            laufenderTag: HomeSerie.laufenderTag(
+                                sessions.aktiveSession(jetzt: jetzt)?.startedAt, zeitzone: zeitzone))
                     }
 
                     // Spec 1.1: die EINE Karte "Nächste Einheit" (ersetzt
@@ -152,9 +163,9 @@ struct HomeRootView: View {
                     // Termine -- Home bleibt Home.
                     if let plan {
                         if HomeSerie.zeigtNaechsteEinheit(planTagId: planTagId) {
-                            naechsteEinheit(plan: plan, termine: termine, jetzt: jetzt)
+                            naechsteEinheit(plan: plan)
                         } else if let planTagId {
-                            planTag(planTagId, plan: plan, termine: termine, jetzt: jetzt)
+                            planTag(planTagId, plan: plan, woche: woche)
                         }
                     }
 
@@ -327,10 +338,11 @@ private extension HomeRootView {
             bis: KurseWochenBerechnung.fensterEnde(ab: jetzt, zeitzone: zone))
     }
 
-    /// Die Woche braucht die Haken nur mit Plan; dieselben Daten wie im
-    /// Plan-Tab (`CardioChecksStore`), hier nur die laufende Woche.
+    /// Die Haken der Woche braucht Home mit Plan oder mit Cardio-Ziel; dieselben
+    /// Daten wie im Plan-Tab (`CardioChecksStore`), hier nur die laufende Woche.
     func cardioLaden() async {
-        guard PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil else { return }
+        guard PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil
+                || PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap).cardio > 0 else { return }
         let kalender = planKalender
         let montag = KurseWochenBerechnung.montag(enthaelt: Date(), zeitzone: planZeitzone)
         guard let sonntag = kalender.date(byAdding: .day, value: 6, to: montag) else { return }
@@ -349,93 +361,77 @@ private extension HomeRootView {
 
     var planKalender: Calendar { PlanKalenderKontext.kalender(zeitzone: planZeitzone) }
 
-    /// Die Termine der laufenden Woche und der kommenden Tage
-    /// (`PlanKalenderKontext.fenster`), mit denselben Eingaben wie im Plan-Tab.
-    func planTermine(_ plan: Trainingsplan, jetzt: Date) -> [Date: [PlanTermin]] {
-        let kalender = planKalender
-        let montag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: planZeitzone)
-        let woche = (0..<7).compactMap { kalender.date(byAdding: .day, value: $0, to: montag) }
-        let tage = Set((woche + PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender))
-            .map { kalender.startOfDay(for: $0) }).sorted()
-        return PlanKalenderKontext.termine(
-            plan: plan, tage: tage, kalender: kalender, profil: katalog.bootstrap?.member.trainingProfile,
+    /// Die laufende Woche wie im Plan-Tab (`PlanKalenderKontext.stand`): Marken
+    /// aus Geleistetem und gebuchten Kursen, dazu die Haken fuer die Zielzeile.
+    /// Ohne Plan entfallen die Kraft-Karten, Marken und Cardio bleiben.
+    func wochenStand(jetzt: Date) -> PlanWochenStand {
+        PlanKalenderKontext.stand(
+            bootstrap: katalog.bootstrap,
+            wocheStart: KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: planZeitzone), heute: jetzt,
+            kalender: planKalender,
             heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
-            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
-            heute: jetzt, kurse: kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? []),
-            cardioErledigt: cardio.erledigt, cardioGeladen: cardio.geladen, filter: .alle)
+            sitzungen: verlauf.sessions, cardioChecks: cardio.checks,
+            kurse: kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? []), filter: .alle)
     }
 
-    /// "Nächste Einheit" (Spec 1.1). Ohne Kraft-Tage (Bestandsplan, I3) statt
-    /// der Karte der Weg zu den Tagen. Laeuft die Einheit schon, steht ihr
-    /// Stand in der Karte und der Knopf heisst "Weiter trainieren".
+    /// "Kraft 1/2 · Cardio 0/1" samt gesprochenem Satz -- nur mit Plan oder
+    /// einem Ziel des Mitglieds (`HomeSerie.zeigtZielZeile`); sonst nil und
+    /// die Serie zeigt die alte Zeile.
+    func zielZeile(_ woche: PlanWochenStand) -> (text: String, vorlesen: String)? {
+        guard HomeSerie.zeigtZielZeile(
+            hatPlan: PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil,
+            member: katalog.bootstrap?.member) else { return nil }
+        let ziel = PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap)
+        guard let text = HomeSerie.zielZeile(stand: woche, ziel: ziel) else { return nil }
+        return (text, HomeSerie.zielVorlesetext(stand: woche, ziel: ziel))
+    }
+
+    /// "Nächste Einheit" (Spec P2 §5): die Einheit, die der Plan als naechste
+    /// fuehrt, ohne Tag und mit "Training starten" -- die Woche hat keine
+    /// festen Tage. Laeuft sie schon, steht ihr Stand in der Karte und der
+    /// Knopf heisst "Weiter trainieren".
     @ViewBuilder
-    func naechsteEinheit(plan: Trainingsplan, termine: [Date: [PlanTermin]], jetzt: Date) -> some View {
-        let kalender = planKalender
-        let raster = PlanTabZustand.anzeigeRaster(
-            planRaster: plan.wochenraster, einheiten: plan.einheiten.map(\.key),
-            profil: katalog.bootstrap?.member.trainingProfile)
-        if !PlanTabZustand.hatKrafttage(anzeigeRaster: raster) {
-            TrainingstageFestlegenZeile { beiPlanZeigen(.woche) }
-        } else {
-            let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)
-            let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: planAblauf.gebundeneSessionId != nil)
-            if let naechster = NaechsteEinheitKarte.auswahl(
-                termine: termine, laufendeEinheitKey: laufend?.einheitKey, jetzt: jetzt, kalender: kalender) {
-                NaechsteEinheitKarte(
-                    termin: naechster,
-                    modell: einheitModell(naechster, plan: plan, laufend: laufend, jetzt: jetzt),
-                    istHeute: kalender.isDate(naechster.tag, inSameDayAs: jetzt),
-                    laeuft: laufend != nil,
-                    kalender: kalender, geschlecht: geschlecht,
-                    beiTippen: {
-                        // E2: die Einheit im Home-Stack; Kurs und Cardio
-                        // haben dort keine eigene Seite und fuehren in den Plan.
-                        if case .einheit(let key, _) = naechster.termin {
-                            pfad.append(.einheit(key: key))
-                        } else {
-                            beiPlanZeigen(.tag(naechster.tag))
-                        }
-                    },
-                    beiStart: beiPlanStarten)
-            }
+    func naechsteEinheit(plan: Trainingsplan) -> some View {
+        let heute = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)
+        let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: planAblauf.gebundeneSessionId != nil)
+        let key = laufend?.einheitKey ?? heute?.einheitKey ?? plan.naechsteEinheitKey
+        if let key, let modell = einheitModell(key: key, plan: plan, laufend: laufend) {
+            // E2: die Karte oeffnet die Einheit im Home-Stack, der Knopf startet
+            // sie im Plan-Einstieg des Training-Tabs.
+            NaechsteEinheitKarte(
+                modell: modell, laeuft: laufend != nil, geschlecht: geschlecht,
+                beiTippen: { pfad.append(.einheit(key: key)) },
+                beiStart: beiPlanStarten)
         }
     }
 
-    /// Die Termine des gewaehlten Plantags (E1). Ein unlesbarer Tag oder
-    /// einer ohne Termine laesst "Nächste Einheit" stehen, statt die Stelle
-    /// leer zu lassen.
+    /// Die gebuchten Kurse des gewaehlten kuenftigen Tages (E1). Ein
+    /// unlesbarer Tag oder einer ohne Kurse laesst "Nächste Einheit" stehen,
+    /// statt die Stelle leer zu lassen.
     @ViewBuilder
-    func planTag(_ id: String, plan: Trainingsplan, termine: [Date: [PlanTermin]], jetzt: Date) -> some View {
+    func planTag(_ id: String, plan: Trainingsplan, woche: PlanWochenStand) -> some View {
         let kalender = planKalender
         if let tag = PlanKalenderKontext.tag(id: id, kalender: kalender),
-           let liste = termine[tag], !liste.isEmpty {
+           case let liste = HomePlanTagAbschnitt.kurse(am: tag, karten: woche.karten, kalender: kalender),
+           !liste.isEmpty {
             HomePlanTagAbschnitt(
-                tag: tag, termine: liste, plan: plan,
-                muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap), geschlecht: geschlecht,
-                kalender: kalender,
-                cardioArten: katalog.bootstrap?.member.trainingProfile?.cardioArten ?? [],
-                eigeneKurse: eigeneKurse?.termine ?? [],
+                tag: tag, kurse: liste, kalender: kalender,
                 beiKurs: { pfad.append(.kursDetail(sessionId: $0)) },
-                beiEinheit: { pfad.append(.einheit(key: $0)) },
                 beiPlanZeigen: beiPlanZeigen)
         } else {
-            naechsteEinheit(plan: plan, termine: termine, jetzt: jetzt)
+            naechsteEinheit(plan: plan)
         }
     }
 
     /// Die Karte der Einheit; laeuft sie, traegt die Zeile den Stand wie
     /// die Plankarte ("1 von 4 · noch ca. 45 Min", `PlanAnzeige.standZeile`)
     /// statt der Uebungszahl.
-    func einheitModell(
-        _ naechster: (tag: Date, termin: PlanTermin), plan: Trainingsplan, laufend: PlanAnzeige.Heute?, jetzt: Date
-    ) -> EinheitKarteModell? {
-        guard case .einheit(let key, _) = naechster.termin,
-              let einheit = plan.einheiten.first(where: { $0.key == key }) else { return nil }
+    func einheitModell(key: String, plan: Trainingsplan, laufend: PlanAnzeige.Heute?) -> EinheitKarteModell? {
+        guard let einheit = plan.einheiten.first(where: { $0.key == key }) else { return nil }
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let modell = EinheitKarteModell.einheit(
             einheit, namen: EinheitNamen(plan: plan, muskeln: muskeln), muskeln: muskeln,
-            tag: NaechsteEinheitKarte.tagText(naechster.tag, jetzt: jetzt, kalender: planKalender),
-            zustand: .geplant)
+            tag: nil, zustand: .geplant)
         guard let laufend, laufend.einheitKey == key else { return modell }
         return EinheitKarteModell.laufend(modell, fortschritt: PlanAnzeige.standZeile(laufend, laeuft: true))
     }

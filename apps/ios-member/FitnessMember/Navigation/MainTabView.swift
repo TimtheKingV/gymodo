@@ -42,7 +42,6 @@ struct MainTabView: View {
                     beiKurs: { sessionId in planPfad.append(.detail(sessionId: sessionId)) },
                     beiEinheit: { key in planPfad.append(.einheit(key: key)) },
                     beiTraining: { id in planPfad.append(.sessionDetail(id: id)) },
-                    beiTrainingStarten: planStarten,
                     tagWunsch: $planTagWunsch)
                 .navigationDestination(for: KursRoute.self) { route in
                     switch route {

@@ -49,7 +49,7 @@
 ### Task 1: RPC `order_training_plan_einheit` und Domain-Funktion `ordnePlanEinheit`
 
 **Files:**
-- Create: `supabase/migrations/0072_plan_einheit_ordnen.sql`
+- Create: `supabase/migrations/0073_plan_einheit_ordnen.sql`
 - Modify: `packages/domain/src/trainingsplan.ts` (neben `tauschePlanPosition`, ab Z. 265), `packages/domain/src/index.ts` (Export)
 - Test: `tests/integration/domain-trainingsplan.test.ts` (neuer `describe("ordnePlanEinheit")`), `packages/domain/src/trainingsplan.test.ts` oder neue `packages/domain/src/plan-ordnen.test.ts` für die reine Minutenrechnung
 
@@ -67,7 +67,7 @@
     - Fremder Plan und nicht aktiver Plan → `DomainError("conflict")`.
     - Zielgewichte: Eine verbleibende Position behält ihr Ziel (wie G9 beim Tausch).
 - [ ] **Step 2:** `pnpm --filter @fitretro/domain test` und `pnpm test:integration -- domain-trainingsplan` → FAIL (Funktion fehlt).
-- [ ] **Step 3: Migration `0072_plan_einheit_ordnen.sql`.** Kopf-Kommentar mit Zweck (Entwurf 2b, E6). Die Funktion folgt `swap_training_plan_position` aus 0070:
+- [ ] **Step 3: Migration `0073_plan_einheit_ordnen.sql`.** Kopf-Kommentar mit Zweck (Entwurf 2b, E6). Die Funktion folgt `swap_training_plan_position` aus 0070:
   - `auth.uid()` prüfen; Studio lesen (`plan_nicht_annehmbar`, wenn kein eigener Plan).
   - Advisory-Lock mit demselben Schlüssel `'training_plans:' || user || ':' || studio`.
   - `for update`; `status = 'aktiv'` und `is_catalog_studio` (sonst `plan_nicht_annehmbar`).
@@ -344,4 +344,4 @@
   2. Karte antippen → Einheiten-Detail im Home-Stack, dann „Bearbeiten“ → ziehen, löschen, ersetzen → „Fertig“ → Detail zeigt die neue Reihenfolge, und der Plan-Tab zeigt dieselbe.
   3. Training-Tab ohne Session → Auswahl. Mi-Einheit „Starten“ → Blatt mit „Danach: …“ → Start → Plankarte zeigt die Mi-Einheit.
   4. „Freies Training“ → Geräteliste ohne Plankarte. Ein Satz an einer Planübung → im Plan-Tab bleibt die Einheit offen.
-- [ ] **Step 4:** Ergebnis und Screenshots an Tim. Prod-Migration 0072 und API-Deploy erst nach ausdrücklicher Freigabe.
+- [ ] **Step 4:** Ergebnis und Screenshots an Tim. Prod-Migration 0073 und API-Deploy erst nach ausdrücklicher Freigabe.

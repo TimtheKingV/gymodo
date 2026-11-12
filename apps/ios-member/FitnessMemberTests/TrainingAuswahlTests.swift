@@ -2,99 +2,63 @@ import Foundation
 import Testing
 @testable import FitnessMember
 
-/// Auswahl-Modell des Training-Tabs (E8, E9).
+/// Auswahl-Modell des Training-Tabs (E8, E9) auf der Woche ohne feste Tage
+/// (Spec P2): naechste Einheit, die uebrigen der Reihe, offenes Cardio.
 struct TrainingAuswahlTests {
-    private var kalender: Calendar { PlanKalenderKontext.kalender(zeitzone: "Europe/Berlin") }
-
-    /// November 2026: 9 = Montag.
-    private func tag(_ t: Int) -> Date {
-        kalender.date(from: DateComponents(year: 2026, month: 11, day: t))!
+    private func ziel(kraft: Int = 2, cardio: Int = 0, minuten: Int = 30) -> Wochenziel {
+        Wochenziel(kraft: kraft, cardio: cardio, cardioMinuten: minuten)
     }
 
-    private func modell(_ termine: [Date: [PlanTermin]], next: String? = nil) -> TrainingAuswahlModell {
-        TrainingAuswahl.modell(termine: termine, heute: tag(9), naechsteEinheitKey: next, kalender: kalender)
+    @Test func naechsteVornUndRestInFolge() {
+        let m = TrainingAuswahl.modell(
+            einheiten: ["A", "B", "C"], naechsteEinheitKey: "B", ziel: ziel(), cardioErledigt: 0)
+        #expect(m.naechsteEinheitKey == "B")
+        // Wie die offenen Kraft-Karten: (i + k) mod n.
+        #expect(m.weitere == [.einheit(key: "C"), .einheit(key: "A")])
     }
 
-    @Test func heuteGeplantUndRestDerWoche() {
-        let beginn = tag(14).addingTimeInterval(18 * 3600)
-        let m = modell([
-            tag(9): [.einheit(key: "A", zustand: .geplant)],
-            tag(11): [.einheit(key: "B", zustand: .geplant)],
-            tag(13): [.cardio(arten: ["Laufen"], zustand: .geplant)],
-            tag(14): [.kurs(titel: "Yoga", beginn: beginn, angemeldet: true, zustand: .geplant),
-                      .kurs(titel: "Spin", beginn: beginn, angemeldet: false, zustand: .geplant)],
-        ], next: "A")
-        #expect(m.heuteEinheitKey == "A")
-        #expect(m.weitere == [
-            .einheit(key: "B", tag: tag(11)),
-            .cardio(tag: tag(13)),
-            .kurs(titel: "Yoga", beginn: beginn, tag: tag(14)),
-        ])
+    @Test func ohneNaechstenKeyDieErste() {
+        let m = TrainingAuswahl.modell(
+            einheiten: ["A", "B"], naechsteEinheitKey: nil, ziel: ziel(), cardioErledigt: 0)
+        #expect(m.naechsteEinheitKey == "A")
+        #expect(m.weitere == [.einheit(key: "B")])
     }
 
-    @Test func ohneKraftHeuteKeinHeute() {
-        let m = modell([
-            tag(9): [.cardio(arten: ["Laufen"], zustand: .geplant)],
-            tag(11): [.einheit(key: "B", zustand: .geplant)],
-        ])
-        #expect(m.heuteEinheitKey == nil)
-        #expect(m.weitere.first == .cardio(tag: tag(9)))
+    @Test func unbekannterKeyFaelltAufDieErste() {
+        let m = TrainingAuswahl.modell(
+            einheiten: ["A", "B"], naechsteEinheitKey: "X", ziel: ziel(), cardioErledigt: 0)
+        #expect(m.naechsteEinheitKey == "A")
     }
 
-    @Test func naechsteEinheitStehtOhneHeutigenKraftterminZuerst() {
-        let m = modell([
-            tag(9): [.cardio(arten: ["Laufen"], zustand: .geplant)],
-            tag(11): [.einheit(key: "B", zustand: .geplant)],
-        ], next: "B")
-        #expect(m.heuteEinheitKey == nil)
-        #expect(m.weitere == [.einheit(key: "B", tag: tag(11)), .cardio(tag: tag(9))])
-    }
-
-    @Test func erledigtesUndVerpasstesFehlt() {
-        let m = modell([
-            tag(9): [.einheit(key: "A", zustand: .erledigt)],
-            tag(10): [.einheit(key: "B", zustand: .verpasst(verschobenAuf: tag(11))),
-                      .cardio(arten: [], zustand: .erledigt)],
-        ])
-        #expect(m.heuteEinheitKey == nil)
+    @Test func eineEinheitHatKeineWeiteren() {
+        let m = TrainingAuswahl.modell(
+            einheiten: ["A"], naechsteEinheitKey: "A", ziel: ziel(), cardioErledigt: 0)
+        #expect(m.naechsteEinheitKey == "A")
         #expect(m.weitere.isEmpty)
     }
 
-    @Test func naechsteWocheFehlt() {
-        let m = modell([tag(16): [.einheit(key: "B", zustand: .geplant)]])
-        #expect(m.weitere.isEmpty)
+    @Test func cardioNurMitOffenemZiel() {
+        let offen = TrainingAuswahl.modell(
+            einheiten: ["A", "B"], naechsteEinheitKey: "A", ziel: ziel(cardio: 2, minuten: 30), cardioErledigt: 1)
+        #expect(offen.weitere == [.einheit(key: "B"), .cardio(minuten: 30)])
+        let erfuellt = TrainingAuswahl.modell(
+            einheiten: ["A", "B"], naechsteEinheitKey: "A", ziel: ziel(cardio: 1), cardioErledigt: 1)
+        #expect(erfuellt.weitere == [.einheit(key: "B")])
+        let ohneZiel = TrainingAuswahl.modell(
+            einheiten: ["A", "B"], naechsteEinheitKey: "A", ziel: ziel(cardio: 0), cardioErledigt: 0)
+        #expect(ohneZiel.weitere == [.einheit(key: "B")])
     }
 
-    @Test func einheitNurEinmal() {
-        let m = modell([
-            tag(11): [.einheit(key: "B", zustand: .geplant)],
-            tag(13): [.einheit(key: "B", zustand: .geplant)],
-        ])
-        #expect(m.weitere == [.einheit(key: "B", tag: tag(11))])
-    }
-
-    @Test func heutigeEinheitNichtInWeitere() {
-        let m = modell([
-            tag(9): [.einheit(key: "A", zustand: .geplant)],
-            tag(11): [.einheit(key: "A", zustand: .geplant)],
-        ], next: "A")
-        #expect(m.weitere.isEmpty)
-    }
-
-    @Test func sonntagIstLetzterTag() {
-        let m = modell([tag(15): [.cardio(arten: [], zustand: .geplant)]])
-        #expect(m.weitere == [.cardio(tag: tag(15))])
+    @Test func ohneEinheitenNurCardio() {
+        let m = TrainingAuswahl.modell(
+            einheiten: [], naechsteEinheitKey: nil, ziel: ziel(cardio: 1, minuten: 45), cardioErledigt: 0)
+        #expect(m.naechsteEinheitKey == nil)
+        #expect(m.weitere == [.cardio(minuten: 45)])
     }
 
     @Test func idsSindStabil() {
-        #expect(TrainingAuswahlOption.einheit(key: "B", tag: tag(11)).id == "einheit-B")
-        #expect(TrainingAuswahlOption.cardio(tag: tag(13)).id == "cardio-2026-11-13")
-        // Final-Review 6: zwei Kurse zur selben Zeit bleiben unterscheidbar.
-        let beginn = Date(timeIntervalSince1970: 1_763_110_800)
-        let yoga = TrainingAuswahlOption.kurs(titel: "Yoga", beginn: beginn, tag: tag(14))
-        let spin = TrainingAuswahlOption.kurs(titel: "Spin", beginn: beginn, tag: tag(14))
-        #expect(yoga.id == "kurs-\(beginn.formatted(.iso8601))-Yoga")
-        #expect(yoga.id != spin.id)
+        #expect(TrainingAuswahlOption.einheit(key: "B").id == "einheit-B")
+        #expect(TrainingAuswahlOption.cardio(minuten: 30).id == "cardio")
     }
 
     @Test func danachIstNachfolger() {

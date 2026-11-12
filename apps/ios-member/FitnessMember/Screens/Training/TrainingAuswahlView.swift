@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// Der Einstieg in den Training-Tab vor einem Training (Entwurf 3a, E8):
-/// die geplante Einheit von heute, die weiteren Termine der Woche und das
-/// freie Training. Die eine Akzentflaeche ist "Training starten".
+/// die naechste Einheit der Reihe, die uebrigen Einheiten (vorziehbar),
+/// offenes Cardio und das freie Training. Die eine Akzentflaeche ist
+/// "Training starten".
 ///
-/// Die Termine rechnet die Ansicht mit denselben Eingaben wie Home
-/// (`HomeRootView.planTermine`), damit beide Tabs dieselbe Woche zeigen.
+/// Ohne feste Tage (Spec P2): keine Wochentage an den Optionen. Das
+/// Cardio-Ziel rechnet die Ansicht mit derselben Wochenrechnung wie Home und
+/// Plan-Tab (`PlanKalenderKontext.stand`).
 struct TrainingAuswahlView: View {
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
@@ -33,20 +35,21 @@ struct TrainingAuswahlView: View {
         let kalender = planKalender
         let naechster = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
         let modell = TrainingAuswahl.modell(
-            termine: termine(jetzt: jetzt, naechster: naechster), heute: jetzt,
-            naechsteEinheitKey: naechster, kalender: kalender)
+            einheiten: plan.einheiten.map(\.key), naechsteEinheitKey: naechster ?? plan.naechsteEinheitKey,
+            ziel: PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap),
+            cardioErledigt: wochenStand(jetzt: jetzt).cardioErledigt)
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let namen = EinheitNamen(plan: plan, muskeln: muskeln)
 
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
                 kopf(jetzt: jetzt, kalender: kalender)
-                if let key = modell.heuteEinheitKey,
+                if let key = modell.naechsteEinheitKey,
                    let einheit = plan.einheiten.first(where: { $0.key == key }) {
-                    heuteGeplant(einheit, namen: namen, muskeln: muskeln, kalender: kalender)
+                    alsNaechstes(einheit, namen: namen, muskeln: muskeln)
                 }
                 if !modell.weitere.isEmpty {
-                    weitere(modell.weitere, naechster: naechster, namen: namen, kalender: kalender)
+                    weitere(modell.weitere, naechster: modell.naechsteEinheitKey, namen: namen)
                 }
                 freiesTraining
             }
@@ -94,13 +97,13 @@ struct TrainingAuswahlView: View {
         }
     }
 
-    private func heuteGeplant(_ einheit: TrainingsplanEinheit, namen: EinheitNamen,
-                              muskeln: [String: [GeraetMuskel]], kalender: Calendar) -> some View {
+    private func alsNaechstes(_ einheit: TrainingsplanEinheit, namen: EinheitNamen,
+                              muskeln: [String: [GeraetMuskel]]) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            abschnittTitel("HEUTE GEPLANT")
+            abschnittTitel("ALS NÄCHSTES")
             EinheitKarte(
                 modell: .einheit(einheit, namen: namen, muskeln: muskeln, tag: nil, zustand: .geplant),
-                geschlecht: geschlecht, kalender: kalender,
+                geschlecht: geschlecht,
                 beiTipp: { beiEinheitOeffnen(einheit.key) },
                 hinweis: "Zeigt die Übungen der Einheit")
             PrimaryButton(title: "Training starten") { beiPlanStarten() }
@@ -108,14 +111,14 @@ struct TrainingAuswahlView: View {
         }
     }
 
-    private func weitere(_ optionen: [TrainingAuswahlOption], naechster: String?, namen: EinheitNamen,
-                         kalender: Calendar) -> some View {
+    private func weitere(_ optionen: [TrainingAuswahlOption], naechster: String?,
+                         namen: EinheitNamen) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            abschnittTitel("AUCH DIESE WOCHE IM PLAN")
+            abschnittTitel("AUCH IM PLAN")
             VStack(spacing: 0) {
                 ForEach(Array(optionen.enumerated()), id: \.element.id) { nummer, option in
                     if nummer > 0 { Rectangle().fill(DesignSystem.Color.line).frame(height: 1) }
-                    zeile(option, naechster: naechster, namen: namen, kalender: kalender)
+                    zeile(option, naechster: naechster, namen: namen)
                 }
             }
             .background(DesignSystem.Color.surface)
@@ -124,44 +127,23 @@ struct TrainingAuswahlView: View {
     }
 
     @ViewBuilder
-    private func zeile(_ option: TrainingAuswahlOption, naechster: String?, namen: EinheitNamen,
-                       kalender: Calendar) -> some View {
+    private func zeile(_ option: TrainingAuswahlOption, naechster: String?, namen: EinheitNamen) -> some View {
         switch option {
-        case .einheit(let key, let tag):
+        case .einheit(let key):
             let meta = plan.einheiten.first { $0.key == key }.map(EinheitKuerzel.untertitel) ?? ""
-            optionZeile(tag: tag, titel: namen.name(key), meta: meta, kalender: kalender) {
+            optionZeile(titel: namen.name(key), meta: meta) {
                 // Die naechste Einheit startet direkt; jede andere wird vorgezogen (E9).
                 if key == naechster { beiPlanStarten() } else { vorziehen = VorziehenAuftrag(key: key) }
             }
-        case .cardio(let tag):
-            optionZeile(tag: tag, titel: "Cardio",
+        case .cardio(let minuten):
+            optionZeile(titel: "Cardio · \(minuten) min",
                         meta: CardioArtName.zeile(katalog.bootstrap?.member.trainingProfile?.cardioArten ?? []),
-                        kalender: kalender, beiStarten: beiCardio)
-        case .kurs(let titel, let beginn, let tag):
-            // E10: gebuchte Kurse stehen da, ausgegraut und ohne Start.
-            optionZeile(tag: tag, titel: titel,
-                        meta: "Kurs · \(KursZeit.uhrzeit(beginn, zeitzone: kalender.timeZone.identifier))",
-                        kalender: kalender, beiStarten: nil)
-                .opacity(0.5)
-                // Ohne Knopf eine Zeile fuer VoiceOver, mit dem Grund fuers Grau.
-                .accessibilityElement(children: .combine)
-                .accessibilityHint("Kurs – startet nicht hier")
+                        beiStarten: beiCardio)
         }
     }
 
-    private func optionZeile(tag: Date, titel: String, meta: String, kalender: Calendar,
-                             beiStarten: (() -> Void)?) -> some View {
+    private func optionZeile(titel: String, meta: String, beiStarten: @escaping () -> Void) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
-            VStack(spacing: 2) {
-                Text(Self.kurztag(tag, kalender: kalender))
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(DesignSystem.Color.text)
-                Text(Self.datum(tag, kalender: kalender))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .monospacedDigit()
-            }
-            .frame(width: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(titel)
                     .font(DesignSystem.Typography.uebungsname)
@@ -176,23 +158,21 @@ struct TrainingAuswahlView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
-            if let beiStarten {
-                Button(action: beiStarten) {
-                    Text("Starten")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .padding(.horizontal, DesignSystem.Spacing.s16)
-                        .frame(minHeight: 36)
-                        .background(DesignSystem.Color.surfaceRaised)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(DesignSystem.Color.line, lineWidth: 1))
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PressButtonStyle())
-                .accessibilityLabel("\(titel) starten")
-                .testnotizElement("training.auswahl.option", typ: "Button")
+            Button(action: beiStarten) {
+                Text("Starten")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .padding(.horizontal, DesignSystem.Spacing.s16)
+                    .frame(minHeight: 36)
+                    .background(DesignSystem.Color.surfaceRaised)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(DesignSystem.Color.line, lineWidth: 1))
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(PressButtonStyle())
+            .accessibilityLabel("\(titel) starten")
+            .testnotizElement("training.auswahl.option", typ: "Button")
         }
         .padding(.horizontal, DesignSystem.Spacing.s16)
         .padding(.vertical, DesignSystem.Spacing.s12)
@@ -233,15 +213,10 @@ struct TrainingAuswahlView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: - Termine (wie HomeRootView.planTermine)
+    // MARK: - Woche (wie HomeRootView.wochenStand)
 
     private var aktivesStudio: BootstrapResponse.Studio? {
         katalog.bootstrap?.studios.first { $0.id == katalog.activeStudioId }
-    }
-
-    private var kurseStudios: [String] {
-        KurseStudios.reihenfolge(
-            alle: katalog.bootstrap?.studios.map(\.id) ?? [], aktiv: katalog.activeStudioId)
     }
 
     private var planZeitzone: String {
@@ -255,37 +230,24 @@ struct TrainingAuswahlView: View {
         katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:))
     }
 
-    private func termine(jetzt: Date, naechster: String?) -> [Date: [PlanTermin]] {
-        let kalender = planKalender
-        let montag = KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: planZeitzone)
-        let woche = (0..<7).compactMap { kalender.date(byAdding: .day, value: $0, to: montag) }
-        let tage = Set((woche + PlanKalenderKontext.fenster(heute: jetzt, kalender: kalender))
-            .map { kalender.startOfDay(for: $0) }).sorted()
-        return PlanKalenderKontext.termine(
-            plan: plan, tage: tage, kalender: kalender, profil: katalog.bootstrap?.member.trainingProfile,
-            heuteEinheitKey: naechster,
-            sessions: verlauf.sessions, gesamt: verlauf.summary?.totalCount, verlaufGeladen: verlauf.stand != nil,
-            heute: jetzt, kurse: kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? []),
-            cardioErledigt: cardio.erledigt, cardioGeladen: cardio.geladen, filter: .alle)
+    /// Die laufende Woche wie auf Home: nur fuer das offene Cardio-Ziel.
+    private func wochenStand(jetzt: Date) -> PlanWochenStand {
+        PlanKalenderKontext.stand(
+            bootstrap: katalog.bootstrap,
+            wocheStart: KurseWochenBerechnung.montag(enthaelt: jetzt, zeitzone: planZeitzone), heute: jetzt,
+            kalender: planKalender,
+            heuteEinheitKey: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey,
+            sitzungen: verlauf.sessions, cardioChecks: cardio.checks,
+            kurse: [], filter: .alle)
     }
 
     // MARK: - Texte
 
     // Feste Namen: unabhaengig von Locale-Eigenheiten (wie EinheitKarteModell).
-    private static let kurzNamen = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
     private static let langNamen = ["SONNTAG", "MONTAG", "DIENSTAG", "MITTWOCH", "DONNERSTAG", "FREITAG", "SAMSTAG"]
 
     private static func wochentagIndex(_ tag: Date, kalender: Calendar) -> Int {
         (kalender.component(.weekday, from: tag) - 1 + 7) % 7
-    }
-
-    static func kurztag(_ tag: Date, kalender: Calendar) -> String {
-        kurzNamen[wochentagIndex(tag, kalender: kalender)]
-    }
-
-    static func datum(_ tag: Date, kalender: Calendar) -> String {
-        let teile = kalender.dateComponents([.day, .month], from: tag)
-        return "\(teile.day ?? 0).\(teile.month ?? 0)."
     }
 
     /// "<STUDIO> · <WOCHENTAG>"; ohne Ortsnamen nur der Wochentag.

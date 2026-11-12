@@ -211,327 +211,150 @@ struct PlanAntwortenTests {
         #expect(PlanEinrichten.umfang(member: Self.member(profil: profil)) == .nurVorschau)
     }
 
-    // MARK: - Kurse, Cardio, Deine Woche (Leinwaende 2c, 2c2, 2c3)
+    // MARK: - Cardio und Deine Woche (Wochenplan ohne Tage, Spec §4)
 
-    @Test("ein Kurstag laesst sich nicht zugleich als Cardio waehlen (E4)")
-    func kurstagNichtAlsCardio() {
-        var antworten = PlanAntworten(profil: nil)
-        antworten.kurseBeantworten(true)
-        do {
-            let ergebnis = antworten.tagUmschalten(1, fuer: .kurs)
-            #expect(ergebnis == nil)
-        }
-        antworten.cardioBeantworten(true)
-        do {
-            let ergebnis = antworten.tagUmschalten(1, fuer: .cardio)
-            #expect(ergebnis == .belegt(.kurs))
-        }
-        #expect(antworten.cardioTage.isEmpty)
-        #expect(antworten.kursTage == [1])
-        // Abwaehlen beim eigenen Schritt geht immer.
-        do {
-            let ergebnis = antworten.tagUmschalten(1, fuer: .kurs)
-            #expect(ergebnis == nil)
-        }
-        #expect(antworten.kursTage.isEmpty)
-    }
+    @Test("Vorbelegung des Wochenziels aus dem Profil, ohne Profil Kraft 2 und kein Cardio")
+    func vorbelegungWoche() {
+        let leer = PlanAntworten(profil: nil)
+        #expect(leer.woche == WochenAuswahl(ziel: Wochenziel(kraft: 2, cardio: 0, cardioMinuten: 30), profil: nil))
 
-    @Test("der siebte feste Tag ist gesperrt, einer bleibt fuers Krafttraining")
-    func siebterTagGesperrt() {
-        var antworten = PlanAntworten(profil: nil)
-        antworten.kurseBeantworten(true)
-        for tag in 1...4 { antworten.tagUmschalten(tag, fuer: .kurs) }
-        antworten.cardioBeantworten(true)
-        antworten.tagUmschalten(5, fuer: .cardio)
-        antworten.tagUmschalten(6, fuer: .cardio)
-        do {
-            let ergebnis = antworten.tagUmschalten(7, fuer: .cardio)
-            #expect(ergebnis == .letzterFreierTag)
-        }
-        #expect(antworten.cardioTage == [5, 6])
-        #expect(antworten.tagGesperrt(7, fuer: .cardio) == .letzterFreierTag)
-        #expect(antworten.tagGesperrt(4, fuer: .cardio) == .belegt(.kurs))
-        #expect(antworten.tagGesperrt(5, fuer: .cardio) == nil)
-    }
-
-    @Test("Nein leert Tage und Arten")
-    func neinLeertTageUndArten() {
-        var antworten = PlanAntworten(profil: nil)
-        antworten.kurseBeantworten(true)
-        antworten.tagUmschalten(2, fuer: .kurs)
-        antworten.kurseBeantworten(false)
-        #expect(antworten.kursTage.isEmpty)
-        #expect(antworten.kursAntwort == false)
-
-        antworten.cardioBeantworten(true)
-        antworten.tagUmschalten(7, fuer: .cardio)
-        antworten.cardioArtUmschalten("laufen")
-        antworten.cardioBeantworten(false)
-        #expect(antworten.cardioTage.isEmpty)
-        #expect(antworten.cardioArten.isEmpty)
-        #expect(antworten.cardioAntwort == false)
-    }
-
-    @Test("Weiter ist gesperrt, solange Ja ohne Tag (Cardio: ohne Art) steht")
-    func weiterGesperrtBeiJaOhneTag() {
-        var antworten = PlanAntworten(profil: nil)
-        // Noch nichts getippt: Weiter geht (wie Nein).
-        #expect(antworten.kannWeiter(.planKurse))
-        #expect(antworten.kannWeiter(.planCardio))
-
-        antworten.kurseBeantworten(true)
-        #expect(!antworten.kannWeiter(.planKurse))
-        antworten.tagUmschalten(1, fuer: .kurs)
-        #expect(antworten.kannWeiter(.planKurse))
-
-        antworten.cardioBeantworten(true)
-        #expect(!antworten.kannWeiter(.planCardio))
-        antworten.tagUmschalten(7, fuer: .cardio)
-        #expect(!antworten.kannWeiter(.planCardio))
-        antworten.cardioArtUmschalten("laufen")
-        #expect(antworten.kannWeiter(.planCardio))
-        antworten.tagUmschalten(7, fuer: .cardio)
-        #expect(!antworten.kannWeiter(.planCardio))
-        antworten.cardioBeantworten(false)
-        #expect(antworten.kannWeiter(.planCardio))
-    }
-
-    @Test("ohne Studio mit Kursen entfaellt die Kursfrage, der Zaehler passt sich an")
-    func kursFrageOhneStudio() {
-        let antworten = PlanAntworten(profil: nil)
-        #expect(!antworten.kursFrageSichtbar(hatStudioMitKursen: false))
-        #expect(antworten.kursFrageSichtbar(hatStudioMitKursen: true))
-
-        let onboarding = OnboardingAntworten()
-        let ohne = onboarding.schritte(
-            umfang: .nurPlan, mitKursen: antworten.kursFrageSichtbar(hatStudioMitKursen: false))
-        let mit = onboarding.schritte(
-            umfang: .nurPlan, mitKursen: antworten.kursFrageSichtbar(hatStudioMitKursen: true))
-        #expect(ohne == [.planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau])
-        #expect(mit == [.planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau])
-        #expect(OnboardingSchrittzeile.text(nummer: 4, gesamt: ohne.count) == "Schritt 4 von 6")
-        #expect(OnboardingSchrittzeile.text(nummer: 4, gesamt: mit.count) == "Schritt 4 von 7")
-    }
-
-    @Test("ohne Kursfrage gelten keine Kurstage, auch wenn das Profil welche hatte")
-    func kurseOhneStudioGeleert() {
-        let profil = TrainingsplanProfil(minutes: 60, experience: "neu", focus: [], kursTage: [1], cardioTage: [], cardioArten: [], kraftTage: [])
-        var antworten = PlanAntworten(profil: profil)
-        antworten.kurseOhneFrage()
-        #expect(antworten.kursTage.isEmpty)
-        #expect(antworten.tagGesperrt(1, fuer: .cardio) == nil)
-    }
-
-    @Test("Vorbelegung der Tage aus dem Profil, Ja nur mit Tagen")
-    func vorbelegungTage() {
         let profil = TrainingsplanProfil(
-            minutes: 60, experience: "neu", focus: [],
-            kursTage: [1], cardioTage: [], cardioArten: ["laufen"], kraftTage: [3, 5])
+            minutes: 60, experience: "neu", focus: [], cardioArten: ["laufen"],
+            kraftProWoche: 3, cardioProWoche: 2, cardioMinuten: 45)
         let antworten = PlanAntworten(profil: profil)
-        #expect(antworten.kursTage == [1])
-        #expect(antworten.kursAntwort == true)
-        #expect(antworten.cardioTage.isEmpty)
-        #expect(antworten.cardioAntwort == nil)
-        #expect(antworten.cardioArten == ["laufen"])
-        #expect(antworten.kraftTage == [3, 5])
+        #expect(antworten.woche.kraft == 3)
+        #expect(antworten.woche.cardio == 2)
+        #expect(antworten.woche.cardioMinuten == 45)
+        #expect(antworten.woche.cardioArten == ["laufen"])
     }
 
-    @Test("Tagesfelder gehen nur mit, wenn der Flow die Woche gefragt hat")
-    func tagesfelderNurWennGefragt() {
+    @Test("Kraft folgt der Wie-oft-Antwort, sonst dem Wochenziel, sonst 2")
+    func kraftVorbelegungAusWieOft() {
+        #expect(PlanAntworten(profil: nil, wieOft: 4).woche.kraft == 4)
+        // Geklemmt auf 1...7.
+        #expect(PlanAntworten(profil: nil, wieOft: 9).woche.kraft == 7)
+        let ziel = Wochenziel(kraft: 3, cardio: 1, cardioMinuten: 30)
+        #expect(PlanAntworten(profil: nil, wieOft: nil, wochenziel: ziel).woche.kraft == 3)
+        #expect(PlanAntworten(profil: nil, wieOft: 4, wochenziel: ziel).woche.kraft == 4)
+        #expect(PlanAntworten(profil: nil).woche.kraft == 2)
+    }
+
+    @Test("ein Kraft-Ziel im Profil gewinnt gegen die Wie-oft-Antwort")
+    func profilKraftGewinnt() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kraftProWoche: 5, cardioProWoche: 0, cardioMinuten: 30)
+        var antworten = PlanAntworten(profil: profil, wieOft: 4)
+        #expect(antworten.woche.kraft == 5)
+        antworten.kraftVorbelegen(wieOft: 3, wochenziel: Wochenziel(kraft: 6, cardio: 0, cardioMinuten: 30))
+        #expect(antworten.woche.kraft == 5)
+    }
+
+    @Test("die spaete Antwort auf Wie oft setzt Kraft nach")
+    func kraftVorbelegenNachtraeglich() {
+        var antworten = PlanAntworten(profil: nil)
+        #expect(antworten.woche.kraft == 2)
+        antworten.kraftVorbelegen(wieOft: 4, wochenziel: nil)
+        #expect(antworten.woche.kraft == 4)
+    }
+
+    @Test("Zusammenfassung nennt Zaehler und Minuten, der Cardio-Teil entfaellt bei 0")
+    func zusammenfassung() {
+        var antworten = PlanAntworten(profil: nil)
+        antworten.woche.kraft = 2
+        antworten.woche.cardio = 1
+        antworten.woche.cardioMinuten = 30
+        #expect(antworten.zusammenfassung == "2× Kraft · 1× Cardio 30 min · Kurse nach Buchung")
+        antworten.woche.cardio = 0
+        #expect(antworten.zusammenfassung == "2× Kraft · Kurse nach Buchung")
+        antworten.woche.kraft = 4
+        antworten.woche.cardio = 3
+        antworten.woche.cardioMinuten = 45
+        #expect(antworten.zusammenfassung == "4× Kraft · 3× Cardio 45 min · Kurse nach Buchung")
+    }
+
+    @Test("Weiter im Cardio-Schritt: ohne Cardio immer, mit Cardio erst mit einer Art")
+    func weiterImCardioSchritt() {
+        var antworten = PlanAntworten(profil: nil)
+        #expect(antworten.kannWeiter(.planCardio))
+        #expect(antworten.weiterGesperrtHinweis(.planCardio) == nil)
+
+        antworten.woche.cardio = 1
+        #expect(!antworten.kannWeiter(.planCardio))
+        #expect(antworten.weiterGesperrtHinweis(.planCardio) == "Erst wählen, was du machst.")
+        antworten.cardioArtUmschalten("laufen")
+        #expect(antworten.kannWeiter(.planCardio))
+        antworten.woche.cardio = 0
+        #expect(antworten.kannWeiter(.planCardio))
+    }
+
+    @Test("Cardio-Arten bleiben in Anzeigereihenfolge")
+    func cardioArtenReihenfolge() {
+        var antworten = PlanAntworten(profil: nil)
+        antworten.cardioArtUmschalten("wandern")
+        antworten.cardioArtUmschalten("laufen")
+        #expect(antworten.woche.cardioArten == ["laufen", "wandern"])
+        antworten.cardioArtUmschalten("laufen")
+        #expect(antworten.woche.cardioArten == ["wandern"])
+    }
+
+    @Test("Zaehler gehen nur mit, wenn der Flow die Woche gefragt hat, und ohne Tagesfelder")
+    func zaehlerNurWennGefragt() throws {
         var antworten = PlanAntworten(profil: nil)
         antworten.minuten = 60
         antworten.erfahrung = "neu"
         // Ohne Wochenfragen (etwa nur "Zeit oder Schwerpunkt ändern"): nil = nicht senden.
-        #expect(antworten.trainingsprofil?.kursTage == nil)
-        #expect(antworten.trainingsprofil?.kraftTage == nil)
+        #expect(antworten.trainingsprofil?.kraftProWoche == nil)
+        #expect(antworten.trainingsprofil?.cardioProWoche == nil)
 
         antworten.wochenGefragt = true
-        antworten.kurseBeantworten(true)
-        antworten.tagUmschalten(1, fuer: .kurs)
-        antworten.cardioBeantworten(true)
-        antworten.tagUmschalten(7, fuer: .cardio)
+        antworten.woche.kraft = 3
+        antworten.woche.cardio = 2
+        antworten.woche.cardioMinuten = 40
         antworten.cardioArtUmschalten("laufen")
-        let profil = antworten.trainingsprofil
-        #expect(profil?.kursTage == [1])
-        #expect(profil?.cardioTage == [7])
-        #expect(profil?.cardioArten == ["laufen"])
-        // Kein Tausch: leer = der Server verteilt die Krafttage selbst.
-        #expect(profil?.kraftTage == [])
+        let profil = try #require(antworten.trainingsprofil)
+        #expect(profil.kraftProWoche == 3)
+        #expect(profil.cardioProWoche == 2)
+        #expect(profil.cardioMinuten == 40)
+        #expect(profil.cardioArten == ["laufen"])
+        #expect(profil.kursTage == nil && profil.cardioTage == nil && profil.kraftTage == nil)
+
+        let json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(profil)) as? [String: Any])
+        for key in ["kursTage", "cardioTage", "kraftTage"] { #expect(json[key] == nil) }
+        #expect(json["kraftProWoche"] as? Int == 3)
     }
 
-    private static let raster = [
-        Rasterplatz(tag: 1, art: .kurs, einheitKey: nil),
-        Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-        Rasterplatz(tag: 5, art: .kraft, einheitKey: "B"),
-        Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-    ]
-
-    private static func mitWoche() -> PlanAntworten {
-        var antworten = PlanAntworten(profil: nil)
-        antworten.minuten = 60
-        antworten.erfahrung = "neu"
+    @Test("Cardio-Arten ohne Cardio gehen leer raus")
+    func cardioArtenOhneCardioLeer() {
+        let profil = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], cardioArten: ["laufen"],
+            kraftProWoche: 2, cardioProWoche: 0, cardioMinuten: 30)
+        var antworten = PlanAntworten(profil: profil)
         antworten.wochenGefragt = true
-        antworten.kurseBeantworten(true)
-        antworten.tagUmschalten(1, fuer: .kurs)
-        antworten.cardioBeantworten(true)
-        antworten.tagUmschalten(7, fuer: .cardio)
-        antworten.cardioArtUmschalten("laufen")
-        return antworten
+        #expect(antworten.trainingsprofil?.cardioArten == [])
+        antworten.woche.cardio = 1
+        #expect(antworten.trainingsprofil?.cardioArten == ["laufen"])
     }
 
-    @Test("ohne Tausch zeigt Deine Woche genau das Raster des Servers")
-    func wocheOhneTauschIstServerRaster() {
-        let antworten = Self.mitWoche()
-        #expect(antworten.wochenAnzeige(raster: Self.raster, einheiten: ["A", "B"]) == Self.raster)
-    }
-
-    @Test("Tauschen legt einen Krafttag auf einen freien Tag und schreibt kraftTage")
-    func tauschenSchreibtKraftTage() {
-        var antworten = Self.mitWoche()
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 5, nach: 6, raster: Self.raster)
-            #expect(ergebnis)
-        }
-        #expect(antworten.kraftTage == [3, 6])
-        #expect(antworten.trainingsprofil?.kraftTage == [3, 6])
-        let anzeige = antworten.wochenAnzeige(raster: Self.raster, einheiten: ["A", "B"])
-        #expect(anzeige == [
-            Rasterplatz(tag: 1, art: .kurs, einheitKey: nil),
-            Rasterplatz(tag: 3, art: .kraft, einheitKey: "A"),
-            Rasterplatz(tag: 6, art: .kraft, einheitKey: "B"),
-            Rasterplatz(tag: 7, art: .cardio, einheitKey: nil),
-        ])
-        // Ein zweiter Tausch rechnet vom getauschten Stand aus.
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 3, nach: 2, raster: Self.raster)
-            #expect(ergebnis)
-        }
-        #expect(antworten.kraftTage == [2, 6])
-    }
-
-    @Test("Tauschen auf einen festen oder Kraft-Tag wird abgelehnt")
-    func tauschenAufBelegtenTag() {
-        var antworten = Self.mitWoche()
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 3, nach: 1, raster: Self.raster)
-            #expect(!ergebnis)
-        }
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 3, nach: 7, raster: Self.raster)
-            #expect(!ergebnis)
-        }
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 3, nach: 5, raster: Self.raster)
-            #expect(!ergebnis)
-        }
-        do {
-            let ergebnis = antworten.kraftTagTauschen(von: 2, nach: 4, raster: Self.raster)
-            #expect(!ergebnis)
-        }
-        #expect(antworten.kraftTage.isEmpty)
-    }
-
-    @Test("geaenderte Kurs- oder Cardio-Antworten verwerfen den Tausch")
-    func aenderungVerwirftTausch() {
-        var antworten = Self.mitWoche()
-        antworten.kraftTagTauschen(von: 5, nach: 6, raster: Self.raster)
-        antworten.tagUmschalten(6, fuer: .cardio)
-        #expect(antworten.kraftTage.isEmpty)
-        #expect(antworten.cardioTage == [6, 7])
-
-        antworten.kraftTagTauschen(von: 5, nach: 4, raster: Self.raster)
-        antworten.kurseBeantworten(false)
-        #expect(antworten.kraftTage.isEmpty)
-
-        antworten.kraftTagTauschen(von: 5, nach: 4, raster: Self.raster)
-        antworten.wocheNeuVorschlagen()
-        #expect(antworten.kraftTage.isEmpty)
-    }
-
-    @Test("Ueberspringen stellt Kurs- und Cardio-Stand vom Server wieder her")
+    @Test("Ueberspringen stellt den Cardio-Stand vom Server wieder her")
     func ueberspringenStelltWiederHer() {
         let profil = TrainingsplanProfil(
-            minutes: 60, experience: "neu", focus: [],
-            kursTage: [2], cardioTage: [6], cardioArten: ["wandern"], kraftTage: [])
+            minutes: 60, experience: "neu", focus: [], cardioArten: ["wandern"],
+            kraftProWoche: 3, cardioProWoche: 1, cardioMinuten: 20)
         var antworten = PlanAntworten(profil: profil)
-        antworten.kurseBeantworten(false)
-        antworten.kurseVerwerfen()
-        #expect(antworten.kursTage == [2])
-        #expect(antworten.kursAntwort == true)
+        antworten.woche.cardio = 4
+        antworten.woche.cardioMinuten = 60
         antworten.cardioArtUmschalten("laufen")
-        antworten.tagUmschalten(6, fuer: .cardio)
         antworten.cardioVerwerfen()
-        #expect(antworten.cardioTage == [6])
-        #expect(antworten.cardioArten == ["wandern"])
+        #expect(antworten.woche.cardio == 1)
+        #expect(antworten.woche.cardioMinuten == 20)
+        #expect(antworten.woche.cardioArten == ["wandern"])
+        // Kraft gehoert zu "Deine Woche", nicht zum Cardio-Schritt.
+        #expect(antworten.woche.kraft == 3)
     }
 
-    @Test("Hinweise unter den Tagen nennen die Tage, nicht die Zahl der Einheiten")
-    func wochenHinweise() {
-        #expect(PlanWochenText.kursHinweis([1]) == "Montags ist dein Kurs gesetzt. Die Kraft-Einheiten legen wir auf die übrigen Tage.")
-        #expect(PlanWochenText.kursHinweis([1, 4]) == "Montags und donnerstags sind deine Kurse gesetzt. Die Kraft-Einheiten legen wir auf die übrigen Tage.")
-        #expect(PlanWochenText.kursHinweis([]) == nil)
-        #expect(PlanWochenText.cardioHinweis([7]) == "Cardio am Sonntag ist ein fester Termin im Plan. Umfang und Tempo kommen später, jetzt zählt nur die Einheit.")
-        #expect(PlanWochenText.cardioHinweis([2, 4, 7]) == "Cardio am Dienstag, Donnerstag und Sonntag sind feste Termine im Plan. Umfang und Tempo kommen später, jetzt zählt nur die Einheit.")
-        #expect(PlanWochenText.tagLabel(1, ausgewaehlt: true) == "Montag, ausgewählt")
-        #expect(PlanWochenText.tagLabel(3, ausgewaehlt: false) == "Mittwoch, nicht ausgewählt")
-    }
-
-    // MARK: - Fix-Runde 1
-
-    @Test("ohne geladenen Bootstrap bleiben Kurstage unberuehrt und gehen nicht mit")
-    func kurstageOhneBootstrapUnberuehrt() {
-        let profil = TrainingsplanProfil(
-            minutes: 60, experience: "neu", focus: [], kursTage: [1], cardioTage: [], cardioArten: [], kraftTage: [])
-        var antworten = PlanAntworten(profil: profil)
-        antworten.wochenGefragt = true
-        antworten.kursFrageFestlegen(hatStudioMitKursen: nil)
-        #expect(antworten.kursTage == [1])
-        #expect(antworten.trainingsprofil?.kursTage == nil)
-        // Die uebrigen Tagesfelder gehen weiter mit.
-        #expect(antworten.trainingsprofil?.cardioTage == [])
-
-        // Ohne Studio (Bootstrap geladen): keine Kurstage, und das wird gesendet.
-        var ohneStudio = PlanAntworten(profil: profil)
-        ohneStudio.wochenGefragt = true
-        ohneStudio.kursFrageFestlegen(hatStudioMitKursen: false)
-        #expect(ohneStudio.kursTage.isEmpty)
-        #expect(ohneStudio.trainingsprofil?.kursTage == [])
-
-        // Mit Studio bleibt alles, wie es ist.
-        var mitStudio = PlanAntworten(profil: profil)
-        mitStudio.wochenGefragt = true
-        mitStudio.kursFrageFestlegen(hatStudioMitKursen: true)
-        #expect(mitStudio.trainingsprofil?.kursTage == [1])
-    }
-
-    @Test("Cardio-Arten ohne Cardio-Tage gehen leer raus")
-    func cardioArtenOhneTageLeer() {
-        let profil = TrainingsplanProfil(
-            minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [], cardioArten: ["laufen"], kraftTage: [])
-        var antworten = PlanAntworten(profil: profil)
-        antworten.wochenGefragt = true
-        #expect(antworten.trainingsprofil?.cardioArten == [])
-
-        antworten.cardioBeantworten(true)
-        antworten.tagUmschalten(7, fuer: .cardio)
-        #expect(antworten.trainingsprofil?.cardioArten == ["laufen"])
-        antworten.tagUmschalten(7, fuer: .cardio)
-        #expect(antworten.trainingsprofil?.cardioArten == [])
-    }
-
-    @Test("ein Cardio-Tag aus dem Profil ist im Kurs-Schritt gesperrt")
-    func profilCardioSperrtKurstag() {
-        let profil = TrainingsplanProfil(
-            minutes: 60, experience: "neu", focus: [], kursTage: [], cardioTage: [7], cardioArten: ["laufen"], kraftTage: [])
-        var antworten = PlanAntworten(profil: profil)
-        antworten.kurseBeantworten(true)
-        #expect(antworten.tagGesperrt(7, fuer: .kurs) == .belegt(.cardio))
-        do {
-            let ergebnis = antworten.tagUmschalten(7, fuer: .kurs)
-            #expect(ergebnis == .belegt(.cardio))
-        }
-        #expect(antworten.kursTage.isEmpty)
-        #expect(antworten.tagGesperrt(6, fuer: .kurs) == nil)
+    @Test("Der Hinweis steht an einer Stelle: Du legst fest, wie oft, nicht wann")
+    func hinweisEineQuelle() {
+        #expect(WochenAuswahl.hinweis == "Du legst fest, wie oft – nicht wann. Montag beginnt die Woche neu.")
     }
 
     // MARK: - Namen

@@ -109,15 +109,30 @@ function alsOrtsdatum(tag: number): string {
  * zurueckholt. Eine Zahl, die sinkt, ohne dass jemand etwas versaeumt
  * hat, ist keine Serie, sondern ein Zaehlfehler mit Anlauf.
  */
-export function serienstand(startsAt: string[], jetzt: Date, zeitzone: string): Serienstand {
+export function serienstand(
+  startsAt: string[],
+  jetzt: Date,
+  zeitzone: string,
+  /**
+   * Weitere Trainingstage als Ortsdaten (`YYYY-MM-DD`), etwa abgehakte
+   * Cardio-Tage. Sie zaehlen wie ein Trainingstag; Kursbeginne gehen als
+   * Zeitpunkte in `startsAt` ein.
+   */
+  weitereTage: string[] = [],
+): Serienstand {
   const heute = tagNummer(jetzt, zeitzone);
   const montag = montagDerWoche(heute);
 
   const belegteWochen = new Set<number>();
   const tageDieserWoche = new Set<string>();
 
-  for (const iso of startsAt) {
-    const tag = tagNummer(new Date(iso), zeitzone);
+  const tage = [
+    ...startsAt.map((iso) => tagNummer(new Date(iso), zeitzone)),
+    ...weitereTage.map((ort) => Math.floor(Date.parse(`${ort}T00:00:00Z`) / 86_400_000)),
+  ];
+
+  for (const tag of tage) {
+    if (Number.isNaN(tag)) continue;
     // Eine kuenftig datierte Einheit gibt es nicht -- eine falsch
     // gestellte Uhr schon. Sie darf die Serie nicht verlaengern.
     if (tag > heute) continue;
@@ -259,6 +274,43 @@ async function startsFuerDieSerie(
   return ((data ?? []) as Array<{ started_at: string }>).map((zeile) => zeile.started_at);
 }
 
+/** Die abgehakten Cardio-Tage (Ortsdaten), juengste zuerst, gedeckelt. */
+async function ladeCardioTage(client: SupabaseClient, userId: string): Promise<string[]> {
+  const { data } = await client
+    .from("cardio_checks")
+    .select("day")
+    .eq("user_id", userId)
+    .order("day", { ascending: false })
+    .limit(STREAK_SESSION_LIMIT);
+  return ((data ?? []) as Array<{ day: string }>).map((zeile) => zeile.day);
+}
+
+/**
+ * Die Beginne der eigenen, gebuchten Kurse, die schon angefangen haben --
+ * in allen Studios. Vom Mitglied stornierte Buchungen, vom Studio abgesagte
+ * Termine und Wartelisten zaehlen nicht.
+ */
+async function ladeKursBeginne(client: SupabaseClient, userId: string): Promise<string[]> {
+  const jetzt = new Date().toISOString();
+  const { data } = await client
+    .from("course_bookings")
+    .select("course_sessions!inner(starts_at, status)")
+    .eq("user_id", userId)
+    .eq("status", "booked")
+    .eq("course_sessions.status", "planned")
+    .lte("course_sessions.starts_at", jetzt)
+    .order("starts_at", { referencedTable: "course_sessions", ascending: false })
+    .limit(STREAK_SESSION_LIMIT);
+  const zeilen = (data ?? []) as unknown as Array<{
+    course_sessions: { starts_at: string } | Array<{ starts_at: string }>;
+  }>;
+  return zeilen.flatMap((zeile) =>
+    (Array.isArray(zeile.course_sessions) ? zeile.course_sessions : [zeile.course_sessions]).map(
+      (termin) => termin.starts_at,
+    ),
+  );
+}
+
 /**
  * Der Trainingsverlauf fuer den Home-Tab, einschliesslich der Bloecke und
  * Saetze fuer das Session-Detail (Spec 6.3).
@@ -284,12 +336,18 @@ export async function getSessions(
 
   const zeitzone = await zeitzoneDesStudios(client, optionen.studioId);
 
+  // Cardio-Haken und Kursbeginne laufen neben dem Einheiten-Abruf her.
+  const cardioUndKurse = zeitzone
+    ? Promise.all([ladeCardioTage(client, userId), ladeKursBeginne(client, userId)])
+    : Promise.resolve<[string[], string[]]>([[], []]);
+
   const { data: sessionRows } = await client
     .from("workout_sessions")
     .select("id, started_at, completed_at, completed_reason, paused_seconds")
     .eq("user_id", userId)
     .order("started_at", { ascending: false })
     .limit(SESSION_LIMIT);
+  const [cardioTage, kursBeginne] = await cardioUndKurse;
 
   const sessions = (sessionRows ?? []) as SessionRow[];
   const summary: SessionsSummary = {
@@ -299,7 +357,12 @@ export async function getSessions(
       : null,
     streak: zeitzone
       ? {
-          ...serienstand(await startsFuerDieSerie(client, userId, sessions), new Date(), zeitzone),
+          ...serienstand(
+            [...(await startsFuerDieSerie(client, userId, sessions)), ...kursBeginne],
+            new Date(),
+            zeitzone,
+            cardioTage,
+          ),
           // Das Ziel liegt neben der Serie, nicht in ihr: die Zeile
           // "2 von 3 Tagen" braucht trainedDays und das Ziel aus
           // DEMSELBEN Abruf, sonst zeigt ein alter Cache das eine gegen

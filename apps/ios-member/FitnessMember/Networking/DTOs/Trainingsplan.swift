@@ -165,10 +165,17 @@ struct TrainingsplanProfil: Codable, Equatable, Sendable {
     /// Schluessel aus CARDIO_ARTEN (laufen, radfahren, schwimmen, wandern, anderes).
     let cardioArten: [String]?
     let kraftTage: [Int]?
+    /// Wochenziel (Spec Wochenplan ohne Tage). nil heisst "nicht gesetzt": beim
+    /// Schreiben weggelassen (der Server laesst den Wert unveraendert), beim
+    /// Lesen nil fuer eine aeltere Antwort oder ein Konto ohne Kraft-Ziel.
+    let kraftProWoche: Int?
+    let cardioProWoche: Int?
+    let cardioMinuten: Int?
 
     init(
         minutes: Int, experience: String, focus: [String],
-        kursTage: [Int]? = nil, cardioTage: [Int]? = nil, cardioArten: [String]? = nil, kraftTage: [Int]? = nil
+        kursTage: [Int]? = nil, cardioTage: [Int]? = nil, cardioArten: [String]? = nil, kraftTage: [Int]? = nil,
+        kraftProWoche: Int? = nil, cardioProWoche: Int? = nil, cardioMinuten: Int? = nil
     ) {
         self.minutes = minutes
         self.experience = experience
@@ -177,10 +184,14 @@ struct TrainingsplanProfil: Codable, Equatable, Sendable {
         self.cardioTage = cardioTage
         self.cardioArten = cardioArten
         self.kraftTage = kraftTage
+        self.kraftProWoche = kraftProWoche
+        self.cardioProWoche = cardioProWoche
+        self.cardioMinuten = cardioMinuten
     }
 
     private enum CodingKeys: String, CodingKey {
         case minutes, experience, focus, kursTage, cardioTage, cardioArten, kraftTage
+        case kraftProWoche, cardioProWoche, cardioMinuten
     }
 
     init(from decoder: any Decoder) throws {
@@ -192,6 +203,9 @@ struct TrainingsplanProfil: Codable, Equatable, Sendable {
         cardioTage = try c.decodeIfPresent([Int].self, forKey: .cardioTage)
         cardioArten = try c.decodeIfPresent([String].self, forKey: .cardioArten)
         kraftTage = try c.decodeIfPresent([Int].self, forKey: .kraftTage)
+        kraftProWoche = try c.decodeIfPresent(Int.self, forKey: .kraftProWoche)
+        cardioProWoche = try c.decodeIfPresent(Int.self, forKey: .cardioProWoche)
+        cardioMinuten = try c.decodeIfPresent(Int.self, forKey: .cardioMinuten)
     }
 
     func encode(to encoder: any Encoder) throws {
@@ -203,6 +217,9 @@ struct TrainingsplanProfil: Codable, Equatable, Sendable {
         try c.encodeIfPresent(cardioTage, forKey: .cardioTage)
         try c.encodeIfPresent(cardioArten, forKey: .cardioArten)
         try c.encodeIfPresent(kraftTage, forKey: .kraftTage)
+        try c.encodeIfPresent(kraftProWoche, forKey: .kraftProWoche)
+        try c.encodeIfPresent(cardioProWoche, forKey: .cardioProWoche)
+        try c.encodeIfPresent(cardioMinuten, forKey: .cardioMinuten)
     }
 }
 
