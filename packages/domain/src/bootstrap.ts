@@ -21,6 +21,7 @@ import { stationsSchluessel } from "./station.js";
 import { aktiverKatalogPlan } from "./trainingsplan.js";
 import { ladePlaeneFuerApp, type PlanFuerApp } from "./trainingsplan-bootstrap.js";
 import { DomainError } from "./errors.js";
+import { berechneWochenziel, type Wochenziel } from "./wochenziel.js";
 import { getTrainingLimits, getTrainingProfile, type TrainingProfile } from "./trainingsprofil.js";
 
 /**
@@ -48,6 +49,8 @@ export type Bootstrap = {
     goals: AktiveZiele;
     /** Dauer, Erfahrung und Fokus (0060); null, solange das Mitglied keins angelegt hat. */
     trainingProfile: TrainingProfile | null;
+    /** Wochenziel als Zaehler; Fallback Profil, Plantage, weekly_days, 2 -- nie 0 Kraft (Spec 6). */
+    wochenziel: Wochenziel;
     /**
      * Der aktive Plan je Studio, in dem das Mitglied jetzt ist, mit Zaehler und naechster
      * Einheit (Etappe 3). Die Beschwerden selbst stehen bewusst nicht im Bootstrap
@@ -393,25 +396,27 @@ export async function ladeTrainingsteil(
   userId: string,
   jetzt: Date,
   melde: (nachricht: string) => void = (n) => console.error(n),
-): Promise<{ trainingProfile: TrainingProfile | null; plans: PlanFuerApp[] }> {
+): Promise<{ trainingProfile: TrainingProfile | null; plans: PlanFuerApp[]; planTage: number | null }> {
   const grund = (e: unknown) => (e instanceof DomainError ? `${e.code}: ${e.message}` : "unerwarteter Fehler");
   const profilAnfrage = getTrainingProfile(client, userId).catch((e: unknown) => {
     melde(`bootstrap: Trainingsprofil nicht geladen (${grund(e)})`);
     return null;
   });
-  const plaeneAnfrage = (async () => {
+  const plaeneAnfrage = (async (): Promise<{ plans: PlanFuerApp[]; planTage: number | null }> => {
     const [profil, limits, aktiver] = await Promise.all([
       profilAnfrage,
       getTrainingLimits(client, userId),
       aktiverKatalogPlan(client, userId),
     ]);
-    return ladePlaeneFuerApp(client, userId, aktiver, profil, limits, jetzt, melde);
+    const tage = aktiver?.eingabe?.tage;
+    const plans = await ladePlaeneFuerApp(client, userId, aktiver, profil, limits, jetzt, melde);
+    return { plans, planTage: typeof tage === "number" ? tage : null };
   })().catch((e: unknown) => {
     melde(`bootstrap: Plaene nicht geladen (${grund(e)})`);
-    return [] as PlanFuerApp[];
+    return { plans: [] as PlanFuerApp[], planTage: null };
   });
-  const [trainingProfile, plans] = await Promise.all([profilAnfrage, plaeneAnfrage]);
-  return { trainingProfile, plans };
+  const [trainingProfile, { plans, planTage }] = await Promise.all([profilAnfrage, plaeneAnfrage]);
+  return { trainingProfile, plans, planTage };
 }
 
 /**
@@ -682,7 +687,8 @@ export async function getBootstrap(
 
   const weight = weightRow as { measured_on: string; weight_kg: number | string } | null;
 
-  const { trainingProfile, plans } = await trainingsteil;
+  const { trainingProfile, plans, planTage } = await trainingsteil;
+  const ziele = await aktiveZiele(client, userId);
 
   return {
     member: {
@@ -693,8 +699,9 @@ export async function getBootstrap(
         },
       ),
       latestWeight: weight ? { measuredOn: weight.measured_on, weightKg: Number(weight.weight_kg) } : null,
-      goals: await aktiveZiele(client, userId),
+      goals: ziele,
       trainingProfile,
+      wochenziel: berechneWochenziel(trainingProfile, ziele.weeklyDays?.targetValue ?? null, planTage),
       plans,
     },
     studios: (studioRows ?? []) as Bootstrap["studios"],

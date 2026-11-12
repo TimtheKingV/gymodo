@@ -3,22 +3,21 @@ import SwiftUI
 /// Das Monatsgitter des Plan-Tabs -- herausgeloest aus dem Monat in
 /// `HomeSerieView` (`monatsgitter`/`monatszelle`), der mit dem Kalender
 /// hierher umzieht. Die Tage rechnet weiter `HomeSerie.monatstage` (volle
-/// Wochen Mo-So, Nachbarmonate gedimmt), die Zelle ist `Kalenderzelle`;
-/// darunter stehen dieselben Marken wie im Wochenstreifen.
+/// Wochen Mo-So, Nachbarmonate gedimmt), die Zelle ist dieselbe wie im
+/// Wochenstreifen (`PlanTagZelle`, Spec P2 §3 "Monat": gleiche Marken).
 ///
 /// Gerechnet wird mit Daten im Kalender des Plans (`PlanKalenderKontext`);
 /// fuer `HomeSerie` werden sie zum Ortsdatum "yyyy-MM-dd" und zurueck.
-struct PlanMonatsgitter<Marken: View>: View {
+struct PlanMonatsgitter: View {
     /// Irgendein Tag des gezeigten Monats.
     let monat: Date
     let kalender: Calendar
     let heute: Date
-    @ViewBuilder let marken: (Date) -> Marken
+    /// Die Marken des Tages (`PlanWochenStand.marken`).
+    let marken: (Date) -> [TagMarke]
     let gewaehlt: Date?
     /// Tage ohne Daten (ausserhalb der wischbaren Wochen) sind kein Knopf.
     var waehlbar: (Date) -> Bool = { _ in true }
-    /// Hantel statt Zahl wie im Streifen.
-    var trainiert: (Date) -> Bool = { _ in false }
     /// VoiceOver-Label eines Tages.
     var label: (Date) -> String = { _ in "" }
     let beiTag: (Date) -> Void
@@ -52,7 +51,7 @@ struct PlanMonatsgitter<Marken: View>: View {
                         }
                         .buttonStyle(PressButtonStyle())
                         .accessibilityLabel(label(tag.datum))
-                        .accessibilityHint("Zeigt den Tag in der Woche.")
+                        .accessibilityHint("Zeigt den Tag unter dem Monat.")
                         .accessibilityAddTraits(istGewaehlt(tag.datum) ? .isSelected : [])
                     } else {
                         zelle(tag)
@@ -71,19 +70,13 @@ struct PlanMonatsgitter<Marken: View>: View {
 
     /// Die 44 pt traegt die Spalte, nicht der 40-pt-Kreis (designsystem.md SS4).
     private func zelle(_ tag: PlanMonatsgitterTage.Tag) -> some View {
-        let hatTraining = !tag.zelle.ausserhalb && trainiert(tag.datum)
-        return VStack(spacing: 6) {
-            Kalenderzelle(
-                inhalt: hatTraining ? .hantel : .zahl(tag.zelle.tagesnummer),
-                istGewaehlt: istGewaehlt(tag.datum),
-                istHeute: tag.zelle.istHeute,
-                trainiert: hatTraining,
-                gedeckt: tag.zelle.ausserhalb)
-            marken(tag.datum)
-                .opacity(tag.zelle.ausserhalb ? 0 : 1)
-                .accessibilityHidden(true)
-        }
-        .frame(maxWidth: .infinity, minHeight: 44)
+        PlanTagZelle(
+            nummer: tag.zelle.tagesnummer,
+            marken: tag.zelle.ausserhalb ? [] : marken(tag.datum),
+            istHeute: tag.zelle.istHeute,
+            istGewaehlt: istGewaehlt(tag.datum),
+            gedeckt: tag.zelle.ausserhalb)
+            .frame(maxWidth: .infinity, minHeight: 44)
     }
 }
 

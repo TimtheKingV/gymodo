@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// Wie eine Planeinheit auf der Karte steht: noch offen oder erledigt.
+enum TerminZustand: Equatable {
+    case geplant
+    case erledigt
+}
+
 /// Was die eine Karte zeigt -- fuer ein absolviertes Training (Home) und fuer
 /// eine Planeinheit (Plan-Tab, spaeter die Kopfzeile im Detail).
 struct EinheitKarteModell: Equatable {
@@ -47,19 +53,11 @@ struct EinheitKarteModell: Equatable {
             zeilen: [fortschritt], stufen: modell.stufen, zustand: modell.zustand)
     }
 
-    /// „verpasst · verschoben auf Fr“, „verpasst“, „Erledigt“, nil bei .geplant.
-    static func zustandsText(_ zustand: TerminZustand, kalender: Calendar) -> String? {
+    /// „Erledigt“, nil bei .geplant.
+    static func zustandsText(_ zustand: TerminZustand) -> String? {
         switch zustand {
-        case .geplant:
-            return nil
-        case .erledigt:
-            return "Erledigt"
-        case .verpasst(let verschobenAuf):
-            guard let tag = verschobenAuf else { return "verpasst" }
-            // Feste Kurznamen: unabhaengig von Locale-Eigenheiten (Punkt, Laenge).
-            let kurz = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
-            let index = (kalender.component(.weekday, from: tag) - 1 + 7) % 7
-            return "verpasst · verschoben auf \(kurz[index])"
+        case .geplant: nil
+        case .erledigt: "Erledigt"
         }
     }
 }
@@ -68,8 +66,6 @@ struct EinheitKarteModell: Equatable {
 struct EinheitKarte: View {
     let modell: EinheitKarteModell
     let geschlecht: Geschlecht?
-    /// Fuer den Text „verpasst · verschoben auf <Kurztag>“.
-    var kalender: Calendar = .current
     /// Tippen auf die Karte (ohne den Knopf); nil, wenn die Umgebung selbst tippbar macht.
     var beiTipp: (() -> Void)? = nil
     /// VoiceOver-Hinweis nur fuer den Tipp-Inhalt, nicht fuer den Knopf.
@@ -77,11 +73,6 @@ struct EinheitKarte: View {
     /// Optionaler Knopf rechts unten („Training starten“), nur am geplanten Tag.
     /// `label`/`hinweis` fuer VoiceOver; ohne `label` gilt der Titel.
     var aktion: (titel: String, label: String?, hinweis: String?, ausloesen: () -> Void)? = nil
-
-    private var verpasst: Bool {
-        if case .verpasst = modell.zustand { return true }
-        return false
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
@@ -141,7 +132,6 @@ struct EinheitKarte: View {
             .accessibilityHidden(true)
             text
         }
-        .opacity(verpasst ? 0.75 : 1)
         .contentShape(Rectangle())
     }
 
@@ -174,22 +164,12 @@ struct EinheitKarte: View {
 
     @ViewBuilder
     private var zustandsmarke: some View {
-        if let text = EinheitKarteModell.zustandsText(modell.zustand, kalender: kalender) {
-            if verpasst {
-                Text(text)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-                    .padding(.horizontal, DesignSystem.Spacing.s8)
-                    .padding(.vertical, DesignSystem.Spacing.s4)
-                    .overlay(
-                        Capsule().strokeBorder(
-                            DesignSystem.Color.textFaint, style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-            } else if case .erledigt = modell.zustand, modell.art == .einheit {
-                // Beim Training ist Erledigt selbstverstaendlich; nur die Planeinheit sagt es.
-                Text(text)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.textMuted)
-            }
+        if let text = EinheitKarteModell.zustandsText(modell.zustand),
+           case .erledigt = modell.zustand, modell.art == .einheit {
+            // Beim Training ist Erledigt selbstverstaendlich; nur die Planeinheit sagt es.
+            Text(text)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(DesignSystem.Color.textMuted)
         }
     }
 }

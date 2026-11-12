@@ -16,30 +16,35 @@ struct Rasterplatz: Decodable, Equatable, Sendable {
 }
 
 enum PlanFilter: CaseIterable {
-    case alle, einheiten, kurse, cardio
+    case alle, kraft, kurse, cardio
 
     var titel: String {
         switch self {
         case .alle: "Alle"
-        case .einheiten: "Einheiten"
+        case .kraft: "Kraft"
         case .kurse: "Kurse"
         case .cardio: "Cardio"
         }
     }
 }
 
-/// Reine Darstellungslogik des Plan-Tabs. Die Termine je Tag legt
-/// `PlanKalender` an.
+/// Reine Darstellungslogik des Plan-Tabs.
 enum PlanWoche {
-    /// Filter nur, wenn es neben den Einheiten Kurse oder Cardio gibt; sonst keine
+    /// Filter nur, wenn es neben Kraft Kurse oder Cardio gibt; sonst keine
     /// Leiste (Leinwand 2g).
     static func sichtbareFilter(hatPlan: Bool, hatKurse: Bool, hatCardio: Bool) -> [PlanFilter] {
         guard hatKurse || hatCardio else { return [] }
         var filter: [PlanFilter] = [.alle]
-        if hatPlan { filter.append(.einheiten) }
+        if hatPlan { filter.append(.kraft) }
         if hatKurse { filter.append(.kurse) }
         if hatCardio { filter.append(.cardio) }
         return filter
+    }
+
+    /// Ob es Cardio gibt (Filter "Cardio"): ein Cardio-Ziel, ein Handhaken
+    /// oder Auto-Cardio aus einem Training (`PlanWochenStand.cardioErledigt`).
+    static func hatCardio(zielCardio: Int, handHaken: Int, cardioErledigt: Int) -> Bool {
+        zielCardio > 0 || handHaken > 0 || cardioErledigt > 0
     }
 
     /// ISO-Wochentag (1 = Montag ... 7 = Sonntag), unabhaengig von `Calendar.firstWeekday`.

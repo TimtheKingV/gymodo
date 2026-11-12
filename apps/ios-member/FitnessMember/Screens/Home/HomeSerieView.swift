@@ -64,8 +64,21 @@ struct HomeSerieView: View {
     var muskeln: [String: [GeraetMuskel]] = [:]
     var geschlecht: Geschlecht? = nil
     var beiKursAuswahl: (String) -> Void = { _ in }
-    /// Planmarken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`); leer ohne Plan.
-    var geplant: [String: PlanTagMarke.Art] = [:]
+    /// Marken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`): Geleistetes und
+    /// gebuchte Kurse der Woche.
+    var geplant: [String: TagMarke] = [:]
+    /// "Kraft 1/2 · Cardio 0/1" (`HomeSerie.zielZeile`); ersetzt "X von Y
+    /// Tagen" samt Zielstrichen. nil = die alte Zeile mit `wochenziel`.
+    var zielZeile: String? = nil
+    /// Dieselbe Zeile gesprochen ("Kraft 1 von 2, Cardio 0 von 1").
+    var zielVorlesetext: String? = nil
+    /// Ortstage mit Sitzung (auch laufender) und mit Cardio- oder Kursmarke:
+    /// die Hantel steht nur an Tagen mit Sitzung (`HomeSerie.trainingstage`).
+    var sitzungstage: Set<String> = []
+    var cardioOderKursTage: Set<String> = []
+    /// Ortstag der gerade laufenden Sitzung -- nur dort sagt VoiceOver
+    /// "Training läuft.".
+    var laufenderTag: String? = nil
     /// Tipp auf heute oder einen kuenftigen Tag mit Marke: die Tages-Id, der
     /// Aufrufer springt in den Plan-Tab (`PlanSprung.tag`).
     var beiPlanTag: (String) -> Void = { _ in }
@@ -74,7 +87,8 @@ struct HomeSerieView: View {
 
     var body: some View {
         let trainingstage = HomeSerie.trainingstage(
-            stand: stand, einheitenJeTag: einheitenJeTag)
+            stand: stand, einheitenJeTag: einheitenJeTag,
+            sitzungstage: sitzungstage, cardioOderKursTage: cardioOderKursTage)
         let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage, geplant: geplant)
         let gewaehlt = gewaehlterTag(wochentage: wochentage)
 
@@ -85,7 +99,7 @@ struct HomeSerieView: View {
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                 Spacer()
-                if let wochenziel {
+                if zielZeile == nil, let wochenziel {
                     Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
@@ -97,7 +111,13 @@ struct HomeSerieView: View {
             kopfzeile(wochentage)
 
             wochenstreifen(wochentage, gewaehlt: gewaehlt)
-            if let wochenziel {
+            if let zielZeile {
+                Text(zielZeile)
+                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .accessibilityLabel(zielVorlesetext ?? zielZeile)
+                    .testnotizElement("home.wochenziel", typ: "Text")
+            } else if let wochenziel {
                 zielzeile(wochentage, ziel: wochenziel)
             }
 
@@ -190,7 +210,9 @@ private extension HomeSerieView {
                 // Elemente durchlaufen muss.
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage, ziel: wochenziel))
+                    HomeSerie.vorlesetext(
+                        wochen: stand.weeks, tage: wochentage, ziel: zielZeile == nil ? wochenziel : nil)
+                        + ((zielVorlesetext ?? zielZeile).map { " \($0)." } ?? ""))
 
             Text(
                 HomeSerie.fussnote(
@@ -314,7 +336,7 @@ private extension HomeSerieView {
     func marke(_ tag: HomeSerieTag) -> some View {
         Group {
             if let art = tag.geplant {
-                PlanTagMarke(art: art)
+                PlanTagMarke(marke: art)
                     .accessibilityHidden(true)
             } else {
                 kurspunkt(tag)
@@ -411,29 +433,25 @@ private extension HomeSerieView {
         var teile = ["\(tag.wochentagVoll), \(tag.tagesnummer)."]
         if tag.istHeute { teile.append("Heute.") }
 
-        switch (einheitenJeTag[tag.id] ?? []).count {
-        case 0:
-            // Ein Tag, den der Server als trainiert nennt, dessen Einheit
-            // aber in keiner Buendelung steht, hat noch kein Ende --
-            // sie laeuft gerade im Training-Tab.
-            teile.append(tag.trainiert ? "Training läuft." : "Kein Training.")
-        case 1:
-            teile.append("Eine Einheit.")
-        case let anzahl:
-            teile.append("\(anzahl) Einheiten.")
-        }
+        // "Training läuft." nur am Tag der laufenden Sitzung -- ein Hanteltag
+        // ohne gebuendelte Einheit ist nicht automatisch ein laufender.
+        teile.append(HomeSerie.einheitenVorlesetext(
+            anzahl: (einheitenJeTag[tag.id] ?? []).count, trainiert: tag.trainiert,
+            laeuft: tag.id == laufenderTag))
         switch HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) {
         case .angemeldet: teile.append("Kurs, du bist angemeldet.")
         case .warteliste: teile.append("Kurs, du stehst auf der Warteliste.")
         case .keiner: break
         }
         switch tag.geplant {
-        case .einheit: teile.append("Einheit geplant.")
+        // Die Einheit hat der Zaehler oben schon genannt.
+        case .kraft, nil: break
         // Der Kurspunkt hat den Kurs oben schon genannt.
-        case .kurs: if HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) == .keiner { teile.append("Kurs geplant.") }
-        case .cardio: teile.append("Cardio geplant.")
-        case .verpasst: teile.append("Verpasst.")
-        case nil: break
+        case .kurs, .kursGebucht:
+            if HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) == .keiner {
+                teile.append(tag.geplant == .kurs ? "Kurs besucht." : "Kurs gebucht.")
+            }
+        case .cardio: teile.append("Cardio gemacht.")
         }
         return teile.joined(separator: " ")
     }

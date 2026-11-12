@@ -7,7 +7,8 @@ import { PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 // 1.1.0: Auffuellen bis zum Zeitbudget, A/B-Rotation nur ueber unbedenkliche Uebungen.
 // 1.2.0: Rolle auffuellung, Anzeigereihenfolge (Mehrgelenk vor Isolation), Anfaengerende.
 // 1.3.0: Wochenraster; die Zahl der Krafttage folgt den festen Kurs- und Cardio-Tagen.
-export const PLAN_REGEL_VERSION = "1.3.0";
+// 1.4.0: Struktur nach Kraft pro Woche, kein Wochenraster mehr (Plaene speichern []).
+export const PLAN_REGEL_VERSION = "1.4.0";
 
 export type Ziel = "muskelaufbau" | "fitness" | "abnehmen";
 

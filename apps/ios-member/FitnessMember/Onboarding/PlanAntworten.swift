@@ -32,66 +32,65 @@ struct PlanAntworten: Equatable {
     /// "nie eingewilligt" unterscheiden.
     private(set) var beschwerdenVorher: [String: String]?
 
-    // MARK: Woche (Leinwaende 2c, 2c2, 2c3)
+    // MARK: Woche (Cardio-Schritt und "Deine Woche", Spec P2 §4)
 
-    /// Ja/Nein auf "Gehst du in Kurse?"; nil = noch nicht getippt (Weiter
-    /// geht dann wie bei Nein, es bleibt bei keinen Kurstagen).
-    private(set) var kursAntwort: Bool?
-    /// ISO-Wochentage (1 = Mo ... 7 = So), aufsteigend.
-    private(set) var kursTage: [Int]
-    private(set) var cardioAntwort: Bool?
-    private(set) var cardioTage: [Int]
-    /// Schluessel aus CARDIO_ARTEN, in Anzeigereihenfolge.
-    private(set) var cardioArten: [String]
-    /// Nur durch "Tauschen" in "Deine Woche" gesetzt; leer = der Server
-    /// verteilt die Krafttage selbst (die App rechnet ihre Zahl nicht, F15).
-    private(set) var kraftTage: [Int]
-    /// Ob dieser Flow die Woche fragt (Kurs-/Cardio-Schritt). Nur dann gehen
-    /// die vier Tagesfelder mit dem Trainingsprofil raus -- sonst nil, und
-    /// der Server laesst sie, wie sie sind ("Zeit oder Schwerpunkt ändern"
-    /// aus der reinen Vorschau darf die Woche nicht ueberschreiben).
+    /// Wie oft Kraft, wie oft Cardio, wie lange, welche Arten -- nicht wann.
+    /// Dieselben Zaehler wie in "Woche anpassen".
+    var woche: WochenAuswahl
+    /// Ob dieser Flow die Woche fragt (Cardio-Schritt). Nur dann gehen die
+    /// Zaehler mit dem Trainingsprofil raus -- sonst nil, und der Server
+    /// laesst sie, wie sie sind ("Zeit oder Schwerpunkt ändern" aus der
+    /// reinen Vorschau darf die Woche nicht ueberschreiben).
     var wochenGefragt = false
-    /// false, solange unbekannt ist, ob das Mitglied ein Studio hat (Bootstrap
-    /// nicht geladen): dann gehen die Kurstage nicht mit (nil), der Server
-    /// laesst sie, wie sie sind (`kursFrageFestlegen`).
-    private(set) var kursTageBekannt = true
     /// Der Stand aus dem Profil, fuer "Überspringen" (wie `beschwerdenVorher`).
-    private let wocheVorher: (kurs: [Int], cardio: [Int], arten: [String])
+    private let wocheVorher: WochenAuswahl
+    /// Ob das Profil schon ein Kraft-Ziel hat: dann gilt es, und keine
+    /// Vorbelegung ueberschreibt es.
+    private let kraftAusProfil: Bool
 
     /// Vorbelegung aus `Member.trainingProfile`. Beschwerden stehen dort nie
     /// (Gesundheitsdaten, nicht im Bootstrap-Cache) -- die kommen ueber
     /// `beschwerdenUebernehmen` aus dem eigenen Abruf.
-    init(profil: TrainingsplanProfil?) {
+    ///
+    /// Kraft pro Woche, in dieser Rangfolge: das Profil, die Antwort auf "Wie
+    /// oft?" in diesem Flow (`wieOft`), das Wochenziel aus dem Bootstrap, 2.
+    init(profil: TrainingsplanProfil?, wieOft: Int? = nil, wochenziel: Wochenziel? = nil) {
         minuten = profil?.minutes
         erfahrung = profil?.experience
         schwerpunkt = Array((profil?.focus ?? []).prefix(2))
         beschwerden = [:]
         einwilligung = false
         beschwerdenVorher = nil
-        let kurs = Self.tage(profil?.kursTage)
-        let cardio = Self.tage(profil?.cardioTage)
-        let arten = PlanAuswahl.cardioArten.map(\.code).filter { (profil?.cardioArten ?? []).contains($0) }
-        kursTage = kurs
-        cardioTage = cardio
-        cardioArten = arten
-        kraftTage = Self.tage(profil?.kraftTage)
-        kursAntwort = kurs.isEmpty ? nil : true
-        cardioAntwort = cardio.isEmpty ? nil : true
-        wocheVorher = (kurs, cardio, arten)
+        let vorgabe = Wochenziel(
+            kraft: profil?.kraftProWoche ?? Self.kraftVorgabe,
+            cardio: profil?.cardioProWoche ?? 0,
+            cardioMinuten: profil?.cardioMinuten ?? Self.cardioMinutenVorgabe)
+        var auswahl = WochenAuswahl(ziel: vorgabe, profil: profil)
+        auswahl.cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(auswahl.cardioArten.contains)
+        woche = auswahl
+        wocheVorher = auswahl
+        kraftAusProfil = profil?.kraftProWoche != nil
+        kraftVorbelegen(wieOft: wieOft, wochenziel: wochenziel)
     }
 
-    private static func tage(_ tage: [Int]?) -> [Int] {
-        Set((tage ?? []).filter { (1...7).contains($0) }).sorted()
+    /// Setzt Kraft neu, solange das Profil keines hat -- der Flow ruft es,
+    /// sobald "Wie oft?" beantwortet ist (die Vorbelegung beim Start kennt die
+    /// Antwort noch nicht).
+    mutating func kraftVorbelegen(wieOft: Int?, wochenziel: Wochenziel?) {
+        guard !kraftAusProfil else { return }
+        woche.kraft = WochenAuswahl.klemmen(
+            wieOft ?? wochenziel?.kraft ?? Self.kraftVorgabe, WochenAuswahl.kraftGrenzen)
     }
+
+    /// Letzter Rueckfall fuer Kraft; Cardio beginnt bei 0.
+    static let kraftVorgabe = 2
+    static let cardioMinutenVorgabe = 30
 
     static func == (a: PlanAntworten, b: PlanAntworten) -> Bool {
         a.minuten == b.minuten && a.erfahrung == b.erfahrung && a.schwerpunkt == b.schwerpunkt
             && a.beschwerden == b.beschwerden && a.einwilligung == b.einwilligung
             && a.beschwerdenVorher == b.beschwerdenVorher
-            && a.kursAntwort == b.kursAntwort && a.kursTage == b.kursTage
-            && a.cardioAntwort == b.cardioAntwort && a.cardioTage == b.cardioTage
-            && a.cardioArten == b.cardioArten && a.kraftTage == b.kraftTage
-            && a.wochenGefragt == b.wochenGefragt && a.kursTageBekannt == b.kursTageBekannt
+            && a.woche == b.woche && a.wochenGefragt == b.wochenGefragt
     }
 
     // MARK: - Schwerpunkt
@@ -159,162 +158,40 @@ struct PlanAntworten: Equatable {
 
     // MARK: - Woche
 
-    /// Die Kursfrage (2c) erscheint nur mit zugeordnetem Studio, das Kurse
-    /// anbietet (Leinwand-Notiz s2) -- sonst entfaellt der Schritt, und der
-    /// Zaehler zaehlt ihn nicht.
-    func kursFrageSichtbar(hatStudioMitKursen: Bool) -> Bool {
-        hatStudioMitKursen
-    }
-
-    /// Einmal je Flow, sobald feststeht, ob es ein Studio gibt. nil = der
-    /// Bootstrap ist nicht geladen: nichts leeren und die Kurstage nicht
-    /// senden -- "unbekannt" ist nicht "kein Studio". false = ohne Studio:
-    /// keine Kurstage (`kurseOhneFrage`).
-    mutating func kursFrageFestlegen(hatStudioMitKursen: Bool?) {
-        switch hatStudioMitKursen {
-        case nil: kursTageBekannt = false
-        case false?: kursTageBekannt = true; kurseOhneFrage()
-        case true?: kursTageBekannt = true
-        }
-    }
-
-    /// Ohne Kursfrage gibt es keine Kurstage: gespeicherte aus einem
-    /// frueheren Studio sperrten sonst Cardio-Tage, ohne dass das Mitglied
-    /// sieht, warum.
-    mutating func kurseOhneFrage() {
-        kursAntwort = nil
-        setzeTage(.kurs, [])
-    }
-
-    mutating func kurseBeantworten(_ ja: Bool) {
-        kursAntwort = ja
-        if !ja { setzeTage(.kurs, []) }
-    }
-
-    /// "Nein, nur Gym" leert Tage und Arten.
-    mutating func cardioBeantworten(_ ja: Bool) {
-        cardioAntwort = ja
-        if !ja {
-            setzeTage(.cardio, [])
-            cardioArten = []
-        }
-    }
-
+    /// Schluessel aus CARDIO_ARTEN, in Anzeigereihenfolge.
     mutating func cardioArtUmschalten(_ art: String) {
-        if let index = cardioArten.firstIndex(of: art) {
-            cardioArten.remove(at: index)
-        } else {
-            let neu = Set(cardioArten + [art])
-            cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(neu.contains)
-        }
+        var neu = Set(woche.cardioArten)
+        if neu.contains(art) { neu.remove(art) } else { neu.insert(art) }
+        woche.cardioArten = PlanAuswahl.cardioArten.map(\.code).filter(neu.contains)
     }
 
-    /// Warum ein Tag fuer `art` gerade nicht waehlbar ist; nil = waehlbar
-    /// (auch: schon gewaehlt, dann waehlt Tippen ihn ab).
-    func tagGesperrt(_ tag: Int, fuer art: Wochenart) -> TagSperre? {
-        if tage(art).contains(tag) { return nil }
-        for andere in [Wochenart.kurs, .cardio] where andere != art && tage(andere).contains(tag) {
-            return .belegt(andere)
-        }
-        // Kurs und Cardio duerfen nicht alle sieben Tage belegen (der Server
-        // lehnt das mit 422 ab): einer bleibt fuers Krafttraining.
-        if art != .kraft, Set(kursTage + cardioTage + [tag]).count == 7 { return .letzterFreierTag }
-        return nil
-    }
-
-    /// Schaltet `tag` fuer Kurs oder Cardio um. Anders als im Einplanen-Sheet
-    /// (`PlanWochentage.umschalten`) nimmt das Onboarding einen Tag nie einer
-    /// anderen Art weg: die steht in einem frueheren Schritt fest. nil =
-    /// umgeschaltet, sonst der Grund der Ablehnung fuer den Hinweis.
-    @discardableResult
-    mutating func tagUmschalten(_ tag: Int, fuer art: Wochenart) -> TagSperre? {
-        guard (1...7).contains(tag), art != .kraft else { return nil }
-        if let sperre = tagGesperrt(tag, fuer: art) { return sperre }
-        var neu = Set(tage(art))
-        if neu.contains(tag) { neu.remove(tag) } else { neu.insert(tag) }
-        setzeTage(art, neu.sorted())
-        return nil
-    }
-
-    /// Vor jedem neuen Vorschlag fuer "Deine Woche": der Tausch gehoert zu
-    /// genau einem Vorschlag. Danach verteilt der Server die Krafttage
-    /// wieder selbst -- auch, wenn sich Ziel oder Wochentage seitdem
-    /// geaendert haben.
-    mutating func wocheNeuVorschlagen() {
-        kraftTage = []
-    }
-
-    /// "Tauschen" (2c3): der Krafttag `von` wandert auf den freien Tag
-    /// `nach`. Gezaehlt wird vom Raster des Servers aus, nach einem ersten
-    /// Tausch von dessen Stand. `false` = nicht moeglich (kein Krafttag oder
-    /// Ziel belegt), dann aendert sich nichts.
-    @discardableResult
-    mutating func kraftTagTauschen(von: Int, nach: Int, raster: [Rasterplatz]) -> Bool {
-        let aktuell = kraftTage.isEmpty ? raster.filter { $0.art == .kraft }.map(\.tag) : kraftTage
-        let belegt = Set(aktuell + kursTage + cardioTage)
-        guard aktuell.contains(von), (1...7).contains(nach), !belegt.contains(nach) else { return false }
-        kraftTage = Set(aktuell.filter { $0 != von } + [nach]).sorted()
-        return true
-    }
-
-    /// Was "Deine Woche" zeigt: ohne Tausch genau das Raster des Servers,
-    /// mit Tausch dieselbe Anzeige-Regel wie der Plan-Tab
-    /// (`PlanTabZustand.anzeigeRaster`: die Folge bleibt, die Tage wandern).
-    func wochenAnzeige(raster: [Rasterplatz], einheiten: [String]) -> [Rasterplatz] {
-        guard !kraftTage.isEmpty else { return raster }
-        let profil = TrainingsplanProfil(
-            minutes: minuten ?? 0, experience: erfahrung ?? "", focus: schwerpunkt,
-            kursTage: kursTage, cardioTage: cardioTage, cardioArten: cardioArten, kraftTage: kraftTage)
-        return PlanTabZustand.anzeigeRaster(planRaster: raster, einheiten: einheiten, profil: profil)
-    }
-
-    /// "Überspringen" auf 2c/2c2: zurueck auf den Stand aus dem Profil.
-    mutating func kurseVerwerfen() {
-        kursAntwort = wocheVorher.kurs.isEmpty ? nil : true
-        setzeTage(.kurs, wocheVorher.kurs)
-    }
-
+    /// "Überspringen" auf dem Cardio-Schritt: zurueck auf den Stand aus dem
+    /// Profil. Kraft bleibt, wie es ist -- das gehoert zu "Deine Woche".
     mutating func cardioVerwerfen() {
-        cardioAntwort = wocheVorher.cardio.isEmpty ? nil : true
-        setzeTage(.cardio, wocheVorher.cardio)
-        cardioArten = wocheVorher.arten
+        woche.cardio = wocheVorher.cardio
+        woche.cardioMinuten = wocheVorher.cardioMinuten
+        woche.cardioArten = wocheVorher.cardioArten
     }
 
-    private func tage(_ art: Wochenart) -> [Int] {
-        switch art {
-        case .kurs: kursTage
-        case .cardio: cardioTage
-        case .kraft: kraftTage
-        }
-    }
-
-    /// Jede Aenderung an Kurs- oder Cardio-Tagen verwirft einen Tausch: er
-    /// bezog sich auf ein anderes Raster und koennte jetzt auf einem festen
-    /// Tag liegen (der Server lehnte das ab).
-    private mutating func setzeTage(_ art: Wochenart, _ neu: [Int]) {
-        switch art {
-        case .kurs:
-            if kursTage != neu { kraftTage = [] }
-            kursTage = neu
-        case .cardio:
-            if cardioTage != neu { kraftTage = [] }
-            cardioTage = neu
-        case .kraft:
-            kraftTage = neu
-        }
+    /// "Deine Woche": "2× Kraft · 1× Cardio 30 min · Kurse nach Buchung";
+    /// der Cardio-Teil entfaellt bei 0.
+    var zusammenfassung: String {
+        var teile = ["\(woche.kraft)× Kraft"]
+        if woche.cardio > 0 { teile.append("\(woche.cardio)× Cardio \(woche.cardioMinuten) min") }
+        teile.append("Kurse nach Buchung")
+        return teile.joined(separator: " · ")
     }
 
     // MARK: - Weiter und Schreiben
 
     /// Weiter bleibt aktiv (Entwurf 1.1: fehlt eine Angabe, zeigt der
     /// Plan-Schritt den Fehler, 4.2). Gedaempft sind nur 1.3, solange ein
-    /// Bereich gewaehlt ist und die Einwilligung fehlt, und 2c/2c2, solange
-    /// "Ja" ohne Tag (Cardio: ohne Tag oder Art) steht.
+    /// Bereich gewaehlt ist und die Einwilligung fehlt, und der Cardio-Schritt,
+    /// solange Cardio gewaehlt ist, aber keine Art.
     func kannWeiter(_ schritt: OnboardingSchritt) -> Bool {
         switch schritt {
         case .planBeschwerden: beschwerden.isEmpty || einwilligung
-        case .planKurse: kursAntwort != true || !kursTage.isEmpty
-        case .planCardio: cardioAntwort != true || (!cardioTage.isEmpty && !cardioArten.isEmpty)
+        case .planCardio: woche.cardio == 0 || !woche.cardioArten.isEmpty
         default: true
         }
     }
@@ -324,37 +201,24 @@ struct PlanAntworten: Equatable {
         guard !kannWeiter(schritt) else { return nil }
         switch schritt {
         case .planBeschwerden: return "Erst die Einwilligung bestätigen — oder überspringen."
-        case .planKurse: return "Erst einen Tag wählen — oder „Nein“."
-        case .planCardio:
-            return cardioTage.isEmpty ? "Erst einen Tag wählen — oder „Nein“." : "Erst wählen, was du machst."
+        case .planCardio: return "Erst wählen, was du machst."
         default: return nil
         }
     }
 
     /// Der PUT-Rumpf -- nil, solange eine Pflichtangabe fehlt: dann kein
-    /// Aufruf, ein vorhandenes Profil bleibt, wie es ist. Die Tagesfelder
-    /// nur, wenn der Flow die Woche fragt (`wochenGefragt`), dann alle vier:
-    /// ein gespeicherter Krafttag duerfte sonst mit einem neuen Kurstag
-    /// kollidieren.
+    /// Aufruf, ein vorhandenes Profil bleibt, wie es ist. Die Zaehler nur,
+    /// wenn der Flow die Woche fragt (`wochenGefragt`); Tagesfelder gehen nie
+    /// mit.
     var trainingsprofil: TrainingsplanProfil? {
         guard let minuten, let erfahrung else { return nil }
-        guard wochenGefragt else {
-            return TrainingsplanProfil(minutes: minuten, experience: erfahrung, focus: schwerpunkt)
-        }
-        return TrainingsplanProfil(
-            minutes: minuten, experience: erfahrung, focus: schwerpunkt,
-            kursTage: kursTageBekannt ? kursTage : nil, cardioTage: cardioTage,
-            // Arten ohne Tage waeren eine Angabe ohne Termin.
-            cardioArten: cardioTage.isEmpty ? [] : cardioArten, kraftTage: kraftTage)
+        let basis = TrainingsplanProfil(minutes: minuten, experience: erfahrung, focus: schwerpunkt)
+        guard wochenGefragt else { return basis }
+        var auswahl = woche
+        // Arten ohne Cardio waeren eine Angabe ohne Haken.
+        if auswahl.cardio == 0 { auswahl.cardioArten = [] }
+        return auswahl.profil(aus: basis)
     }
-}
-
-/// Warum ein Tag im Kurs- oder Cardio-Schritt nicht waehlbar ist.
-enum TagSperre: Equatable {
-    /// Der Tag gehoert schon der anderen Art (E4).
-    case belegt(Wochenart)
-    /// Es waere der siebte feste Tag: einer bleibt fuers Krafttraining.
-    case letzterFreierTag
 }
 
 enum BeschwerdenAktion: Equatable {

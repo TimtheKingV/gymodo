@@ -118,70 +118,39 @@ describe("/me/plans", () => {
   });
 });
 
-describe("Wochenraster im Plan", () => {
-  type Raster = Array<{ tag: number; art: string; einheitKey?: string }>;
-  type PlanMitRaster = { id: string; einheiten: Array<{ key: string }>; wochenraster: Raster; gruende: string[] };
+describe("Kraft pro Woche im Plan (1.4.0)", () => {
+  type PlanNeu = { id: string; struktur: string; einheiten: Array<{ key: string }>; wochenraster: unknown[]; gruende: string[]; regelVersion: string };
 
-  it("Vorschlag und aktiver Plan tragen das Raster, GET liest es unveraendert", async () => {
-    const m = await legeMitgliedAn("api-plan-raster", {
+  it("kraft_pro_woche 2 bei weekly_days 3: Struktur des Zwei-Tage-Falls, Raster leer", async () => {
+    const zwei = await legeMitgliedAn("api-plan-kpw2", { studios: [s.voll], weeklyDays: 2 });
+    const erwartet = (await (await post(await accessTokenFor(zwei.email), { studioId: s.voll })).json()) as PlanNeu;
+    const m = await legeMitgliedAn("api-plan-kpw", {
       studios: [s.voll],
-      weeklyDays: 4,
-      profil: { minutes: 60, experience: "regelmaessig", focus: [], kurs_tage: [1], cardio_tage: [7] },
+      weeklyDays: 3,
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_pro_woche: 2 },
     });
-    const token = await accessTokenFor(m.email);
-    const vorschlag = (await (await post(token, { studioId: s.voll })).json()) as PlanMitRaster;
-    const erwartet = [
-      { tag: 1, art: "kurs" },
-      { tag: 3, art: "kraft", einheitKey: "A" },
-      { tag: 5, art: "kraft", einheitKey: "B" },
-      { tag: 7, art: "cardio" },
-    ];
-    expect(vorschlag.wochenraster).toEqual(erwartet);
-    expect(vorschlag.einheiten.map((e) => e.key)).toEqual(["A", "B"]);
-
-    const aktiv = (await (await accept(token, vorschlag.id)).json()) as PlanMitRaster;
-    expect(aktiv.wochenraster).toEqual(erwartet);
-
-    // F14: ein spaeter geaendertes Profil aendert den gespeicherten Plan nicht.
-    const { error } = await admin
-      .from("training_profiles")
-      .update({ kurs_tage: [2], cardio_tage: [] })
-      .eq("user_id", m.userId);
-    if (error) throw error;
-    const liste = (await (await get(token)).json()) as PlanMitRaster[];
-    expect(liste.find((p) => p.id === aktiv.id)!.wochenraster).toEqual(erwartet);
-
-    // Ein Tausch legt eine neue Version an, die das Raster mitnimmt.
-    type Pos = { key: string; exerciseId: string; modelId: string };
-    type MitPositionen = { einheiten: Array<{ key: string; positionen: Pos[] }> };
-    const pos = (aktiv as unknown as MitPositionen).einheiten[0]!;
-    const tausch = await swap(token, aktiv.id, {
-      einheitKey: pos.key,
-      positionKey: pos.positionen[0]!.key,
-      exerciseId: pos.positionen[0]!.exerciseId,
-      modelId: pos.positionen[0]!.modelId,
-    });
-    expect(((await tausch.json()) as PlanMitRaster).wochenraster).toEqual(erwartet);
+    const plan = (await (await post(await accessTokenFor(m.email), { studioId: s.voll })).json()) as PlanNeu;
+    expect(plan.struktur).toBe(erwartet.struktur);
+    expect(plan.einheiten.map((e) => e.key)).toEqual(erwartet.einheiten.map((e) => e.key));
+    expect(plan.wochenraster).toEqual([]);
+    expect(plan.regelVersion).toBe("1.4.0");
   });
 
-  it("kraft_tage im Profil gelten statt des Vorschlags; der naechste Vorschlag folgt dem Profil", async () => {
-    const m = await legeMitgliedAn("api-plan-kraft", {
+  it("kraft_pro_woche 1 bei weekly_days 3: gk_eine mit Einheit A (Profil wird durchgereicht)", async () => {
+    const m = await legeMitgliedAn("api-plan-kpw1", {
       studios: [s.voll],
-      weeklyDays: 2,
-      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_tage: [2, 6] },
+      weeklyDays: 3,
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_pro_woche: 1 },
     });
-    const token = await accessTokenFor(m.email);
-    const plan = (await (await post(token, { studioId: s.voll })).json()) as PlanMitRaster;
-    expect(plan.wochenraster).toEqual([
-      { tag: 2, art: "kraft", einheitKey: "A" },
-      { tag: 6, art: "kraft", einheitKey: "B" },
-    ]);
+    const plan = (await (await post(await accessTokenFor(m.email), { studioId: s.voll })).json()) as PlanNeu;
+    expect(plan.struktur).toBe("gk_eine");
+    expect(plan.einheiten.map((e) => e.key)).toEqual(["A"]);
   });
 
-  it("Bestandsprofil ohne Kurs und Cardio: Raster nur mit Kraft-Tagen, Grund kraft_tage_auf_eins fehlt", async () => {
-    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as PlanMitRaster;
-    expect(plan.wochenraster).toHaveLength(3);
-    expect(plan.wochenraster.every((e) => e.art === "kraft")).toBe(true);
+  it("Bestandsprofil ohne kraft_pro_woche: Struktur folgt weekly_days, Raster leer, kein Grund kraft_tage_auf_eins", async () => {
+    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as PlanNeu;
+    expect(plan.struktur).toBe("gk_ab");
+    expect(plan.wochenraster).toEqual([]);
     expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
   });
 });

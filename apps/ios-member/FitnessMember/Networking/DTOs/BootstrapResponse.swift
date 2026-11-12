@@ -26,6 +26,8 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// dann nil bzw. leer.
         let trainingProfile: TrainingsplanProfil?
         let plans: [Trainingsplan]
+        /// Fehlt in Antworten eines aelteren Servers (Prod): dann nil.
+        let wochenziel: Wochenziel?
 
         /// Eigener Init mit Vorgaben statt des synthetisierten: bestehende
         /// Testdaten (GeraetEinstiegTests) bauen nur `displayName` und
@@ -34,7 +36,8 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             displayName: String?, sex: String? = nil, ageBand: String? = nil,
             heightCm: Int? = nil, trainingGoal: String? = nil, onboardingCompletedAt: String? = nil,
             goals: Ziele = Ziele(weeklyDays: nil, targetWeight: nil), latestWeight: Messwert? = nil,
-            trainingProfile: TrainingsplanProfil? = nil, plans: [Trainingsplan] = []
+            trainingProfile: TrainingsplanProfil? = nil, plans: [Trainingsplan] = [],
+            wochenziel: Wochenziel? = nil
         ) {
             self.displayName = displayName
             self.sex = sex
@@ -46,6 +49,7 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             self.latestWeight = latestWeight
             self.trainingProfile = trainingProfile
             self.plans = plans
+            self.wochenziel = wochenziel
         }
 
         init(from decoder: any Decoder) throws {
@@ -60,11 +64,12 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
             latestWeight = try c.decodeIfPresent(Messwert.self, forKey: .latestWeight)
             trainingProfile = try c.decodeIfPresent(TrainingsplanProfil.self, forKey: .trainingProfile)
             plans = try c.decodeIfPresent([Trainingsplan].self, forKey: .plans) ?? []
+            wochenziel = try c.decodeIfPresent(Wochenziel.self, forKey: .wochenziel)
         }
 
         private enum CodingKeys: String, CodingKey {
             case displayName, sex, ageBand, heightCm, trainingGoal, onboardingCompletedAt, goals, latestWeight,
-                 trainingProfile, plans
+                 trainingProfile, plans, wochenziel
         }
     }
 

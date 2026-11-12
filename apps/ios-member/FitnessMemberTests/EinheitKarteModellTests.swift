@@ -103,25 +103,16 @@ struct EinheitKarteModellTests {
             muskeln: katalog(), tag: nil, zustand: .erledigt)
 
         #expect(modell.zeilen == ["2 Übungen · ca. 50 Min"])
-        #expect(EinheitKarteModell.zustandsText(.erledigt, kalender: kalender) == "Erledigt")
+        #expect(EinheitKarteModell.zustandsText(.erledigt) == "Erledigt")
     }
 
-    @Test func verpasstText() {
-        let freitag = kalender.date(from: DateComponents(year: 2026, month: 11, day: 6))!
-        #expect(EinheitKarteModell.zustandsText(.verpasst(verschobenAuf: freitag), kalender: kalender)
-            == "verpasst · verschoben auf Fr")
-        #expect(EinheitKarteModell.zustandsText(.verpasst(verschobenAuf: nil), kalender: kalender)
-            == "verpasst")
-        #expect(EinheitKarteModell.zustandsText(.geplant, kalender: kalender) == nil)
+    @Test func zustandsTextNurBeiErledigt() {
+        #expect(EinheitKarteModell.zustandsText(.geplant) == nil)
     }
 
-    @Test func ueberzeileGeplant() {
+    @Test func ueberzeileTrainiert() {
         let freitag = kalender.date(from: DateComponents(year: 2026, month: 11, day: 6))!
-        #expect(ProfilKopf.ueberzeile(geplantAm: freitag, kalender: kalender)
-            == "GEPLANT · FREITAG, 6. NOV")
         #expect(ProfilKopf.ueberzeile(trainiertAm: freitag, kalender: kalender)
             == "FREITAG, 6. NOV")
-        #expect(ProfilKopf.startKnopfText(istGeplanterTag: true) == "Training starten")
-        #expect(ProfilKopf.startKnopfText(istGeplanterTag: false) == "Jetzt starten (vorziehen)")
     }
 }
