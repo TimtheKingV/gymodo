@@ -240,7 +240,7 @@ struct PlanWochenRechnungTests {
             sitzungen: [sitzung("s1", Self.zp(11, 9, 18), cardioMinuten: [35])],
             checks: [CardioCheck(id: "c1", day: "2026-11-10", minuten: nil)],
             kurse: [kurs("k1", "2026-11-09T18:00:00Z"), kurs("k2", "2026-11-12T17:00:00Z")],
-            filter: .einheiten)
+            filter: .kraft)
         #expect(!s.karten.isEmpty)
         #expect(s.karten.allSatisfy { if case .kraft = $0.art { true } else { false } })
         #expect(s.marken == [Self.tag(11, 9): [.kraft]])

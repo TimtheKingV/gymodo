@@ -143,6 +143,10 @@ struct PlanTabZustand: Equatable {
             let m = monat.string(from: d).replacingOccurrences(of: ".", with: "")
             return "\(kalender.component(.day, from: d)). \(m)"
         }
+        // Im selben Monat steht er einmal: "9.–15. Nov" (Leinwand "Kalender B").
+        if kalender.isDate(erster, equalTo: letzter, toGranularity: .month) {
+            return "KW \(kw) · \(kalender.component(.day, from: erster)).–\(text(letzter))"
+        }
         return "KW \(kw) · \(text(erster)) – \(text(letzter))"
     }
 

@@ -16,12 +16,12 @@ struct Rasterplatz: Decodable, Equatable, Sendable {
 }
 
 enum PlanFilter: CaseIterable {
-    case alle, einheiten, kurse, cardio
+    case alle, kraft, kurse, cardio
 
     var titel: String {
         switch self {
         case .alle: "Alle"
-        case .einheiten: "Einheiten"
+        case .kraft: "Kraft"
         case .kurse: "Kurse"
         case .cardio: "Cardio"
         }
@@ -31,12 +31,12 @@ enum PlanFilter: CaseIterable {
 /// Reine Darstellungslogik des Plan-Tabs. Die Termine je Tag legt
 /// `PlanKalender` an.
 enum PlanWoche {
-    /// Filter nur, wenn es neben den Einheiten Kurse oder Cardio gibt; sonst keine
+    /// Filter nur, wenn es neben Kraft Kurse oder Cardio gibt; sonst keine
     /// Leiste (Leinwand 2g).
     static func sichtbareFilter(hatPlan: Bool, hatKurse: Bool, hatCardio: Bool) -> [PlanFilter] {
         guard hatKurse || hatCardio else { return [] }
         var filter: [PlanFilter] = [.alle]
-        if hatPlan { filter.append(.einheiten) }
+        if hatPlan { filter.append(.kraft) }
         if hatKurse { filter.append(.kurse) }
         if hatCardio { filter.append(.cardio) }
         return filter

@@ -100,7 +100,7 @@ enum PlanKalender {
             if filter == .kurse {
                 liste = kursTermine
             } else {
-                if filter == .alle || filter == .einheiten, let termin = einheitTermine[start] {
+                if filter == .alle || filter == .kraft, let termin = einheitTermine[start] {
                     liste.append(termin)
                 }
                 if filter == .alle || filter == .cardio, hatSlots, cardioTage.contains(iso) {

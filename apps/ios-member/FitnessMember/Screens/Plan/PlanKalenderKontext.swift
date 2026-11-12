@@ -27,6 +27,8 @@ enum PlanKalenderKontext {
             })
     }
 
+    /// Bisheriger Zusammenbau mit festen Tagen -- nur noch Home und
+    /// Einheiten-Detail, entfaellt mit Task 13 (Plan-Tab nutzt `stand`).
     /// `PlanKalender.termine` mit den Eingaben, die Plan-Tab, Einheiten-Detail
     /// und Home gleich zusammensetzen: Raster wie angezeigt (`anzeigeRaster`),
     /// die Folge ab der Einheit von heute (`PlanAnzeige.heute`, sonst der
@@ -51,6 +53,41 @@ enum PlanKalenderKontext {
                 sessions: sessions, gesamt: gesamt, geladen: verlaufGeladen, beginn: beginn, kalender: kalender),
             heute: heute, kurse: kurse, cardioErledigt: cardioErledigt, cardioGeladen: cardioGeladen,
             filter: filter)
+    }
+
+    // MARK: - Woche ohne feste Tage (Spec P2 §8)
+
+    /// Das Wochenziel des Servers; ein aelterer Server (Prod vor 0072) liefert
+    /// keins -- dann zaehlen die Kraft-Tage des Plans, sonst 2, ohne Cardio.
+    /// Die eine Stelle fuer diesen Ersatz (Plan-Tab und Home).
+    static func wochenziel(server: Wochenziel?, raster: [Rasterplatz]) -> Wochenziel {
+        if let server { return server }
+        let kraftTage = raster.filter { $0.art == .kraft }.count
+        return Wochenziel(kraft: kraftTage > 0 ? kraftTage : 2, cardio: 0, cardioMinuten: 30)
+    }
+
+    static func wochenziel(bootstrap: BootstrapResponse?) -> Wochenziel {
+        wochenziel(
+            server: bootstrap?.member.wochenziel,
+            raster: PlanAnzeige.plan(bootstrap: bootstrap)?.wochenraster ?? [])
+    }
+
+    /// Der gemeinsame Zusammenbau der Woche fuer Plan-Tab und Home: Ziel (mit
+    /// Ersatz), Folge ab der Einheit von heute (`PlanAnzeige.heute`, sonst der
+    /// Server) und die gezaehlten Einheiten des Plans. Ohne Plan entfallen die
+    /// offenen Kraft-Karten, Cardio und Kurse bleiben.
+    static func stand(
+        bootstrap: BootstrapResponse?, wocheStart: Date, heute: Date, kalender: Calendar,
+        heuteEinheitKey: String?, sitzungen: [SessionSummary], cardioChecks: [CardioCheck],
+        kurse: [CourseWeekSession], filter: PlanFilter
+    ) -> PlanWochenStand {
+        let plan = PlanAnzeige.plan(bootstrap: bootstrap)
+        return PlanWochenRechnung.berechne(
+            wocheStart: wocheStart, heute: heute, kalender: kalender, ziel: wochenziel(bootstrap: bootstrap),
+            einheiten: plan?.einheiten.map(\.key) ?? [],
+            naechsteEinheitKey: heuteEinheitKey ?? plan?.naechsteEinheitKey,
+            sitzungen: sitzungen, erledigt: plan?.erledigt ?? [], cardioChecks: cardioChecks,
+            kurse: kurse, filter: filter)
     }
 
     /// "yyyy-MM-dd" (Tages-Id der Streak-Woche) -> `startOfDay` im Kalender des Plans.

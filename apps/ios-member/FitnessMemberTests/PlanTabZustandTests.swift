@@ -59,7 +59,7 @@ struct PlanTabZustandTests {
     }
 
     @Test func ohneFilterleisteGiltAlle() {
-        #expect(PlanTabZustand(gewaehlterFilter: .einheiten).geltenderFilter(sichtbar: []) == .alle)
+        #expect(PlanTabZustand(gewaehlterFilter: .kraft).geltenderFilter(sichtbar: []) == .alle)
     }
 
     // MARK: - Anzeige-Raster (Profil-Tage vor Planraster)
@@ -167,6 +167,11 @@ struct PlanTabZustandTests {
 
     @Test func wochenTitelNenntKalenderwocheUndSpanne() {
         #expect(PlanTabZustand.wochenTitel(tage: woche, kalender: Self.kalender) == "KW 44 · 26. Okt – 1. Nov")
+    }
+
+    @Test func wochenTitelImSelbenMonatNenntDenMonatEinmal() {
+        let tage = (0..<7).map { Self.kalender.date(from: DateComponents(year: 2026, month: 11, day: 9 + $0))! }
+        #expect(PlanTabZustand.wochenTitel(tage: tage, kalender: Self.kalender) == "KW 46 · 9.–15. Nov")
     }
 
     @Test func alsNaechstesSindDieZweiFolgendenTermine() {

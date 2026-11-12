@@ -79,7 +79,12 @@ struct EinheitNamen: Equatable {
         namen[key] ?? Self.mechanisch(key)
     }
 
-    /// Fuer Fliesstext: "Brust, Trizeps" in Anfuehrung, damit das Komma nicht
+    /// Kein Muskelname bekannt: der Name ist nur der Buchstabe ("Einheit A").
+    func istMechanisch(_ key: String) -> Bool {
+        name(key) == Self.mechanisch(key)
+    }
+
+    /// Fuer Fliesstext:"Brust, Trizeps" in Anfuehrung, damit das Komma nicht
     /// wie eine Aufzaehlung liest ("Nächstes Mal ist „Brust, Trizeps“ dran.").
     /// Der mechanische Name ("Einheit A", "Oberkörper A") bleibt ohne -- wie
     /// in `PlanTausch`.

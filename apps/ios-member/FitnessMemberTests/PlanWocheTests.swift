@@ -127,7 +127,7 @@ struct PlanWocheTests {
     }
 
     @Test func einheitenUndCardioFilter() {
-        let e = termine(filter: .einheiten)
+        let e = termine(filter: .kraft)
         #expect(e.keys.count == 2)
         let c = termine(filter: .cardio)
         #expect(c == [tage[6]: [.cardio(arten: [], zustand: .geplant)]])
@@ -143,12 +143,16 @@ struct PlanWocheTests {
         #expect(t[tage[2]] == [.einheit(key: "A", zustand: .geplant)])
     }
 
+    @Test func filterTitel() {
+        #expect(PlanFilter.allCases.map(\.titel) == ["Alle", "Kraft", "Kurse", "Cardio"])
+    }
+
     @Test func sichtbareFilter() {
         #expect(PlanWoche.sichtbareFilter(hatPlan: false, hatKurse: true, hatCardio: false) == [.alle, .kurse])
         #expect(PlanWoche.sichtbareFilter(hatPlan: false, hatKurse: false, hatCardio: false) == [])
         #expect(PlanWoche.sichtbareFilter(hatPlan: true, hatKurse: false, hatCardio: false) == [])
         #expect(PlanWoche.sichtbareFilter(hatPlan: true, hatKurse: true, hatCardio: true)
-                == [.alle, .einheiten, .kurse, .cardio])
+                == [.alle, .kraft, .kurse, .cardio])
     }
 
     @Test func rasterUndProfilDekodierenAeltereAntworten() throws {

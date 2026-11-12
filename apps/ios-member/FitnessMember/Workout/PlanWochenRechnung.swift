@@ -143,11 +143,13 @@ enum PlanWochenRechnung {
             kraftErledigt: kraftErledigt, cardioErledigt: cardioErledigt)
     }
 
-    /// `.einheiten` ist der Kraft-Filter (Umbenennung folgt mit dem Plan-Tab).
+    /// Ohne `default`: ein neuer Filter oder eine neue Kartenart muss hier entschieden werden.
     private static func zeigt(_ art: WochenKarte.Art, _ filter: PlanFilter) -> Bool {
-        switch (filter, art) {
-        case (.alle, _), (.einheiten, .kraft), (.cardio, .cardio), (.kurse, .kurs): true
-        default: false
+        switch filter {
+        case .alle: true
+        case .kraft: if case .kraft = art { true } else { false }
+        case .cardio: art == .cardio
+        case .kurse: if case .kurs = art { true } else { false }
         }
     }
 
