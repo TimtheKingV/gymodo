@@ -546,3 +546,144 @@ struct HomeSerieTests {
         #expect(NaechsteEinheitKarte.startText(laeuft: true) == "Weiter trainieren")
     }
 }
+
+/// Abschluss-Review P2: Zielzeile nur mit Ziel, gesprochener Satz dazu.
+struct HomeSerieWochenzielTests {
+    private func member(
+        wochenziel: Wochenziel? = Wochenziel(kraft: 2, cardio: 0, cardioMinuten: 30),
+        kraftProWoche: Int? = nil, cardioProWoche: Int? = nil, weeklyDays: Bool = false
+    ) -> BootstrapResponse.Member {
+        BootstrapResponse.Member(
+            displayName: "Tim",
+            goals: Ziele(
+                weeklyDays: weeklyDays
+                    ? Ziel(id: "z", kind: "weekly_days", targetValue: 3, createdAt: "2026-11-01T00:00:00Z") : nil,
+                targetWeight: nil),
+            trainingProfile: TrainingsplanProfil(
+                minutes: 60, experience: "neu", focus: [],
+                kraftProWoche: kraftProWoche, cardioProWoche: cardioProWoche),
+            wochenziel: wochenziel)
+    }
+
+    /// Spec §5: ohne Plan und ohne Ziel wie heute -- der Server schickt das
+    /// abgeleitete Wochenziel immer, das allein ist kein Ziel des Mitglieds.
+    @Test func ohnePlanUndOhneZielKeineZielZeile() {
+        #expect(!HomeSerie.zeigtZielZeile(hatPlan: false, member: member()))
+        #expect(!HomeSerie.zeigtZielZeile(hatPlan: false, member: member(cardioProWoche: 0)))
+        #expect(!HomeSerie.zeigtZielZeile(hatPlan: false, member: nil))
+    }
+
+    @Test func mitPlanOderZielZielZeile() {
+        #expect(HomeSerie.zeigtZielZeile(hatPlan: true, member: member()))
+        #expect(HomeSerie.zeigtZielZeile(hatPlan: false, member: member(kraftProWoche: 2)))
+        #expect(HomeSerie.zeigtZielZeile(hatPlan: false, member: member(cardioProWoche: 1)))
+        #expect(HomeSerie.zeigtZielZeile(hatPlan: false, member: member(weeklyDays: true)))
+    }
+
+    /// Alte Prod-API ohne `wochenziel`: ohne Plan bleibt die alte Zeile
+    /// ("X von Y Tagen" aus dem Serienstand), der Ersatz kennte weekly_days nicht.
+    @Test func alteApiOhnePlanBehaeltDieAlteZeile() {
+        #expect(!HomeSerie.zeigtZielZeile(hatPlan: false, member: member(wochenziel: nil, weeklyDays: true)))
+    }
+
+    @Test func zielZeileHatEinenGesprochenenSatz() {
+        let stand = PlanWochenStand(phase: .laufend, karten: [], marken: [:], kraftErledigt: 1, cardioErledigt: 0)
+        #expect(HomeSerie.zielVorlesetext(stand: stand, ziel: Wochenziel(kraft: 2, cardio: 1, cardioMinuten: 30))
+            == "Kraft 1 von 2, Cardio 0 von 1")
+        #expect(HomeSerie.zielVorlesetext(stand: stand, ziel: Wochenziel(kraft: 2, cardio: 0, cardioMinuten: 30))
+            == "Kraft 1 von 2")
+    }
+}
+
+/// Abschluss-Review P2: Hantel nur mit Sitzung, VoiceOver ohne erfundenes
+/// laufendes Training.
+struct HomeSerieHantelTests {
+    private func stand(trainedDays: [String]) -> Serienstand {
+        Serienstand(weeks: 3, weekStart: "2026-11-09", today: "2026-11-12", trainedDays: trainedDays)
+    }
+
+    private func sitzung(_ id: String, start: String, ende: String?) -> SessionSummary {
+        SessionSummary(
+            id: id, startedAt: start, completedAt: ende,
+            completedReason: ende == nil ? nil : "manual", machineCount: 1, setCount: 3, blocks: [])
+    }
+
+    private var berlin: Calendar {
+        var k = Calendar(identifier: .gregorian)
+        k.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        return k
+    }
+
+    private func tag(_ id: String) -> Date {
+        let teile = id.split(separator: "-").map { Int($0)! }
+        return berlin.date(from: DateComponents(year: teile[0], month: teile[1], day: teile[2]))!
+    }
+
+    /// Ein Tag nur mit Cardio-Handhaken oder begonnenem Kurs steht im
+    /// `trainedDays` des Servers (Serie), traegt aber keine Hantel.
+    @Test func cardioOderKursAlleinKeineHantel() {
+        let menge = HomeSerie.trainingstage(
+            stand: stand(trainedDays: ["2026-11-09", "2026-11-10", "2026-11-11"]),
+            einheitenJeTag: [:],
+            sitzungstage: ["2026-11-11"],
+            cardioOderKursTage: ["2026-11-09", "2026-11-10"])
+        #expect(menge == ["2026-11-11"])
+    }
+
+    /// Cardio-Haken und Sitzung am selben Tag: die Hantel bleibt.
+    @Test func cardioUndSitzungAmSelbenTagHantel() {
+        let menge = HomeSerie.trainingstage(
+            stand: stand(trainedDays: ["2026-11-10"]), einheitenJeTag: [:],
+            sitzungstage: ["2026-11-10"], cardioOderKursTage: ["2026-11-10"])
+        #expect(menge == ["2026-11-10"])
+    }
+
+    /// Ein Servertag ohne geladene Sitzung und ohne Cardio/Kurs (Liste noch
+    /// nicht geladen) behaelt seine Hantel.
+    @Test func unerklaerterServertagBehaeltHantel() {
+        let menge = HomeSerie.trainingstage(
+            stand: stand(trainedDays: ["2026-11-12"]), einheitenJeTag: [:],
+            sitzungstage: [], cardioOderKursTage: [])
+        #expect(menge == ["2026-11-12"])
+    }
+
+    @Test func cardioOderKursTageAusDenMarken() {
+        let marken: [Date: [TagMarke]] = [
+            tag("2026-11-09"): [.cardio],
+            tag("2026-11-10"): [.kraft, .cardio],
+            tag("2026-11-11"): [.kurs],
+            tag("2026-11-13"): [.kursGebucht],
+        ]
+        #expect(HomeSerie.cardioOderKursTage(marken, kalender: berlin)
+            == ["2026-11-09", "2026-11-10", "2026-11-11"])
+    }
+
+    /// Sitzungstage zaehlen auch laufende (ohne `completedAt`) und die lokal
+    /// laufende Sitzung, im Ortstag des Studios.
+    @Test func sitzungstageMitLaufenden() {
+        let tage = HomeSerie.sitzungstage(
+            [
+                sitzung("a", start: "2026-11-09T23:30:00Z", ende: "2026-11-10T00:20:00Z"),
+                sitzung("b", start: "2026-11-11T17:00:00Z", ende: nil),
+            ],
+            laufendSeit: Zeitpunkt.parse("2026-11-12T08:00:00Z"),
+            zeitzone: "Europe/Berlin")
+        #expect(tage == ["2026-11-10", "2026-11-11", "2026-11-12"])
+    }
+
+    @Test func laufenderTagImOrtstag() {
+        #expect(HomeSerie.laufenderTag(Zeitpunkt.parse("2026-11-12T23:30:00Z"), zeitzone: "Europe/Berlin")
+            == "2026-11-13")
+        #expect(HomeSerie.laufenderTag(nil, zeitzone: "Europe/Berlin") == nil)
+    }
+
+    /// VoiceOver sagt "Training läuft." nur mit laufender Sitzung.
+    @Test func vorlesetextDerEinheiten() {
+        #expect(HomeSerie.einheitenVorlesetext(anzahl: 0, trainiert: true, laeuft: false) == "Training.")
+        #expect(HomeSerie.einheitenVorlesetext(anzahl: 0, trainiert: true, laeuft: true) == "Training läuft.")
+        #expect(HomeSerie.einheitenVorlesetext(anzahl: 0, trainiert: false, laeuft: false) == "Kein Training.")
+        #expect(HomeSerie.einheitenVorlesetext(anzahl: 1, trainiert: true, laeuft: false) == "Eine Einheit.")
+        #expect(HomeSerie.einheitenVorlesetext(anzahl: 2, trainiert: true, laeuft: true)
+            == "2 Einheiten. Training läuft.")
+    }
+}

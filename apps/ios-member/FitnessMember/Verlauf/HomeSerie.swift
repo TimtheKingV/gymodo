@@ -71,10 +71,57 @@ enum HomeSerie {
     /// Die laufende Woche gewinnt aus `trainedDays` auch die Tage, an
     /// denen gerade noch eine Einheit laeuft: die hat kein `completedAt`
     /// und steht darum in keiner Buendelung.
+    ///
+    /// Seit P2 nennt der Server in `trainedDays` auch Tage, die nur einen
+    /// Cardio-Handhaken oder einen begonnenen Kurs tragen (sie zaehlen fuer die
+    /// Serie). Die Hantel heisst aber "Training": Tage aus `cardioOderKursTage`
+    /// verlieren sie, ausser eine Sitzung (`sitzungstage`, auch laufende, oder
+    /// `einheitenJeTag`) liegt am selben Tag. Ein Servertag, den weder eine
+    /// geladene Sitzung noch Cardio/Kurs erklaert (Liste noch nicht geladen),
+    /// behaelt sie. Die Serienzahl rechnet weiter allein der Server.
     static func trainingstage(
-        stand: Serienstand, einheitenJeTag: [String: [SessionSummary]]
+        stand: Serienstand, einheitenJeTag: [String: [SessionSummary]],
+        sitzungstage: Set<String> = [], cardioOderKursTage: Set<String> = []
     ) -> Set<String> {
-        Set(stand.trainedDays).union(einheitenJeTag.keys)
+        let mitSitzung = sitzungstage.union(einheitenJeTag.keys)
+        return Set(stand.trainedDays).subtracting(cardioOderKursTage).union(mitSitzung)
+    }
+
+    /// Die Tage ("yyyy-MM-dd") mit Cardio- oder Kursmarke (`PlanWochenStand.marken`):
+    /// Handhaken, Auto-Cardio, begonnene Kurse. Gebuchte, noch nicht begonnene
+    /// Kurse nicht -- die stehen nie in `trainedDays`.
+    static func cardioOderKursTage(_ marken: [Date: [TagMarke]], kalender: Calendar) -> Set<String> {
+        Set(marken.compactMap { tag, liste in
+            liste.contains(where: { $0 == .cardio || $0 == .kurs }) ? PlanWoche.tagesSchluessel(tag, kalender) : nil
+        })
+    }
+
+    /// Die Ortstage aller geladenen Sitzungen, auch der noch laufenden (ohne
+    /// `completedAt`), dazu die lokal laufende (`laufendSeit`).
+    static func sitzungstage(
+        _ sessions: [SessionSummary], laufendSeit: Date?, zeitzone: String
+    ) -> Set<String> {
+        let formatter = ortsTagFormatter(zeitzone)
+        var tage = Set(sessions.compactMap { Zeitpunkt.parse($0.startedAt).map(formatter.string(from:)) })
+        if let laufendSeit { tage.insert(formatter.string(from: laufendSeit)) }
+        return tage
+    }
+
+    /// Der Ortstag der lokal laufenden Sitzung; nil ohne laufende.
+    static func laufenderTag(_ seit: Date?, zeitzone: String) -> String? {
+        seit.map(ortsTagFormatter(zeitzone).string(from:))
+    }
+
+    /// Ob unter der Serie "Kraft 1/2 · Cardio 0/1" steht (Spec §5): mit Plan,
+    /// oder ohne Plan nur mit einem Ziel des Mitglieds (Kraft- oder
+    /// Cardio-Zaehler im Profil, weekly_days). Das `wochenziel` des Servers
+    /// kommt immer, auch erfunden ("2") -- es allein ist kein Ziel. Ohne
+    /// `wochenziel` (alte Prod-API) bleibt ohne Plan die alte Zeile.
+    static func zeigtZielZeile(hatPlan: Bool, member: BootstrapResponse.Member?) -> Bool {
+        if hatPlan { return true }
+        guard let member, member.wochenziel != nil else { return false }
+        let profil = member.trainingProfile
+        return profil?.kraftProWoche != nil || (profil?.cardioProWoche ?? 0) > 0 || member.goals.weeklyDays != nil
     }
 
     /// Die abgeschlossenen Einheiten, nach ORTSTAG des Studios gebuendelt
@@ -87,13 +134,7 @@ enum HomeSerie {
     static func einheitenJeTag(
         _ sessions: [SessionSummary], zeitzone: String
     ) -> [String: [SessionSummary]] {
-        let formatter = DateFormatter()
-        // en_US_POSIX fuer ein rein numerisches, festes Muster -- dieselbe
-        // Begruendung wie bei KursZeit.uhrzeit.
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: zeitzone) ?? TimeZone(identifier: "UTC")
-        formatter.dateFormat = "yyyy-MM-dd"
-
+        let formatter = ortsTagFormatter(zeitzone)
         var gebuendelt: [String: [SessionSummary]] = [:]
         for einheit in HomeZeilen.abgeschlossene(sessions) {
             guard let start = Zeitpunkt.parse(einheit.startedAt) else { continue }
@@ -153,6 +194,26 @@ enum HomeSerie {
         var teile = ["Kraft \(stand.kraftErledigt)/\(ziel.kraft)"]
         if ziel.cardio > 0 { teile.append("Cardio \(stand.cardioErledigt)/\(ziel.cardio)") }
         return teile.joined(separator: " · ")
+    }
+
+    /// "Kraft 1 von 2, Cardio 0 von 1" -- die Zielzeile fuer VoiceOver; "1/2"
+    /// liest sie sonst als Bruch oder Datum.
+    static func zielVorlesetext(stand: PlanWochenStand, ziel: Wochenziel) -> String {
+        var teile = ["Kraft \(stand.kraftErledigt) von \(ziel.kraft)"]
+        if ziel.cardio > 0 { teile.append("Cardio \(stand.cardioErledigt) von \(ziel.cardio)") }
+        return teile.joined(separator: ", ")
+    }
+
+    /// Der Einheiten-Teil des Tageslabels. "Training läuft." nur mit laufender
+    /// Sitzung an diesem Tag; ein Hanteltag ohne gebuendelte Einheit (Servertag
+    /// ausserhalb der geladenen Liste) heisst schlicht "Training.".
+    static func einheitenVorlesetext(anzahl: Int, trainiert: Bool, laeuft: Bool) -> String {
+        let einheiten: String? = switch anzahl {
+        case 0: laeuft ? nil : (trainiert ? "Training." : "Kein Training.")
+        case 1: "Eine Einheit."
+        default: "\(anzahl) Einheiten."
+        }
+        return [einheiten, laeuft ? "Training läuft." : nil].compactMap { $0 }.joined(separator: " ")
     }
 
     /// Ein Tag mit Inhalt (Einheit oder eigener Kurs) klappt ihn auf -- auch
@@ -321,6 +382,16 @@ enum HomeSerie {
     }
 
     // MARK: - Innereien
+
+    /// "yyyy-MM-dd" in der Zeitzone des Studios. en_US_POSIX fuer ein rein
+    /// numerisches, festes Muster -- dieselbe Begruendung wie bei KursZeit.uhrzeit.
+    private static func ortsTagFormatter(_ zeitzone: String) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: zeitzone) ?? TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }
 
     private static func bauen(
         _ tag: Date, heute: String, trainingstage: Set<String>

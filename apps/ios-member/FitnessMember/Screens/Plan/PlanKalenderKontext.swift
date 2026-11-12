@@ -27,6 +27,9 @@ enum PlanKalenderKontext {
     /// Das Wochenziel des Servers; ein aelterer Server (Prod vor 0072) liefert
     /// keins -- dann zaehlen die Kraft-Tage des Plans, sonst 2, ohne Cardio.
     /// Die eine Stelle fuer diesen Ersatz (Plan-Tab und Home).
+    ///
+    /// Der Ersatz im Client gilt nur fuer die alte Prod-API ohne `wochenziel`
+    /// im Bootstrap; nach dem API-Deploy von P2 kann er samt `raster` entfallen.
     static func wochenziel(server: Wochenziel?, raster: [Rasterplatz]) -> Wochenziel {
         if let server { return server }
         let kraftTage = raster.filter { $0.art == .kraft }.count

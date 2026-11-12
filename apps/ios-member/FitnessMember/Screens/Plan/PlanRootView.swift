@@ -139,16 +139,21 @@ struct PlanRootView: View {
 
         let ziel = PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap)
         let hatKurse = !sitzungen.isEmpty
-        let hatCardio = ziel.cardio > 0 || !cardio.checks.isEmpty
-        let sichtbar = PlanWoche.sichtbareFilter(hatPlan: true, hatKurse: hatKurse, hatCardio: hatCardio)
-        let filter = zustand.geltenderFilter(sichtbar: sichtbar)
         let heuteKey = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
-        let stand: (Date) -> PlanWochenStand = { m in
+        let standMit: (Date, PlanFilter) -> PlanWochenStand = { m, f in
             PlanKalenderKontext.stand(
                 bootstrap: katalog.bootstrap, wocheStart: m, heute: jetzt, kalender: kalender,
                 heuteEinheitKey: heuteKey, sitzungen: verlauf.sessions, cardioChecks: cardio.checks,
-                kurse: sitzungen, filter: filter)
+                kurse: sitzungen, filter: f)
         }
+        // Auto-Cardio aus einem Training zaehlt auch ohne Ziel und Handhaken;
+        // ungefiltert gerechnet, weil der Filter erst aus `hatCardio` folgt.
+        let hatCardio = PlanWoche.hatCardio(
+            zielCardio: ziel.cardio, handHaken: cardio.checks.count,
+            cardioErledigt: standMit(montag, .alle).cardioErledigt)
+        let sichtbar = PlanWoche.sichtbareFilter(hatPlan: true, hatKurse: hatKurse, hatCardio: hatCardio)
+        let filter = zustand.geltenderFilter(sichtbar: sichtbar)
+        let stand: (Date) -> PlanWochenStand = { m in standMit(m, filter) }
         let woche = stand(montag)
         let kontext = kartenKontext(plan: plan, jetzt: jetzt)
 
@@ -385,7 +390,7 @@ struct PlanRootView: View {
                 untertitel: untertitel(nil, kontext.kalender), rechts: .offen, hervorgehoben: karte.istNaechste,
                 geschlecht: kontext.geschlecht,
                 beiTipp: key.map { k in { vorTipp(); beiEinheit(k) } },
-                tippHinweis: "Zeigt die Übungen der Einheit")
+                tippHinweis: "Zeigt die Übungen")
         case .cardio:
             switch karte.quelle {
             case .sitzung(let id):

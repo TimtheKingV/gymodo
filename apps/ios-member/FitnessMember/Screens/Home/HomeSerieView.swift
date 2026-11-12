@@ -70,6 +70,15 @@ struct HomeSerieView: View {
     /// "Kraft 1/2 · Cardio 0/1" (`HomeSerie.zielZeile`); ersetzt "X von Y
     /// Tagen" samt Zielstrichen. nil = die alte Zeile mit `wochenziel`.
     var zielZeile: String? = nil
+    /// Dieselbe Zeile gesprochen ("Kraft 1 von 2, Cardio 0 von 1").
+    var zielVorlesetext: String? = nil
+    /// Ortstage mit Sitzung (auch laufender) und mit Cardio- oder Kursmarke:
+    /// die Hantel steht nur an Tagen mit Sitzung (`HomeSerie.trainingstage`).
+    var sitzungstage: Set<String> = []
+    var cardioOderKursTage: Set<String> = []
+    /// Ortstag der gerade laufenden Sitzung -- nur dort sagt VoiceOver
+    /// "Training läuft.".
+    var laufenderTag: String? = nil
     /// Tipp auf heute oder einen kuenftigen Tag mit Marke: die Tages-Id, der
     /// Aufrufer springt in den Plan-Tab (`PlanSprung.tag`).
     var beiPlanTag: (String) -> Void = { _ in }
@@ -78,7 +87,8 @@ struct HomeSerieView: View {
 
     var body: some View {
         let trainingstage = HomeSerie.trainingstage(
-            stand: stand, einheitenJeTag: einheitenJeTag)
+            stand: stand, einheitenJeTag: einheitenJeTag,
+            sitzungstage: sitzungstage, cardioOderKursTage: cardioOderKursTage)
         let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage, geplant: geplant)
         let gewaehlt = gewaehlterTag(wochentage: wochentage)
 
@@ -105,6 +115,7 @@ struct HomeSerieView: View {
                 Text(zielZeile)
                     .font(.system(size: 12, weight: .semibold).monospacedDigit())
                     .foregroundStyle(DesignSystem.Color.textMuted)
+                    .accessibilityLabel(zielVorlesetext ?? zielZeile)
                     .testnotizElement("home.wochenziel", typ: "Text")
             } else if let wochenziel {
                 zielzeile(wochentage, ziel: wochenziel)
@@ -201,7 +212,7 @@ private extension HomeSerieView {
                 .accessibilityLabel(
                     HomeSerie.vorlesetext(
                         wochen: stand.weeks, tage: wochentage, ziel: zielZeile == nil ? wochenziel : nil)
-                        + (zielZeile.map { " \($0)." } ?? ""))
+                        + ((zielVorlesetext ?? zielZeile).map { " \($0)." } ?? ""))
 
             Text(
                 HomeSerie.fussnote(
@@ -422,17 +433,11 @@ private extension HomeSerieView {
         var teile = ["\(tag.wochentagVoll), \(tag.tagesnummer)."]
         if tag.istHeute { teile.append("Heute.") }
 
-        switch (einheitenJeTag[tag.id] ?? []).count {
-        case 0:
-            // Ein Tag, den der Server als trainiert nennt, dessen Einheit
-            // aber in keiner Buendelung steht, hat noch kein Ende --
-            // sie laeuft gerade im Training-Tab.
-            teile.append(tag.trainiert ? "Training läuft." : "Kein Training.")
-        case 1:
-            teile.append("Eine Einheit.")
-        case let anzahl:
-            teile.append("\(anzahl) Einheiten.")
-        }
+        // "Training läuft." nur am Tag der laufenden Sitzung -- ein Hanteltag
+        // ohne gebuendelte Einheit ist nicht automatisch ein laufender.
+        teile.append(HomeSerie.einheitenVorlesetext(
+            anzahl: (einheitenJeTag[tag.id] ?? []).count, trainiert: tag.trainiert,
+            laeuft: tag.id == laufenderTag))
         switch HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) {
         case .angemeldet: teile.append("Kurs, du bist angemeldet.")
         case .warteliste: teile.append("Kurs, du stehst auf der Warteliste.")

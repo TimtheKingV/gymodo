@@ -137,7 +137,16 @@ struct HomeRootView: View {
                             geschlecht: geschlecht,
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) },
                             geplant: HomeSerie.planMarken(woche.marken, kalender: planKalender),
-                            zielZeile: zielZeile,
+                            zielZeile: zielZeile?.text,
+                            zielVorlesetext: zielZeile?.vorlesen,
+                            // Die Hantel nur an Tagen mit Sitzung: Cardio-Handhaken
+                            // und begonnene Kurse fuellen `trainedDays` nur fuer die Serie.
+                            sitzungstage: HomeSerie.sitzungstage(
+                                verlauf.sessions, laufendSeit: sessions.aktiveSession(jetzt: jetzt)?.startedAt,
+                                zeitzone: zeitzone),
+                            cardioOderKursTage: HomeSerie.cardioOderKursTage(woche.marken, kalender: planKalender),
+                            laufenderTag: HomeSerie.laufenderTag(
+                                sessions.aktiveSession(jetzt: jetzt)?.startedAt, zeitzone: zeitzone),
                             beiPlanTag: { id in
                                 if let tag = PlanKalenderKontext.tag(id: id, kalender: planKalender) {
                                     beiPlanZeigen(.tag(tag))
@@ -349,12 +358,16 @@ private extension HomeRootView {
             kurse: kurseStudios.isEmpty ? [] : (kurse.woche?.sessions ?? []), filter: .alle)
     }
 
-    /// "Kraft 1/2 · Cardio 0/1" -- nur mit Plan oder einem Wochenziel des
-    /// Servers; sonst nil und die Serie zeigt die alte Zeile.
-    func zielZeile(_ woche: PlanWochenStand) -> String? {
-        guard PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil
-                || katalog.bootstrap?.member.wochenziel != nil else { return nil }
-        return HomeSerie.zielZeile(stand: woche, ziel: PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap))
+    /// "Kraft 1/2 · Cardio 0/1" samt gesprochenem Satz -- nur mit Plan oder
+    /// einem Ziel des Mitglieds (`HomeSerie.zeigtZielZeile`); sonst nil und
+    /// die Serie zeigt die alte Zeile.
+    func zielZeile(_ woche: PlanWochenStand) -> (text: String, vorlesen: String)? {
+        guard HomeSerie.zeigtZielZeile(
+            hatPlan: PlanAnzeige.plan(bootstrap: katalog.bootstrap) != nil,
+            member: katalog.bootstrap?.member) else { return nil }
+        let ziel = PlanKalenderKontext.wochenziel(bootstrap: katalog.bootstrap)
+        guard let text = HomeSerie.zielZeile(stand: woche, ziel: ziel) else { return nil }
+        return (text, HomeSerie.zielVorlesetext(stand: woche, ziel: ziel))
     }
 
     /// "Nächste Einheit" (Spec P2 §5): die Einheit, die der Plan als naechste

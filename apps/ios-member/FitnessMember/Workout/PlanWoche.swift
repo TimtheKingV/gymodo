@@ -41,6 +41,12 @@ enum PlanWoche {
         return filter
     }
 
+    /// Ob es Cardio gibt (Filter "Cardio"): ein Cardio-Ziel, ein Handhaken
+    /// oder Auto-Cardio aus einem Training (`PlanWochenStand.cardioErledigt`).
+    static func hatCardio(zielCardio: Int, handHaken: Int, cardioErledigt: Int) -> Bool {
+        zielCardio > 0 || handHaken > 0 || cardioErledigt > 0
+    }
+
     /// ISO-Wochentag (1 = Montag ... 7 = Sonntag), unabhaengig von `Calendar.firstWeekday`.
     static func isoWochentag(_ tag: Date, _ kalender: Calendar) -> Int {
         // Calendar.weekday: 1 = Sonntag ... 7 = Samstag.

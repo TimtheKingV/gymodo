@@ -16,6 +16,15 @@ struct PlanWocheTests {
                 == [.alle, .kraft, .kurse, .cardio])
     }
 
+    /// Auto-Cardio aus einem Training zaehlt auch ohne Cardio-Ziel und ohne
+    /// Handhaken -- dann muss der Filter "Cardio" stehen.
+    @Test func hatCardioAuchMitAutoCardio() {
+        #expect(!PlanWoche.hatCardio(zielCardio: 0, handHaken: 0, cardioErledigt: 0))
+        #expect(PlanWoche.hatCardio(zielCardio: 1, handHaken: 0, cardioErledigt: 0))
+        #expect(PlanWoche.hatCardio(zielCardio: 0, handHaken: 1, cardioErledigt: 0))
+        #expect(PlanWoche.hatCardio(zielCardio: 0, handHaken: 0, cardioErledigt: 1))
+    }
+
     @Test func rasterUndProfilDekodierenAeltereAntworten() throws {
         let json = #"[{"tag":1,"art":"kurs"},{"tag":3,"art":"kraft","einheitKey":"A"}]"#
         let r = try JSONDecoder().decode([Rasterplatz].self, from: Data(json.utf8))
