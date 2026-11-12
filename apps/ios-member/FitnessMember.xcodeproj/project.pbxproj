@@ -84,6 +84,7 @@
 		2E8C9C369514B0119183FF90 /* BelegungsleisteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A611FB701374C11335D844E4 /* BelegungsleisteTests.swift */; };
 		2EF2018291A256819D332F1C /* KurseAnsicht.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EDCD91DBF3DA79135DC7C5 /* KurseAnsicht.swift */; };
 		309307436B8EE156A6673AA2 /* PrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */; };
+		30D8D5CBD77007C96AE59FE9 /* WochenZaehler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A002F7E06C2F02619FC4F14 /* WochenZaehler.swift */; };
 		314FA2F843E86E287D170A14 /* SatzZaehler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7551BF185923696CE8280A /* SatzZaehler.swift */; };
 		3191084E1AB99CE0B8A96B32 /* Reserve.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39728482D01D77470A4FA96 /* Reserve.swift */; };
 		31ABF99542691ACBCC68BAC5 /* MuskelgruppenUebersichtView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 437F4E7734CF62C835867649 /* MuskelgruppenUebersichtView.swift */; };
@@ -643,6 +644,7 @@
 		76B45F293755B9D5DEA1E3CF /* PlanAnzeige.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanAnzeige.swift; sourceTree = "<group>"; };
 		776038DDD81851939CEDC670 /* GewichtEintragenSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GewichtEintragenSheet.swift; sourceTree = "<group>"; };
 		77CD8F083B18A9C6710DF1C0 /* UebungsGruppierungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsGruppierungTests.swift; sourceTree = "<group>"; };
+		7A002F7E06C2F02619FC4F14 /* WochenZaehler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WochenZaehler.swift; sourceTree = "<group>"; };
 		7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vorschaubild.swift; sourceTree = "<group>"; };
 		7C0CB91C0BF08BFD791C2E14 /* PlanKalenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalenderTests.swift; sourceTree = "<group>"; };
 		7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorQuelle.swift; sourceTree = "<group>"; };
@@ -1079,6 +1081,7 @@
 				EFEE91087FF1DF7B63D3D199 /* PlanWochenKarten.swift */,
 				E198C8906DC8CB06DEC8D2D3 /* WocheAnpassenSheet.swift */,
 				C7872ABA3036231446409B96 /* WochenAuswahl.swift */,
+				7A002F7E06C2F02619FC4F14 /* WochenZaehler.swift */,
 			);
 			path = Plan;
 			sourceTree = "<group>";
@@ -1956,6 +1959,7 @@
 				4196455285CC682E9475A449 /* WertZeile.swift in Sources */,
 				BFB9D0198ED18907EBF7E048 /* WocheAnpassenSheet.swift in Sources */,
 				5FE835AED246D3029BB15AD2 /* WochenAuswahl.swift in Sources */,
+				30D8D5CBD77007C96AE59FE9 /* WochenZaehler.swift in Sources */,
 				CDFAAA852F981253E1B2E93D /* Wochenziel.swift in Sources */,
 				3D434A9FDCC360100D327428 /* WorkoutSessionStore+Ortswechsel.swift in Sources */,
 				B6342F2803AFA48AEEC73B7C /* WorkoutSessionStore.swift in Sources */,

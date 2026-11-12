@@ -9,6 +9,9 @@ struct WochenAuswahl: Equatable {
     static let minutenGrenzen = 10...90
     static let minutenSchritt = 5
 
+    /// Unter den Zaehlern: im Sheet "Woche anpassen" und im Onboarding.
+    static let hinweis = "Du legst fest, wie oft – nicht wann. Montag beginnt die Woche neu."
+
     var kraft: Int
     var cardio: Int
     var cardioMinuten: Int

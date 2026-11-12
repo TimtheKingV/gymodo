@@ -13,8 +13,6 @@ struct WocheAnpassenSheet: View {
     @State private var fehler: String?
     @State private var laeuft = false
 
-    static let hinweis = "Du legst fest, wie oft – nicht wann. Montag beginnt die Woche neu."
-
     init(ziel: Wochenziel, profil: TrainingsplanProfil, speichern: @escaping (TrainingsplanProfil) async -> String?) {
         self.profil = profil
         self.speichern = speichern
@@ -25,18 +23,18 @@ struct WocheAnpassenSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s24) {
-                    zaehler("Kraft", wert: $auswahl.kraft, grenzen: WochenAuswahl.kraftGrenzen,
+                    WochenZaehler("Kraft", wert: $auswahl.kraft, grenzen: WochenAuswahl.kraftGrenzen,
                             einheit: { "\($0)× pro Woche" })
-                    zaehler("Cardio", wert: $auswahl.cardio, grenzen: WochenAuswahl.cardioGrenzen,
+                    WochenZaehler("Cardio", wert: $auswahl.cardio, grenzen: WochenAuswahl.cardioGrenzen,
                             einheit: { $0 == 0 ? "kein Cardio" : "\($0)× pro Woche" })
                     if auswahl.cardio >= 1 {
-                        zaehler("Minuten je Cardio", wert: $auswahl.cardioMinuten,
+                        WochenZaehler("Minuten je Cardio", wert: $auswahl.cardioMinuten,
                                 grenzen: WochenAuswahl.minutenGrenzen, schritt: WochenAuswahl.minutenSchritt,
                                 einheit: { "\($0) min" })
                         cardioArten
                     }
 
-                    Text(Self.hinweis)
+                    Text(WochenAuswahl.hinweis)
                         .font(.system(size: 13))
                         .foregroundStyle(DesignSystem.Color.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -86,27 +84,6 @@ struct WocheAnpassenSheet: View {
                     .accessibilityAddTraits(istAktiv ? [.isToggle, .isSelected] : .isToggle)
                 }
             }
-        }
-    }
-
-    private func zaehler(
-        _ titel: String, wert: Binding<Int>, grenzen: ClosedRange<Int>, schritt: Int = 1,
-        einheit: @escaping (Int) -> String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            Text(titel.uppercased())
-                .font(DesignSystem.Typography.label)
-                .tracking(1.5)
-                .foregroundStyle(DesignSystem.Color.textMuted)
-                .accessibilityAddTraits(.isHeader)
-            Stepper(value: wert, in: grenzen, step: schritt) {
-                Text(einheit(wert.wrappedValue))
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Color.text)
-            }
-            .frame(minHeight: 44)
-            .accessibilityLabel(titel)
-            .accessibilityValue(einheit(wert.wrappedValue))
         }
     }
 }
