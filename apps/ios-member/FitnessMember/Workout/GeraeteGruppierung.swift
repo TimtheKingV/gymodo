@@ -50,6 +50,14 @@ enum GeraeteGruppierung {
         MuskelHauptgruppe.allCases.filter { !gruppieren(eintraege, nur: $0).isEmpty }
     }
 
+    /// "Zuletzt bei dir" nach einem Bullet (Testnotiz 19.10., #4): dieselbe
+    /// Zuordnung wie `gruppieren(_:nur:)`, aber flach und in der
+    /// Reihenfolge von `eintraege` (juengstes zuerst). nil = alle.
+    static func gefiltert(_ eintraege: [GeraeteAuswahl.Eintrag], nur filter: MuskelHauptgruppe?) -> [GeraeteAuswahl.Eintrag] {
+        guard let filter else { return eintraege }
+        return gruppieren(eintraege, nur: filter).first?.eintraege ?? []
+    }
+
     /// Nur Geraete, an denen schon trainiert wurde, das juengste zuerst.
     static func favoriten(_ eintraege: [GeraeteAuswahl.Eintrag]) -> [GeraeteAuswahl.Eintrag] {
         eintraege

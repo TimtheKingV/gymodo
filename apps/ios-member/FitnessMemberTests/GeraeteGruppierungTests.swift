@@ -107,6 +107,28 @@ struct GeraeteGruppierungTests {
         let nie = try eintrag("nie", uebungen: [("a", "abs")])
         #expect(GeraeteGruppierung.favoriten([alt, nie, neu]).map(\.name) == ["neu", "alt"])
     }
+
+    // MARK: - Zuletzt bei dir gefiltert (Testnotiz 19.10., #4)
+
+    @Test func gefiltertBehaeltDieReihenfolge() throws {
+        let lat = try eintrag("lat", uebungen: [("l", "lats")])
+        let presse = try eintrag("presse", uebungen: [("b", "quads")])
+        let ruder = try eintrag("ruder", uebungen: [("r", "upper_back")])
+        #expect(GeraeteGruppierung.gefiltert([lat, presse, ruder], nur: .ruecken).map(\.name) == ["lat", "ruder"])
+    }
+
+    @Test func gefiltertOhneFilterGibtAlle() throws {
+        let lat = try eintrag("lat", uebungen: [("l", "lats")])
+        let presse = try eintrag("presse", uebungen: [("b", "quads")])
+        #expect(GeraeteGruppierung.gefiltert([presse, lat], nur: nil).map(\.name) == ["presse", "lat"])
+    }
+
+    @Test func gefiltertNachMehrereNurMitHeimatMehrere() throws {
+        let kabel = try eintrag("kabel", uebungen: [("a", "pectorals"), ("b", "lats")])
+        let lat = try eintrag("lat", uebungen: [("l", "lats")])
+        #expect(GeraeteGruppierung.gefiltert([kabel, lat], nur: .mehrere).map(\.name) == ["kabel"])
+        #expect(GeraeteGruppierung.gefiltert([kabel, lat], nur: .ruecken).map(\.name) == ["kabel", "lat"])
+    }
 }
 
 struct UebungsGruppierungFilterTests {
