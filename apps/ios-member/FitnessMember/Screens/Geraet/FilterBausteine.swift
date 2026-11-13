@@ -101,11 +101,13 @@ struct UebungsUntertitel: View {
     }
 }
 
-/// Der Kopf der Uebungsliste eines Geraets: der grosse Schalter
+/// Der Kopf der Uebungsliste eines Geraets: ab 4 Uebungen die Suche
+/// (Testnotiz 10.11., #15), darunter der grosse Schalter
 /// Muskelgruppe | Favorit, darunter die Bullets, dann die Liste.
 /// Favorit zeigt nur Uebungen mit Historie, in der Reihenfolge von `uebungen`.
 /// Bis zu fuenf Uebungen ohne Schalter -- die Liste ist dort schneller zu
-/// ueberblicken als zu filtern.
+/// ueberblicken als zu filtern. Mit Suchtext eine flache Trefferliste ueber
+/// alle Uebungen, ohne Schalter und Bullets (Entscheidung Tim, 10.11.).
 struct UebungsAnsichtBereich<Zeile: View>: View {
     /// In der "Zuletzt"-Reihenfolge des Geraets.
     let uebungen: [GeraetUebung]
@@ -114,8 +116,31 @@ struct UebungsAnsichtBereich<Zeile: View>: View {
     @ViewBuilder let zeile: (GeraetUebung) -> Zeile
 
     @State private var gruppe: MuskelHauptgruppe?
+    @State private var suchtext = ""
 
     var body: some View {
+        if UebungsSuche.bietetSucheAn(uebungsanzahl: uebungen.count) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                Suchfeld(text: $suchtext, prompt: "Übung suchen")
+                if let treffer = UebungsSuche.treffer(uebungen, suchtext: suchtext) {
+                    if treffer.isEmpty {
+                        Text("Keine Treffer für „\(suchtext.trimmingCharacters(in: .whitespaces))“")
+                            .font(.system(size: 13))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                            .padding(.vertical, DesignSystem.Spacing.s8)
+                    } else {
+                        UebungsAbschnitte(uebungen: treffer, gruppiert: false, zeile: zeile)
+                    }
+                } else {
+                    ansichtOhneSuche
+                }
+            }
+        } else {
+            ansichtOhneSuche
+        }
+    }
+
+    @ViewBuilder private var ansichtOhneSuche: some View {
         if UebungsGruppierung.bietetSchalterAn(uebungsanzahl: uebungen.count) {
             let angebot = UebungsGruppierung.vorhandeneGruppen(uebungen)
             let filter = gruppe.flatMap { angebot.contains($0) ? $0 : nil }
@@ -139,6 +164,51 @@ struct UebungsAnsichtBereich<Zeile: View>: View {
         } else {
             UebungsAbschnitte(uebungen: uebungen, gruppiert: false, zeile: zeile)
         }
+    }
+}
+
+/// Ein Suchfeld im Inhalt, im Stil der Geraetesuche (GeraeteAuswahlView):
+/// Lupe, Feld, Loeschen-Knopf; Akzentrand, solange es den Fokus hat.
+struct Suchfeld: View {
+    @Binding var text: String
+    let prompt: String
+
+    @FocusState private var aktiv: Bool
+
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.s12) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(aktiv ? DesignSystem.Color.accent : DesignSystem.Color.textFaint)
+                .accessibilityHidden(true)
+            TextField("", text: $text, prompt: Text(prompt).foregroundColor(DesignSystem.Color.textFaint))
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Color.text)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .focused($aktiv)
+                .submitLabel(.search)
+                .accessibilityLabel(prompt)
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 17))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
+                .frame(width: 44, height: 44)
+                .accessibilityLabel("Suche löschen")
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.s16)
+        .frame(height: 52)
+        .background(DesignSystem.Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.neben))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.neben)
+                .stroke(aktiv ? DesignSystem.Color.accent : DesignSystem.Color.line, lineWidth: aktiv ? 1.5 : 1)
+        )
     }
 }
 

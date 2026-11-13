@@ -150,11 +150,13 @@ struct UebungsGruppierungTests {
                         problemReason: nil, performedAt: Date(timeIntervalSince1970: 1_000_000 + Double(i)))
         }
         let block = LokalerBlock(station: wahl.station, exerciseId: "e3", saetze: [satz(1), satz(2)])
-        let heute = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[3], bloecke: [block])
+        let heute = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[3], station: wahl.station, bloecke: [block],
+                                                 bootstrap: nil)
         #expect(heute.text == "Heute · 2 Sätze · 7,5 kg")
         #expect(heute.hatHistorie)
-        let neu = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[0], bloecke: [block])
-        #expect(neu.text == "Ziel 8 – 12 Wdh.")
+        let neu = ZirkelUebungswahl.untertitel(wahl.geraetUebungen[0], station: wahl.station, bloecke: [block],
+                                               bootstrap: nil)
+        #expect(neu.text == "Noch nie · Ziel 8 – 12 Wdh.")
         #expect(!neu.hatHistorie)
         // Heute gemachte zuerst, sonst Katalogreihenfolge.
         #expect(wahl.sortiert(bloecke: [block]).map(\.id) == ["e3", "e0", "e1", "e2", "e4", "e5", "e6"])

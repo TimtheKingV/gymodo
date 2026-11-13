@@ -12,6 +12,11 @@ struct AblaufZeile: Identifiable, Equatable {
     /// naechste/offen: die Vorgabe ("3 × 10–12") oder "".
     let detail: String
     let stand: Stand
+    /// Die Uebung der Zeile: ihr Video steht links (Testnotiz 10.11., #1).
+    /// Das Geraetefoto allein reicht nicht -- alle Kurzhantel-Uebungen
+    /// teilen ein Modell und damit ein Foto.
+    let exerciseId: String?
+    /// Ersatz, solange es kein Video gibt.
     let bildModellId: String?
 }
 
@@ -60,7 +65,7 @@ enum AblaufListe {
             return AblaufZeile(
                 id: stelle.key,
                 name: PlanZeilenModell.uebungsname(exerciseId: wirksam, maschine: nil, bootstrap: bootstrap),
-                detail: detail, stand: stand,
+                detail: detail, stand: stand, exerciseId: wirksam,
                 bildModellId: PlanAnzeige.bildmodell(exerciseId: wirksam, modelId: modelId, bootstrap: bootstrap))
         }
         // Zusaetzlich gemacht (R6): Uebungen ohne Position stehen wie in der
@@ -81,7 +86,7 @@ enum AblaufListe {
                 id: "zusatz:\(extra.id)",
                 name: PlanZeilenModell.uebungsname(exerciseId: extra.id, maschine: nil, bootstrap: bootstrap),
                 detail: istJetzt ? jetztText(eigene) : (erledigtText(eigene) ?? ""),
-                stand: istJetzt ? .jetzt : .erledigt,
+                stand: istJetzt ? .jetzt : .erledigt, exerciseId: extra.id,
                 bildModellId: PlanAnzeige.bildmodell(exerciseId: extra.id, modelId: extra.modell, bootstrap: bootstrap)))
         }
         return zeilen
@@ -128,7 +133,8 @@ enum AblaufListe {
             }
             let detail = stand == .erledigt ? kompakt(werte) : (werte.last ?? "")
             return AblaufZeile(id: "\(uebung.station):\(uebung.exerciseId)", name: name(uebung),
-                               detail: detail, stand: stand, bildModellId: bildModellId(uebung))
+                               detail: detail, stand: stand, exerciseId: uebung.exerciseId,
+                               bildModellId: bildModellId(uebung))
         }
     }
 
@@ -145,7 +151,8 @@ enum AblaufListe {
             return AblaufZeile(
                 id: block.id, name: name(block),
                 detail: istAktuell ? jetztText([block]) : (erledigtText([block]) ?? ""),
-                stand: istAktuell ? .jetzt : .erledigt, bildModellId: block.equipmentModelId)
+                stand: istAktuell ? .jetzt : .erledigt, exerciseId: block.exerciseId,
+                bildModellId: block.equipmentModelId)
         }
     }
 

@@ -48,7 +48,7 @@ struct AblaufListeTests {
     }
 
     private func zeile(_ n: Int, _ stand: AblaufZeile.Stand) -> AblaufZeile {
-        AblaufZeile(id: "z\(n)", name: "Z\(n)", detail: "", stand: stand, bildModellId: nil)
+        AblaufZeile(id: "z\(n)", name: "Z\(n)", detail: "", stand: stand, exerciseId: nil, bildModellId: nil)
     }
 
     // MARK: Plan
@@ -58,6 +58,7 @@ struct AblaufListeTests {
                                       ausgelassen: [], bloecke: [], aktuelleUebung: "e2", bootstrap: nil)
         #expect(zeilen.map(\.id) == ["A0", "A1", "A2", "A3", "A4", "A5"])
         #expect(zeilen.map(\.stand) == [.erledigt, .erledigt, .jetzt, .naechste, .offen, .offen])
+        #expect(zeilen.map(\.exerciseId) == ["e0", "e1", "e2", "e3", "e4", "e5"])
         #expect(zeilen[3].detail == "3 × 10–12")
     }
 
@@ -163,6 +164,17 @@ struct AblaufListeTests {
         #expect(zeilen.map(\.stand) == [.erledigt, .erledigt])
     }
 
+    /// Testnotiz 10.11. #1: drei Kurzhantel-Uebungen teilen ein Modell und
+    /// damit ein Geraetefoto. Jede Zeile muss ihre eigene Uebung tragen,
+    /// damit die Ansicht deren Video zeigen kann.
+    @Test func zirkelZeilenTragenIhreUebung() {
+        let zirkel = Zirkel(uebungen: [uebung(1), uebung(2), uebung(3)], runden: 3, uebungspause: 20, rundenpause: 90)
+        let zeilen = AblaufListe.zirkel(zirkel, bloecke: [], seit: nil,
+                                        name: { $0.exerciseId }, bildModellId: { _ in "m-kh" })
+        #expect(zeilen.map(\.exerciseId) == ["e1", "e2", "e3"])
+        #expect(zeilen.map(\.bildModellId) == ["m-kh", "m-kh", "m-kh"])
+    }
+
     // MARK: Frei
 
     @Test func freiEineUebung() {
@@ -182,6 +194,7 @@ struct AblaufListeTests {
                                       aktuell: (stationSchluessel: jetzt.stationSchluessel, exerciseId: "e2"),
                                       name: { $0.exerciseId })
         #expect(zeilen.map(\.stand) == [.erledigt, .jetzt])
+        #expect(zeilen.map(\.exerciseId) == ["e1", "e2"])
         #expect(zeilen[0].detail == "2 × " + (ZirkelPauseText.satzwerte(alt.saetze[0], alt) ?? "?"))
         #expect(zeilen[1].detail == ZirkelPauseText.satzwerte(jetzt.saetze[0], jetzt))
     }
@@ -212,6 +225,7 @@ struct AblaufListeTests {
                                       ausgelassen: [], bloecke: [extra], aktuelleUebung: "e1", bootstrap: nil)
         #expect(zeilen.count == 7)
         #expect(zeilen.last?.id == "zusatz:x1")
+        #expect(zeilen.last?.exerciseId == "x1")
         #expect(zeilen.last?.stand == .erledigt)
         #expect(zeilen.last?.detail == ZirkelPauseText.satzwerte(extra.saetze[0], extra))
     }

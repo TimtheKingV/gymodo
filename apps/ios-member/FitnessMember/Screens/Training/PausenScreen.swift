@@ -261,11 +261,13 @@ struct PausenScreen: View {
 struct AblaufZeileAnsicht: View {
     let zeile: AblaufZeile
 
-    /// Standbild statt Video (Spec 2.1): die Liste ist zum Lesen da, eine
-    /// Schleife je Zeile zoege den Blick weg.
+    /// Das Video der Uebung als Schleife wie in der Zirkel-Planung
+    /// (Testnotiz 10.11., #1, Entscheidung Tim; ersetzt das Standbild aus
+    /// Spec 2.1). Bis es da ist -- und ohne Video -- das Geraetefoto, sonst
+    /// der Platzhalter.
     var body: some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
-            Group {
+            UebungsVideoKachel(exerciseId: zeile.exerciseId, kante: 36) {
                 if let modellId = zeile.bildModellId {
                     Geraetefoto(modellId: modellId, url: nil, hoehe: 36, breite: 36)
                 } else {

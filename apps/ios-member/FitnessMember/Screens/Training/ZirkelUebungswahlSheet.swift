@@ -55,13 +55,23 @@ struct ZirkelUebungswahl: Identifiable, Hashable {
         return alle.filter { heute.contains($0.id) } + alle.filter { !heute.contains($0.id) }
     }
 
-    /// Nur aus den Bloecken von heute (kein Geraete-Kontext im Zirkel):
-    /// "Heute · 2 Sätze · 7,5 kg", sonst "Ziel 8 – 12 Wdh.".
-    static func untertitel(_ uebung: GeraetUebung, bloecke: [LokalerBlock]) -> (text: String, hatHistorie: Bool) {
-        if let block = bloecke.first(where: { $0.exerciseId == uebung.id && !$0.saetze.isEmpty }) {
+    /// Wie im freien Training (Testnotiz 10.11., #14): heute an dieser
+    /// Station gemacht "Heute · 2 Sätze · 7,5 kg", sonst der letzte Satz
+    /// aus dem Bootstrap "vor 3 Tagen · 10,0 kg", ohne beides "Noch nie ·
+    /// Ziel 8 – 12 Wdh.". `hatHistorie` ist zugleich der Favorit.
+    static func untertitel(_ uebung: GeraetUebung, station: Station, bloecke: [LokalerBlock],
+                           bootstrap: BootstrapResponse?, jetzt: Date = Date()) -> (text: String, hatHistorie: Bool) {
+        if let block = bloecke.first(where: {
+            $0.stationSchluessel == station.schluessel && $0.exerciseId == uebung.id && !$0.saetze.isEmpty
+        }) {
             return ("Heute · \(TrainingTab.blockzeile(block))", true)
         }
-        return ("Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))", false)
+        if let bootstrap,
+           let letzter = UebungsHistorie.letzterSatz(an: station, uebungId: uebung.id, in: bootstrap),
+           let zeile = UebungsHistorie.zeile(letzter, loadUnit: station.equipmentModel.loadUnit, jetzt: jetzt) {
+            return (zeile, true)
+        }
+        return (UebungsHistorie.nochNie(uebung), false)
     }
 }
 
@@ -73,6 +83,8 @@ struct ZirkelUebungswahlSheet: View {
     var eingebettet = false
     /// Die Bloecke der laufenden Einheit: Untertitel und Reihenfolge kommen von heute.
     var bloecke: [LokalerBlock] = []
+    /// Die Historie an der Station fuer Favorit und Untertitel.
+    var bootstrap: BootstrapResponse?
     let beiWahl: (ZirkelUebung) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -107,11 +119,10 @@ struct ZirkelUebungswahlSheet: View {
                 Text(untertitelDerStation(wahl.station))
                     .font(.system(size: 13))
                     .foregroundStyle(DesignSystem.Color.textMuted)
-                let heute = wahl.heutigeBloecke(bloecke)
                 UebungsAnsichtBereich(uebungen: wahl.sortiert(bloecke: bloecke),
-                                      hatHistorie: { u in heute.contains { $0.exerciseId == u.id } },
+                                      hatHistorie: { untertitel($0).hatHistorie },
                                       ansicht: ansicht) { uebung in
-                    Button { waehlen(uebung.id) } label: { zeile(uebung, heute: heute) }
+                    Button { waehlen(uebung.id) } label: { zeile(uebung) }
                         .buttonStyle(PressButtonStyle())
                 }
                 if let hinweis = wahl.hinweis {
@@ -139,8 +150,12 @@ struct ZirkelUebungswahlSheet: View {
         beiWahl(uebung)
     }
 
-    private func zeile(_ uebung: GeraetUebung, heute: [LokalerBlock]) -> some View {
-        let untertitel = ZirkelUebungswahl.untertitel(uebung, bloecke: heute)
+    private func untertitel(_ uebung: GeraetUebung) -> (text: String, hatHistorie: Bool) {
+        ZirkelUebungswahl.untertitel(uebung, station: wahl.station, bloecke: bloecke, bootstrap: bootstrap)
+    }
+
+    private func zeile(_ uebung: GeraetUebung) -> some View {
+        let untertitel = untertitel(uebung)
         return HStack(spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: uebung.id) { Uebungsbild() }
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
