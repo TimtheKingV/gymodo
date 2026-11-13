@@ -27,6 +27,21 @@ struct SatzAutomatikTests {
         #expect(a.ausgewertet(bis: 12) == .beendet(kennung: a.kennung, bewegung: 4))
         #expect(a.ausgewertet(bis: 12) == nil)
     }
+    /// 10.11.: Hantieren zwischen zwei Zirkel-Stationen lieferte dem Takt
+    /// regelmaessige "Wiederholungen" ohne Ausschlag. Sie starten keinen
+    /// Satz; die echten danach schon.
+    @Test func ausschlagloseWiederholungenStartenNicht() {
+        var a = SatzAutomatik()
+        empfangen(&a, von: 0, bis: 300)
+        let hantieren = [0.0, 2.1, 4.1].enumerated().map { i, von in
+            Wiederholung(nummer: i + 1, beginn: von, umkehr: von + 1, ende: von + 2,
+                         ausschlag: 0.003, sicherheit: 0.36, pauseDavor: nil)
+        }
+        #expect(a.wiederholungen(hantieren).isEmpty)
+        #expect(a.zustand == .wartet)
+        let echt = [rep(1, 20, 22), rep(2, 22, 24)]
+        #expect(a.wiederholungen(echt) == [.begonnen(kennung: a.kennung, beginn: 20, bewegung: 24)])
+    }
     @Test func einzelneUndGetrennteBewegungenStartenNicht() {
         var a = SatzAutomatik()
         empfangen(&a, von: 0, bis: 100)

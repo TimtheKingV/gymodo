@@ -23,6 +23,10 @@ public struct SatzAutomatik: Sendable {
     private var beobachtetAb: TimeInterval?
     private let vorlaufSekunden: TimeInterval
     public static let ruheSekunden: TimeInterval = 8
+    /// Unter diesem Ausschlag ist eine "Wiederholung" Hantieren, kein Satz:
+    /// ueber alle Aufnahmen bis 10.11. lagen solche Starts bei hoechstens
+    /// 0,003 und 10 bis 40 s vor dem Satz, der kleinste echte Start bei 0,023.
+    public static let startAusschlag: Double = 0.01
 
     public init(kennung: UUID = UUID(), vorlaufSekunden: TimeInterval = 30) {
         self.kennung = kennung
@@ -69,6 +73,8 @@ public struct SatzAutomatik: Sendable {
             letzteWiederholung = w.ende
             if zustand == .laeuft {
                 bewegung(bis: w.ende)
+            } else if w.ausschlag < Self.startAusschlag {
+                continue
             } else if let erste = kandidat, w.beginn >= erste.ende - 0.1,
                       w.beginn - erste.ende <= 4 {
                 zustand = .laeuft
