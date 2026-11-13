@@ -243,7 +243,11 @@ private extension HomeSerieView {
                 .foregroundStyle(
                     laeuft ? DesignSystem.Color.accent : DesignSystem.Color.textFaint)
         }
-        .frame(width: 56)
+        // Mindestens 56 pt, damit eine einstellige Serie wie bisher steht;
+        // ab zehn Wochen waechst die Spalte mit, statt die Zahl auf zwei
+        // Zeilen zu brechen ("1" ueber "0"). Die Fussnote daneben gibt nach.
+        .fixedSize()
+        .frame(minWidth: 56)
     }
 }
 
