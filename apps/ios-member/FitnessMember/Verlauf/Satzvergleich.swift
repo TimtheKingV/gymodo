@@ -1,14 +1,19 @@
 import Foundation
 
-/// Der Fortschritt im Trainingsdetail (Testnotiz 06.10., #20).
+/// Der Fortschritt im Trainingsdetail (Testnotiz 06.10., #20; seit
+/// Testnotiz 19.10., #2 ein Feld je Uebung statt einer Zahl je Satz).
 ///
-/// Jeder Satz wird mit dem Durchschnitt DESSELBEN Satzes (Satz 1 mit Satz
-/// 1 usw.) aus den bis zu fuenf vorherigen Trainings dieser Uebung
-/// verglichen: wie viel mehr oder weniger Kilogramm, wie viele Wdh. mehr
-/// oder weniger. Die Richtung des Pfeils folgt dem Volumen kg x Wdh., nicht
-/// dem Gewicht allein -- 10 Wdh. mit 10 kg sind mehr als 5 Wdh. mit 18 kg.
-/// Rechts je Uebung der Gesamttrend: die Summe kg x Wdh. aller Saetze
-/// gegen den Durchschnitt dieser Summe (so auf Rueckfrage entschieden; ein
+/// Verglichen wird der Schnitt aller Saetze heute mit dem Schnitt der bis
+/// zu fuenf vorherigen Trainings dieser Uebung: wie viel Kilogramm und wie
+/// viele Wdh. je Satz mehr oder weniger. Vorher stand das je Satz da (Satz
+/// 1 gegen Satz 1 usw.) -- bei immer gleichen 12 kg las sich das als
+/// "+3,7 kg", nur weil Satz 1 frueher im Schnitt leichter war.
+///
+/// Jedes vorherige Training zaehlt gleich, egal wie viele Saetze es hatte:
+/// erst der Schnitt je Training, dann der Schnitt dieser Schnitte.
+///
+/// Der Pfeil folgt dem Volumen kg x Wdh., nicht dem Gewicht allein: die
+/// Summe aller Saetze gegen den Durchschnitt dieser Summe (ein
 /// zusaetzlicher Satz zaehlt damit mit).
 ///
 /// Nur bei Kilogramm und Wiederholungen: an einem Laufband gibt es weder
@@ -25,16 +30,10 @@ enum Satzvergleich {
         case gleich
     }
 
-    struct Satz: Equatable {
+    struct Ergebnis: Equatable {
+        /// Schnitt je Satz heute minus Schnitt je Satz vorher.
         let deltaKg: Double
         let deltaWdh: Double
-        let trend: Trend
-    }
-
-    struct Ergebnis: Equatable {
-        /// Je Position im Block (0 = erster Satz); nil, wenn keines der
-        /// vorherigen Trainings so viele Saetze hatte.
-        let saetze: [Int: Satz]
         let gesamt: Trend
         /// Wie viele vorherige Trainings eingeflossen sind (1 bis 5).
         let basis: Int
@@ -43,7 +42,8 @@ enum Satzvergleich {
     static let hoechstensVorherige = 5
 
     /// nil, wenn es nichts zu vergleichen gibt: andere Einheiten als kg und
-    /// Wdh., oder kein frueheres Training mit dieser Uebung.
+    /// Wdh., kein frueheres Training mit dieser Uebung oder heute kein
+    /// Kraftsatz.
     static func fuer(block: SessionSummary.Block, in teil: SessionSummary,
                      verlauf: [SessionSummary]) -> Ergebnis? {
         guard block.loadUnit == .kg, block.volumeKind == .reps,
@@ -55,32 +55,22 @@ enum Satzvergleich {
                       let start = Zeitpunkt.parse(einheit.startedAt), start < beginn,
                       let gleich = einheit.blocks.first(where: { $0.exerciseId == block.exerciseId })
                 else { return nil }
-                let saetze = sortiert(gleich.sets)
+                let saetze = kraftsaetze(gleich.sets)
                 return saetze.isEmpty ? nil : (start, saetze)
             }
             .sorted { $0.0 > $1.0 }
             .prefix(hoechstensVorherige)
             .map(\.1)
-        guard !vorherige.isEmpty else { return nil }
+        let heute = kraftsaetze(block.sets)
+        guard !vorherige.isEmpty, !heute.isEmpty else { return nil }
 
-        let heute = sortiert(block.sets)
-        var saetze: [Int: Satz] = [:]
-        for (position, satz) in heute.enumerated() {
-            let gegenstuecke = vorherige.compactMap { $0.indices.contains(position) ? $0[position] : nil }
-            guard !gegenstuecke.isEmpty else { continue }
-            let anzahl = Double(gegenstuecke.count)
-            let schnittKg = gegenstuecke.map(\.load).reduce(0, +) / anzahl
-            let schnittWdh = gegenstuecke.map { Double($0.volume) }.reduce(0, +) / anzahl
-            let schnittVolumen = gegenstuecke.map(volumen).reduce(0, +) / anzahl
-            saetze[position] = Satz(
-                deltaKg: satz.load - schnittKg,
-                deltaWdh: Double(satz.volume) - schnittWdh,
-                trend: trend(volumen(satz), gegen: schnittVolumen))
-        }
-
+        let schnittKg = schnitt(vorherige.map { schnitt($0.map(\.load)) })
+        let schnittWdh = schnitt(vorherige.map { schnitt($0.map { Double($0.volume) }) })
         let summeHeute = heute.map(volumen).reduce(0, +)
-        let schnittSumme = vorherige.map { $0.map(volumen).reduce(0, +) }.reduce(0, +) / Double(vorherige.count)
-        return Ergebnis(saetze: saetze, gesamt: trend(summeHeute, gegen: schnittSumme),
+        let schnittSumme = schnitt(vorherige.map { $0.map(volumen).reduce(0, +) })
+        return Ergebnis(deltaKg: schnitt(heute.map(\.load)) - schnittKg,
+                        deltaWdh: schnitt(heute.map { Double($0.volume) }) - schnittWdh,
+                        gesamt: trend(summeHeute, gegen: schnittSumme),
                         basis: vorherige.count)
     }
 
@@ -105,18 +95,19 @@ enum Satzvergleich {
     /// Was der Vergleich von einem Satz braucht. Ein Cardio-Satz hat keine
     /// Belastung und keine Wiederholungen und faellt heraus.
     private struct Kraftsatz {
-        let setIndex: Int
         let load: Double
         let volume: Int
     }
 
-    private static func sortiert(_ saetze: [SessionSummary.Block.Set]) -> [Kraftsatz] {
-        saetze
-            .compactMap { satz -> Kraftsatz? in
-                guard let load = satz.load, let volume = satz.volume else { return nil }
-                return Kraftsatz(setIndex: satz.setIndex, load: load, volume: volume)
-            }
-            .sorted { $0.setIndex < $1.setIndex }
+    private static func kraftsaetze(_ saetze: [SessionSummary.Block.Set]) -> [Kraftsatz] {
+        saetze.compactMap { satz in
+            guard let load = satz.load, let volume = satz.volume else { return nil }
+            return Kraftsatz(load: load, volume: volume)
+        }
+    }
+
+    private static func schnitt(_ werte: [Double]) -> Double {
+        werte.isEmpty ? 0 : werte.reduce(0, +) / Double(werte.count)
     }
 
     private static func volumen(_ satz: Kraftsatz) -> Double {
