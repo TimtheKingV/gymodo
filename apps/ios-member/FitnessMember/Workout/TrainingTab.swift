@@ -57,4 +57,46 @@ enum TrainingTab {
                 > ($1.saetze.map(\.performedAt).max() ?? .distantPast)
         }
     }
+
+    // MARK: - Einstieg (E8)
+
+    /// Die Auswahl steht nur vor einem Training und nur mit Plan. Laeuft eine
+    /// Session, gibt es keine Auswahl; ohne Plan bleibt der Tab wie bisher.
+    static func zeigtAuswahl(einstieg: TrainingEinstieg, laeuft: Bool, hatPlan: Bool) -> Bool {
+        einstieg == .auswahl && !laeuft && hatPlan
+    }
+
+    /// Das freie Training zeigt die Geraeteliste ohne Plankarte.
+    static func zeigtPlankarte(einstieg: TrainingEinstieg) -> Bool {
+        einstieg != .frei
+    }
+
+    /// Wechselt die Session-ID (Start, Ende, Fortsetzen, Neustart): ein fuer
+    /// diese ID gespeicherter Einstieg geht vor, sonst bleibt der aktuelle.
+    static func einstiegFuerSession(gespeichert: TrainingEinstieg?,
+                                    aktuell: TrainingEinstieg) -> TrainingEinstieg {
+        gespeichert ?? aktuell
+    }
+
+    /// Der Abgleich beim Wechsel der Session-ID. Ohne Session bleibt der
+    /// Speicher unberuehrt -- "Fortsetzen" holt dieselbe ID zurueck, und mit
+    /// ihr muss `.frei` oder `.plan` wiederkommen. Ein veralteter Eintrag
+    /// schadet nicht: `laden` prueft die ID, `speichern` ueberschreibt.
+    static func einstiegAbgleichen(sessionId: UUID?, aktuell: TrainingEinstieg,
+                                   speicher: TrainingEinstiegSpeicher) -> TrainingEinstieg {
+        guard let sessionId else { return aktuell }
+        let gespeichert = speicher.laden(sessionId: sessionId)
+        if gespeichert == nil, aktuell != .auswahl {
+            speicher.speichern(aktuell, sessionId: sessionId)
+        }
+        return einstiegFuerSession(gespeichert: gespeichert, aktuell: aktuell)
+    }
+
+    /// Ein Wunsch von aussen ("Training starten" auf Home oder im Plan) gilt
+    /// nur vor einem Training; ein laufendes behaelt seinen Einstieg.
+    static func einstiegNachWunsch(_ wunsch: TrainingEinstieg?, aktuell: TrainingEinstieg,
+                                   laeuft: Bool) -> TrainingEinstieg {
+        guard let wunsch, !laeuft else { return aktuell }
+        return wunsch
+    }
 }

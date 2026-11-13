@@ -483,11 +483,12 @@ struct HomeSerieTests {
         #expect(HomeSerie.zielZeile(stand: stand, ziel: Wochenziel(kraft: 0, cardio: 0, cardioMinuten: 30)) == nil)
     }
 
-    @Test func kuenftigerTagMitMarkeWaehlbar() {
+    /// E1: ein kuenftiger Tag mit Marke (gebuchter Kurs) bleibt auf Home und zeigt seine Kurse.
+    @Test func kuenftigerTagMitMarkeZeigtPlan() {
         let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-06": .kursGebucht, "2026-11-05": .kraft])
-        // Freitag (kuenftig) mit Marke: Sprung in den Plan, auch mit eigenem Kurs.
-        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planTag)
-        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planTag)
+        // Freitag (kuenftig) mit Marke: Kurse darunter, auch mit eigenem Kurs -- kein Sprung in den Plan.
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: false) == .planZeigen)
+        #expect(HomeSerie.tippZiel(tage[4], heute: "2026-11-05", hatInhalt: true) == .planZeigen)
     }
 
     /// R8: die Trainings von heute bleiben auf Home erreichbar.
@@ -496,9 +497,60 @@ struct HomeSerieTests {
         #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: true) == .ausklappen)
     }
 
-    @Test func heuteMitMarkeOhneInhaltSpringtInDenPlan() {
+    /// Heute steht schon in "Nächste Einheit" -- keine doppelte Information, kein Sprung.
+    @Test func heuteMitMarkeOhneInhaltNichtAntippbar() {
         let tage = HomeSerie.tage(planWoche, trainingstage: [], geplant: ["2026-11-05": .kraft])
-        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == .planTag)
+        #expect(HomeSerie.tippZiel(tage[3], heute: "2026-11-05", hatInhalt: false) == nil)
+    }
+
+    @Test func naechsteEinheitNurOhneGewaehltenPlantag() {
+        #expect(HomeSerie.zeigtNaechsteEinheit(planTagId: nil) == true)
+        #expect(HomeSerie.zeigtNaechsteEinheit(planTagId: "2026-11-06") == false)
+    }
+
+    /// Eine Stelle je Tag: am gewaehlten kuenftigen Tag mit Marke zeigt nur
+    /// der Plan-Abschnitt die Kurse, nicht zusaetzlich die Tagesliste.
+    @Test func tageslisteNichtAmKuenftigenPlantag() {
+        let geplant: [String: TagMarke] = ["2026-11-06": .kursGebucht, "2026-11-05": .kraft, "2026-11-03": .cardio]
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-06", heute: "2026-11-05", geplant: geplant) == false)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-07", heute: "2026-11-05", geplant: geplant) == true)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-05", heute: "2026-11-05", geplant: geplant) == true)
+        #expect(HomeSerie.zeigtTagesliste(tagId: "2026-11-03", heute: "2026-11-05", geplant: geplant) == true)
+    }
+
+    private static func kurs(_ id: String, name: String, beginn: Date) -> CourseWeekSession {
+        CourseWeekSession(
+            sessionId: id, templateId: "t", name: name, description: nil,
+            startsAt: ISO8601DateFormatter().string(from: beginn),
+            localDay: "2026-11-06", durationMin: 60, capacity: 16, room: nil, instructorName: nil,
+            status: "planned", bookedCount: 1, waitlistCount: 0, freeSeats: 15,
+            ownStatus: "booked", ownBookingId: "b-\(id)", ownWaitlistPosition: nil)
+    }
+
+    /// Der Abschnitt nimmt die Kurs-Karten des Tages aus der Wochenrechnung --
+    /// keine Einheiten oder Cardio, keine Kurse anderer Tage.
+    @Test func plantagZeigtNurKurseDesTages() {
+        let freitag18 = Self.planKalender.date(byAdding: .hour, value: 18, to: Self.planTag(11, 6))!
+        let freitag9 = Self.planKalender.date(byAdding: .hour, value: 9, to: Self.planTag(11, 6))!
+        let samstag = Self.planKalender.date(byAdding: .hour, value: 10, to: Self.planTag(11, 7))!
+        let karte = { (k: CourseWeekSession) in
+            WochenKarte(id: "kurs-\(k.sessionId)", art: .kurs(k), erledigtAm: nil, quelle: .keine,
+                        istNaechste: false, minuten: 60)
+        }
+        let karten = [
+            WochenKarte(id: "kraft-offen-0", art: .kraft(einheitKey: "A"), erledigtAm: nil, quelle: .keine,
+                        istNaechste: true, minuten: nil),
+            karte(Self.kurs("k1", name: "Zirkel", beginn: freitag9)),
+            karte(Self.kurs("k2", name: "Yoga", beginn: freitag18)),
+            karte(Self.kurs("k3", name: "Spin", beginn: samstag)),
+        ]
+        let kurse = HomePlanTagAbschnitt.kurse(am: Self.planTag(11, 6), karten: karten, kalender: Self.planKalender)
+        #expect(kurse.map(\.sessionId) == ["k1", "k2"])
+    }
+
+    @Test func plantagKopfNenntTagUndGeplant() {
+        #expect(HomePlanTagAbschnitt.kopfText(Self.planTag(11, 11), kalender: Self.planKalender)
+            == "MITTWOCH, 11. NOV · GEPLANT")
     }
 
     @Test func kuenftigerTagOhneMarkeNicht() {

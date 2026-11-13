@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// "NÄCHSTE EINHEIT" auf Home (Spec P2 §5): die Einheit, die der Plan als
-/// naechste fuehrt (`naechsteEinheitKey`), ohne Tag. Tippen fuehrt zur
-/// Einheit im Plan-Tab; "Training starten" gibt es immer -- die Woche hat
+/// naechste fuehrt (`naechsteEinheitKey`), ohne Tag. Tippen auf die Karte
+/// oeffnet die Einheit im Home-Stack (E2); gestartet wird nur ueber den
+/// eigenen Knopf darunter. "Training starten" gibt es immer -- die Woche hat
 /// keine festen Tage mehr, jede Einheit darf heute dran sein.
 struct NaechsteEinheitKarte: View {
     let modell: EinheitKarteModell
@@ -21,7 +22,7 @@ struct NaechsteEinheitKarte: View {
                 .accessibilityAddTraits(.isHeader)
             EinheitKarte(
                 modell: modell, geschlecht: geschlecht,
-                beiTipp: beiTippen, hinweis: "Zeigt die Einheit im Plan",
+                beiTipp: beiTippen, hinweis: "Zeigt die Übungen der Einheit",
                 aktion: (titel: Self.startText(laeuft: laeuft),
                          label: "\(modell.titel) \(laeuft ? "weiter trainieren" : "starten")",
                          hinweis: "Öffnet das Training", ausloesen: beiStart))

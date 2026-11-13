@@ -48,6 +48,9 @@ final class TrainingsplanAblaufStore {
     /// ist Einheit B dran", wenn der Ablauf nach dem Beenden leer ist.
     var naechsteEinheitKey: String? { datei.vorlage.map(gewaehlteEinheit) }
 
+    /// Die Einheit, die das Mitglied vorgezogen hat; nil, wenn keine.
+    var vorgezogenerKey: String? { datei.vorgezogen?.einheitKey }
+
     // MARK: - Vorbereiten
 
     /// Bequemer Einstieg fuer die Wurzel: der Plan des Mitglieds aus dem Bootstrap.
@@ -64,6 +67,7 @@ final class TrainingsplanAblaufStore {
     /// (Review Focus 2): der Server hat die Session an diese Version gebunden,
     /// und ein Wechsel mitten in der Einheit aenderte ihre Zaehlung.
     func vorbereiten(plan: Trainingsplan?, jetzt: Date = Date()) {
+        let vorherigeVorlage = datei.vorlage
         datei.vorlage = plan.flatMap { p in !p.einheiten.isEmpty ? PlanVorlage(p) : nil }
 
         if let lauf = datei.lauf, lauf.gebundeneSessionId != nil {
@@ -77,6 +81,39 @@ final class TrainingsplanAblaufStore {
             abschliessen(jetzt: jetzt)
         }
 
+        // Ein Vorzug ohne Satz verfaellt wie der Ablauf selbst.
+        if let vorzug = datei.vorgezogen, jetzt.timeIntervalSince(vorzug.am) > Self.verfallOhneSatz {
+            datei.vorgezogen = nil
+        }
+        // Eine Einheit, die es in der Vorlage nicht (mehr) gibt, kann nicht vorgezogen sein.
+        if let vorzug = datei.vorgezogen, datei.vorlage?.einheitKeys.contains(vorzug.einheitKey) != true {
+            datei.vorgezogen = nil
+        }
+        ungebundenAuffrischen(jetzt: jetzt, vorherigeVorlage: vorherigeVorlage)
+        speichern()
+    }
+
+    // MARK: - Vorziehen
+
+    /// Zieht eine spaetere Einheit vor: sie wird statt der naechsten
+    /// vorbereitet. Nach ihr gilt ihr Nachfolger in der Folge (E9). Geht nicht,
+    /// sobald eine Session am Ablauf haengt, und nicht fuer einen unbekannten
+    /// Schluessel.
+    @discardableResult
+    func vorziehen(einheitKey: String, jetzt: Date = Date()) -> Bool {
+        guard datei.lauf?.gebundeneSessionId == nil,
+              let vorlage = datei.vorlage, vorlage.einheitKeys.contains(einheitKey) else { return false }
+        datei.vorgezogen = Vorgezogen(einheitKey: einheitKey, am: jetzt)
+        ungebundenAuffrischen(jetzt: jetzt)
+        speichern()
+        return true
+    }
+
+    /// Nimmt den Vorzug zurueck; die Folge gilt wieder. Wirkt nur ohne
+    /// gebundene Session.
+    func vorziehenZuruecknehmen(jetzt: Date = Date()) {
+        guard datei.vorgezogen != nil, datei.lauf?.gebundeneSessionId == nil else { return }
+        datei.vorgezogen = nil
         ungebundenAuffrischen(jetzt: jetzt)
         speichern()
     }
@@ -183,6 +220,7 @@ final class TrainingsplanAblaufStore {
         } else {
             // Ohne Satz gab es die Einheit nie (Entschieden 2): nur leeren.
             datei.lauf = nil
+            datei.vorgezogen = nil
         }
         speichern()
     }
@@ -200,6 +238,8 @@ final class TrainingsplanAblaufStore {
             }
             datei.zuletztBeendet = nil
         }
+        // Wer verwirft, bleibt bei der Folge: auch ein Vorzug faellt weg.
+        datei.vorgezogen = nil
         // Ein schon vorbereiteter Ablauf der Folgeeinheit passt jetzt nicht mehr.
         ungebundenAuffrischen(jetzt: Date())
         speichern()
@@ -254,6 +294,7 @@ final class TrainingsplanAblaufStore {
     private func abschliessen(jetzt: Date) {
         guard let lauf = datei.lauf else { return }
         let vorher = datei.lokalZuletzt
+        datei.vorgezogen = nil
         let gezaehlt = TrainingsplanAblauf.zaehlt(lauf.zustand)
         if gezaehlt {
             // Der Zaehler des Servers, so wie die Vorlage ihn zuletzt sah:
@@ -268,7 +309,7 @@ final class TrainingsplanAblaufStore {
 
     /// Ersetzt einen ungebundenen Ablauf, der nicht mehr passt, und baut einen,
     /// falls keiner da ist. Ein gebundener bleibt immer (Review Focus 2).
-    private func ungebundenAuffrischen(jetzt: Date) {
+    private func ungebundenAuffrischen(jetzt: Date, vorherigeVorlage: PlanVorlage? = nil) {
         var ersetzt: PlanLauf?
         if let lauf = datei.lauf, lauf.gebundeneSessionId == nil, !passt(lauf, jetzt: jetzt) {
             ersetzt = lauf
@@ -276,7 +317,9 @@ final class TrainingsplanAblaufStore {
         }
         if datei.lauf == nil, let vorlage = datei.vorlage {
             let neu = neuerLauf(vorlage, jetzt: jetzt)
-            datei.lauf = ersetzt.map { mitHeutigenTauschen(aus: $0, in: neu, jetzt: jetzt) } ?? neu
+            datei.lauf = ersetzt.map {
+                mitHeutigenTauschen(aus: $0, in: neu, vorherige: vorherigeVorlage ?? datei.vorlage, jetzt: jetzt)
+            } ?? neu
         }
     }
 
@@ -288,10 +331,12 @@ final class TrainingsplanAblaufStore {
     ///   dauerhaft getauschte --, faellt der heutige Tausch weg: sonst stuende
     ///   die neue Uebung als geplant UND als Tausch da.
     /// - Ausgelassene Positionen, soweit es ihren Schluessel noch gibt.
-    /// - Die Reihenfolge: bekannte Schluessel wie bisher, neue hinten an.
+    /// - Die Reihenfolge, wenn das Mitglied sie heute umgestellt hat: bekannte
+///   Schluessel wie bisher, neue hinten an. Sonst gilt die der neuen Version.
     /// Ein verfallener Ablauf (12 h) gibt nichts weiter, und mit ihm bleibt
     /// sein Alter, damit ein Tausch nicht durch eine neue Version verlaengert wird.
-    private func mitHeutigenTauschen(aus alt: PlanLauf, in neu: PlanLauf, jetzt: Date) -> PlanLauf {
+    private func mitHeutigenTauschen(aus alt: PlanLauf, in neu: PlanLauf, vorherige: PlanVorlage?,
+                                    jetzt: Date) -> PlanLauf {
         guard alt.einheitKey == neu.einheitKey,
               jetzt.timeIntervalSince(alt.erstelltAm) <= Self.verfallOhneSatz else { return neu }
         var zustand = neu.zustand
@@ -303,8 +348,14 @@ final class TrainingsplanAblaufStore {
                                                    ersatz: (exerciseId: ersatz, hauptmuskeln: position.hauptmuskeln))
         }
         let altReihenfolge = alt.zustand.positionen.map(\.key)
-        let bekannt = altReihenfolge.compactMap { key in zustand.positionen.first { $0.key == key } }
-        zustand.positionen = bekannt + zustand.positionen.filter { !altReihenfolge.contains($0.key) }
+        // Die alte Reihenfolge gilt nur, wenn das Mitglied heute selbst umgeordnet
+        // hat, sie also von der vorigen Version abweicht; sonst gilt die der neuen
+        // (ein dauerhaftes Umordnen). Ohne vorige Version bleibt es bei der alten.
+        let heuteUmgeordnet = vorherige?.positionen[alt.einheitKey].map { $0.map(\.key) != altReihenfolge } ?? true
+        if heuteUmgeordnet {
+            let bekannt = altReihenfolge.compactMap { key in zustand.positionen.first { $0.key == key } }
+            zustand.positionen = bekannt + zustand.positionen.filter { !altReihenfolge.contains($0.key) }
+        }
         let schluessel = Set(zustand.positionen.map(\.key))
         let ausgelassen = alt.ausgelassen.filter { schluessel.contains($0) }
         guard zustand != neu.zustand || !ausgelassen.isEmpty else { return neu }
@@ -326,6 +377,9 @@ final class TrainingsplanAblaufStore {
     /// Die lokal zuletzt beendete Einheit geht dem Server vor, solange er sie
     /// noch nicht kennen kann; sonst seine naechste, ohne sie die erste.
     private func gewaehlteEinheit(_ vorlage: PlanVorlage) -> String {
+        if let vorzug = datei.vorgezogen, vorlage.einheitKeys.contains(vorzug.einheitKey) {
+            return vorzug.einheitKey
+        }
         if let zuletzt = datei.lokalZuletzt, vorlage.einheitKeys.contains(zuletzt.einheitKey) {
             return TrainingsplanFolge.naechsteEinheitKey(einheitKeys: vorlage.einheitKeys, zuletzt: zuletzt.einheitKey)
         }
@@ -362,8 +416,19 @@ struct PlanAblaufDatei: Codable, Equatable {
     var lauf: PlanLauf?
     var lokalZuletzt: LokalZuletzt?
     var zuletztBeendet: BeendeterLauf?
+    /// Eine spaeter geplante Einheit, die das Mitglied jetzt startet. Optional,
+    /// damit eine Datei von vorher lesbar bleibt.
+    var vorgezogen: Vorgezogen?
 
-    var istLeer: Bool { vorlage == nil && lauf == nil && lokalZuletzt == nil && zuletztBeendet == nil }
+    var istLeer: Bool {
+        vorlage == nil && lauf == nil && lokalZuletzt == nil && zuletztBeendet == nil && vorgezogen == nil
+    }
+}
+
+/// Der Vorzug einer Einheit samt Zeitpunkt, fuer den Verfall nach zwoelf Stunden.
+struct Vorgezogen: Codable, Equatable {
+    let einheitKey: String
+    let am: Date
 }
 
 struct PlanVorlage: Codable, Equatable {

@@ -11,11 +11,23 @@ import SwiftUI
 /// nicht mehr (Spec P2): gestartet wird nur die naechste Einheit.
 struct PlanEinheitView: View {
     let einheitKey: String
+    let apiClient: APIClient
     let beiTrainingStarten: () -> Void
+    /// "Zum Training" bei einer Einheit, die nicht dran ist: fuehrt in die
+    /// Auswahl statt in den Plan. nil = derselbe Weg wie `beiTrainingStarten`.
+    var beiZumTraining: (() -> Void)? = nil
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @State private var warumOffen = false
+    @State private var bearbeitenOffen = false
+
+    /// E7: nicht, solange an genau dieser Einheit eine Session haengt.
+    private var darfBearbeiten: Bool {
+        PlanEinheitBearbeitung.darfBearbeiten(
+            einheitKey: einheitKey, laufEinheitKey: planAblauf.einheitKey,
+            gebunden: planAblauf.gebundeneSessionId != nil)
+    }
 
     private var plan: Trainingsplan? { PlanAnzeige.plan(bootstrap: katalog.bootstrap) }
 
@@ -35,8 +47,42 @@ struct PlanEinheitView: View {
         .background(DesignSystem.Color.bg)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if darfBearbeiten, plan?.einheiten.contains(where: { $0.key == einheitKey }) == true {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Bearbeiten") { bearbeitenOffen = true }
+                        .foregroundStyle(DesignSystem.Color.text)
+                        .testnotizElement("einheit.bearbeiten", typ: "Button")
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $bearbeitenOffen) {
+            if let einheit = plan?.einheiten.first(where: { $0.key == einheitKey }) {
+                PlanEinheitBearbeitenView(einheit: einheit, apiClient: apiClient) { bearbeitenOffen = false }
+                    .environment(katalog)
+                    .environment(planAblauf)
+                    .environment(videoVorrat)
+            } else {
+                // Die Einheit ist weg (neuer Plan): nie ein leeres Cover ohne Ausweg.
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
+                    Text("Diese Einheit gibt es in deinem Plan nicht mehr.")
+                        .font(.system(size: 15))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Schließen") { bearbeitenOffen = false }
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.accent)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(DesignSystem.Color.bg)
+            }
+        }
         .testnotizScreen()
     }
+
+    /// Fuer das Bearbeiten-Cover (Videos der Ersatz-Kandidaten).
+    @Environment(UebungsVideoVorrat.self) private var videoVorrat
 
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
         let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: einheit.key, zustand: nil,
@@ -56,7 +102,7 @@ struct PlanEinheitView: View {
                         geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                        Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · REIHENFOLGE EGAL")
+                        Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · IN DIESER REIHENFOLGE")
                             .font(DesignSystem.Typography.label)
                             .tracking(1.5)
                             .foregroundStyle(DesignSystem.Color.textMuted)
@@ -118,9 +164,9 @@ struct PlanEinheitView: View {
                         beiTrainingStarten()
                     }
                         .accessibilityLabel("Training starten")
-                        .accessibilityHint("Wechselt in den Tab Training, dort startet die Einheit")
+                        .accessibilityHint("Wechselt in den Tab Training und startet die Einheit")
                 } else {
-                    SecondaryButton(title: "Zum Training") { beiTrainingStarten() }
+                    SecondaryButton(title: "Zum Training") { (beiZumTraining ?? beiTrainingStarten)() }
                 }
             }
             .padding(.horizontal, 20)

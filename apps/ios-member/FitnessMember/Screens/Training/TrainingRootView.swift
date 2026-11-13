@@ -29,8 +29,15 @@ struct TrainingRootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     let apiClient: APIClient
+    /// Der Wunsch von Home oder Plan ("Training starten"); wird hier verbraucht.
+    var einstiegWunsch: Binding<TrainingEinstieg?> = .constant(nil)
 
     @State private var pfad: [GeraetRoute] = []
+    /// Womit der Tab vor einem Training startet (E8). Endet die Session,
+    /// steht wieder die Auswahl da (onChange unten).
+    @State private var einstieg: TrainingEinstieg = .auswahl
+    /// Haelt den Einstieg der laufenden Session ueber einen Neustart.
+    private let einstiegSpeicher = TrainingEinstiegSpeicher()
     @State private var scannerOffen = false
     @State private var scanFehler: String?
     /// Lebt an der Wurzel, nicht in GeraeteAuswahlView: "Geraet waehlen"
@@ -329,6 +336,14 @@ struct TrainingRootView: View {
             .task {
                 if let eingang = pendingTag.consume() { verarbeite(eingang) }
             }
+            // Der Einstieg der laufenden Session: beim Erscheinen (Neustart)
+            // und beim Fortsetzen zurueckholen, bei einer neuen festhalten.
+            .onAppear {
+                einstiegAbgleichen(sessionId: sessions.aktiveSession()?.id)
+                wunschVerbrauchen()
+            }
+            .onChange(of: sessions.aktiveSession()?.id) { _, neu in einstiegAbgleichen(sessionId: neu) }
+            .onChange(of: einstiegWunsch.wrappedValue) { _, _ in wunschVerbrauchen() }
             // Verlaesst die Ersatzwahl den Pfad (Zurueck, Scan,
             // Pfadbereinigung), gehoert ihr Zustand mit weg.
             .onChange(of: pfad) { _, _ in
@@ -373,6 +388,8 @@ struct TrainingRootView: View {
                 // Ein Zirkel lebt nur in der laufenden Einheit (Spec,
                 // Nicht-Ziele): endet sie, ist auch er vorbei.
                 if !laeuft {
+                    // E8: nach dem Training wieder die Auswahl.
+                    einstieg = .auswahl
                     #if DEBUG
                     satzZaehler.aktivesModell?.screenVerlassen()
                     #endif
@@ -434,14 +451,52 @@ struct TrainingRootView: View {
         }
     }
 
+    // MARK: - Einstieg
+
+    /// Gibt es zur Session einen gespeicherten Einstieg, gilt er; sonst wird
+    /// ein gewaehlter (Plan, frei) fuer sie festgehalten. Endet die Session,
+    /// bleibt der Eintrag stehen: "Fortsetzen" bringt dieselbe ID zurueck und
+    /// mit ihr den Einstieg (TrainingTab.einstiegAbgleichen).
+    private func einstiegAbgleichen(sessionId: UUID?) {
+        einstieg = TrainingTab.einstiegAbgleichen(sessionId: sessionId, aktuell: einstieg,
+                                                  speicher: einstiegSpeicher)
+    }
+
+    private func wunschVerbrauchen() {
+        guard einstiegWunsch.wrappedValue != nil else { return }
+        einstieg = TrainingTab.einstiegNachWunsch(einstiegWunsch.wrappedValue, aktuell: einstieg,
+                                                  laeuft: sessions.aktiveSession() != nil)
+        einstiegWunsch.wrappedValue = nil
+    }
+
     // MARK: - Wurzel
 
     /// Die Liste braucht den Prefetch; der Ort ist immer gesetzt, auch im
     /// Freien Training. Ohne Prefetch (etwa direkt nach dem Onboarding)
     /// steht der Titel "TRAINING" mit den Scanwegen da, wie vor dem Umbau.
+    ///
+    /// E8: Ohne laufende Session und mit Plan steht davor die Auswahl
+    /// (`TrainingAuswahlView`). "Freies Training" zeigt die Liste ohne
+    /// Plankarte und ohne Plan-Modus.
     @ViewBuilder
     private func wurzel(mitte: TrainingTab.Mitte?, session: LokaleSession?) -> some View {
-        if katalog.bootstrap != nil, let mitte, let session,
+        let plan = PlanAnzeige.plan(bootstrap: katalog.bootstrap)
+        let mitPlankarte = TrainingTab.zeigtPlankarte(einstieg: einstieg)
+        if let plan, TrainingTab.zeigtAuswahl(einstieg: einstieg, laeuft: session != nil, hatPlan: true) {
+            TrainingAuswahlView(
+                plan: plan,
+                beiEinheitOeffnen: { pfad.append(.planEinheit(key: $0)) },
+                beiPlanStarten: { einstieg = .plan },
+                beiCardio: {
+                    // E10: freies Training auf der Kategorie Cardio.
+                    einstieg = .frei
+                    pfad.append(.kategorie(.cardio))
+                },
+                beiFrei: { einstieg = .frei })
+            // Ohne Scanwege (E8), aber Hinweise wie ein ungueltiger Link
+            // muessen auch hier sichtbar sein.
+            .safeAreaInset(edge: .bottom) { fuss(mitScanWegen: false) }
+        } else if katalog.bootstrap != nil, let mitte, let session, mitPlankarte,
            PlanAnzeige.planModus(laeuft: true, heute: PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)) {
             planModusWurzel(mitte: mitte, session: session)
         } else if katalog.bootstrap != nil {
@@ -451,8 +506,10 @@ struct TrainingRootView: View {
                         laufendKopf(mitte, session: session)
                     }
                     // Entwurf 2.1/2.2; ohne Plan im aktiven Studio nichts.
-                    PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
-                        planPositionAntippen($0, bloecke: session?.bloecke ?? [])
+                    if mitPlankarte {
+                        PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
+                            planPositionAntippen($0, bloecke: session?.bloecke ?? [])
+                        }
                     }
                 }
             } trainingsinhalt: {
@@ -470,7 +527,25 @@ struct TrainingRootView: View {
             // safeAreaInset statt overlay: die Liste bekommt unten so viel
             // Luft, dass ihr letztes Geraet ueber den Knoepfen landet, und
             // scrollt trotzdem unter ihnen durch -- die Knoepfe schweben.
-            .safeAreaInset(edge: .bottom) { fuss }
+            .safeAreaInset(edge: .bottom) { fuss() }
+            .toolbar {
+                // Zurueck in die Auswahl, solange noch kein Training laeuft.
+                if plan != nil, session == nil, einstieg != .auswahl {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            // Ohne Satz zurueck: ein Vorziehen aus dieser
+                            // Auswahl gilt nicht weiter, auch nicht auf Home/Plan.
+                            planAblauf.vorziehenZuruecknehmen()
+                            einstieg = .auswahl
+                        } label: {
+                            Label("Auswahl", systemImage: "chevron.left")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .accessibilityHint("Zurück zur Trainingsauswahl")
+                        .testnotizElement("training.auswahl.zurueck", typ: "Button")
+                    }
+                }
+            }
         } else {
             VStack(alignment: .leading, spacing: 0) {
                 titel
@@ -485,7 +560,7 @@ struct TrainingRootView: View {
                         .padding(.top, DesignSystem.Spacing.s16)
                 }
                 Spacer(minLength: 0)
-                fuss
+                fuss()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
@@ -517,7 +592,8 @@ struct TrainingRootView: View {
     /// die Ueberschrift "Training starten" sind weg -- die Liste darueber
     /// ist die Suche (Testnotiz 06.10., #2, #13). "NÄCHSTES GERÄT" steht
     /// jetzt ueber der Liste, nicht ueber den Knoepfen.
-    private var fuss: some View {
+    /// `mitScanWegen`: false in der Auswahl (E8) -- dort stehen nur die Hinweise.
+    private func fuss(mitScanWegen: Bool = true) -> some View {
         VStack(spacing: DesignSystem.Spacing.s12) {
             if let toast {
                 Toast(meldung: toast) { self.toast = nil }
@@ -529,8 +605,10 @@ struct TrainingRootView: View {
             if beitrittZeigen, let studiohinweis = katalog.studiohinweis {
                 InlineBanner(tone: .muted, message: studiohinweis.text)
             }
-            ScanWege(beiQR: { scannerOffen = true }, beiNFC: { nfcStarten() })
-                .testnotizElement("training.scanwege", typ: "ScanWege")
+            if mitScanWegen {
+                ScanWege(beiQR: { scannerOffen = true }, beiNFC: { nfcStarten() })
+                    .testnotizElement("training.scanwege", typ: "ScanWege")
+            }
         }
         .padding(.horizontal, 20)
         .padding(.bottom, DesignSystem.Spacing.s12)
@@ -560,7 +638,7 @@ struct TrainingRootView: View {
         }
         .background(DesignSystem.Color.bg)
         .modifier(PlanModusTitel())
-        .safeAreaInset(edge: .bottom) { fuss }
+        .safeAreaInset(edge: .bottom) { fuss() }
     }
 
     private func planModusHatAntippbareBloecke(_ session: LokaleSession) -> Bool {
@@ -888,6 +966,15 @@ struct TrainingRootView: View {
                     sessions.reserveNachtragen(blockId: blockId, reserve: reserve, enqueue: einreihen)
                 },
                 beiWeiter: zirkelUebersichtWeiter)
+        case .planEinheit(let key):
+            // E2: die Karte oeffnet die Einheit, ihr Knopf startet den Plan.
+            PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: {
+                if !pfad.isEmpty { pfad.removeLast() }
+                einstieg = .plan
+            }, beiZumTraining: {
+                // Nicht dran: zurueck in die Auswahl.
+                if !pfad.isEmpty { pfad.removeLast() }
+            })
         case .abschluss(let sessionId, let zusammenfassung):
             // "Fertig" nimmt den Pfad zur Wurzel zurueck (Aufgabenbrief):
             // pfad.removeAll() statt eines einzelnen pop, weil ein Zirkel-
@@ -972,7 +1059,8 @@ struct TrainingRootView: View {
             zaehler: zaehler,
             startwerte: startwerte,
             mitCountdown: !zirkel,
-            ablauf: planAblauf
+            // E8: im freien Training binden Saetze nicht an den Plan.
+            ablauf: einstieg == .frei ? nil : planAblauf
         )
         if zirkel {
             modell.beiZirkelSatzGesichert = { zirkelSatzGesichert() }

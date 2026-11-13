@@ -600,4 +600,183 @@ struct TrainingsplanAblaufStoreTests {
         #expect(geladen.ausgelassen == [])
         #expect(geladen.einheitKey == "A")
     }
+
+    // MARK: - Einheit vorziehen
+
+    @Test func vorziehenStartetGewaehlteEinheit() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+
+        let ok = sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(ok)
+        #expect(sut.einheitKey == "B")
+        #expect(sut.naechsteEinheitKey == "B")
+        #expect(sut.vorgezogenerKey == "B")
+        #expect(sut.zustand?.positionen.map(\.key) == ["B0"])
+    }
+
+    @Test func vorziehenMitGebundenerSessionVerweigert() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: Self.brust, jetzt: Self.jetzt)
+
+        let ok = sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(!ok)
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func vorziehenUnbekannterKey() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+
+        #expect(!sut.vorziehen(einheitKey: "Z", jetzt: Self.jetzt))
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func nachBeendetGiltFolgeDesVorgezogenen() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: AblaufSatz(exerciseId: "e3", hauptmuskeln: ["quads"], cardio: false),
+                         jetzt: Self.jetzt)
+
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.naechsteEinheitKey == "A")
+    }
+
+    @Test func vorzugVerfaellt() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorbereiten(plan: Self.plan(naechste: "A"),
+                        jetzt: Self.jetzt.addingTimeInterval(TrainingsplanAblaufStore.verfallOhneSatz + 1))
+
+        #expect(sut.einheitKey == "A")
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func neueVersionBehaeltVorzug() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, naechste: "A"),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.planId == "p2")
+        #expect(sut.einheitKey == "B")
+        #expect(sut.zustand?.positionen.map(\.key) == ["B0"])
+    }
+
+    @Test func vorziehenZuruecknehmenKehrtZurFolgeZurueck() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.vorziehenZuruecknehmen(jetzt: Self.jetzt)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.einheitKey == "A")
+    }
+
+    @Test func resetLeertDenVorzug() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        sut.reset()
+
+        #expect(sut.vorgezogenerKey == nil)
+    }
+
+    @Test func vorzugUeberlebtNeustart() {
+        let verzeichnis = Self.verzeichnis()
+        let sut = Self.store(verzeichnis)
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        #expect(Self.store(verzeichnis).vorgezogenerKey == "B")
+    }
+
+    @Test func alteDateiOhneVorzugLesbar() throws {
+        let alt = Data(#"{"lokalZuletzt":{"einheitKey":"A","beendetAm":0}}"#.utf8)
+
+        let geladen = try JSONDecoder().decode(PlanAblaufDatei.self, from: alt)
+
+        #expect(geladen.vorgezogen == nil)
+        #expect(geladen.lokalZuletzt?.einheitKey == "A")
+    }
+
+    @Test func verwerfenNachVorzugKehrtZurFolgeZurueckGebunden() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: AblaufSatz(exerciseId: "e3", hauptmuskeln: ["quads"], cardio: false),
+                         jetzt: Self.jetzt)
+
+        sut.einheitVerworfen(sessionId: sessionA)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.einheitKey == "A")
+    }
+
+    @Test func verwerfenNachVorzugKehrtZurFolgeZurueckNachBeendet() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+        _ = sut.nachSatz(sessionId: sessionA, satz: AblaufSatz(exerciseId: "e3", hauptmuskeln: ["quads"], cardio: false),
+                         jetzt: Self.jetzt)
+        sut.einheitBeendet(jetzt: Self.jetzt)
+
+        sut.einheitVerworfen(sessionId: sessionA)
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.einheitKey == "A")
+    }
+
+    @Test func vorzugOhneEinheitInDerVorlageFaelltWeg() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(naechste: "A"), jetzt: Self.jetzt)
+        sut.vorziehen(einheitKey: "B", jetzt: Self.jetzt)
+
+        // Neue Version, in der es nur noch Einheit A gibt.
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2, positionenA: [("A0", "e1")]),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.vorgezogenerKey == nil)
+        #expect(sut.einheitKey == "A")
+    }
+
+    @Test func neueReihenfolgeGiltOhneHeutigesUmordnen() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1,
+                                        positionenA: [("A0", "e1"), ("A1", "e2"), ("A2", "e4")]), jetzt: Self.jetzt)
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2,
+                                        positionenA: [("A2", "e4"), ("A1", "e2"), ("A0", "e1")]),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.planId == "p2")
+        #expect(sut.zustand?.positionen.map(\.key) == ["A2", "A1", "A0"])
+    }
+
+    @Test func heutigesUmordnenBleibtBeiNeuerVersion() {
+        let sut = Self.store()
+        sut.vorbereiten(plan: Self.plan(planId: "p1", version: 1,
+                                        positionenA: [("A0", "e1"), ("A1", "e2"), ("A2", "e4")]), jetzt: Self.jetzt)
+        sut.umordnen(positionKey: "A2", nach: 0)  // A2, A0, A1
+
+        sut.vorbereiten(plan: Self.plan(planId: "p2", version: 2,
+                                        positionenA: [("A2", "e4"), ("A1", "e2"), ("A0", "e1")]),
+                        jetzt: Self.jetzt.addingTimeInterval(60))
+
+        #expect(sut.zustand?.positionen.map(\.key) == ["A2", "A0", "A1"])
+    }
 }

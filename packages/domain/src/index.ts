@@ -323,6 +323,8 @@ export {
   aktiverKatalogPlan,
   erzeugePlanVorschlag,
   listPlaene,
+  minutenNachOrdnen,
+  ordnePlanEinheit,
   tauschePlanPosition,
 } from "./trainingsplan.js";
 export {
@@ -347,7 +349,7 @@ export type {
   SessionFuerNachholen,
   SessionFuerZaehler,
 } from "./trainingsplan-bootstrap.js";
-export type { PlanEingabe, PlanStatus, PlanTausch, TauschGrund, TrainingPlan } from "./trainingsplan.js";
+export type { PlanEingabe, PlanOrdnen, PlanStatus, PlanTausch, TauschGrund, TrainingPlan } from "./trainingsplan.js";
 export { ablaufNachSatz, ablaufTauschen, einheitZaehlt, naechsteEinheitKey } from "./trainingsplan-ablauf.js";
 export type { AblaufPosition, AblaufSatz, AblaufZustand, PositionStatus } from "./trainingsplan-ablauf.js";
 export {
