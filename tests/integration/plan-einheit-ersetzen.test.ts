@@ -188,12 +188,12 @@ describe("replace_training_plan_einheit", () => {
     expect(error).toBeNull();
   });
 
-  it("Modell eines normalen Studios: plan_ungueltig", async () => {
+  it("Modell eines normalen Studios: modell_ungueltig", async () => {
     const { m, plan } = await mitAktivemPlan("ersetzen-modell");
     const { key, positionen } = ersteEinheit(plan);
     positionen[0]!.modelId = s.studioModelle.voll;
     const e = await fehlerVon(ersetze(m.client, plan.id, key, positionen));
-    expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
+    expect(e).toMatchObject({ code: "P0001", message: "modell_ungueltig" });
     expect(await status(plan.id)).toBe("aktiv");
   });
 
@@ -239,5 +239,20 @@ describe("replace_training_plan_einheit", () => {
     cardio.reserveVon = null;
     const e = await fehlerVon(ersetze(m.client, plan.id, key, positionen));
     expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
+  });
+
+  it("gemiedene Uebung, die schon in der Einheit steht, blockiert das Entfernen einer anderen Position nicht", async () => {
+    const m = await legeMitgliedAn("ersetzen-spaeter", { studios: [] });
+    const plan = await aktiverKatalogPlan(m, s);
+    const { key, positionen } = ersteEinheit(plan);
+    // Beschwerde erst nach dem Plan: die Beinpresse (Bereich knie) steht schon in der Einheit.
+    const { error: le } = await admin
+      .from("training_limits")
+      .insert({ user_id: m.userId, consent_at: new Date().toISOString(), areas: { knie: "meiden" } });
+    if (le) throw le;
+    expect(positionen[0]!.exerciseId).toBe(s.uebungen["Beinpresse"]);
+    const ohneLetzte = positionen.filter((p) => p.baustein !== "cardio").slice(0, -1);
+    const { error } = await ersetze(m.client, plan.id, key, ohneLetzte);
+    expect(error).toBeNull();
   });
 });

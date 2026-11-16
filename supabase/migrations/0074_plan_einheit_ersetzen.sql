@@ -120,6 +120,7 @@ begin
 
     if v_cardio then
       if v_saetze <> 1 or v_pause <> 0
+         or v_pos -> 'aufwaermsatz' <> 'false'::jsonb
          or jsonb_typeof(v_pos -> 'wdhVon') is distinct from 'null'
          or jsonb_typeof(v_pos -> 'wdhBis') is distinct from 'null'
          or jsonb_typeof(v_pos -> 'dauerMin') is distinct from 'number'
@@ -174,18 +175,32 @@ begin
     if not found then
       raise exception 'plan_ungueltig' using errcode = 'P0001';
     end if;
-    if v_baustein is null or v_typ is null
-       or v_baustein <> (v_pos ->> 'baustein') or v_typ <> (v_pos ->> 'typ') then
+    if v_baustein is null or v_typ is null then
       raise exception 'uebung_ohne_planmerkmale' using errcode = 'P0001';
+    end if;
+    if v_baustein <> (v_pos ->> 'baustein') or v_typ <> (v_pos ->> 'typ') then
+      raise exception 'plan_ungueltig' using errcode = 'P0001';
     end if;
 
     -- Katalogmodell und Uebung daran (Modelle normaler Studios abgelehnt).
-    perform public.training_plan_pruefen(
-      v_plan.studio_id,
-      jsonb_build_array(jsonb_build_object('positionen', jsonb_build_array(
-        jsonb_build_object('modelId', v_pos ->> 'modelId', 'exerciseId', v_pos ->> 'exerciseId')))));
+    -- Eigener Fehlercode, damit der Client "Gibt es an diesem Geraet nicht" zeigen kann.
+    begin
+      perform public.training_plan_pruefen(
+        v_plan.studio_id,
+        jsonb_build_array(jsonb_build_object('positionen', jsonb_build_array(
+          jsonb_build_object('modelId', v_pos ->> 'modelId', 'exerciseId', v_pos ->> 'exerciseId')))));
+    exception when raise_exception then
+      raise exception 'modell_ungueltig' using errcode = 'P0001';
+    end;
 
-    if v_areas is not null and exists (
+    -- Gemieden wird nur geprueft, was neu ist oder eine andere Uebung als vorher hat:
+    -- eine spaeter gesetzte Beschwerde sperrt sonst jede Aenderung der Einheit.
+    if v_areas is not null
+       and not exists (
+         select 1 from jsonb_array_elements(v_einheit -> 'positionen') o(value)
+          where o.value ->> 'key' = v_pos ->> 'key'
+            and o.value ->> 'exerciseId' = v_pos ->> 'exerciseId')
+       and exists (
       select 1 from unnest(coalesce(v_bereiche, '{}')) b(bereich) where v_areas ->> b.bereich = 'meiden'
     ) then
       raise exception 'uebung_gemieden' using errcode = 'P0001';
