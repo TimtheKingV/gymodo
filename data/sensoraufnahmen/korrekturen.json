@@ -1806,6 +1806,198 @@
       "repsWahr": null,
       "fuerZaehler": false,
       "grund": "Cardio (Ruderergometer), keine Wiederholungen"
+    },
+    "2026-11-10-1820-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 12,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-10-1821-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1822-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1822-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1822-03": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 5,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Trizepsstrecken über Kopf – eine Kurzhantel (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1823-01": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1823-02": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Trizepsstrecken über Kopf – eine Kurzhantel) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bizepscurl – stehend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1824-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 9,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1825-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1825-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 4,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Trizepsstrecken über Kopf – eine Kurzhantel (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1825-03": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1825-04": {
+      "was": "Kurzhantel-Bizepscurl – stehend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Trizepsstrecken über Kopf – eine Kurzhantel) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bizepscurl – stehend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1826-01": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1826-02": {
+      "was": "Kurzhantel-Schulterdrücken – sitzend",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 10,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Bizepscurl – stehend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Schulterdrücken – sitzend (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1827-01": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1827-02": {
+      "was": "Trizepsstrecken über Kopf – eine Kurzhantel",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 4,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantel-Schulterdrücken – sitzend) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Trizepsstrecken über Kopf – eine Kurzhantel (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1828-01": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 16,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-10-1829-01": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1830-01": {
+      "was": "Kurzhantelrudern – einarmig, abgestützt",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 16,
+      "fuerZaehler": true,
+      "grund": null
+    },
+    "2026-11-10-1830-02": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1830-03": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": "kurzhantel",
+      "repsWahr": 16,
+      "fuerZaehler": true,
+      "grund": "Name in aufnahme.json (Kurzhantelrudern – einarmig, abgestützt) ist die beim Auto-Start offene Übung; gespeichert wurde der Satz als Kurzhantel-Bankdrücken (Gewicht und Reps passen zur DB)"
+    },
+    "2026-11-10-1832-01": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz"
+    },
+    "2026-11-10-1832-02": {
+      "was": "Kurzhantel-Bankdrücken",
+      "befestigung": "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "abgebrochen, kein Satz; Endlosaufnahme 22 min bis zum Ruderergometer (Zirkel 2 Runde 2/3)"
+    },
+    "2026-11-10-1854-01": {
+      "was": "Ruderergometer",
+      "befestigung": null,
+      "befestigungsart": null,
+      "repsWahr": null,
+      "fuerZaehler": false,
+      "grund": "Cardio (Ruderergometer), keine Wiederholungen"
     }
   }
 }

@@ -98,6 +98,11 @@ final class GeraetModel {
     private var satzAbgeschlossen = false
     private var automatischeKennung: UUID?
     var beiAutomatischemStart: (() -> Void)?
+    /// Nur im Zirkel gesetzt: ob der Slot dieses Modells gerade dran ist.
+    /// Sensor und Zaehler sind app-weit; ein Modell eines vergangenen Slots
+    /// (alter Screen, im ViewBuilder neu gebautes Modell) darf sie nicht
+    /// zuruecknehmen (Testnotiz 10.11. #2).
+    var zirkelSlotAktiv: (() -> Bool)?
 
     var hatAutomatikStartwerte: Bool {
         let letzter = Self.letzterSatzHeute(an: station, uebungId: uebungId, in: sessions)
@@ -1414,6 +1419,12 @@ final class GeraetModel {
         // Abgegeben an die naechste Zirkel-Uebung: Sensor und Zaehler
         // gehoeren jetzt deren Modell.
         guard !anZirkelAbgegeben else { return }
+        // Im Zirkel traegt ein Modell genau einen Satz. Danach -- oder wenn
+        // sein Slot nicht mehr dran ist -- gehoeren Sensor und Zaehler der
+        // naechsten Station. Ohne diese Sperre nahm das .task des alten
+        // Screens beim Stationswechsel beides zurueck: falscher Name in der
+        // Aufnahme, verworfene Automatik, eine Aufnahme ohne Ende (10.11.).
+        guard !zirkelSatzAbgegeben, zirkelSlotAktiv?() ?? true else { return }
         #if DEBUG
         if let koordinator = zaehler as? ZaehlerKoordinator,
            koordinator.aktivesModell !== self { sensorKontextOffen = false }

@@ -1,0 +1,127 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-11-10T18:24:43+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "f57da95f-5186-4739-87e4-755c8d21e4e5",
+    "exerciseName" : "Trizepsstrecken über Kopf – eine Kurzhantel",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "644F08F2-D1A0-4AAD-B2A0-F191A4665688",
+    "setId" : "67EFDAA8-FACC-43F4-85FD-A7B6A05BC955",
+    "setIndex" : 2
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 10,
+    "weightKg" : 10
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-11-10T18:23:29+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 388.85,
+      "median" : 0,
+      "p95" : 61.06
+    },
+    "luecken" : 0,
+    "pakete" : 3696,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/takt2",
+    "ereignisse" : {
+      "algo" : "kurzhantel/takt2",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 40.33,
+          "ende" : 43.09,
+          "sicherheit" : 0.86,
+          "umkehr" : 41.71
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 43.09,
+          "ende" : 45.85,
+          "sicherheit" : 0.86,
+          "umkehr" : 44.47
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 45.85,
+          "ende" : 48.6,
+          "sicherheit" : 0.86,
+          "umkehr" : 47.22
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 48.6,
+          "ende" : 51.36,
+          "sicherheit" : 0.86,
+          "umkehr" : 49.98
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 51.36,
+          "ende" : 54.11,
+          "sicherheit" : 0.86,
+          "umkehr" : 52.74
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 54.11,
+          "ende" : 56.87,
+          "sicherheit" : 0.86,
+          "umkehr" : 55.49
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 56.87,
+          "ende" : 59.63,
+          "sicherheit" : 0.86,
+          "umkehr" : 58.25
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 59.63,
+          "ende" : 62.38,
+          "sicherheit" : 0.86,
+          "umkehr" : 61.01
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 62.38,
+          "ende" : 65.14,
+          "sicherheit" : 0.86,
+          "umkehr" : 63.76
+        },
+        {
+          "ausschlag" : 0.45,
+          "beginn" : 65.14,
+          "ende" : 67.9,
+          "sicherheit" : 0.86,
+          "umkehr" : 66.52
+        }
+      ]
+    },
+    "gezaehlt" : 10,
+    "herkunft" : "gemessen"
+  }
+}
