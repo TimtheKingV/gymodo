@@ -128,8 +128,23 @@ begin
         raise exception 'plan_ungueltig' using errcode = 'P0001';
       end if;
       v_dauer := (v_pos ->> 'dauerMin')::numeric;
-    else
-      foreach v_feld in array array['wdhVon', 'wdhBis', 'reserveVon', 'reserveBis'] loop
+    end if;
+
+    -- Reserve gilt auch fuer Cardio (der Generator schreibt sie, iOS dekodiert sie als Int).
+    foreach v_feld in array array['reserveVon', 'reserveBis'] loop
+      if jsonb_typeof(v_pos -> v_feld) is distinct from 'number'
+         or (v_pos ->> v_feld)::numeric <> trunc((v_pos ->> v_feld)::numeric) then
+        raise exception 'plan_ungueltig' using errcode = 'P0001';
+      end if;
+    end loop;
+    v_res_von := (v_pos ->> 'reserveVon')::numeric;
+    v_res_bis := (v_pos ->> 'reserveBis')::numeric;
+    if not (v_res_von between 0 and v_res_bis and v_res_bis <= 10) then
+      raise exception 'plan_ungueltig' using errcode = 'P0001';
+    end if;
+
+    if not v_cardio then
+      foreach v_feld in array array['wdhVon', 'wdhBis'] loop
         if jsonb_typeof(v_pos -> v_feld) is distinct from 'number'
            or (v_pos ->> v_feld)::numeric <> trunc((v_pos ->> v_feld)::numeric) then
           raise exception 'plan_ungueltig' using errcode = 'P0001';
@@ -137,10 +152,7 @@ begin
       end loop;
       v_wdh_von := (v_pos ->> 'wdhVon')::numeric;
       v_wdh_bis := (v_pos ->> 'wdhBis')::numeric;
-      v_res_von := (v_pos ->> 'reserveVon')::numeric;
-      v_res_bis := (v_pos ->> 'reserveBis')::numeric;
-      if not (v_wdh_von between 1 and 50 and v_wdh_bis between v_wdh_von and 50
-              and v_res_von between 0 and v_res_bis and v_res_bis <= 10)
+      if not (v_wdh_von between 1 and 50 and v_wdh_bis between v_wdh_von and 50)
          or coalesce(jsonb_typeof(v_pos -> 'dauerMin'), 'null') <> 'null' then
         raise exception 'plan_ungueltig' using errcode = 'P0001';
       end if;
@@ -190,8 +202,8 @@ begin
       'saetze', v_saetze::int,
       'wdhVon', case when v_cardio then null else v_wdh_von::int end,
       'wdhBis', case when v_cardio then null else v_wdh_bis::int end,
-      'reserveVon', case when v_cardio then null else v_res_von::int end,
-      'reserveBis', case when v_cardio then null else v_res_bis::int end,
+      'reserveVon', v_res_von::int,
+      'reserveBis', v_res_bis::int,
       'pauseSek', v_pause::int,
       'aufwaermsatz', v_pos -> 'aufwaermsatz',
       'dauerMin', case when v_cardio then v_dauer::int else null end,

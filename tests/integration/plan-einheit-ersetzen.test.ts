@@ -78,7 +78,12 @@ async function mitAktivemPlan(prefix: string, limits?: Record<string, "meiden" |
 /** Die Positionen der ersten Einheit unveraendert (so liefert sie die Domain zurueck). */
 function ersteEinheit(plan: KatalogPlan) {
   const e = plan.einheiten[0]!;
-  return { key: e.key, positionen: structuredClone(e.positionen) as KatalogPosition[] };
+  const positionen = structuredClone(e.positionen) as KatalogPosition[];
+  // Der Fixture-Plan hat bei Cardio keine Reserve; baueEinheit liefert sie immer.
+  for (const p of positionen) {
+    if (p.baustein === "cardio") Object.assign(p, { reserveVon: 1, reserveBis: 3 });
+  }
+  return { key: e.key, positionen };
 }
 
 async function neueUebung(
@@ -220,5 +225,19 @@ describe("replace_training_plan_einheit", () => {
     const neu = data as NeuerPlan;
     const p = neu.einheiten.find((e) => e.key === key)!.positionen.find((x) => x.key === stelle.key)!;
     expect(p.hauptmuskeln).toEqual(["quadrizeps"]);
+  });
+
+  it("Cardio-Position behaelt reserveVon/reserveBis", async () => {
+    const { m, plan } = await mitAktivemPlan("ersetzen-cardio");
+    const { key, positionen } = ersteEinheit(plan);
+    const cardio = positionen.find((p) => p.baustein === "cardio")!;
+    const { data, error } = await ersetze(m.client, plan.id, key, positionen);
+    expect(error).toBeNull();
+    const c = (data as NeuerPlan).einheiten.find((e) => e.key === key)!.positionen.find((p) => p.key === cardio.key)!;
+    expect(c).toMatchObject({ reserveVon: 1, reserveBis: 3, wdhVon: null, wdhBis: null, saetze: 1, pauseSek: 0 });
+    // Ohne Reserve ist die Cardio-Position ungueltig.
+    cardio.reserveVon = null;
+    const e = await fehlerVon(ersetze(m.client, plan.id, key, positionen));
+    expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
   });
 });
