@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		002194F6704F72BE06B95E76 /* CardioVerlaufTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB12AC4B9078522360F6C20 /* CardioVerlaufTests.swift */; };
+		00471B8E21F848FE9E4EFC6C /* Uebungskarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D6CF27EB8B28461AB98A26E /* Uebungskarte.swift */; };
 		0075B0E3CF0E786F9D22AFFF /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC66ACF7FB394ECB319166C3 /* APIClient.swift */; };
 		013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */; };
 		016753249B5CB49B03D514B4 /* Trainingsuhr.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECD3248CAD211A17B23D8826 /* Trainingsuhr.swift */; };
 		029CFC2CAB97744920578EE2 /* PlanAbschlussBereich.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E8DFCD399030A03462AC1F /* PlanAbschlussBereich.swift */; };
+		03442DF5E1A6C5FDABCEBC16 /* UebungskarteModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4A8AD1E1541C488239F73D /* UebungskarteModellTests.swift */; };
 		0382DA5E0E287C3C9870CAAC /* SensorAufnahmeKoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */; };
 		042F6324294F8E5E71B29B11 /* TestnotizScreenStapel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20C077400AA8EF5A0B1AE96 /* TestnotizScreenStapel.swift */; };
 		0494622A73CA66BE840CADA0 /* TrainingspauseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F8D7BC3F8D6CFCD55CA53B5 /* TrainingspauseTests.swift */; };
@@ -565,6 +567,7 @@
 		3BF32B8D3E1CBF0B570EEF40 /* PlanKalenderKontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanKalenderKontext.swift; sourceTree = "<group>"; };
 		3C3D6DF5C1CF76DEAC63015E /* MemberStudiosView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberStudiosView.swift; sourceTree = "<group>"; };
 		3CCAF28CF0463F019CE620E6 /* AblaufzeileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AblaufzeileTests.swift; sourceTree = "<group>"; };
+		3D6CF27EB8B28461AB98A26E /* Uebungskarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Uebungskarte.swift; sourceTree = "<group>"; };
 		3E67B77D484B574613C4314E /* Herkunftssatz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Herkunftssatz.swift; sourceTree = "<group>"; };
 		3EC5DE4F4A42F0296CF0BA5B /* CardioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioTests.swift; sourceTree = "<group>"; };
 		3F8D7BC3F8D6CFCD55CA53B5 /* TrainingspauseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingspauseTests.swift; sourceTree = "<group>"; };
@@ -794,6 +797,7 @@
 		CA443E7FB8DF3C02F909E2E2 /* PlanEinrichtenKarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEinrichtenKarte.swift; sourceTree = "<group>"; };
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
+		CC4A8AD1E1541C488239F73D /* UebungskarteModellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungskarteModellTests.swift; sourceTree = "<group>"; };
 		CD2C414143359BA7CE04FAD3 /* Medienablage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Medienablage.swift; sourceTree = "<group>"; };
 		CD9E984B918F57B23D33809C /* PausenKnoepfeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PausenKnoepfeTests.swift; sourceTree = "<group>"; };
 		CF637DFBD6453479895418C8 /* BeschwerdenSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeschwerdenSheet.swift; sourceTree = "<group>"; };
@@ -1170,6 +1174,7 @@
 				C5F6D81AFCBEAE0F2AAF9BAC /* SecondaryButton.swift */,
 				5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */,
 				A34961E54EBC121CA386A136 /* Toast.swift */,
+				3D6CF27EB8B28461AB98A26E /* Uebungskarte.swift */,
 				7BBBF93AF7F82B0A6C8D237F /* Vorschaubild.swift */,
 				EDB71A28870C04657A4593E5 /* Zeitring.swift */,
 			);
@@ -1350,6 +1355,7 @@
 				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
 				DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */,
 				77CD8F083B18A9C6710DF1C0 /* UebungsGruppierungTests.swift */,
+				CC4A8AD1E1541C488239F73D /* UebungskarteModellTests.swift */,
 				4FF15B0272BC7FFA565035F4 /* UebungsstartTests.swift */,
 				46DBACD8FF94DEE90B68EE25 /* UebungsVideosTests.swift */,
 				F433CFBFAAF0BB5791D28FC9 /* VerlaufHerkunftTests.swift */,
@@ -1994,6 +2000,7 @@
 				A88FA239E40977543922715D /* UebungsGruppierung.swift in Sources */,
 				AF91775CE064CF7328A2D20D /* UebungsVideos.swift in Sources */,
 				DB641A2801D4875409F434F5 /* UebungsfortschrittView.swift in Sources */,
+				00471B8E21F848FE9E4EFC6C /* Uebungskarte.swift in Sources */,
 				E0135EE6945457EDFF8721F2 /* Uebungsstart.swift in Sources */,
 				07F0231E7A619E7C13648A86 /* UebungsstartSheet.swift in Sources */,
 				7BE807F55A982F870100ABEA /* VerlaufFileStore.swift in Sources */,
@@ -2153,6 +2160,7 @@
 				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				42B77C328425F61506D26ADA /* UebungsGruppierungTests.swift in Sources */,
 				D9003B708636A8AF96E1D2AA /* UebungsVideosTests.swift in Sources */,
+				03442DF5E1A6C5FDABCEBC16 /* UebungskarteModellTests.swift in Sources */,
 				78B6533E405451D6DA3A93C5 /* UebungsstartTests.swift in Sources */,
 				BB4049269A55E59A041A3AC8 /* VerlaufHerkunftTests.swift in Sources */,
 				F3EC6BE2F4C7D29CB4039D48 /* VerlaufStoreTests.swift in Sources */,

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Vorschau einer Planeinheit aus dem Plan-Tab (Leinwand 2e): die Uebungen
 /// aus `Trainingsplan.einheiten`, "Warum so?" und "Im Training öffnen".
@@ -21,6 +22,9 @@ struct PlanEinheitView: View {
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @State private var warumOffen = false
     @State private var bearbeitenOffen = false
+    @State private var vorschauLader = VorschauLader(ablage: .fotos)
+    @State private var fotos: [String: URL] = [:]
+    @State private var bilder: [String: UIImage] = [:]
 
     /// E7: nicht, solange an genau dieser Einheit eine Session haengt.
     private var darfBearbeiten: Bool {
@@ -78,15 +82,20 @@ struct PlanEinheitView: View {
                 .background(DesignSystem.Color.bg)
             }
         }
+        .task { fotos = await GeraeteFotos.laden(von: apiClient) }
         .testnotizScreen()
+    }
+
+    private func fotoLaden(modell: String?) async {
+        guard let modell, let url = fotos[modell], bilder[modell] == nil else { return }
+        // 56 pt bei 3x, wie die Geraeteliste (P4, Testnotiz 10.11. #7).
+        bilder[modell] = await vorschauLader.bild(modellId: modell, url: url, kantePixel: 168)
     }
 
     /// Fuer das Bearbeiten-Cover (Videos der Ersatz-Kandidaten).
     @Environment(UebungsVideoVorrat.self) private var videoVorrat
 
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
-        let zeilen = PlanAnzeige.zeilen(plan: plan, einheitKey: einheit.key, zustand: nil,
-                                        bloecke: [], bootstrap: katalog.bootstrap)
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)
         let namen = EinheitNamen(plan: plan, muskeln: muskeln)
         let naechste = PlanAnzeige.heute(katalog: katalog, ablauf: planAblauf)?.einheitKey
@@ -102,33 +111,19 @@ struct PlanEinheitView: View {
                         geschlecht: katalog.bootstrap?.member.sex.flatMap(Geschlecht.init(rawValue:)))
 
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                        Text("\(zeilen.count) \(zeilen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · IN DIESER REIHENFOLGE")
+                        Text("\(einheit.positionen.count) \(einheit.positionen.count == 1 ? "ÜBUNG" : "ÜBUNGEN") · IN DIESER REIHENFOLGE")
                             .font(DesignSystem.Typography.label)
                             .tracking(1.5)
                             .foregroundStyle(DesignSystem.Color.textMuted)
-                        VStack(spacing: 0) {
-                            ForEach(Array(zeilen.enumerated()), id: \.element.id) { nummer, zeile in
-                                if nummer > 0 { Divider().overlay(DesignSystem.Color.line) }
-                                HStack(spacing: DesignSystem.Spacing.s12) {
-                                    Text("\(nummer + 1)")
-                                        .font(.system(size: 13, weight: .heavy).monospacedDigit())
-                                        .foregroundStyle(DesignSystem.Color.textMuted)
-                                        .frame(width: 20, alignment: .leading)
-                                    Text(zeile.name)
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(DesignSystem.Color.text)
-                                    Spacer(minLength: DesignSystem.Spacing.s8)
-                                    Text(zeile.untertitel)
-                                        .font(.system(size: 13).monospacedDigit())
-                                        .foregroundStyle(DesignSystem.Color.textMuted)
-                                }
-                                .padding(.horizontal, DesignSystem.Spacing.s16)
-                                .frame(minHeight: 48)
-                                .accessibilityElement(children: .combine)
+                        VStack(spacing: 10) {
+                            ForEach(einheit.positionen, id: \.key) { position in
+                                let modell = UebungskarteModell.aus(position, bootstrap: katalog.bootstrap)
+                                Uebungskarte(modell: modell, foto: modell.vorschaubildModell.flatMap { bilder[$0] })
+                                    .task(id: modell.vorschaubildModell.flatMap { fotos[$0] }) {
+                                        await fotoLaden(modell: modell.vorschaubildModell)
+                                    }
                             }
                         }
-                        .background(DesignSystem.Color.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                     }
 
                     Button { warumOffen = true } label: {
