@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { deleteCardioCheck, listCardioChecks, pruefeTag, setCardioCheck } from "./cardio-checks.js";
+import { addCardioCheck, deleteCardioCheck, deleteCardioCheckById, listCardioChecks, pruefeTag, setCardioCheck } from "./cardio-checks.js";
 
 // Die Format- und Zukunftspruefung passiert vor jedem Datenbankzugriff; der Client darf nie benutzt werden.
 const keinZugriff = new Proxy({}, { get: () => { throw new Error("kein Datenbankzugriff erwartet"); } }) as unknown as SupabaseClient;
@@ -30,5 +30,20 @@ describe("deleteCardioCheck und listCardioChecks", () => {
     await expect(deleteCardioCheck(keinZugriff, U, "x")).rejects.toMatchObject({ code: "validation_failed" });
     await expect(listCardioChecks(keinZugriff, U, "2026-10-01", "x")).rejects.toMatchObject({ code: "validation_failed" });
     await expect(listCardioChecks(keinZugriff, U, "2026-10-10", "2026-10-01")).rejects.toMatchObject({ code: "validation_failed" });
+  });
+});
+
+describe("addCardioCheck", () => {
+  it("weist einen Tag nach heute ab", async () => {
+    await expect(addCardioCheck(keinZugriff, U, "2026-10-29", "2026-10-28")).rejects.toMatchObject({ code: "validation_failed" });
+  });
+  it.each([0, 601, 1.5, -3])("weist minuten %j ab", async (minuten) => {
+    await expect(addCardioCheck(keinZugriff, U, "2026-10-28", "2026-10-28", minuten)).rejects.toMatchObject({ code: "validation_failed" });
+  });
+});
+
+describe("deleteCardioCheckById", () => {
+  it("weist eine Nicht-UUID ab", async () => {
+    await expect(deleteCardioCheckById(keinZugriff, U, "abc")).rejects.toMatchObject({ code: "validation_failed" });
   });
 });

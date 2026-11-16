@@ -69,18 +69,9 @@ struct ProfilKopf: View {
 
     // MARK: - Texte
 
-    /// „GEPLANT · FREITAG, 6. NOV“ (de_DE, Monat ohne Punkt, Grossbuchstaben).
-    static func ueberzeile(geplantAm: Date, kalender: Calendar) -> String {
-        "GEPLANT · \(datumGross(geplantAm, kalender))"
-    }
-
     /// „FREITAG, 6. NOV“ -- das Datum des Trainings im selben Stil.
     static func ueberzeile(trainiertAm: Date, kalender: Calendar) -> String {
         datumGross(trainiertAm, kalender)
-    }
-
-    static func startKnopfText(istGeplanterTag: Bool) -> String {
-        istGeplanterTag ? "Training starten" : "Jetzt starten (vorziehen)"
     }
 
     private static func datumGross(_ datum: Date, _ kalender: Calendar) -> String {

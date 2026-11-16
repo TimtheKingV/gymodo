@@ -6,7 +6,6 @@ import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { waehleFokus, waehleKandidat } from "./trainingsplan-auswahl.js";
 import type { Baustein, Bereich, PlanTyp } from "./trainingsplan-typen.js";
 import { PLAN_REGEL_VERSION } from "./trainingsplan-regeln.js";
-import { verteileKraft } from "./trainingsplan-woche.js";
 
 // Kleiner Testkatalog: je Baustein 2 Kandidaten, Typen wie in der Spec (beine_huefte hier
 // Isolation, damit die Zeitrechnung des 60-min-Falls exakt 62,75 ergibt), ein Cardiogeraet.
@@ -382,7 +381,7 @@ describe("generierePlan: Determinismus und Eingabe", () => {
   it("Geschlecht/Alter sind kein Eingabefeld", () => {
     expectTypeOf<keyof GeneratorEingabe>().toEqualTypeOf<
       | "ziel" | "tage" | "minuten" | "fokus" | "erfahrung" | "anfaengerBeendet" | "beschwerden" | "kandidaten"
-      | "kursTage" | "cardioTage" | "kraftTage"
+      | "kraftProWoche"
     >();
   });
 
@@ -475,10 +474,10 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
   });
 });
 
-describe("generierePlan: Regelversion 1.3.0", () => {
-  it("Regelversion ist 1.3.0", () => {
-    expect(PLAN_REGEL_VERSION).toBe("1.3.0");
-    expect(generierePlan(eingabe()).regelVersion).toBe("1.3.0");
+describe("generierePlan: Regelversion 1.4.0", () => {
+  it("Regelversion ist 1.4.0", () => {
+    expect(PLAN_REGEL_VERSION).toBe("1.4.0");
+    expect(generierePlan(eingabe()).regelVersion).toBe("1.4.0");
   });
 
   it("auffuellpositionen tragen die Rolle auffuellung", () => {
@@ -586,86 +585,54 @@ describe("gefaelltNicht (Merkliste)", () => {
   });
 });
 
-describe("generierePlan: Wochenraster (1.3.0)", () => {
-  // Ausgabe von 1.2.0 fuer sechs Tagezahlen und zwei Ziele (ohne regelVersion). Ohne Kurs- und
-  // Cardio-Tage darf sich am Plan nichts aendern -- nur das Raster kommt hinzu.
+describe("generierePlan: Kraft pro Woche (1.4.0)", () => {
+  // Ausgabe von 1.2.0 fuer sechs Tagezahlen und zwei Ziele (ohne regelVersion). Struktur,
+  // Einheiten und Gruende bleiben gleich; seit 1.4.0 ist das Raster immer leer.
+  // Bewusst nicht neu geschrieben: die Datei kennt weder regelVersion noch wochenraster.
   const bestand = JSON.parse(
     readFileSync(new URL("./trainingsplan-generator.bestand.json", import.meta.url), "utf8"),
   ) as { eingabe: Partial<GeneratorEingabe>; erwartet: Record<string, unknown> }[];
 
-  it("Bestandseingaben ohne Kurs und Cardio: struktur, einheiten und gruende wie bisher", () => {
+  it("Bestandseingaben: struktur, einheiten und gruende wie bisher, Raster leer", () => {
     expect(bestand.length).toBe(12);
     for (const fall of bestand) {
       const plan = generierePlan(eingabe({ ...fall.eingabe, kandidaten: KATALOG }));
       expect(plan.struktur).toEqual(fall.erwartet.struktur);
       expect(plan.einheiten).toEqual(fall.erwartet.einheiten);
       expect(plan.gruende).toEqual(fall.erwartet.gruende);
+      expect(plan.wochenraster).toEqual([]);
     }
   });
 
-  it("Bestandseingabe: das Raster hat nur Kraft-Tage nach verteileKraft([], tage)", () => {
-    const plan = generierePlan(eingabe({ tage: 3 }));
-    const tage = verteileKraft([], 3);
-    expect(plan.wochenraster.map((e) => e.tag)).toEqual(tage);
-    expect(plan.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "A"]);
-    expect(plan.wochenraster.every((e) => e.art === "kraft")).toBe(true);
-    expect(plan.wochenraster).toHaveLength(3);
+  it("kraftProWoche 4 bei tage 6: Struktur ober_unter", () => {
+    expect(generierePlan(eingabe({ tage: 6, kraftProWoche: 4 })).struktur).toBe("ober_unter");
   });
 
-  it("4 Tage, Kurs Mo, Cardio So: zwei Krafttage, Struktur gk_ab, Raster nach Tag sortiert", () => {
-    const plan = generierePlan(eingabe({ tage: 4, kursTage: [1], cardioTage: [7] }));
-    expect(plan.struktur).toBe("gk_ab");
-    expect(plan.wochenraster).toEqual([
-      { tag: 1, art: "kurs" },
-      { tag: 3, art: "kraft", einheitKey: "A" },
-      { tag: 5, art: "kraft", einheitKey: "B" },
-      { tag: 7, art: "cardio" },
-    ]);
-    expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
+  it("kraftProWoche fehlt, tage 3: Struktur gk_ab", () => {
+    expect(generierePlan(eingabe({ tage: 3 })).struktur).toBe("gk_ab");
   });
 
-  it("2 Tage, Kurs Mo, Cardio So: ein Krafttag, gk_eine und Grund kraft_tage_auf_eins", () => {
-    const plan = generierePlan(eingabe({ tage: 2, kursTage: [1], cardioTage: [7] }));
+  it("kraftProWoche 1 bei tage 3: Struktur gk_eine, eine Einheit", () => {
+    const plan = generierePlan(eingabe({ tage: 3, kraftProWoche: 1 }));
     expect(plan.struktur).toBe("gk_eine");
     expect(plan.einheiten.map((e) => e.key)).toEqual(["A"]);
-    expect(plan.gruende).toContain("kraft_tage_auf_eins");
-    expect(plan.wochenraster.filter((e) => e.art === "kraft")).toHaveLength(1);
-    expect(plan.wochenraster.map((e) => e.tag)).toEqual([...plan.wochenraster.map((e) => e.tag)].sort((a, b) => a - b));
   });
 
-  it("kraftTage im Profil gelten statt des Vorschlags, Einheiten der Reihe nach", () => {
-    const plan = generierePlan(eingabe({ tage: 3, kraftTage: [2, 4, 6] }));
-    expect(plan.wochenraster).toEqual([
-      { tag: 2, art: "kraft", einheitKey: "A" },
-      { tag: 4, art: "kraft", einheitKey: "B" },
-      { tag: 6, art: "kraft", einheitKey: "A" },
-    ]);
+  it("kraftProWoche 4 bei tage 2: Struktur ober_unter", () => {
+    expect(generierePlan(eingabe({ tage: 2, kraftProWoche: 4 })).struktur).toBe("ober_unter");
   });
 
-  it("kraftTage in beliebiger Reihenfolge: Einheiten folgen dem Kalender, nicht der Eingabe", () => {
-    const plan = generierePlan(eingabe({ tage: 2, kraftTage: [5, 2] }));
-    expect(plan.wochenraster).toEqual([
-      { tag: 2, art: "kraft", einheitKey: "A" },
-      { tag: 5, art: "kraft", einheitKey: "B" },
-    ]);
+  it("kraftProWoche 2 bei tage 3: Struktur des Zwei-Tage-Falls", () => {
+    const zwei = generierePlan(eingabe({ tage: 2 })).struktur;
+    expect(generierePlan(eingabe({ tage: 3, kraftProWoche: 2 })).struktur).toBe(zwei);
   });
 
-  it("5 und 6 Krafttage: Struktur gk_abc, Einheiten laufen zyklisch durch", () => {
-    const fuenf = generierePlan(eingabe({ tage: 5 }));
-    expect(fuenf.struktur).toBe("gk_abc");
-    expect(fuenf.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B"]);
-    const sechs = generierePlan(eingabe({ tage: 6 }));
-    expect(sechs.struktur).toBe("gk_abc");
-    expect(sechs.wochenraster.map((e) => e.einheitKey)).toEqual(["A", "B", "C", "A", "B", "C"]);
-  });
-
-  it("Kurse und Cardio auf allen sieben Tagen: validation_failed statt Plan ohne Krafttag", () => {
-    expect(() => generierePlan(eingabe({ tage: 3, kursTage: [1, 2, 3, 4], cardioTage: [5, 6, 7] }))).toThrow(
-      expect.objectContaining({ code: "validation_failed" }),
-    );
-  });
-
-  it("tage 0 loest kraft_tage_auf_eins nicht aus", () => {
-    expect(generierePlan(eingabe({ tage: 0 })).gruende).not.toContain("kraft_tage_auf_eins");
+  it("wochenraster ist immer leer, kraft_tage_auf_eins kommt nie vor", () => {
+    for (const tage of [0, 1, 2, 3, 4, 5, 6])
+      for (const kraftProWoche of [undefined, 1, 2, 5]) {
+        const plan = generierePlan(eingabe(kraftProWoche === undefined ? { tage } : { tage, kraftProWoche }));
+        expect(plan.wochenraster).toEqual([]);
+        expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
+      }
   });
 });

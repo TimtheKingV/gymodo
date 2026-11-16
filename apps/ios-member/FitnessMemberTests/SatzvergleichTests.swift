@@ -2,10 +2,10 @@ import Foundation
 import Testing
 @testable import FitnessMember
 
-/// Der Fortschritt im Trainingsdetail (Testnotiz 06.10., #20): jeder Satz
-/// gegen den Durchschnitt desselben Satzes aus den bis zu fuenf vorherigen
-/// Trainings dieser Uebung, die Richtung nach kg x Wdh., rechts je Uebung
-/// das Gesamtvolumen gegen dessen Durchschnitt.
+/// Der Fortschritt im Trainingsdetail (Testnotiz 06.10., #20, umgebaut nach
+/// Testnotiz 19.10., #2): ein Feld je Uebung -- der Schnitt aller Saetze
+/// heute gegen den Schnitt der bis zu fuenf vorherigen Trainings dieser
+/// Uebung; der Pfeil folgt dem Gesamtvolumen kg x Wdh.
 struct SatzvergleichTests {
     private func satz(_ index: Int, _ kg: Double, _ wdh: Int) -> SessionSummary.Block.Set {
         SessionSummary.Block.Set(setIndex: index, load: kg, secondaryLoad: nil, volume: wdh, rir: nil,
@@ -28,8 +28,7 @@ struct SatzvergleichTests {
                        setCount: bloecke.flatMap(\.sets).count, blocks: bloecke)
     }
 
-    @Test func vergleichtJedenSatzMitDemDurchschnittDesselbenSatzes() {
-        // Vorher zweimal: Satz 1 je 5 kg x 8, Satz 2 je 7,5 kg x 11.
+    @Test func vergleichtDenSchnittAllerSaetzeMitDemSchnittDerVorherigen() {
         let vorher = [
             einheit("a", tag: 1, [block([(5, 8), (7.5, 11)])]),
             einheit("b", tag: 3, [block([(5, 8), (7.5, 11)])]),
@@ -38,22 +37,58 @@ struct SatzvergleichTests {
 
         let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
 
-        // Das Beispiel aus der Notiz: "+2,5 kg +2 Wdh" nach oben,
-        // "±0 kg −1 Wdh" nach unten.
-        #expect(vergleich?.saetze[0] == .init(deltaKg: 2.5, deltaWdh: 2, trend: .hoch))
-        #expect(vergleich?.saetze[1] == .init(deltaKg: 0, deltaWdh: -1, trend: .runter))
+        #expect(vergleich?.deltaKg == 1.25)
+        #expect(vergleich?.deltaWdh == 0.5)
         #expect(vergleich?.basis == 2)
     }
 
+    @Test func derFallAusDerNotizZeigtNullKg() {
+        // Immer 12 kg: frueher stand bei Satz 1 "+3,7 kg", weil Satz 1 mit
+        // Satz 1 verglichen wurde. Im Schnitt ist es kein Kilo mehr.
+        let vorher = [einheit("a", tag: 1, [block([(12, 10), (12, 8), (12, 8)])])]
+        let heute = einheit("b", tag: 2, [block([(12, 15), (12, 12), (12, 9)])])
+
+        let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
+
+        #expect(vergleich.map { Satzvergleich.kgText($0.deltaKg) } == "±0 kg")
+        #expect(vergleich.map { Satzvergleich.wdhText($0.deltaWdh) } == "+3,3 Wdh.")
+        #expect(vergleich?.gesamt == .hoch)
+    }
+
+    @Test func andereSatzzahlHeuteRechnetOhneIndexfehler() {
+        let vorher = [einheit("a", tag: 1, [block([(10, 10), (10, 10), (10, 10)])])]
+        let heute = einheit("b", tag: 2, [block([(10, 10), (10, 10), (10, 10), (10, 10)])])
+
+        let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
+
+        #expect(vergleich?.deltaKg == 0)
+        #expect(vergleich?.deltaWdh == 0)
+        // Der zusaetzliche Satz zaehlt im Gesamtvolumen mit.
+        #expect(vergleich?.gesamt == .hoch)
+    }
+
+    @Test func jedesTrainingZaehltGleich() {
+        // a: ein Satz 10 kg, b: drei Saetze 20 kg -> Schnitt 15, nicht 17,5.
+        let vorher = [
+            einheit("a", tag: 1, [block([(10, 10)])]),
+            einheit("b", tag: 2, [block([(20, 10), (20, 10), (20, 10)])]),
+        ]
+        let heute = einheit("c", tag: 3, [block([(15, 10)])])
+
+        let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
+
+        #expect(vergleich?.deltaKg == 0)
+    }
+
     @Test func derPfeilFolgtDemVolumenNichtDemGewicht() {
-        // 10 Wdh. x 10 kg ist mehr als 5 Wdh. x 18 kg (Beispiel aus der Notiz).
+        // 10 Wdh. x 10 kg ist mehr als 5 Wdh. x 18 kg.
         let vorher = [einheit("a", tag: 1, [block([(18, 5)])])]
         let heute = einheit("b", tag: 2, [block([(10, 10)])])
 
         let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
 
-        #expect(vergleich?.saetze[0]?.trend == .hoch)
-        #expect(vergleich?.saetze[0]?.deltaKg == -8)
+        #expect(vergleich?.gesamt == .hoch)
+        #expect(vergleich?.deltaKg == -8)
     }
 
     @Test func nimmtHoechstensDieFuenfJuengstenVorherigenTrainings() {
@@ -68,19 +103,9 @@ struct SatzvergleichTests {
                                            verlauf: vorher + [heute, spaeter])
 
         #expect(vergleich?.basis == 5)
-        #expect(vergleich?.saetze[0] == .init(deltaKg: 0, deltaWdh: 0, trend: .gleich))
+        #expect(vergleich?.deltaKg == 0)
+        #expect(vergleich?.deltaWdh == 0)
         #expect(vergleich?.gesamt == .gleich)
-    }
-
-    @Test func einSatzOhneGegenstueckBekommtKeinenVergleich() {
-        let vorher = [einheit("a", tag: 1, [block([(10, 10)])])]
-        let heute = einheit("b", tag: 2, [block([(10, 10), (10, 8)])])
-
-        let vergleich = Satzvergleich.fuer(block: heute.blocks[0], in: heute, verlauf: vorher + [heute])
-
-        #expect(vergleich?.saetze[1] == nil)
-        // Der zusaetzliche Satz zaehlt aber im Gesamtvolumen mit.
-        #expect(vergleich?.gesamt == .hoch)
     }
 
     @Test func gesamttrendVergleichtDieSummeMitIhremDurchschnitt() {

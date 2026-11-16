@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-/// Die abgehakten Cardio-Tage ("YYYY-MM-DD"), geteilt von Plan-Tab und Home.
+/// Die Cardio-Haken (je mit id, Tag "YYYY-MM-DD" und optionalen Minuten),
+/// geteilt von Plan-Tab und Home.
 ///
 /// Frueher hielt der Plan-Tab sie als eigenen `@State`; seit Home die Woche
 /// markiert (Spec 1.1), lesen beide denselben Stand -- ein Haken im Plan steht
@@ -9,11 +10,10 @@ import Observation
 @MainActor
 @Observable
 final class CardioChecksStore {
-    private(set) var erledigt: Set<String> = []
+    private(set) var checks: [CardioCheck] = []
     /// Die erfolgreich geladenen Bereiche ("YYYY-MM-DD", eingeschlossen). Nur
     /// darin heisst ein fehlender Haken "nicht gemacht"; ausserhalb (noch nicht
-    /// geladen, Abruf fehlgeschlagen) weiss die App es nicht -- der Plan-Kalender
-    /// laesst vergangene Cardio-Slots dort neutral statt "verpasst".
+    /// geladen, Abruf fehlgeschlagen) weiss die App es nicht.
     private(set) var geladen: [ClosedRange<String>] = []
     /// Jede Aenderung am Haken zaehlt hoch; eine GET-Antwort, die vor ihr
     /// losging, wird verworfen (wie `KurseStore.generation`) -- sonst
@@ -25,26 +25,34 @@ final class CardioChecksStore {
     func laden(von: String, bis: String, apiClient: APIClient) async {
         let start = generation
         do throws(APIError) {
-            let tage = try await apiClient.cardioChecks(from: von, to: bis)
+            let neu = try await apiClient.cardioChecks(from: von, to: bis)
             guard start == generation else { return }
-            erledigt = Self.zusammenfuehren(alt: erledigt, neu: Set(tage), von: von, bis: bis)
+            checks = Self.zusammenfuehren(alt: checks, neu: neu, von: von, bis: bis)
             geladen = Self.bereiche(alt: geladen, von: von, bis: bis)
         } catch {
             // Bleibt beim letzten Stand.
         }
     }
 
-    /// Setzt oder nimmt den Haken; liefert bei einem Fehler den Servertext.
-    func setzen(tagId: String, erledigt neu: Bool, apiClient: APIClient) async -> String? {
+    /// Hakt Cardio fuer `tagId` ab (mehrere Haken je Tag moeglich); liefert bei
+    /// einem Fehler den Servertext.
+    func abhaken(tagId: String, apiClient: APIClient) async -> String? {
         generation += 1
         do throws(APIError) {
-            if neu {
-                try await apiClient.setCardioCheck(day: tagId)
-                erledigt.insert(tagId)
-            } else {
-                try await apiClient.deleteCardioCheck(day: tagId)
-                erledigt.remove(tagId)
-            }
+            let neu = try await apiClient.addCardioCheck(day: tagId)
+            checks.append(neu)
+            return nil
+        } catch {
+            return error.servertext
+        }
+    }
+
+    /// Nimmt genau den Haken mit `id` zurueck.
+    func zuruecknehmen(id: String, apiClient: APIClient) async -> String? {
+        generation += 1
+        do throws(APIError) {
+            try await apiClient.deleteCardioCheck(id: id)
+            checks.removeAll { $0.id == id }
             return nil
         } catch {
             return error.servertext
@@ -52,10 +60,12 @@ final class CardioChecksStore {
     }
 
     /// Ersetzt nur den geladenen Bereich: Home laedt eine Woche, der Plan-Tab
-    /// mehrere -- keiner soll dem anderen die Tage ausserhalb seines Fensters
+    /// mehrere -- keiner soll dem anderen die Haken ausserhalb seines Fensters
     /// loeschen. "YYYY-MM-DD" vergleicht sich als Text wie als Datum.
-    nonisolated static func zusammenfuehren(alt: Set<String>, neu: Set<String>, von: String, bis: String) -> Set<String> {
-        alt.filter { $0 < von || $0 > bis }.union(neu)
+    nonisolated static func zusammenfuehren(
+        alt: [CardioCheck], neu: [CardioCheck], von: String, bis: String
+    ) -> [CardioCheck] {
+        alt.filter { $0.day < von || $0.day > bis } + neu
     }
 
     /// Merkt sich `von`...`bis` als geladen; ein schon abgedeckter Bereich

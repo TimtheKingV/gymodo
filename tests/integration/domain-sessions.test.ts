@@ -484,3 +484,77 @@ describe("getSessions -- streak.weeklyTarget", () => {
     expect(nachher.summary.streak?.weeklyTarget).toBe(3);
   });
 });
+
+describe("getSessions -- Serie mit Cardio-Haken und Kursen", () => {
+  it("zaehlt Cardio-Haken und begonnene Kurse, nicht abgesagte, stornierte oder wartende", async () => {
+    const email = uniqueEmail("serie-cardio-kurse");
+    const userId = await createTestUser(email);
+    const admin = serviceClient();
+    const tage = (n: number) => new Date(Date.now() - n * 24 * HOUR).toISOString();
+
+    const { error: membershipError } = await admin
+      .from("studio_memberships")
+      .insert({ studio_id: studioA, user_id: userId, role: "member" });
+    if (membershipError) throw membershipError;
+
+    const { data: vorlage, error: vorlageError } = await admin
+      .from("course_templates")
+      .insert({ studio_id: studioA, name: "Serie-Kurs", default_duration_min: 60, default_capacity: 10 })
+      .select("id")
+      .single();
+    if (vorlageError) throw vorlageError;
+
+    async function termin(startsAt: string, status: "planned" | "cancelled"): Promise<string> {
+      const { data, error } = await admin
+        .from("course_sessions")
+        .insert({
+          studio_id: studioA,
+          course_template_id: vorlage!.id,
+          starts_at: startsAt,
+          duration_min: 60,
+          capacity: 10,
+          ...(status === "cancelled" ? { status, cancelled_at: new Date().toISOString() } : {}),
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    }
+    async function buchung(terminId: string, status: "booked" | "waitlisted" | "cancelled") {
+      const { error } = await admin.from("course_bookings").insert({
+        id: newId(),
+        studio_id: studioA,
+        course_session_id: terminId,
+        user_id: userId,
+        status,
+        ...(status === "cancelled" ? { cancelled_at: new Date().toISOString() } : {}),
+      });
+      if (error) throw error;
+    }
+
+    // Training diese Woche (gerade eben), Cardio-Haken vor 7 Tagen, begonnener
+    // Kurs vor 14 Tagen. In der Woche davor (21 Tage): nur ein abgesagter Kurs,
+    // eine Warteliste und eine Stornierung -- die duerfen nichts verlaengern.
+    // Das Training liegt nur eine Minute zurueck, und der Cardio-Tag ist das Datum in
+    // Studiozeit (Europe/Berlin): ein UTC-Datum laege Mo 00:00-02:00 Berlin noch auf dem
+    // Sonntag davor, die Woche dazwischen waere leer und die Serie risse ab.
+    await seedSession({ userId, startedAt: isoAgo(1 / 60), completedAt: isoAgo(1 / 120), completedReason: "manual" });
+    const berlinTag = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date(iso));
+    const { error: cardioError } = await admin
+      .from("cardio_checks")
+      .insert({ user_id: userId, day: berlinTag(tage(7)) });
+    if (cardioError) throw cardioError;
+    await buchung(await termin(tage(14), "planned"), "booked");
+    await buchung(await termin(tage(21), "cancelled"), "booked");
+    await buchung(await termin(tage(22), "planned"), "waitlisted");
+    await buchung(await termin(tage(23), "planned"), "cancelled");
+    // Ein gebuchter Kurs in der Zukunft zaehlt noch nicht.
+    await buchung(await termin(tage(-30), "planned"), "booked");
+
+    const client = await userClient(email);
+    const { summary } = await getSessions(client, { studioId: studioA });
+
+    expect(summary.streak?.weeks).toBe(3);
+  });
+});

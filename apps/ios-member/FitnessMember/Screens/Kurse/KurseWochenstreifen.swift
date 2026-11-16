@@ -22,6 +22,9 @@ struct KurseWochenstreifen<Marke: View>: View {
     /// Ein Tag mit abgeschlossenem Training (Plan-Tab): Hantel statt Zahl wie
     /// im Home-Kalender. Der Kursplan kennt das nicht.
     var trainiert: (KurseWochentag) -> Bool = { _ in false }
+    /// Eine eigene Tageszelle statt `Kalenderzelle` (Plan-Tab, Leinwand
+    /// "Kalender B"); nil im Kursplan.
+    var zelle: ((KurseWochentag) -> AnyView)? = nil
     let beiWochenwahl: (Int) -> Void
     let beiTagwahl: (KurseWochentag) -> Void
     /// Das VoiceOver-Label des Tages -- die Marke selbst ist Verzierung.
@@ -67,13 +70,17 @@ struct KurseWochenstreifen<Marke: View>: View {
 
                         // Dieselbe Zelle wie im Home-Kalender -- trainierte
                         // Tage kennt nur der Plan-Tab, Nachbarmonate keiner.
-                        let hatTraining = trainiert(tag)
-                        Kalenderzelle(
-                            inhalt: hatTraining ? .hantel : .zahl(tag.tagesnummer),
-                            istGewaehlt: ausgewaehlt,
-                            istHeute: tag.istHeute,
-                            trainiert: hatTraining,
-                            gedeckt: false)
+                        if let zelle {
+                            zelle(tag)
+                        } else {
+                            let hatTraining = trainiert(tag)
+                            Kalenderzelle(
+                                inhalt: hatTraining ? .hantel : .zahl(tag.tagesnummer),
+                                istGewaehlt: ausgewaehlt,
+                                istHeute: tag.istHeute,
+                                trainiert: hatTraining,
+                                gedeckt: false)
+                        }
 
                         marke(tag)
                             .accessibilityHidden(true)

@@ -64,19 +64,42 @@ struct HomeSerieView: View {
     var muskeln: [String: [GeraetMuskel]] = [:]
     var geschlecht: Geschlecht? = nil
     var beiKursAuswahl: (String) -> Void = { _ in }
-    /// Planmarken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`); leer ohne Plan.
-    var geplant: [String: PlanTagMarke.Art] = [:]
+    /// Marken je Tag ("yyyy-MM-dd", `HomeSerie.planMarken`): Geleistetes und
+    /// gebuchte Kurse der Woche.
+    var geplant: [String: TagMarke] = [:]
+    /// "Kraft 1/2 · Cardio 0/1" (`HomeSerie.zielZeile`); ersetzt "X von Y
+    /// Tagen" samt Zielstrichen. nil = die alte Zeile mit `wochenziel`.
+    var zielZeile: String? = nil
+    /// Dieselbe Zeile gesprochen ("Kraft 1 von 2, Cardio 0 von 1").
+    var zielVorlesetext: String? = nil
+    /// Ortstage mit Sitzung (auch laufender) und mit Cardio- oder Kursmarke:
+    /// die Hantel steht nur an Tagen mit Sitzung (`HomeSerie.trainingstage`).
+    var sitzungstage: Set<String> = []
+    var cardioOderKursTage: Set<String> = []
+    /// Ortstag der gerade laufenden Sitzung -- nur dort sagt VoiceOver
+    /// "Training läuft.".
+    var laufenderTag: String? = nil
     /// Tipp auf heute oder einen kuenftigen Tag mit Marke: die Tages-Id, der
     /// Aufrufer springt in den Plan-Tab (`PlanSprung.tag`).
     var beiPlanTag: (String) -> Void = { _ in }
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
+    /// Die angezeigte Woche: 0 = die laufende, -1 = die davor (Testnotiz
+    /// 19.10., #1). Flamme, Fussnote und Zielzeile bleiben bei der laufenden.
+    @State private var wochenVersatz = 0
 
     var body: some View {
         let trainingstage = HomeSerie.trainingstage(
-            stand: stand, einheitenJeTag: einheitenJeTag)
+            stand: stand, einheitenJeTag: einheitenJeTag,
+            sitzungstage: sitzungstage, cardioOderKursTage: cardioOderKursTage)
         let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage, geplant: geplant)
-        let gewaehlt = gewaehlterTag(wochentage: wochentage)
+        let bereich = HomeSerie.wochenBereich(
+            weekStart: stand.weekStart, fruehesterTag: einheitenJeTag.keys.min(),
+            spaetesterTag: kurseJeTag.keys.max())
+        let versatz = min(max(wochenVersatz, bereich.lowerBound), bereich.upperBound)
+        let angezeigt = versatz == 0 ? wochentage : HomeSerie.tage(
+            stand, wochenVersatz: versatz, trainingstage: trainingstage, geplant: geplant)
+        let gewaehlt = gewaehlterTag(wochentage: angezeigt)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack(alignment: .firstTextBaseline) {
@@ -85,7 +108,7 @@ struct HomeSerieView: View {
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                 Spacer()
-                if let wochenziel {
+                if versatz == 0, zielZeile == nil, let wochenziel {
                     Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
@@ -93,11 +116,39 @@ struct HomeSerieView: View {
                         .monospacedDigit()
                 }
             }
+            // Als Overlay, damit die Zeile beim Wischen nicht springt; die
+            // Trefferflaeche reicht trotzdem auf 44 pt.
+            .overlay(alignment: .trailing) {
+                if versatz != 0 {
+                    Button {
+                        withAnimation(DesignSystem.Motion.oeffnen) { wochenVersatz = 0 }
+                    } label: {
+                        Text("DIESE WOCHE")
+                            .font(DesignSystem.Typography.label)
+                            .tracking(1.5)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                            .padding(.vertical, DesignSystem.Spacing.s12)
+                            .padding(.leading, DesignSystem.Spacing.s16)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressButtonStyle())
+                    .padding(.vertical, -DesignSystem.Spacing.s12)
+                    .accessibilityLabel("Zur laufenden Woche")
+                    .testnotizElement("home.dieseWoche", typ: "Button")
+                }
+            }
 
             kopfzeile(wochentage)
 
-            wochenstreifen(wochentage, gewaehlt: gewaehlt)
-            if let wochenziel {
+            wischstreifen(bereich: bereich, versatz: versatz, trainingstage: trainingstage,
+                          wochentage: wochentage, gewaehlt: gewaehlt)
+            if let zielZeile {
+                Text(zielZeile)
+                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .accessibilityLabel(zielVorlesetext ?? zielZeile)
+                    .testnotizElement("home.wochenziel", typ: "Text")
+            } else if let wochenziel {
                 zielzeile(wochentage, ziel: wochenziel)
             }
 
@@ -108,6 +159,9 @@ struct HomeSerieView: View {
             }
         }
         .animation(DesignSystem.Motion.oeffnen, value: gewaehlt)
+        // Ein Tag einer anderen Woche bleibt nicht aufgeklappt: die neue
+        // Woche faellt auf ihren juengsten Trainingstag zurueck.
+        .onChange(of: versatz) { auswahl = .vorgabe }
     }
 }
 
@@ -190,7 +244,9 @@ private extension HomeSerieView {
                 // Elemente durchlaufen muss.
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    HomeSerie.vorlesetext(wochen: stand.weeks, tage: wochentage, ziel: wochenziel))
+                    HomeSerie.vorlesetext(
+                        wochen: stand.weeks, tage: wochentage, ziel: zielZeile == nil ? wochenziel : nil)
+                        + ((zielVorlesetext ?? zielZeile).map { " \($0)." } ?? ""))
 
             Text(
                 HomeSerie.fussnote(
@@ -221,13 +277,48 @@ private extension HomeSerieView {
                 .foregroundStyle(
                     laeuft ? DesignSystem.Color.accent : DesignSystem.Color.textFaint)
         }
-        .frame(width: 56)
+        // Mindestens 56 pt, damit eine einstellige Serie wie bisher steht;
+        // ab zehn Wochen waechst die Spalte mit, statt die Zahl auf zwei
+        // Zeilen zu brechen ("1" ueber "0"). Die Fussnote daneben gibt nach.
+        .fixedSize()
+        .frame(minWidth: 56)
     }
 }
 
 // MARK: - Woche
 
 private extension HomeSerieView {
+    /// Wochenweise wischen (Testnotiz 19.10., #1) -- ein echter
+    /// Paging-Container wie `KurseWochenstreifen`, keine eigene DragGesture.
+    /// Die Hoehe gibt die unsichtbare laufende Woche vor: eine TabView hat
+    /// keine Eigenhoehe und fuellte sonst den ganzen ScrollView.
+    func wischstreifen(bereich: ClosedRange<Int>, versatz: Int, trainingstage: Set<String>,
+                       wochentage: [HomeSerieTag], gewaehlt: String?) -> some View {
+        wochenstreifen(wochentage, gewaehlt: nil)
+            .hidden()
+            .accessibilityHidden(true)
+            .overlay {
+                TabView(selection: Binding(get: { versatz }, set: { wochenVersatz = $0 })) {
+                    ForEach(Array(bereich), id: \.self) { seite in
+                        wochenstreifen(
+                            seite == 0 ? wochentage : HomeSerie.tage(
+                                stand, wochenVersatz: seite, trainingstage: trainingstage, geplant: geplant),
+                            gewaehlt: seite == versatz ? gewaehlt : nil)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                            .tag(seite)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+            }
+            .accessibilityAction(named: "Nächste Woche") {
+                if versatz < bereich.upperBound { wochenVersatz = versatz + 1 }
+            }
+            .accessibilityAction(named: "Vorherige Woche") {
+                if versatz > bereich.lowerBound { wochenVersatz = versatz - 1 }
+            }
+            .testnotizElement("home.wochenstreifen", typ: "TabView")
+    }
+
     func wochenstreifen(_ tage: [HomeSerieTag], gewaehlt: String?) -> some View {
         // Abstand 0 und gleich breite Spalten: die Zelle ist 40 pt, die
         // Spalte auf einem 390er Screen 50 -- die 10 pt Luft entstehen
@@ -314,7 +405,7 @@ private extension HomeSerieView {
     func marke(_ tag: HomeSerieTag) -> some View {
         Group {
             if let art = tag.geplant {
-                PlanTagMarke(art: art)
+                PlanTagMarke(marke: art)
                     .accessibilityHidden(true)
             } else {
                 kurspunkt(tag)
@@ -411,29 +502,25 @@ private extension HomeSerieView {
         var teile = ["\(tag.wochentagVoll), \(tag.tagesnummer)."]
         if tag.istHeute { teile.append("Heute.") }
 
-        switch (einheitenJeTag[tag.id] ?? []).count {
-        case 0:
-            // Ein Tag, den der Server als trainiert nennt, dessen Einheit
-            // aber in keiner Buendelung steht, hat noch kein Ende --
-            // sie laeuft gerade im Training-Tab.
-            teile.append(tag.trainiert ? "Training läuft." : "Kein Training.")
-        case 1:
-            teile.append("Eine Einheit.")
-        case let anzahl:
-            teile.append("\(anzahl) Einheiten.")
-        }
+        // "Training läuft." nur am Tag der laufenden Sitzung -- ein Hanteltag
+        // ohne gebuendelte Einheit ist nicht automatisch ein laufender.
+        teile.append(HomeSerie.einheitenVorlesetext(
+            anzahl: (einheitenJeTag[tag.id] ?? []).count, trainiert: tag.trainiert,
+            laeuft: tag.id == laufenderTag))
         switch HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) {
         case .angemeldet: teile.append("Kurs, du bist angemeldet.")
         case .warteliste: teile.append("Kurs, du stehst auf der Warteliste.")
         case .keiner: break
         }
         switch tag.geplant {
-        case .einheit: teile.append("Einheit geplant.")
+        // Die Einheit hat der Zaehler oben schon genannt.
+        case .kraft, nil: break
         // Der Kurspunkt hat den Kurs oben schon genannt.
-        case .kurs: if HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) == .keiner { teile.append("Kurs geplant.") }
-        case .cardio: teile.append("Cardio geplant.")
-        case .verpasst: teile.append("Verpasst.")
-        case nil: break
+        case .kurs, .kursGebucht:
+            if HomeKurse.punkt(kurseJeTag[tag.id], jetzt: jetzt) == .keiner {
+                teile.append(tag.geplant == .kurs ? "Kurs besucht." : "Kurs gebucht.")
+            }
+        case .cardio: teile.append("Cardio gemacht.")
         }
         return teile.joined(separator: " ")
     }

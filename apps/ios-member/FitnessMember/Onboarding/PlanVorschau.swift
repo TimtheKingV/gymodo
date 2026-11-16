@@ -19,6 +19,8 @@ struct PlanVorschauSchritt: View {
     let gesamtSchritte: Int
     /// Die Bereiche aus diesem Flow, nur fuer den Satz in 4.1.
     let beschwerden: [String: String]
+    /// Die Woche als Zaehler ("2× Kraft · Kurse nach Buchung"), wie in "Deine Woche".
+    var wochenText: String? = nil
     /// Nach gelungener Uebernahme; der Flow laedt den Bootstrap neu und
     /// schliesst.
     let beiUebernommen: () async -> Void
@@ -135,14 +137,14 @@ struct PlanVorschauSchritt: View {
     private func planInhalt(_ plan: Trainingsplan) -> some View {
         let einheit = plan.einheiten.first { $0.key == einheitKey } ?? plan.einheiten.first
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-            // Das Raster dieses Vorschlags, wie der Server es legt (nach einem
-            // Tausch in "Deine Woche" mit dessen Krafttagen). Fehlt es (alte
-            // Server-Antwort), fehlt die Zeile.
-            if !plan.wochenraster.isEmpty {
+            // Die Woche als Zaehler, nicht als Tage (Spec P2 §4).
+            if let wochenText {
                 OnboardingAbschnitt(label: "Deine Woche") {
-                    PlanWochenZeile(
-                        raster: plan.wochenraster,
-                        namen: EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap)))
+                    Text(wochenText)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Color.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.bottom, DesignSystem.Spacing.s4)
             }

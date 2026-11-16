@@ -326,6 +326,7 @@ describe("getBootstrap -- Trainingsplan", () => {
     });
     expect(b.member.trainingProfile).toEqual({
       minutes: 60, experience: "regelmaessig", focus: [], kursTage: [], cardioTage: [], cardioArten: [], kraftTage: [],
+      kraftProWoche: null, cardioProWoche: 0, cardioMinuten: 30,
     });
   });
 
@@ -636,6 +637,37 @@ describe("getBootstrap -- Trainingsplan", () => {
     expect(planVon(await getBootstrap(m.client)).zielgewichte[k0]).toEqual({
       load: 55, secondaryLoad: null, aenderung: 5, grund: "korridor_oben_erreicht",
     });
+  });
+
+  it("wochenziel kommt aus dem Profil-Zaehler", async () => {
+    const m = await legeMitgliedAn("boot-wz-profil", {
+      studios: [ps.voll],
+      profil: { minutes: 60, experience: "regelmaessig", focus: [], kraft_pro_woche: 2, cardio_pro_woche: 1 },
+    });
+    const b = await getBootstrap(m.client);
+    expect(b.member.wochenziel).toEqual({ kraft: 2, cardio: 1, cardioMinuten: 30 });
+  });
+
+  it("wochenziel faellt ohne Zaehler auf weekly_days zurueck, ohne Profil auf 2", async () => {
+    const a = await legeMitgliedAn("boot-wz-ziel", { studios: [ps.voll], weeklyDays: 4 });
+    expect((await getBootstrap(a.client)).member.wochenziel).toEqual({ kraft: 4, cardio: 0, cardioMinuten: 30 });
+    const o = await legeMitgliedAn("boot-wz-leer", { studios: [ps.voll], profil: null, weeklyDays: null });
+    expect((await getBootstrap(o.client)).member.wochenziel).toEqual({ kraft: 2, cardio: 0, cardioMinuten: 30 });
+  });
+
+  it("wochenziel ohne Profil-Zaehler nimmt die Tage des aktiven Plans vor weekly_days", async () => {
+    // Profil ohne kraft_pro_woche (null), weekly_days 3, aktiver Plan mit eingabe.tage 5
+    const m = await legeMitgliedAn("boot-wz-plan", { studios: [ps.voll], weeklyDays: 3 });
+    const plan = await aktiverPlan(m);
+    const { error } = await admin
+      .from("training_plans")
+      .update({ eingabe: { ...plan.eingabe, tage: 5 } })
+      .eq("id", plan.id);
+    if (error) throw error;
+    const b = await getBootstrap(m.client);
+    expect(b.member.trainingProfile?.kraftProWoche).toBeNull();
+    expect(b.member.goals.weeklyDays?.targetValue).toBe(3);
+    expect(b.member.wochenziel.kraft).toBe(5);
   });
 
   it("trainingProfile ist null ohne Profil", async () => {

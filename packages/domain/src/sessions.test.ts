@@ -40,6 +40,34 @@ describe("zaehleDieseWoche", () => {
 });
 
 describe("serienstand", () => {
+  // Wochenplan ohne Tage: Cardio-Haken (Ortsdaten) und Kursbeginne (Zeitpunkte)
+  // halten die Serie wie ein Training.
+  it("zaehlt eine Vorwoche mit nur einem Cardio-Haken", () => {
+    const dieseWoche = "2026-09-09T08:00:00.000Z";
+
+    expect(serienstand([dieseWoche], mittwoch, BERLIN, ["2026-09-02"]).weeks).toBe(2);
+  });
+
+  it("zaehlt eine Woche mit nur einem Kursbeginn", () => {
+    const kurs = "2026-09-01T17:00:00.000Z";
+    const dieseWoche = "2026-09-09T08:00:00.000Z";
+
+    expect(serienstand([dieseWoche, kurs], mittwoch, BERLIN).weeks).toBe(2);
+  });
+
+  it("laesst einen kuenftigen Cardio-Tag die Serie nicht verlaengern", () => {
+    const stand = serienstand([], mittwoch, BERLIN, ["2026-09-10", "2026-09-17"]);
+
+    expect(stand.weeks).toBe(0);
+    expect(stand.trainedDays).toEqual([]);
+  });
+
+  it("fuehrt den Cardio-Tag dieser Woche in trainedDays", () => {
+    const stand = serienstand(["2026-09-09T08:00:00.000Z"], mittwoch, BERLIN, ["2026-09-08"]);
+
+    expect(stand.trainedDays).toEqual(["2026-09-08", "2026-09-09"]);
+  });
+
   it("zaehlt die laufende Woche, sobald sie ihre erste Einheit hat", () => {
     expect(serienstand(["2026-09-09T08:00:00.000Z"], mittwoch, BERLIN).weeks).toBe(1);
   });

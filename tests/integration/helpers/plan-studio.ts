@@ -267,6 +267,10 @@ export type MitgliedOptionen = {
     cardio_tage?: number[];
     cardio_arten?: string[];
     kraft_tage?: number[];
+    // Wochenziel als Zaehler (0072).
+    kraft_pro_woche?: number | null;
+    cardio_pro_woche?: number;
+    cardio_minuten?: number;
   } | null;
   limits?: Record<string, "meiden" | "vorsichtig"> | null;
 };

@@ -55,17 +55,14 @@ struct OnboardingAntwortenTests {
         ])
     }
 
-    @Test("schritte nurPlan hat sechs, mit Kursen sieben")
-    func schritteNurPlanHatVier() {
+    @Test("schritte nurPlan hat sechs und keinen Kurstage-Schritt")
+    func schritteNurPlanHatSechs() {
         let antworten = OnboardingAntworten()
         #expect(antworten.schritte(umfang: .nurPlan) == [
             .planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau,
         ])
-        #expect(antworten.schritte(umfang: .nurPlan, mitKursen: true) == [
-            .planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau,
-        ])
-        // Die reine Vorschau fragt keine Woche, auch nicht mit Kursen.
-        #expect(antworten.schritte(umfang: .nurVorschau, mitKursen: true) == [.planVorschau])
+        // Die reine Vorschau fragt keine Woche.
+        #expect(antworten.schritte(umfang: .nurVorschau) == [.planVorschau])
     }
 
     @Test("schritte nurVorschau ist nur die Vorschau")

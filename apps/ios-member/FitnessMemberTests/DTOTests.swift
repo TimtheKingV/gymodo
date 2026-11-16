@@ -703,4 +703,57 @@ struct DTOTests {
         let r = try JSONDecoder().decode(RecordedSet.self, from: Data(json.utf8))
         #expect(r.id == "i")
     }
+
+    // MARK: - Wochenziel und Cardio-Haken (Wochenplan ohne Tage)
+
+    @Test("TrainingsplanProfil dekodiert mit und ohne die Wochenziel-Felder")
+    func profilWochenzielFelder() throws {
+        let mit = #"{"minutes":60,"experience":"neu","focus":[],"kraftProWoche":3,"cardioProWoche":2,"cardioMinuten":45}"#
+        let p = try JSONDecoder().decode(TrainingsplanProfil.self, from: Data(mit.utf8))
+        #expect(p.kraftProWoche == 3 && p.cardioProWoche == 2 && p.cardioMinuten == 45)
+        let ohne = #"{"minutes":60,"experience":"neu","focus":[]}"#
+        let q = try JSONDecoder().decode(TrainingsplanProfil.self, from: Data(ohne.utf8))
+        #expect(q.kraftProWoche == nil && q.cardioProWoche == nil && q.cardioMinuten == nil)
+        let leer = #"{"minutes":60,"experience":"neu","focus":[],"kraftProWoche":null,"cardioProWoche":0,"cardioMinuten":30}"#
+        let r = try JSONDecoder().decode(TrainingsplanProfil.self, from: Data(leer.utf8))
+        #expect(r.kraftProWoche == nil && r.cardioProWoche == 0)
+    }
+
+    @Test("TrainingsplanProfil kodiert ohne Tages- und Wochenziel-Felder, wenn nil")
+    func profilKodiertOhneNil() throws {
+        let json = String(data: try JSONEncoder().encode(TrainingsplanProfil(minutes: 60, experience: "neu", focus: [])), encoding: .utf8)!
+        for key in ["kursTage", "cardioTage", "kraftTage", "kraftProWoche", "cardioProWoche", "cardioMinuten"] {
+            #expect(!json.contains(key))
+        }
+        let mit = TrainingsplanProfil(
+            minutes: 60, experience: "neu", focus: [], kraftProWoche: 3, cardioProWoche: 1, cardioMinuten: 20)
+        let data = try JSONEncoder().encode(mit)
+        #expect(String(data: data, encoding: .utf8)!.contains(#""kraftProWoche":3"#))
+        #expect(try JSONDecoder().decode(TrainingsplanProfil.self, from: data) == mit)
+    }
+
+    @Test("Wochenziel dekodiert")
+    func wochenzielDekodiert() throws {
+        let w = try JSONDecoder().decode(Wochenziel.self, from: Data(#"{"kraft":3,"cardio":2,"cardioMinuten":30}"#.utf8))
+        #expect(w == Wochenziel(kraft: 3, cardio: 2, cardioMinuten: 30))
+    }
+
+    @Test("Bootstrap dekodiert member.wochenziel, ohne es nil")
+    func bootstrapWochenziel() throws {
+        let mit = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null},"wochenziel":{"kraft":2,"cardio":1,"cardioMinuten":40}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let r = try JSONDecoder().decode(BootstrapResponse.self, from: Data(mit.utf8))
+        #expect(r.member.wochenziel == Wochenziel(kraft: 2, cardio: 1, cardioMinuten: 40))
+        let ohne = #"{"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},"studios":[],"machines":[],"calibrations":[],"lastSets":[]}"#
+        let q = try JSONDecoder().decode(BootstrapResponse.self, from: Data(ohne.utf8))
+        #expect(q.member.wochenziel == nil)
+    }
+
+    @Test("CardioCheck dekodiert mit und ohne Minuten")
+    func cardioCheckDekodiert() throws {
+        let c = try JSONDecoder().decode(
+            CardioCheck.self, from: Data(#"{"id":"c1","day":"2026-11-10","minuten":null}"#.utf8))
+        #expect(c == CardioCheck(id: "c1", day: "2026-11-10", minuten: nil))
+        let d = try JSONDecoder().decode(CardioCheck.self, from: Data(#"{"id":"c2","day":"2026-11-10","minuten":25}"#.utf8))
+        #expect(d.minuten == 25)
+    }
 }

@@ -8,15 +8,15 @@ import Foundation
 enum OnboardingSchritt: Hashable, CaseIterable {
     case ueberDich, koerper, ziel, wieOft, zielgewicht
     case planZeit, planSchwerpunkt, planBeschwerden
-    /// Kurse (2c, nur mit Studio), Cardio (2c2), Deine Woche (2c3): die Woche
-    /// steht VOR der Vorschau, weil der Server Kurs- und Cardio-Tage braucht,
-    /// bevor er das Raster vorschlagen kann.
-    case planKurse, planCardio, planWoche
+    /// Cardio (2c2: wie oft, wie lange, was) und Deine Woche (2c3: die
+    /// Zusammenfassung): beide stehen VOR der Vorschau, weil der Server die
+    /// Zaehler kennen muss, bevor er den Plan vorschlaegt.
+    case planCardio, planWoche
     case planVorschau
 
     var gehoertZumPlan: Bool {
         switch self {
-        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planKurse, .planCardio, .planWoche, .planVorschau: true
+        case .planZeit, .planSchwerpunkt, .planBeschwerden, .planCardio, .planWoche, .planVorschau: true
         default: false
         }
     }
@@ -85,15 +85,13 @@ struct OnboardingAntworten: Equatable {
     /// Schwerpunkt ändern" aus der reinen Vorschau). Sie reihen sich in die
     /// feste Reihenfolge ein, nichts steht doppelt.
     ///
-    /// `mitKursen`: die Kursfrage (2c) nur mit einem Studio, das Kurse hat
-    /// (`PlanAntworten.kursFrageSichtbar`); ohne sie zaehlt die Schrittzeile
-    /// einen Schritt weniger. Cardio und Woche gehoeren zu jedem Lauf, der
-    /// den Block fragt -- nicht zur reinen Vorschau.
+    /// Cardio und Woche gehoeren zu jedem Lauf, der den Block fragt -- nicht
+    /// zur reinen Vorschau. Kurstage fragt der Flow nicht (Spec P2 §4).
     func schritte(
-        umfang: OnboardingUmfang, ergaenzt: [OnboardingSchritt] = [], mitKursen: Bool = false
+        umfang: OnboardingUmfang, ergaenzt: [OnboardingSchritt] = []
     ) -> [OnboardingSchritt] {
         var basis: [OnboardingSchritt]
-        let woche: [OnboardingSchritt] = (mitKursen ? [.planKurse] : []) + [.planCardio, .planWoche]
+        let woche: [OnboardingSchritt] = [.planCardio, .planWoche]
         switch umfang {
         case .komplett: basis = schritte + [.planZeit, .planSchwerpunkt, .planBeschwerden] + woche
         case .nurPlan: basis = [.planZeit, .planSchwerpunkt, .planBeschwerden] + woche

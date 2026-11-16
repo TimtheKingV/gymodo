@@ -345,22 +345,36 @@ struct APIClientTests {
                 == TrainingsplanProfil(minutes: 60, experience: "neu", focus: ["brust"]))
     }
 
-    @Test("cardioChecks: GET mit from/to, PUT und DELETE mit day")
+    @Test("cardioChecks: GET liefert Haken mit id, POST sendet day, DELETE nimmt id")
     func cardioChecks() async throws {
         nonisolated(unsafe) var gesehen: [String] = []
+        nonisolated(unsafe) var postBody = ""
         StubURLProtocol.handler = { request in
             gesehen.append("\(request.httpMethod ?? "") \(request.url?.path ?? "")?\(request.url?.query ?? "")")
-            if request.httpMethod == "GET" { return (200, Data(#"{"days":["2026-10-26","2026-10-28"]}"#.utf8)) }
+            if request.httpMethod == "GET" {
+                return (200, Data(#"{"checks":[{"id":"a","day":"2026-10-26","minuten":null},{"id":"b","day":"2026-10-26","minuten":30}],"days":["2026-10-26"]}"#.utf8))
+            }
+            if request.httpMethod == "POST" {
+                postBody = request.httpBodyStream.map { s -> String in
+                    s.open(); defer { s.close() }
+                    var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                    while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                    return String(decoding: d, as: UTF8.self)
+                } ?? ""
+                return (201, Data(#"{"id":"c","day":"2026-11-10","minuten":null}"#.utf8))
+            }
             return (204, Data())
         }
         let client = stubbedClient()
-        #expect(try await client.cardioChecks(from: "2026-10-26", to: "2026-11-01") == ["2026-10-26", "2026-10-28"])
-        try await client.setCardioCheck(day: "2026-10-28")
-        try await client.deleteCardioCheck(day: "2026-10-28")
+        #expect(try await client.cardioChecks(from: "2026-10-26", to: "2026-11-01") == [
+            CardioCheck(id: "a", day: "2026-10-26", minuten: nil), CardioCheck(id: "b", day: "2026-10-26", minuten: 30)])
+        #expect(try await client.addCardioCheck(day: "2026-11-10") == CardioCheck(id: "c", day: "2026-11-10", minuten: nil))
+        try await client.deleteCardioCheck(id: "c")
         #expect(gesehen.count == 3)
         #expect(gesehen[0].hasSuffix("/me/cardio-checks?from=2026-10-26&to=2026-11-01"))
-        #expect(gesehen[1].hasPrefix("PUT ") && gesehen[1].hasSuffix("/me/cardio-checks?day=2026-10-28"))
-        #expect(gesehen[2].hasPrefix("DELETE ") && gesehen[2].hasSuffix("/me/cardio-checks?day=2026-10-28"))
+        #expect(gesehen[1].hasPrefix("POST ") && gesehen[1].hasSuffix("/me/cardio-checks?"))
+        #expect(postBody == #"{"day":"2026-11-10"}"#)
+        #expect(gesehen[2].hasPrefix("DELETE ") && gesehen[2].hasSuffix("/me/cardio-checks?id=c"))
     }
 
     @Test("trainingLimits: 404 ergibt nil, 200 die Bereiche")

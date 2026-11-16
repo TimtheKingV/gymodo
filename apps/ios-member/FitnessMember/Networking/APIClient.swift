@@ -282,34 +282,31 @@ actor APIClient {
 
     // MARK: - Cardio-Checks
 
-    /// Die abgehakten Cardio-Tage von `from` bis `to` (je "YYYY-MM-DD", eingeschlossen).
-    func cardioChecks(from: String, to: String) async throws(APIError) -> [String] {
-        struct Antwort: Decodable { let days: [String] }
+    /// Die Cardio-Haken von `from` bis `to` (Tage "YYYY-MM-DD", eingeschlossen), je mit id.
+    func cardioChecks(from: String, to: String) async throws(APIError) -> [CardioCheck] {
+        struct Antwort: Decodable { let checks: [CardioCheck] }
         var components = URLComponents(
             url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
         components.queryItems = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
         guard let url = components.url else { throw APIError.encodingFailed }
         let antwort: Antwort = try await execute(url: url, method: "GET", bodyData: nil)
-        return antwort.days
+        return antwort.checks
     }
 
-    /// Hakt Cardio fuer `day` ab (idempotent, 204). Der Server bekommt nur den Tag des
-    /// Mitglieds, kein `today`; liegt der Tag in der Zukunft, antwortet er 422.
-    func setCardioCheck(day: String) async throws(APIError) {
-        try await cardioCheckOhneInhalt(day: day, method: "PUT")
+    /// Legt einen Haken fuer `day` an (201); mehrere je Tag sind moeglich. Der Server
+    /// bekommt nur den Tag des Mitglieds; liegt er in der Zukunft, antwortet er 422.
+    func addCardioCheck(day: String) async throws(APIError) -> CardioCheck {
+        struct Body: Encodable { let day: String }
+        return try await send("me/cardio-checks", method: "POST", body: Body(day: day))
     }
 
-    /// Nimmt das Abhaken zurueck; ein fehlender Tag ist kein Fehler (204).
-    func deleteCardioCheck(day: String) async throws(APIError) {
-        try await cardioCheckOhneInhalt(day: day, method: "DELETE")
-    }
-
-    private func cardioCheckOhneInhalt(day: String, method: String) async throws(APIError) {
+    /// Nimmt genau diesen Haken zurueck; ein fehlender ist kein Fehler (204).
+    func deleteCardioCheck(id: String) async throws(APIError) {
         var components = URLComponents(
             url: baseURL.appendingPathComponent("me/cardio-checks"), resolvingAgainstBaseURL: false)!
-        components.queryItems = [URLQueryItem(name: "day", value: day)]
+        components.queryItems = [URLQueryItem(name: "id", value: id)]
         guard let url = components.url else { throw APIError.encodingFailed }
-        try await executeNoContent(url: url, method: method)
+        try await executeNoContent(url: url, method: "DELETE")
     }
 
     // MARK: - Hilfsmethoden
