@@ -289,6 +289,15 @@ actor APIClient {
             einheitKey: einheitKey, positionKeys: positionKeys))
     }
 
+    /// Ersetzt die Einheit als Ganzes (P4): Listenreihenfolge ist die neue Reihenfolge,
+    /// fehlende Keys sind entfernt, key nil ist neu. 409/422 kommen als APIError.
+    func ersetzePlanEinheit(
+        planId: String, einheitKey: String, positionen: [ErsetzenPosition]
+    ) async throws(APIError) -> Trainingsplan {
+        struct Rumpf: Encodable { let positionen: [ErsetzenPosition] }
+        return try await send("me/plans/\(planId)/einheiten/\(einheitKey)", method: "PUT", body: Rumpf(positionen: positionen))
+    }
+
     // MARK: - Cardio-Checks
 
     /// Die Cardio-Haken von `from` bis `to` (Tage "YYYY-MM-DD", eingeschlossen), je mit id.

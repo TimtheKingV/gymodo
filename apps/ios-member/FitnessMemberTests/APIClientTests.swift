@@ -434,4 +434,32 @@ struct APIClientTests {
         #expect(gesehen?.2["einheitKey"] as? String == "A")
         #expect(gesehen?.2["positionKeys"] as? [String] == ["1", "0"])
     }
+
+    @Test("ersetzePlanEinheit sendet PUT me/plans/P1/einheiten/A mit positionen")
+    func ersetzenSendetPositionen() async throws {
+        nonisolated(unsafe) var gesehen: (String?, String?, [String: Any])?
+        StubURLProtocol.handler = { request in
+            let data = request.httpBodyStream.map { s -> Data in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return d
+            } ?? Data()
+            let json = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+            gesehen = (request.httpMethod, request.url?.path, json)
+            return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
+        }
+        let neu = try await stubbedClient().ersetzePlanEinheit(planId: "P1", einheitKey: "A", positionen: [
+            ErsetzenPosition(key: "1", exerciseId: "e1", modelId: "m1", saetze: 4),
+            ErsetzenPosition(key: nil, exerciseId: "e2", modelId: "m2", dauerMin: 15),
+        ])
+        #expect(neu.planId == "p2")
+        #expect(gesehen?.0 == "PUT")
+        #expect(gesehen?.1 == "/api/v1/me/plans/P1/einheiten/A")
+        let liste = gesehen?.2["positionen"] as? [[String: Any]]
+        #expect(liste?.count == 2)
+        #expect(liste?[0]["key"] as? String == "1" && liste?[0]["saetze"] as? Int == 4)
+        #expect(liste?[0]["dauerMin"] == nil)
+        #expect(liste?[1]["key"] is NSNull && liste?[1]["dauerMin"] as? Int == 15 && liste?[1]["saetze"] == nil)
+    }
 }
