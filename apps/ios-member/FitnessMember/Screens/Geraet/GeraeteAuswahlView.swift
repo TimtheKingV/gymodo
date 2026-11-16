@@ -68,6 +68,9 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     @State private var ansicht: Uebungsansicht = .muskel
     /// Das gewaehlte Bullet; nil = Alle.
     @State private var gruppenfilter: MuskelHauptgruppe?
+    /// Das Bullet unter "Zuletzt bei dir" (Testnotiz 19.10., #4); nil = Alle.
+    /// Nicht gemerkt, wie `gruppenfilter`.
+    @State private var zuletztFilter: MuskelHauptgruppe?
     /// Das Suchergebnis, entprellt berechnet statt in jedem body-Durchlauf
     /// (Offline-Spec 1b): vorher filterte jeder Tastendruck den ganzen
     /// Katalog auf dem Main-Thread. nil bis zur ersten Berechnung --
@@ -326,17 +329,12 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
                             .padding(.top, g.kategorien.isEmpty ? 0 : DesignSystem.Spacing.s16)
                     }
                     if !g.zuletzt.isEmpty {
-                        gruppe("ZULETZT BEI DIR",
-                               zuletztAlle ? g.zuletzt : Array(g.zuletzt.prefix(GeraeteAuswahl.zuletztSichtbar)),
-                               ersteGruppe: g.kategorien.isEmpty)
-                        if g.zuletzt.count > GeraeteAuswahl.zuletztSichtbar {
-                            Button(zuletztAlle ? "Weniger anzeigen" : "Mehr anzeigen") {
-                                zuletztAlle.toggle()
-                            }
-                            .font(DesignSystem.Typography.label)
-                            .foregroundStyle(DesignSystem.Color.textMuted)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                        }
+                        // Eigener Block statt `gruppe`: Abstand zu den Kacheln
+                        // 24pt (8 Spacing + 16) und Kopf zu Bullets/Karten 12pt
+                        // wie auf Home (Testnotiz 19.10., #3), dazu die Bullets
+                        // (#4).
+                        zuletztBlock(g.zuletzt)
+                            .padding(.top, g.kategorien.isEmpty ? 0 : DesignSystem.Spacing.s16)
                     }
                     if !g.liste.isEmpty {
                         kategorieListe(g.liste)
@@ -347,6 +345,46 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, DesignSystem.Spacing.s24)
+            }
+        }
+    }
+
+    // MARK: - Zuletzt bei dir
+
+    /// Kopf, Bullets (erst ab zwei Gruppen, wie die Uebungen auf Home) und
+    /// die Karten; "Mehr anzeigen" gilt fuer die gefilterte Liste. Ein
+    /// gewaehltes Bullet, das nicht mehr im Angebot ist, gilt als Alle.
+    private func zuletztBlock(_ zuletzt: [GeraeteAuswahl.Eintrag]) -> some View {
+        let angebot = GeraeteGruppierung.vorhandeneGruppen(zuletzt)
+        let filter = zuletztFilter.flatMap { angebot.contains($0) ? $0 : nil }
+        let liste = GeraeteGruppierung.gefiltert(zuletzt, nur: filter)
+        let sichtbar = zuletztAlle ? liste : Array(liste.prefix(GeraeteAuswahl.zuletztSichtbar))
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Text("ZULETZT BEI DIR")
+                .font(DesignSystem.Typography.label)
+                .tracking(1.5)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+            if angebot.count > 1 {
+                GruppenLeiste(gruppen: angebot, auswahl: $zuletztFilter)
+                    .testnotizElement("geraete.zuletzt.filter", typ: "GruppenLeiste")
+            }
+            VStack(spacing: DesignSystem.Spacing.s8) {
+                ForEach(sichtbar) { eintrag in
+                    if eintrag.gesperrt {
+                        zeile(eintrag).opacity(0.55)
+                    } else {
+                        Button { beiAuswahl(eintrag.station, eintrag.trefferUebung?.id) } label: { zeile(eintrag) }
+                            .buttonStyle(PressButtonStyle())
+                    }
+                }
+            }
+            if liste.count > GeraeteAuswahl.zuletztSichtbar {
+                Button(zuletztAlle ? "Weniger anzeigen" : "Mehr anzeigen") {
+                    zuletztAlle.toggle()
+                }
+                .font(DesignSystem.Typography.label)
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
         }
     }

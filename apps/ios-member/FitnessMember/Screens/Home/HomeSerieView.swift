@@ -86,13 +86,22 @@ struct HomeSerieView: View {
     var laufenderTag: String? = nil
 
     @State private var auswahl: HomeSerieAuswahl = .vorgabe
+    /// Die angezeigte Woche: 0 = die laufende, -1 = die davor (Testnotiz
+    /// 19.10., #1). Flamme, Fussnote und Zielzeile bleiben bei der laufenden.
+    @State private var wochenVersatz = 0
 
     var body: some View {
         let trainingstage = HomeSerie.trainingstage(
             stand: stand, einheitenJeTag: einheitenJeTag,
             sitzungstage: sitzungstage, cardioOderKursTage: cardioOderKursTage)
         let wochentage = HomeSerie.tage(stand, trainingstage: trainingstage, geplant: geplant)
-        let gewaehlt = gewaehlterTag(wochentage: wochentage)
+        let bereich = HomeSerie.wochenBereich(
+            weekStart: stand.weekStart, fruehesterTag: einheitenJeTag.keys.min(),
+            spaetesterTag: kurseJeTag.keys.max())
+        let versatz = min(max(wochenVersatz, bereich.lowerBound), bereich.upperBound)
+        let angezeigt = versatz == 0 ? wochentage : HomeSerie.tage(
+            stand, wochenVersatz: versatz, trainingstage: trainingstage, geplant: geplant)
+        let gewaehlt = gewaehlterTag(wochentage: angezeigt)
 
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack(alignment: .firstTextBaseline) {
@@ -101,7 +110,7 @@ struct HomeSerieView: View {
                     .tracking(1.5)
                     .foregroundStyle(DesignSystem.Color.textMuted)
                 Spacer()
-                if zielZeile == nil, let wochenziel {
+                if versatz == 0, zielZeile == nil, let wochenziel {
                     Text(HomeSerie.zielkopf(ziel: wochenziel).uppercased())
                         .font(DesignSystem.Typography.label)
                         .tracking(1.5)
@@ -109,10 +118,32 @@ struct HomeSerieView: View {
                         .monospacedDigit()
                 }
             }
+            // Als Overlay, damit die Zeile beim Wischen nicht springt; die
+            // Trefferflaeche reicht trotzdem auf 44 pt.
+            .overlay(alignment: .trailing) {
+                if versatz != 0 {
+                    Button {
+                        withAnimation(DesignSystem.Motion.oeffnen) { wochenVersatz = 0 }
+                    } label: {
+                        Text("DIESE WOCHE")
+                            .font(DesignSystem.Typography.label)
+                            .tracking(1.5)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                            .padding(.vertical, DesignSystem.Spacing.s12)
+                            .padding(.leading, DesignSystem.Spacing.s16)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressButtonStyle())
+                    .padding(.vertical, -DesignSystem.Spacing.s12)
+                    .accessibilityLabel("Zur laufenden Woche")
+                    .testnotizElement("home.dieseWoche", typ: "Button")
+                }
+            }
 
             kopfzeile(wochentage)
 
-            wochenstreifen(wochentage, gewaehlt: gewaehlt)
+            wischstreifen(bereich: bereich, versatz: versatz, trainingstage: trainingstage,
+                          wochentage: wochentage, gewaehlt: gewaehlt)
             if let zielZeile {
                 Text(zielZeile)
                     .font(.system(size: 12, weight: .semibold).monospacedDigit())
@@ -136,9 +167,12 @@ struct HomeSerieView: View {
         // sonst unten noch der alte Plantag; kommt die Marke eines schon
         // gewaehlten Tages spaeter (Plan oder Kurse nachgeladen), fehlte der
         // Abschnitt.
-        .onChange(of: planTag(gewaehlt, wochentage: wochentage)) { _, neu in
+        .onChange(of: planTag(gewaehlt, wochentage: angezeigt)) { _, neu in
             beiPlanAuswahl(neu)
         }
+        // Ein Tag einer anderen Woche bleibt nicht aufgeklappt: die neue
+        // Woche faellt auf ihren juengsten Trainingstag zurueck.
+        .onChange(of: versatz) { auswahl = .vorgabe }
     }
 }
 
@@ -262,13 +296,48 @@ private extension HomeSerieView {
                 .foregroundStyle(
                     laeuft ? DesignSystem.Color.accent : DesignSystem.Color.textFaint)
         }
-        .frame(width: 56)
+        // Mindestens 56 pt, damit eine einstellige Serie wie bisher steht;
+        // ab zehn Wochen waechst die Spalte mit, statt die Zahl auf zwei
+        // Zeilen zu brechen ("1" ueber "0"). Die Fussnote daneben gibt nach.
+        .fixedSize()
+        .frame(minWidth: 56)
     }
 }
 
 // MARK: - Woche
 
 private extension HomeSerieView {
+    /// Wochenweise wischen (Testnotiz 19.10., #1) -- ein echter
+    /// Paging-Container wie `KurseWochenstreifen`, keine eigene DragGesture.
+    /// Die Hoehe gibt die unsichtbare laufende Woche vor: eine TabView hat
+    /// keine Eigenhoehe und fuellte sonst den ganzen ScrollView.
+    func wischstreifen(bereich: ClosedRange<Int>, versatz: Int, trainingstage: Set<String>,
+                       wochentage: [HomeSerieTag], gewaehlt: String?) -> some View {
+        wochenstreifen(wochentage, gewaehlt: nil)
+            .hidden()
+            .accessibilityHidden(true)
+            .overlay {
+                TabView(selection: Binding(get: { versatz }, set: { wochenVersatz = $0 })) {
+                    ForEach(Array(bereich), id: \.self) { seite in
+                        wochenstreifen(
+                            seite == 0 ? wochentage : HomeSerie.tage(
+                                stand, wochenVersatz: seite, trainingstage: trainingstage, geplant: geplant),
+                            gewaehlt: seite == versatz ? gewaehlt : nil)
+                            .frame(maxHeight: .infinity, alignment: .top)
+                            .tag(seite)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+            }
+            .accessibilityAction(named: "Nächste Woche") {
+                if versatz < bereich.upperBound { wochenVersatz = versatz + 1 }
+            }
+            .accessibilityAction(named: "Vorherige Woche") {
+                if versatz > bereich.lowerBound { wochenVersatz = versatz - 1 }
+            }
+            .testnotizElement("home.wochenstreifen", typ: "TabView")
+    }
+
     func wochenstreifen(_ tage: [HomeSerieTag], gewaehlt: String?) -> some View {
         // Abstand 0 und gleich breite Spalten: die Zelle ist 40 pt, die
         // Spalte auf einem 390er Screen 50 -- die 10 pt Luft entstehen
