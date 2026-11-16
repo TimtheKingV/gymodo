@@ -203,9 +203,11 @@ struct SessionDetailView: View {
         }
     }
 
-    /// Mit Fortschritt (Testnotiz 06.10., #20): je Satz der Unterschied zum
-    /// Schnitt der bis zu fuenf vorherigen Trainings dieser Uebung, rechts
-    /// oben der Gesamttrend. Die Rechnung steht in `Satzvergleich`.
+    /// Mit Fortschritt (Testnotiz 06.10., #20): unter den Saetzen EIN Feld
+    /// -- der Schnitt je Satz gegen den Schnitt der bis zu fuenf vorherigen
+    /// Trainings dieser Uebung (Testnotiz 19.10., #2; vorher stand das je
+    /// Satz da). Rechts oben der Gesamttrend. Die Rechnung steht in
+    /// `Satzvergleich`.
     private func blockKarte(_ block: SessionSummary.Block, teil: SessionSummary) -> some View {
         let vergleich = Satzvergleich.fuer(block: block, in: teil, verlauf: verlauf.sessions)
         let saetze = block.sets.sorted { $0.setIndex < $1.setIndex }
@@ -237,11 +239,12 @@ struct SessionDetailView: View {
             .buttonStyle(PressButtonStyle())
             .accessibilityHint("Öffnet den Übungsfortschritt")
 
-            ForEach(Array(saetze.enumerated()), id: \.element.setIndex) { position, satz in
-                satzZeile(satz, block: block, vergleich: vergleich?.saetze[position])
+            ForEach(saetze, id: \.setIndex) { satz in
+                satzZeile(satz, block: block)
             }
 
             if let vergleich {
+                schnittZeile(vergleich)
                 Text(vergleich.basis == 1
                      ? "Verglichen mit deinem letzten Training dieser Übung."
                      : "Verglichen mit dem Schnitt deiner letzten \(vergleich.basis) Trainings dieser Übung.")
@@ -255,10 +258,8 @@ struct SessionDetailView: View {
     }
 
     /// "80,0 kg × 10", "8,5 km/h · 6,0 % × 20:00 min" -- die Einheiten
-    /// kommen vom Block, den der Server mitliefert. Rechts, wenn es etwas
-    /// zu vergleichen gibt: Pfeil, kg- und Wdh.-Unterschied.
-    private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block,
-                           vergleich: Satzvergleich.Satz?) -> some View {
+    /// kommen vom Block, den der Server mitliefert.
+    private func satzZeile(_ satz: SessionSummary.Block.Set, block: SessionSummary.Block) -> some View {
         var label = "Satz \(satz.setIndex)"
         if let cardio = satz.cardio {
             label += ", " + Zahlformat.cardioGesprochen(cardio)
@@ -269,9 +270,6 @@ struct SessionDetailView: View {
         }
         if satz.problemFlag {
             label.append(", Problem gemeldet")
-        }
-        if let vergleich {
-            label.append(", gegenüber dem Schnitt \(Satzvergleich.kgText(vergleich.deltaKg)) und \(Satzvergleich.wdhText(vergleich.deltaWdh))")
         }
 
         return HStack(spacing: DesignSystem.Spacing.s12) {
@@ -303,22 +301,31 @@ struct SessionDetailView: View {
                     .foregroundStyle(DesignSystem.Color.warn)
             }
 
-            Spacer(minLength: DesignSystem.Spacing.s4)
-
-            if let vergleich {
-                HStack(spacing: DesignSystem.Spacing.s4) {
-                    trendSymbol(vergleich.trend, groesse: 12)
-                    Text("\(Satzvergleich.kgText(vergleich.deltaKg))  \(Satzvergleich.wdhText(vergleich.deltaWdh))")
-                        .font(.system(size: 12, weight: .semibold).monospacedDigit())
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                .fixedSize(horizontal: false, vertical: true)
-            }
+            Spacer(minLength: 0)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
+    }
+
+    /// "Ø je Satz   ↗ ±0 kg · +2,3 Wdh." -- das eine Feld rechts.
+    private func schnittZeile(_ vergleich: Satzvergleich.Ergebnis) -> some View {
+        let kg = Satzvergleich.kgText(vergleich.deltaKg)
+        let wdh = Satzvergleich.wdhText(vergleich.deltaWdh)
+        return HStack(spacing: DesignSystem.Spacing.s4) {
+            Text("Ø je Satz")
+                .font(.system(size: 12))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+            Spacer(minLength: DesignSystem.Spacing.s8)
+            trendSymbol(vergleich.gesamt, groesse: 12)
+            Text("\(kg) · \(wdh)")
+                .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Im Schnitt je Satz \(kg) und \(wdh)")
+        .testnotizElement("session.schnitt", typ: "Text")
     }
 
     /// Nach oben in der Signalfarbe, nach unten gedeckt -- weniger als im

@@ -33,6 +33,57 @@ struct HomeSerieTests {
         #expect(HomeSerie.zeitzone(studio: "Europe/Vienna", geraet: geraet) == "Europe/Vienna")
     }
 
+    // MARK: - Wochen wischen (Testnotiz 19.10., #1)
+
+    @Test func vorherigeWocheBeginntSiebenTageFrueher() {
+        let tage = HomeSerie.tage(stand(weekStart: "2026-10-19", today: "2026-10-21", trainedDays: []),
+                                  wochenVersatz: -1, trainingstage: nil, geplant: [:])
+
+        #expect(tage.first?.id == "2026-10-12")
+        #expect(tage.last?.id == "2026-10-18")
+    }
+
+    @Test func markenNurInDerLaufendenWoche() {
+        let s = stand(weekStart: "2026-10-19", today: "2026-10-21", trainedDays: [])
+        let geplant: [String: TagMarke] = ["2026-10-22": .kurs, "2026-10-29": .kurs]
+
+        let naechste = HomeSerie.tage(s, wochenVersatz: 1, trainingstage: nil, geplant: geplant)
+        let laufende = HomeSerie.tage(s, wochenVersatz: 0, trainingstage: nil, geplant: geplant)
+
+        #expect(naechste.allSatisfy { $0.geplant == nil })
+        #expect(laufende.first { $0.id == "2026-10-22" }?.geplant == .kurs)
+    }
+
+    @Test func trainingstageGeltenAuchInVergangenenWochen() {
+        let tage = HomeSerie.tage(stand(weekStart: "2026-10-19", today: "2026-10-21", trainedDays: []),
+                                  wochenVersatz: -1, trainingstage: ["2026-10-14"], geplant: [:])
+
+        #expect(tage.filter(\.trainiert).map(\.id) == ["2026-10-14"])
+    }
+
+    @Test func bereichReichtBisZurAeltestenEinheit() {
+        #expect(HomeSerie.wochenBereich(weekStart: "2026-10-19", fruehesterTag: "2026-09-30",
+                                        spaetesterTag: nil) == -3...0)
+    }
+
+    @Test func bereichNachVornBisZumLetztenKurs() {
+        #expect(HomeSerie.wochenBereich(weekStart: "2026-10-19", fruehesterTag: nil,
+                                        spaetesterTag: "2026-11-04") == 0...2)
+    }
+
+    @Test func bereichOhneDatenIstNurDieLaufendeWoche() {
+        #expect(HomeSerie.wochenBereich(weekStart: "2026-10-19", fruehesterTag: nil,
+                                        spaetesterTag: nil) == 0...0)
+        // Tage innerhalb der Woche verschieben nichts.
+        #expect(HomeSerie.wochenBereich(weekStart: "2026-10-19", fruehesterTag: "2026-10-25",
+                                        spaetesterTag: "2026-10-19") == 0...0)
+    }
+
+    @Test func bereichHoechstensSechsundzwanzigZurueck() {
+        #expect(HomeSerie.wochenBereich(weekStart: "2026-10-19", fruehesterTag: "2024-01-01",
+                                        spaetesterTag: nil) == -26...0)
+    }
+
     // MARK: - Die sieben Tagesboxen
 
     @Test func siebenTageVonMontagBisSonntag() {

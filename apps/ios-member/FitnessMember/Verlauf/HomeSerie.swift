@@ -161,7 +161,18 @@ enum HomeSerie {
     static func tage(
         _ stand: Serienstand, trainingstage: Set<String>? = nil, geplant: [String: TagMarke] = [:]
     ) -> [HomeSerieTag] {
-        guard let montag = datumsFormatter.date(from: stand.weekStart) else { return [] }
+        tage(stand, wochenVersatz: 0, trainingstage: trainingstage, geplant: geplant)
+    }
+
+    /// Eine Woche vor oder zurueck (Testnotiz 19.10., #1): Montag ist
+    /// `weekStart` plus sieben Tage je Versatz. Die Planmarken gelten nur fuer
+    /// die laufende Woche (Versatz 0) -- mehr liefert `PlanWochenStand` nicht.
+    static func tage(
+        _ stand: Serienstand, wochenVersatz: Int, trainingstage: Set<String>?, geplant: [String: TagMarke]
+    ) -> [HomeSerieTag] {
+        guard let laufenderMontag = datumsFormatter.date(from: stand.weekStart),
+              let montag = kalender.date(byAdding: .day, value: 7 * wochenVersatz, to: laufenderMontag)
+        else { return [] }
 
         let trainiert = trainingstage ?? Set(stand.trainedDays)
         return (0..<7).compactMap { versatz in
@@ -169,9 +180,28 @@ enum HomeSerie {
                 return nil
             }
             var gebaut = bauen(tag, heute: stand.today, trainingstage: trainiert)
-            gebaut.geplant = geplant[gebaut.id]
+            if wochenVersatz == 0 { gebaut.geplant = geplant[gebaut.id] }
             return gebaut
         }
+    }
+
+    /// Wie weit der Streifen wischt: zurueck bis zur Woche des fruehesten
+    /// geladenen Trainingstags (hoechstens `maxZurueck` Wochen, wie die
+    /// Kurswoche), vor bis zur Woche des spaetesten eigenen Kurses. Ohne
+    /// beides nur die laufende Woche. Tage als "yyyy-MM-dd".
+    static func wochenBereich(
+        weekStart: String, fruehesterTag: String?, spaetesterTag: String?,
+        maxZurueck: Int = KurseWochenBerechnung.maxWochenZurueck
+    ) -> ClosedRange<Int> {
+        guard let montag = datumsFormatter.date(from: weekStart) else { return 0...0 }
+        func woche(_ tag: String?) -> Int? {
+            guard let tag, let datum = datumsFormatter.date(from: tag),
+                  let tage = kalender.dateComponents([.day], from: montag, to: datum).day else { return nil }
+            return Int((Double(tage) / 7).rounded(.down))
+        }
+        let unten = max(min(woche(fruehesterTag) ?? 0, 0), -maxZurueck)
+        let oben = max(woche(spaetesterTag) ?? 0, 0)
+        return unten...oben
     }
 
     /// Die Marken der Woche (`PlanWochenStand.marken`, je Tag nach Rang
