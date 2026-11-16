@@ -39,5 +39,8 @@ export type CardioArt = (typeof CARDIO_ARTEN)[number];
 /** Diese Bausteine muss jede Einheit abdecken, sonst ist der Plan unvollstaendig. */
 export const PFLICHT_BAUSTEINE: readonly Baustein[] = ["beine_knie", "beine_huefte", "druecken", "ziehen"];
 
+/** Diese Bausteine belegt der Generator nur mit Mehrgelenkuebungen (Spec Abschnitt 2). */
+export const NUR_MEHRGELENK_PFLICHT: readonly Baustein[] = ["druecken", "ziehen", "beine_knie"];
+
 /** Planfeld einer Katalog-Uebung; vorhanden heisst: fuer Plaene freigegeben. */
 export type PlanFeld = { baustein: Baustein; typ: PlanTyp; bereiche: Bereich[] };

@@ -1,7 +1,7 @@
 // Kandidatenauswahl des Plangenerators (Spec 2026-10-21, Abschnitt 2 und Review-Fokus 2/3).
 // Eigene Datei, damit der Generator nur den Ablauf je Einheit enthaelt.
 import { PlanNichtMoeglichError } from "./errors.js";
-import type { FokusBereich } from "./trainingsplan-typen.js";
+import { NUR_MEHRGELENK_PFLICHT, type FokusBereich } from "./trainingsplan-typen.js";
 import type { Baustein, Bereich, PlanTyp } from "./trainingsplan-typen.js";
 import { FOKUS_MUSKELN } from "./trainingsplan-regeln.js";
 
@@ -15,6 +15,8 @@ export type Kandidat = {
   hauptmuskeln: string[];
   /** Die Uebung steht auf der Merkliste "gefaellt nicht": sie kommt nur zum Zug, wenn nichts anderes bleibt. */
   gefaelltNicht?: boolean;
+  /** false: nur frei waehlbar und tauschbar, der Generator schlaegt die Uebung nie vor. */
+  vorschlag?: boolean;
 };
 
 export type Beschwerden = Partial<Record<Bereich, "meiden" | "vorsichtig">>;
@@ -35,6 +37,21 @@ export function filtereKandidaten(kandidaten: Kandidat[], beschwerden: Beschwerd
   ];
 }
 
+/** Kandidaten, die der Generator vorschlagen darf (Katalogfeld plan.vorschlag). */
+export function vorschlagbar(kandidaten: Kandidat[]): Kandidat[] {
+  return kandidaten.filter((k) => k.vorschlag !== false);
+}
+
+/**
+ * Kandidaten fuer einen Platz des Bausteins (Pflicht, Ergaenzung, Auffuellung): druecken,
+ * ziehen und beine_knie nur Mehrgelenk. Deren Isolationsuebungen (Flys, Pullover) kommen nur
+ * ueber den Fokus oder die freie Wahl in den Plan.
+ */
+export function platzKandidaten(kandidaten: Kandidat[], baustein: Baustein): Kandidat[] {
+  const liste = nachBaustein(kandidaten, baustein);
+  return NUR_MEHRGELENK_PFLICHT.includes(baustein) ? liste.filter((k) => k.typ === "mehrgelenk") : liste;
+}
+
 export function nachBaustein(kandidaten: Kandidat[], baustein: Baustein): Kandidat[] {
   return kandidaten.filter((k) => k.baustein === baustein);
 }
@@ -44,8 +61,8 @@ export function nachBaustein(kandidaten: Kandidat[], baustein: Baustein): Kandid
  * Geraet hat oder die Beschwerden alles sperren, weil die Abhilfe jeweils eine andere ist.
  */
 export function pruefePflicht(baustein: Baustein, alle: Kandidat[], gefiltert: Kandidat[]): void {
-  if (nachBaustein(gefiltert, baustein).length > 0) return;
-  const grund = nachBaustein(alle, baustein).length === 0 ? "kein_geraet" : "beschwerden";
+  if (platzKandidaten(gefiltert, baustein).length > 0) return;
+  const grund = platzKandidaten(alle, baustein).length === 0 ? "kein_geraet" : "beschwerden";
   throw new PlanNichtMoeglichError(baustein, grund);
 }
 
