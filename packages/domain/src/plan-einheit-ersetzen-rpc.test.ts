@@ -7,9 +7,21 @@ const MODELL = "22222222-2222-4222-8222-222222222222";
 
 function pos(key: string) {
   return {
-    key, baustein: "druecken", rolle: "pflicht", exerciseId: UEBUNG, modelId: MODELL, typ: "mehrgelenk",
-    saetze: 3, wdhVon: 8, wdhBis: 12, reserveVon: 1, reserveBis: 3, pauseSek: 90, aufwaermsatz: false,
-    dauerMin: null, hauptmuskeln: ["brust"],
+    key,
+    baustein: "druecken",
+    rolle: "pflicht",
+    exerciseId: UEBUNG,
+    modelId: MODELL,
+    typ: "mehrgelenk",
+    saetze: 3,
+    wdhVon: 8,
+    wdhBis: 12,
+    reserveVon: 1,
+    reserveBis: 3,
+    pauseSek: 90,
+    aufwaermsatz: false,
+    dauerMin: null,
+    hauptmuskeln: ["brust"],
   };
 }
 
@@ -27,16 +39,40 @@ function client(rpcFehler: { code: string; message: string }): SupabaseClient {
     from: (tabelle: string) =>
       tabelle === "training_plans"
         ? lesen({
-            einheiten: [{ key: "A", name: "A", geschaetzteMinuten: 30, positionen: [pos("p1")] }],
-            eingabe: { ziel: "muskelaufbau", erfahrung: "fortgeschritten", minuten: 60, anfaengerBeendet: true },
+            einheiten: [
+              {
+                key: "A",
+                name: "A",
+                geschaetzteMinuten: 30,
+                positionen: [pos("p1")],
+              },
+            ],
+            eingabe: {
+              ziel: "muskelaufbau",
+              erfahrung: "fortgeschritten",
+              minuten: 60,
+              anfaengerBeendet: true,
+            },
           })
-        : lesen([{ id: UEBUNG, plan_baustein: "druecken", plan_typ: "mehrgelenk", muscles: [{ key: "brust", role: "primary" }] }]),
-    rpc: () => ({ single: () => Promise.resolve({ data: null, error: rpcFehler }) }),
+        : lesen([
+            {
+              id: UEBUNG,
+              plan_baustein: "druecken",
+              plan_typ: "mehrgelenk",
+              muscles: [{ key: "brust", role: "primary" }],
+            },
+          ]),
+    rpc: () => ({
+      single: () => Promise.resolve({ data: null, error: rpcFehler }),
+    }),
   } as unknown as SupabaseClient;
 }
 
 describe("ersetzePlanEinheit RPC-Fehler", () => {
-  const eingabe = { einheitKey: "A", positionen: [{ key: "p1", exerciseId: UEBUNG, modelId: MODELL }] };
+  const eingabe = {
+    einheitKey: "A",
+    positionen: [{ key: "p1", exerciseId: UEBUNG, modelId: MODELL }],
+  };
   const faelle: Array<[string, string]> = [
     ["plan_nicht_annehmbar", "conflict"],
     ["plan_ungueltig", "validation_failed"],
@@ -46,11 +82,23 @@ describe("ersetzePlanEinheit RPC-Fehler", () => {
   ];
   it.each(faelle)("%s -> %s", async (nachricht, code) => {
     await expect(
-      ersetzePlanEinheit(client({ code: "P0001", message: nachricht }), "u", "p", eingabe),
+      ersetzePlanEinheit(
+        client({ code: "P0001", message: nachricht }),
+        "u",
+        "p",
+        eingabe,
+      ),
     ).rejects.toMatchObject({ code });
   });
   it("23505 -> conflict", async () => {
-    await expect(ersetzePlanEinheit(client({ code: "23505", message: "dup" }), "u", "p", eingabe)).rejects.toMatchObject({
+    await expect(
+      ersetzePlanEinheit(
+        client({ code: "23505", message: "dup" }),
+        "u",
+        "p",
+        eingabe,
+      ),
+    ).rejects.toMatchObject({
       code: "conflict",
     });
   });
