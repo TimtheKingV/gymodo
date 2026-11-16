@@ -340,6 +340,18 @@ describe("planeImport Planfelder", () => {
     expect(plan.uebungen[1]?.zeile).toMatchObject({ plan_baustein: null, plan_typ: null, plan_bereiche: [] });
   });
 
+  it("plan.vorschlag: fehlt = true, false wird uebertragen und als Aenderung erkannt", () => {
+    const erster = plane(mitPlan(), LEER);
+    expect(erster.uebungen[0]?.zeile).toMatchObject({ plan_vorschlag: true });
+    expect(erster.uebungen[1]?.zeile).toMatchObject({ plan_vorschlag: true });
+    const b = mitPlan();
+    (b.roh.exercises[0] as Record<string, unknown>).plan = { baustein: "druecken", typ: "mehrgelenk", bereiche: ["schulter"], vorschlag: false };
+    const zweiter = plane(b, istAus(erster));
+    expect(zweiter.uebungen[0]?.art).toBe("geaendert");
+    expect(zweiter.uebungen[0]?.felder).toEqual(["plan_vorschlag"]);
+    expect(zweiter.uebungen[0]?.zeile).toMatchObject({ plan_vorschlag: false });
+  });
+
   it("plan entfernt im Katalog setzt die Spalten auf null", () => {
     const ist = istAus(plane(mitPlan(), LEER));
     const zweiter = plane(beispielKatalog(), ist);

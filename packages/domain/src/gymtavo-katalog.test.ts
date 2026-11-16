@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { BAUSTEINE, PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
+import { BAUSTEINE, NUR_MEHRGELENK_PFLICHT, PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 import { pruefeKatalog, type KatalogDatei } from "./katalog-datei.js";
 
 /**
@@ -106,9 +106,27 @@ describe("catalog/gymtavo.json Startwerte", () => {
 describe("catalog/gymtavo.json Planuebungen", () => {
   const planUebungen = () => katalog().exercises.filter((u) => u.plan);
 
-  it("hat fuer jeden Pflichtbaustein mindestens zwei Planuebungen", () => {
+  // Gezaehlt wird, was der Generator auf einen Pflichtplatz setzen darf (Regeln 1.5.0).
+  it("hat fuer jeden Pflichtbaustein mindestens zwei vorschlagbare Planuebungen fuer den Pflichtplatz", () => {
     for (const b of PFLICHT_BAUSTEINE) {
-      expect(planUebungen().filter((u) => u.plan?.baustein === b).length, b).toBeGreaterThanOrEqual(2);
+      const platz = planUebungen().filter(
+        (u) =>
+          u.plan?.baustein === b &&
+          u.plan.vorschlag &&
+          (!NUR_MEHRGELENK_PFLICHT.includes(b) || u.plan.typ === "mehrgelenk"),
+      );
+      expect(platz.length, b).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("hat ausser Farmer's Walk fuer jede Uebung Plan-Merkmale (freie Wahl, P4)", () => {
+    // db_farmers_walk zaehlt Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
+    expect(katalog().exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(["db_farmers_walk"]);
+  });
+
+  it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {
+    for (const u of planUebungen().filter((x) => /^(bb|ez)_/.test(x.key))) {
+      expect(u.plan!.vorschlag, u.key).toBe(false);
     }
   });
 
@@ -124,11 +142,11 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     }
   });
 
-  it("traegt druecken, ziehen und beine_knie nie als isolation ein", () => {
-    for (const u of planUebungen()) {
-      if (["druecken", "ziehen", "beine_knie"].includes(u.plan!.baustein)) {
-        expect(u.plan!.typ, u.key).toBe("mehrgelenk");
-      }
+  // Flys und Pullover sind Isolation in druecken/ziehen; der Generator setzt sie nicht auf
+  // Pflichtplaetze (NUR_MEHRGELENK_PFLICHT). beine_knie kennt keine Isolation.
+  it("traegt beine_knie nie als isolation ein", () => {
+    for (const u of planUebungen().filter((x) => x.plan!.baustein === "beine_knie")) {
+      expect(u.plan!.typ, u.key).toBe("mehrgelenk");
     }
   });
 

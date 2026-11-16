@@ -475,9 +475,9 @@ describe("generierePlan: Zeitbudget ausschoepfen", () => {
 });
 
 describe("generierePlan: Regelversion 1.4.0", () => {
-  it("Regelversion ist 1.4.0", () => {
-    expect(PLAN_REGEL_VERSION).toBe("1.4.0");
-    expect(generierePlan(eingabe()).regelVersion).toBe("1.4.0");
+  it("Regelversion ist 1.5.0", () => {
+    expect(PLAN_REGEL_VERSION).toBe("1.5.0");
+    expect(generierePlan(eingabe()).regelVersion).toBe("1.5.0");
   });
 
   it("auffuellpositionen tragen die Rolle auffuellung", () => {
@@ -634,5 +634,56 @@ describe("generierePlan: Kraft pro Woche (1.4.0)", () => {
         expect(plan.wochenraster).toEqual([]);
         expect(plan.gruende).not.toContain("kraft_tage_auf_eins");
       }
+  });
+});
+
+describe("generierePlan: Isolation und Vorschlag (1.5.0)", () => {
+  const fly = k("aaa_fly", "druecken", "isolation", ["pectorals"], ["schulter"]);
+  const pullover = k("aaa_pullover", "ziehen", "isolation", ["lats"], ["schulter"]);
+  const pflichtIds = (plan: ReturnType<typeof generierePlan>) =>
+    plan.einheiten.flatMap((e) => e.positionen.filter((p) => p.rolle === "pflicht"));
+
+  it("Pflichtplaetze von druecken, ziehen, beine_knie nehmen nie eine Isolationsuebung", () => {
+    for (const tage of [1, 2, 3, 4, 5, 6]) {
+      const plan = generierePlan(eingabe({ tage, kandidaten: [fly, pullover, ...KATALOG] }));
+      for (const p of pflichtIds(plan)) {
+        if (["druecken", "ziehen", "beine_knie"].includes(p.baustein)) expect(p.typ, `${tage}`).toBe("mehrgelenk");
+      }
+    }
+  });
+
+  it("nur Isolation im Pflichtbaustein druecken: Plan nicht moeglich (kein_geraet)", () => {
+    const kandidaten = [fly, ...KATALOG.filter((c) => c.baustein !== "druecken")];
+    expect(() => generierePlan(eingabe({ kandidaten }))).toThrow(PlanNichtMoeglichError);
+  });
+
+  it("beine_huefte darf weiter Isolation als Pflicht nehmen", () => {
+    const plan = generierePlan(eingabe());
+    expect(pflichtIds(plan).some((p) => p.baustein === "beine_huefte" && p.typ === "isolation")).toBe(true);
+  });
+
+  it("Isolation in druecken bleibt als Fokusuebung moeglich", () => {
+    const plan = generierePlan(eingabe({ fokus: ["brust"], kandidaten: [fly, ...KATALOG] }));
+    expect(plan.einheiten[0]!.positionen.some((p) => p.exerciseId === "aaa_fly" && p.rolle === "fokus")).toBe(true);
+  });
+
+  it("vorschlag false: nie im Plan, auch nicht als Fokus oder Auffuellung", () => {
+    const nurWaehlbar = KATALOG.map((c) => (c.exerciseId === "chest_press" || c.exerciseId === "curl" ? { ...c, vorschlag: false } : c));
+    for (const tage of [1, 3, 4, 6]) {
+      const plan = generierePlan(eingabe({ tage, minuten: 90, fokus: ["brust", "arme"], kandidaten: nurWaehlbar }));
+      const ids = plan.einheiten.flatMap((e) => e.positionen.map((p) => p.exerciseId));
+      expect(ids, `${tage}`).not.toContain("chest_press");
+      expect(ids, `${tage}`).not.toContain("curl");
+    }
+  });
+
+  it("vorschlag false fuer alle Kandidaten eines Pflichtbausteins: Plan nicht moeglich", () => {
+    const kandidaten = KATALOG.map((c) => (c.baustein === "ziehen" ? { ...c, vorschlag: false } : c));
+    expect(() => generierePlan(eingabe({ kandidaten }))).toThrow(PlanNichtMoeglichError);
+  });
+
+  it("vorschlag false aendert den Plan sonst nicht", () => {
+    const extra = { ...k("aaa_bb_bench", "druecken", "mehrgelenk", ["pectorals"], ["schulter"]), vorschlag: false };
+    expect(generierePlan(eingabe({ kandidaten: [extra, ...KATALOG] }))).toEqual(generierePlan(eingabe()));
   });
 });

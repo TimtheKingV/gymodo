@@ -7,7 +7,9 @@ import {
   filtereKandidaten,
   istVorsichtig,
   nachBaustein,
+  platzKandidaten,
   pruefePflicht,
+  vorschlagbar,
   waehleFokus,
   waehleKandidat,
 } from "./trainingsplan-auswahl.js";
@@ -157,7 +159,7 @@ function sortiereFuerAnzeige(positionen: Entwurf[]): Entwurf[] {
 /** Belegt eine Einheit nach dem Ablauf der Spec: Pflicht, Saetze kuerzen, Fokus, Ergaenzungen. */
 function baueKraftteil(ctx: EinheitKontext, flags: Flags): { positionen: Entwurf[]; minuten: number } {
   const { einheit, kandidaten, variation, profil } = ctx;
-  const waehle = (b: Baustein) => waehleKandidat(nachBaustein(kandidaten, b), variation.get(b) ?? 0, belegt, ctx.vorsichtig);
+  const waehle = (b: Baustein) => waehleKandidat(platzKandidaten(kandidaten, b), variation.get(b) ?? 0, belegt, ctx.vorsichtig);
   const grenze = ctx.kraftBudget * (1 + ZEIT.toleranz) + EPSILON;
   const belegt = new Set<string>();
   const nimm = (k: Kandidat) => belegt.add(k.exerciseId);
@@ -240,10 +242,12 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   // Die Struktur folgt den Kraft-Einheiten pro Woche; ohne sie dem Tage-Wunsch.
   const struktur = strukturFuerTage(eingabe.kraftProWoche ?? eingabe.tage);
   const profil = zielprofil(eingabe.ziel, eingabe.erfahrung, eingabe.anfaengerBeendet ?? false);
-  const kandidaten = filtereKandidaten(eingabe.kandidaten, eingabe.beschwerden);
+  // plan.vorschlag = false: frei waehlbar, aber nie vom Generator vorgeschlagen.
+  const alle = vorschlagbar(eingabe.kandidaten);
+  const kandidaten = filtereKandidaten(alle, eingabe.beschwerden);
 
   for (const b of new Set(struktur.einheiten.flatMap((e) => e.bausteine.pflicht))) {
-    pruefePflicht(b, eingabe.kandidaten, kandidaten);
+    pruefePflicht(b, alle, kandidaten);
   }
 
   // Cardio nur bei Abnehmen und nur, wenn ein (nicht gemiedenes) Cardiogeraet da ist (F19);
@@ -255,7 +259,7 @@ export function generierePlan(eingabe: GeneratorEingabe): GeneratorErgebnis {
   const cardioKandidat = cardioListe.find((k) => !k.gefaelltNicht) ?? cardioListe[0] ?? null;
   // Wie bei pruefePflicht: "kein Geraet" nur, wenn das Studio wirklich keins hat; sind alle
   // gemieden, erklaert das schon beschwerden_meiden, und das Studio wird nicht beschuldigt.
-  const studioHatCardio = nachBaustein(eingabe.kandidaten, "cardio").length > 0;
+  const studioHatCardio = nachBaustein(alle, "cardio").length > 0;
   const cardio = cardioKandidat ? cardioSoll : 0;
   const aufwaermen = aufwaermenMinuten(eingabe.minuten);
   const kraftBudget = eingabe.minuten - aufwaermen - cardio;

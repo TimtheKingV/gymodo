@@ -8,7 +8,8 @@ import { PFLICHT_BAUSTEINE } from "./trainingsplan-typen.js";
 // 1.2.0: Rolle auffuellung, Anzeigereihenfolge (Mehrgelenk vor Isolation), Anfaengerende.
 // 1.3.0: Wochenraster; die Zahl der Krafttage folgt den festen Kurs- und Cardio-Tagen.
 // 1.4.0: Struktur nach Kraft pro Woche, kein Wochenraster mehr (Plaene speichern []).
-export const PLAN_REGEL_VERSION = "1.4.0";
+// 1.5.0: druecken/ziehen/beine_knie nur mit Mehrgelenk belegt; plan.vorschlag = false nie vorgeschlagen.
+export const PLAN_REGEL_VERSION = "1.5.0";
 
 export type Ziel = "muskelaufbau" | "fitness" | "abnehmen";
 

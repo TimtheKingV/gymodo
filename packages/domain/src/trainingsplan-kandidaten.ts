@@ -13,6 +13,7 @@ type PlanUebung = {
   plan_baustein: Baustein | null;
   plan_typ: PlanTyp | null;
   plan_bereiche: Bereich[];
+  plan_vorschlag: boolean | null;
 };
 
 /** Uebungs-IDs: am Ort nicht vorhanden bzw. ueberall unbeliebt. */
@@ -70,7 +71,7 @@ export async function ladeKandidaten(client: SupabaseClient, merkliste: Merklist
     for (let von = 0; ; von += SEITE) {
       const { data, error: linkFehler } = await client
         .from("equipment_model_exercises")
-        .select("equipment_model_id, sort_order, exercises (id, muscles, plan_baustein, plan_typ, plan_bereiche)")
+        .select("equipment_model_id, sort_order, exercises (id, muscles, plan_baustein, plan_typ, plan_bereiche, plan_vorschlag)")
         .in("equipment_model_id", gruppe)
         .order("sort_order", { ascending: true })
         .order("equipment_model_id", { ascending: true })
@@ -110,6 +111,7 @@ export async function ladeKandidaten(client: SupabaseClient, merkliste: Merklist
       bereiche: u.plan_bereiche,
       hauptmuskeln: (u.muscles ?? []).filter((x) => x.role === "primary").map((x) => x.key),
       ...(unbeliebt.has(u.id) ? { gefaelltNicht: true } : {}),
+      ...(u.plan_vorschlag === false ? { vorschlag: false } : {}),
     });
   }
   return kandidaten.sort((a, b) => vergleich(a.exerciseId, b.exerciseId));

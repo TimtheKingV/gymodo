@@ -2478,6 +2478,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -2665,6 +2672,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -2738,6 +2752,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -2765,6 +2786,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -2796,6 +2824,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -2828,6 +2863,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -2926,6 +2969,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3160,6 +3211,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "isolation",
+        "bereiche": [
+          "knie"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3453,6 +3511,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "nasm_lat"
@@ -3522,6 +3587,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3599,6 +3671,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3634,6 +3713,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3665,6 +3751,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -3693,6 +3786,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3746,6 +3846,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3769,6 +3876,14 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3830,6 +3945,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3891,6 +4013,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -3918,6 +4047,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "isolation",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4088,6 +4225,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4111,6 +4255,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [
+          "knie"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4138,6 +4289,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "isolation",
+        "bereiche": [
+          "knie"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4169,6 +4327,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4204,6 +4369,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4227,6 +4399,11 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": []
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4296,6 +4473,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4327,6 +4511,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4354,6 +4545,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4381,6 +4579,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4408,6 +4613,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4431,6 +4645,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [
+          "huefte"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4454,6 +4675,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [
+          "huefte"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4481,6 +4709,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "ace_shoulder_rotation",
@@ -4513,6 +4748,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "ace_shoulder_rotation",
@@ -4541,6 +4783,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4564,6 +4814,14 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4633,6 +4891,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4660,6 +4925,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4695,6 +4967,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4772,6 +5051,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -4800,6 +5086,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4827,6 +5120,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4854,6 +5154,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4881,6 +5189,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4908,6 +5223,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4935,6 +5257,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4958,6 +5288,14 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -4981,6 +5319,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5004,6 +5349,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5035,6 +5387,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5062,6 +5423,15 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5093,6 +5463,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5124,6 +5503,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5147,6 +5535,11 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": []
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5174,6 +5567,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5201,6 +5601,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5228,6 +5635,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5259,6 +5673,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5290,6 +5711,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5325,6 +5753,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5360,6 +5795,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5395,6 +5837,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5430,6 +5880,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5457,6 +5914,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5484,6 +5948,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5511,6 +5982,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5534,6 +6012,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5557,6 +6042,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5580,6 +6072,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5611,6 +6110,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5638,6 +6144,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5669,6 +6182,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5700,6 +6220,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5731,6 +6259,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken",
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5762,6 +6298,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5793,6 +6336,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5820,6 +6370,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5851,6 +6408,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5878,6 +6442,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5913,6 +6485,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -5948,6 +6528,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -5977,6 +6565,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6004,6 +6599,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6031,6 +6633,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6058,6 +6667,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6085,6 +6701,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6112,6 +6735,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6139,6 +6769,13 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6170,6 +6807,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6201,6 +6847,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6232,6 +6887,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6255,6 +6919,11 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": []
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6321,6 +6990,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6352,6 +7028,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6383,6 +7068,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6414,6 +7108,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6449,6 +7152,17 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte",
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6484,6 +7198,17 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte",
+          "unterer_ruecken",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6523,6 +7248,16 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6558,6 +7293,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6601,6 +7345,16 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6636,6 +7390,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6671,6 +7434,16 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6706,6 +7479,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -6734,6 +7516,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6761,6 +7551,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6792,6 +7591,15 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6823,6 +7631,17 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte",
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6850,6 +7669,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6877,6 +7704,14 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6904,6 +7739,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6927,6 +7770,15 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -6950,6 +7802,15 @@
           "role": "primary"
         }
       ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
       "review": "draft",
       "sources": [
         "github_dataset"
@@ -7482,6 +8343,13 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
@@ -7514,6 +8382,14 @@
           "role": "secondary"
         }
       ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ]
+      },
       "review": "draft",
       "sources": [
         "github_dataset",
