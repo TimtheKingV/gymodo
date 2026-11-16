@@ -19,6 +19,7 @@ struct PlanPositionAnpassenSheet: View {
     @State private var wdhBis: Int
     @State private var pauseSek: Int
     @State private var dauerMin: Int
+    @State private var beruehrt: Set<WertFeld> = []
 
     init(
         modell: UebungskarteModell, foto: UIImage? = nil, position: EntwurfsPosition, darfEntfernen: Bool,
@@ -35,7 +36,7 @@ struct PlanPositionAnpassenSheet: View {
         _saetze = State(initialValue: position.saetze)
         let von = position.wdhVon ?? 8
         _wdhVon = State(initialValue: von)
-        _wdhBis = State(initialValue: max(position.wdhBis ?? von, von))
+        _wdhBis = State(initialValue: position.wdhBis ?? von)
         _pauseSek = State(initialValue: position.pauseSek)
         _dauerMin = State(initialValue: position.dauerMin ?? 20)
     }
@@ -90,11 +91,10 @@ struct PlanPositionAnpassenSheet: View {
             dismiss()
             return
         }
-        if istCardio {
-            beiUebernehmen(position.saetze, nil, nil, position.pauseSek, dauerMin)
-        } else {
-            beiUebernehmen(saetze, wdhVon, wdhBis, pauseSek, nil)
-        }
+        let e = PlanWerteAuswahl.ergebnis(
+            ausgang: position, saetze: saetze, wdhVon: wdhVon, wdhBis: wdhBis, pauseSek: pauseSek,
+            dauerMin: dauerMin, beruehrt: beruehrt)
+        beiUebernehmen(e.saetze, e.wdhVon, e.wdhBis, e.pauseSek, e.dauerMin)
         dismiss()
     }
 
@@ -121,7 +121,7 @@ struct PlanPositionAnpassenSheet: View {
             if istCardio {
                 zeile("Dauer") {
                     menue(
-                        wert: $dauerMin, optionen: PlanWerteAuswahl.dauerStufen(aktuell: dauerMin),
+                        wert: Binding(get: { dauerMin }, set: { dauerMin = $0; beruehrt.insert(.dauer) }), optionen: PlanWerteAuswahl.dauerStufen(aktuell: dauerMin),
                         text: { "\($0) min" })
                 }
             } else {
@@ -135,19 +135,22 @@ struct PlanPositionAnpassenSheet: View {
                                 get: { wdhVon },
                                 set: {
                                     wdhVon = $0
-                                    if wdhBis < $0 { wdhBis = $0 }
+                                    wdhBis = PlanWerteAuswahl.wdhBisNachVon(von: $0, bis: wdhBis)
+                                    beruehrt.insert(.wdh)
                                 }),
                             optionen: Array(PlanWerteAuswahl.wdhBereich), text: { "\($0)" })
                         Text("bis").font(.system(size: 12)).foregroundStyle(DesignSystem.Color.textFaint)
                         menue(
-                            wert: $wdhBis, optionen: Array(PlanWerteAuswahl.wdhBisBereich(von: wdhVon)),
+                            wert: Binding(get: { wdhBis }, set: { wdhBis = $0; beruehrt.insert(.wdh) }),
+                            optionen: Array(PlanWerteAuswahl.wdhBisBereich(von: wdhVon)),
                             text: { "\($0)" })
                     }
                 }
                 trenner
                 zeile("Pause") {
                     menue(
-                        wert: $pauseSek, optionen: PlanWerteAuswahl.pausenStufen(aktuell: pauseSek),
+                        wert: Binding(get: { pauseSek }, set: { pauseSek = $0; beruehrt.insert(.pause) }),
+                        optionen: PlanWerteAuswahl.pausenStufen(aktuell: pauseSek),
                         text: { "\($0) s" })
                 }
             }
@@ -178,6 +181,7 @@ struct PlanPositionAnpassenSheet: View {
         HStack(spacing: 6) {
             taste("minus", aktiv: saetze > PlanWerteAuswahl.saetzeBereich.lowerBound, beschriftung: "Weniger Sätze") {
                 saetze -= 1
+                beruehrt.insert(.saetze)
             }
             Text("\(saetze)")
                 .font(DesignSystem.Typography.wertSekundaer)
@@ -185,6 +189,7 @@ struct PlanPositionAnpassenSheet: View {
                 .frame(minWidth: 36)
             taste("plus", aktiv: saetze < PlanWerteAuswahl.saetzeBereich.upperBound, beschriftung: "Mehr Sätze") {
                 saetze += 1
+                beruehrt.insert(.saetze)
             }
         }
     }

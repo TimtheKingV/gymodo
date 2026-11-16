@@ -20,4 +20,35 @@ enum PlanWerteAuswahl {
     static func dauerStufen(aktuell: Int) -> [Int] {
         Array(Set(dauerStufen + [aktuell])).sorted()
     }
+
+    /// Wdh bis folgt Wdh von nach oben mit (P4).
+    static func wdhBisNachVon(von: Int, bis: Int) -> Int { max(von, bis) }
+
+    struct Ergebnis: Equatable {
+        let saetze: Int
+        let wdhVon: Int?
+        let wdhBis: Int?
+        let pauseSek: Int
+        let dauerMin: Int?
+    }
+
+    /// Was "Uebernehmen" meldet: unberuehrte Felder behalten exakt den Ausgangswert
+    /// (auch nil), nur beruehrte nehmen den Anzeigewert (P4).
+    static func ergebnis(
+        ausgang: EntwurfsPosition, saetze: Int, wdhVon: Int, wdhBis: Int, pauseSek: Int, dauerMin: Int,
+        beruehrt: Set<WertFeld>
+    ) -> Ergebnis {
+        if ausgang.art.istCardio {
+            return Ergebnis(
+                saetze: ausgang.saetze, wdhVon: nil, wdhBis: nil, pauseSek: ausgang.pauseSek,
+                dauerMin: beruehrt.contains(.dauer) ? dauerMin : ausgang.dauerMin)
+        }
+        let wdh = beruehrt.contains(.wdh)
+        return Ergebnis(
+            saetze: beruehrt.contains(.saetze) ? saetze : ausgang.saetze,
+            wdhVon: wdh ? wdhVon : ausgang.wdhVon,
+            wdhBis: wdh ? wdhBis : ausgang.wdhBis,
+            pauseSek: beruehrt.contains(.pause) ? pauseSek : ausgang.pauseSek,
+            dauerMin: ausgang.dauerMin)
+    }
 }
