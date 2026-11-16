@@ -45,11 +45,17 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     /// ISO-Zeitpunkt, ab dem der Plan gilt (Annahme, sonst Anlage, hoechstens
     /// bis zur ersten erledigten Einheit zurueck). nil in einer alten Antwort.
     let beginn: String?
+    /// Vorgaben je Typ, Saetze und Zeiten aus der Plan-Eingabe (P4, Testnotiz 10.11.).
+    /// nil in einer alten Server-Antwort und in der eines Schreibwegs.
+    let vorgaben: PlanVorgaben?
+    /// Planmerkmale je Uebung (Schluessel: Uebungs-ID); nur Uebungen mit Baustein und Typ.
+    /// Leer in einer alten Server-Antwort und in der eines Schreibwegs.
+    let planUebungen: [String: PlanUebungsMerkmal]
 
     private enum CodingKeys: String, CodingKey {
         case planId, id, studioId, version, regelVersion, struktur, einheiten, gruende,
              naechsteEinheitKey, zuletztEinheitKey, einheitenErledigt, anfaengerUebergang, alternativen,
-             zielgewichte, merkliste, wochenraster, erledigt, beginn
+             zielgewichte, merkliste, wochenraster, erledigt, beginn, vorgaben, planUebungen
     }
 
     init(from decoder: any Decoder) throws {
@@ -71,6 +77,8 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         wochenraster = try c.decodeIfPresent([Rasterplatz].self, forKey: .wochenraster) ?? []
         erledigt = try c.decodeIfPresent([ErledigteEinheit].self, forKey: .erledigt) ?? []
         beginn = try c.decodeIfPresent(String.self, forKey: .beginn)
+        vorgaben = try c.decodeIfPresent(PlanVorgaben.self, forKey: .vorgaben)
+        planUebungen = try c.decodeIfPresent([String: PlanUebungsMerkmal].self, forKey: .planUebungen) ?? [:]
     }
 
     /// Wie `zielSchluessel` in packages/domain/src/plangewichte.ts: erst
@@ -83,6 +91,48 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
     func zielgewicht(einheitKey: String, positionKey: String) -> Zielgewicht? {
         zielgewichte[Self.zielSchluessel(einheitKey: einheitKey, positionKey: positionKey)]
     }
+}
+
+/// Vorgaben fuer eine Einheit (`EinheitVorgaben` im Server): je Typ Wdh-Korridor,
+/// Reserve, Pause und Aufwaermsatz, dazu Saetze und Zeiten. Die App rechnet
+/// nichts nach, sie zeigt an und reicht durch (P4, Testnotiz 10.11.).
+struct PlanVorgaben: Decodable, Equatable, Sendable {
+    struct Typ: Decodable, Equatable, Sendable {
+        let wdhVon: Int
+        let wdhBis: Int
+        let reserveVon: Int
+        let reserveBis: Int
+        let pauseSek: Int
+        let aufwaermsatz: Bool
+    }
+
+    let mehrgelenk: Typ
+    let isolation: Typ
+    let saetze: Int
+    let cardioMin: Int
+    /// Kann eine Kommazahl sein.
+    let aufwaermenMin: Double
+
+    private enum CodingKeys: String, CodingKey { case typ, saetze, cardioMin, aufwaermenMin }
+    private enum TypKeys: String, CodingKey { case mehrgelenk, isolation }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let t = try c.nestedContainer(keyedBy: TypKeys.self, forKey: .typ)
+        mehrgelenk = try t.decode(Typ.self, forKey: .mehrgelenk)
+        isolation = try t.decode(Typ.self, forKey: .isolation)
+        saetze = try c.decode(Int.self, forKey: .saetze)
+        cardioMin = try c.decode(Int.self, forKey: .cardioMin)
+        aufwaermenMin = try c.decode(Double.self, forKey: .aufwaermenMin)
+    }
+}
+
+/// Baustein und Typ einer Uebung im Plan-Katalog; Text, damit ein Wert, den erst
+/// ein spaeterer Server kennt, den Bootstrap nicht unlesbar macht.
+struct PlanUebungsMerkmal: Decodable, Equatable, Sendable {
+    let baustein: String
+    let typ: String
+    var istCardio: Bool { baustein == "cardio" }
 }
 
 /// Eine gezaehlte Einheit (`GezaehlteEinheit` im Server). `startedAt` bleibt

@@ -243,6 +243,7 @@
 		960836418C9B465A01922B0B /* KursePlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7E4BF6A41BDD5F5547CFB4C /* KursePlanTests.swift */; };
 		9658183FB704B5244DD0C883 /* testnotiz-beispiel.json in Resources */ = {isa = PBXBuildFile; fileRef = CFBC22CBF40859396B6DD869 /* testnotiz-beispiel.json */; };
 		9665FA7B023AC16E31AA7EAE /* ZirkelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28720DEB9E5541AA9C876E1D /* ZirkelTests.swift */; };
+		966ECCA323AF1BE84E515A01 /* TrainingsplanDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAF70475AA089E17E0500D7 /* TrainingsplanDecodingTests.swift */; };
 		96F1E25945DAC2FCF7461EE7 /* EinweisungMedienTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9080FBAAFE2BA83283AA40F5 /* EinweisungMedienTests.swift */; };
 		9717F588D87C3C4C34BB2D9F /* PlanStart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 266C991825FF8AFC68628908 /* PlanStart.swift */; };
 		972C95E4BE31B03A86FA1236 /* PlanReihenfolge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E160BA1DBAB41DA0DEFE60 /* PlanReihenfolge.swift */; };
@@ -565,6 +566,7 @@
 		3E67B77D484B574613C4314E /* Herkunftssatz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Herkunftssatz.swift; sourceTree = "<group>"; };
 		3EC5DE4F4A42F0296CF0BA5B /* CardioTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioTests.swift; sourceTree = "<group>"; };
 		3F8D7BC3F8D6CFCD55CA53B5 /* TrainingspauseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingspauseTests.swift; sourceTree = "<group>"; };
+		3FAF70475AA089E17E0500D7 /* TrainingsplanDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingsplanDecodingTests.swift; sourceTree = "<group>"; };
 		3FD7FC0CB862EF0131A348A5 /* UebungsGruppierung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsGruppierung.swift; sourceTree = "<group>"; };
 		42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingRootView.swift; sourceTree = "<group>"; };
 		437F4E7734CF62C835867649 /* MuskelgruppenUebersichtView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelgruppenUebersichtView.swift; sourceTree = "<group>"; };
@@ -1338,6 +1340,7 @@
 				3F8D7BC3F8D6CFCD55CA53B5 /* TrainingspauseTests.swift */,
 				38F5760504A61073E76B17C8 /* TrainingsplanAblaufStoreTests.swift */,
 				01501F0C255529CA38149001 /* TrainingsplanAblaufTests.swift */,
+				3FAF70475AA089E17E0500D7 /* TrainingsplanDecodingTests.swift */,
 				4FC6A66221FC823101AC2CAC /* TrainingsProfilTests.swift */,
 				9BA53E0FF9AB052ED88E68C7 /* TrainingszusammenfassungTests.swift */,
 				DC4D984EF1252BC49392F988 /* TrainingTabTests.swift */,
@@ -2138,6 +2141,7 @@
 				0494622A73CA66BE840CADA0 /* TrainingspauseTests.swift in Sources */,
 				B15158F53F4454655AAF6AD6 /* TrainingsplanAblaufStoreTests.swift in Sources */,
 				F5AD00995512660F84F9DEE3 /* TrainingsplanAblaufTests.swift in Sources */,
+				966ECCA323AF1BE84E515A01 /* TrainingsplanDecodingTests.swift in Sources */,
 				600E5516A47D964636050F36 /* TrainingszusammenfassungTests.swift in Sources */,
 				42B77C328425F61506D26ADA /* UebungsGruppierungTests.swift in Sources */,
 				D9003B708636A8AF96E1D2AA /* UebungsVideosTests.swift in Sources */,

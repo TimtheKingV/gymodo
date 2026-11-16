@@ -4,6 +4,7 @@
 // sie ohne Datenbank testbar bleibt.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DomainError } from "./errors.js";
+import { vorgabenAusEingabe, type EinheitVorgaben } from "./plan-einheit-ersetzen.js";
 import { einheitZaehlt, naechsteEinheitKey, type PositionStatus } from "./trainingsplan-ablauf.js";
 import { filtereKandidaten, type Kandidat } from "./trainingsplan-auswahl.js";
 import type { PlanEinheit, RasterEintrag } from "./trainingsplan-generator.js";
@@ -239,6 +240,10 @@ export type PlanFuerApp = {
   /** Zielgewicht je Positionsschluessel (G8, G17); Positionen ohne Ziel fehlen. */
   zielgewichte: Record<string, PositionsZiel>;
   merkliste: PlanMerkliste;
+  /** Vorgaben je Typ, Saetze und Zeiten aus der Plan-Eingabe; dieselbe Quelle wie der Generator (P4, Testnotiz 10.11.). */
+  vorgaben: EinheitVorgaben;
+  /** Planmerkmale je Uebung (nur Uebungen mit Baustein und Typ), fuer das Bearbeiten einer Einheit (P4, Testnotiz 10.11.). */
+  planUebungen: Record<string, { baustein: string; typ: string }>;
   /** Die gezaehlten Einheiten, aelteste zuerst; die App zeigt damit erledigte Plantage. */
   erledigt: GezaehlteEinheit[];
   /**
@@ -289,6 +294,15 @@ export function alternativenJeBaustein(
   const erlaubt = filtereKandidaten(kandidaten, beschwerden);
   for (const k of [...erlaubt.filter((x) => !x.gefaelltNicht), ...erlaubt.filter((x) => x.gefaelltNicht)]) {
     (ergebnis[k.baustein] ??= []).push({ exerciseId: k.exerciseId, modelId: k.modelId });
+  }
+  return ergebnis;
+}
+
+/** Baustein und Typ je Uebung; nur Uebungen mit beiden Merkmalen (P4, Testnotiz 10.11.). */
+export function planUebungenAusKandidaten(kandidaten: Kandidat[]): PlanFuerApp["planUebungen"] {
+  const ergebnis: PlanFuerApp["planUebungen"] = {};
+  for (const k of kandidaten) {
+    if (k.baustein && k.typ) ergebnis[k.exerciseId] = { baustein: k.baustein, typ: k.typ };
   }
   return ergebnis;
 }
@@ -355,6 +369,7 @@ export function planFuerApp(
   zielgewichte: PlanFuerApp["zielgewichte"],
   merkliste: PlanMerkliste,
   linie: PlanLinie = planLinie(plan, []),
+  planUebungen: PlanFuerApp["planUebungen"] = {},
 ): PlanFuerApp {
   const zuletzt = gezaehlt.at(-1)?.einheitKey ?? null;
   // Beginn ist die Annahme der Planlinie (ein Tausch setzt ihn nicht neu). Eine Einheit
@@ -383,6 +398,8 @@ export function planFuerApp(
     alternativen,
     zielgewichte,
     merkliste,
+    vorgaben: vorgabenAusEingabe(plan.eingabe),
+    planUebungen,
     erledigt: gezaehlt.map(({ sessionId, einheitKey, startedAt }) => ({ sessionId, einheitKey, startedAt })),
     beginn,
   };
@@ -532,6 +549,15 @@ export async function ladePlaeneFuerApp(
     ladeZielgewichteFuerApp(client, userId, plan, jetzt, melde),
   ]);
   return [
-    planFuerApp(plan, gezaehlt, profil, alternativenJeBaustein(kandidaten, beschwerden), zielgewichte, merkliste, linie),
+    planFuerApp(
+      plan,
+      gezaehlt,
+      profil,
+      alternativenJeBaustein(kandidaten, beschwerden),
+      zielgewichte,
+      merkliste,
+      linie,
+      planUebungenAusKandidaten(kandidaten),
+    ),
   ];
 }

@@ -8,7 +8,9 @@ import {
   nachzuholendeSessions,
   planFuerApp,
   planLinie,
+  planUebungenAusKandidaten,
 } from "./trainingsplan-bootstrap.js";
+import { vorgabenAusEingabe } from "./plan-einheit-ersetzen.js";
 import type { TrainingPlan } from "./trainingsplan.js";
 import type { TrainingProfile } from "./trainingsprofil.js";
 
@@ -273,5 +275,34 @@ describe("planFuerApp -- Merkliste", () => {
     const plan = { id: "p", studioId: "k", version: 1, regelVersion: "x", struktur: "gk_ab", einheiten: [{ key: "A", positionen: [] }], gruende: [], eingabe: {} } as unknown as TrainingPlan;
     const merkliste = { nichtVorhanden: { o: ["e1"] }, gefaelltNicht: ["e2"] };
     expect(planFuerApp(plan, [], null, {}, {}, merkliste).merkliste).toEqual(merkliste);
+  });
+});
+
+describe("Vorgaben und Planmerkmale im Bootstrap (P4)", () => {
+  const LEER = { nichtVorhanden: {}, gefaelltNicht: [] };
+  const plan = {
+    id: "p", studioId: "s", version: 1, status: "aktiv", regelVersion: "1.2.0", struktur: "gk_ab",
+    eingabe: { ziel: "muskelaufbau", tage: 3, minuten: 60, fokus: [], erfahrung: "neu", anfaengerBeendet: false,
+      beschwerdenBeruecksichtigt: false },
+    einheiten: [], gruende: [], wochenraster: [], createdAt: "", acceptedAt: null,
+  } as unknown as TrainingPlan;
+
+  it("Plan im Bootstrap traegt vorgaben aus der Eingabe", () => {
+    const a = planFuerApp(plan, [], null, {}, {}, LEER);
+    expect(a.vorgaben).toEqual(vorgabenAusEingabe(plan.eingabe));
+  });
+
+  it("planUebungen enthaelt nur verschlagwortete Uebungen", () => {
+    const kand = (id: string, baustein: unknown, typ: unknown) =>
+      ({ exerciseId: id, modelId: `m-${id}`, baustein, typ, bereiche: [], hauptmuskeln: [] }) as unknown as Kandidat;
+    const m = planUebungenAusKandidaten([
+      kand("1", "druecken", "mehrgelenk"),
+      kand("2", "cardio", "isolation"),
+      kand("3", null, "isolation"),
+      kand("4", "ziehen", null),
+    ]);
+    expect(m).toEqual({ "1": { baustein: "druecken", typ: "mehrgelenk" }, "2": { baustein: "cardio", typ: "isolation" } });
+    expect(planFuerApp(plan, [], null, {}, {}, LEER, undefined, m).planUebungen).toEqual(m);
+    expect(planFuerApp(plan, [], null, {}, {}, LEER).planUebungen).toEqual({});
   });
 });
