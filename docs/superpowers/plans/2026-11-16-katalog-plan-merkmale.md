@@ -1,6 +1,12 @@
 # Plan-Merkmale für alle Katalogübungen – Vorschlag zur Prüfung
 
-Stand 16.11.2026. **Noch nichts in `catalog/gymtavo.json` übernommen.** Erst nach Tims Freigabe der Tabelle und der Entscheidungen E1–E3.
+Stand 16.11.2026. **Von Tim freigegeben (16.11.):** Tabelle, E1a, E2, E3a.
+
+Umgesetzt:
+- **E1a:** `druecken`, `ziehen`, `beine_knie` werden vom Generator nur mit Mehrgelenk belegt (`NUR_MEHRGELENK_PFLICHT`, gilt für Pflicht-, Ergänzungs- und Auffüllplätze); Flys/Pullover kommen nur über Fokus oder freie Wahl. Regeln 1.5.0.
+- **E2:** Planpositionen außer Cardio kennen nur Wiederholungen (iOS `PlanZeile`, `Ablaufzeile`). `db_farmers_walk` bleibt **ohne** Plan-Merkmale.
+- **E3a:** `plan.vorschlag` (Default `true`), Spalte `exercises.plan_vorschlag` (Migration 0074). `false` für alle `bb_*`/`ez_*`, `db_goblet_squat`, `db_squat_sides`, `db_reverse_lunge`, `db_forward_lunge`, `db_bulgarian_split_squat`, `db_step_up`, `db_romanian_deadlift`, `cable_pull_through` (28 Übungen).
+- 115 `plan`-Blöcke in `catalog/gymtavo.json`; 161 von 162 Übungen haben jetzt Plan-Merkmale.
 
 Anlass: P4 (Einheit bearbeiten) erlaubt freies Hinzufügen und Tauschen. Der Server lehnt Übungen ohne Plan-Merkmale ab, weil sonst der Verletzungs-Check („meiden“) ins Leere liefe. Heute haben 46 von 162 Übungen einen `plan`-Block, 116 fehlen.
 
