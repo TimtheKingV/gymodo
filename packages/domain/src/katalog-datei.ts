@@ -133,6 +133,8 @@ const uebungSchema = z
         baustein: z.enum(BAUSTEINE),
         typ: z.enum(PLAN_TYPEN),
         bereiche: z.array(z.enum(BEREICHE)).default([]),
+        // false = frei waehlbar und tauschbar, der Generator schlaegt die Uebung nie vor.
+        vorschlag: z.boolean().default(true),
       })
       .strict()
       .optional(),

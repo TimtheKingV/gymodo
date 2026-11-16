@@ -1,3 +1,4 @@
+import { LEERE_MERKLISTE, ladeKandidaten } from "./trainingsplan-kandidaten.js";
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -227,6 +228,25 @@ const GESUND: Record<string, Antwort> = {
   },
 };
 
+describe("ladeKandidaten plan_vorschlag", () => {
+  it("false wird als vorschlag false weitergegeben, true und fehlend ohne Kennzeichen", async () => {
+    const kandidaten = await ladeKandidaten(
+      falscherClient({
+        ...GESUND,
+        equipment_model_exercises: {
+          data: [
+            { equipment_model_id: "em1", exercises: { id: "a", muscles: [], plan_baustein: "ziehen", plan_typ: "mehrgelenk", plan_bereiche: [], plan_vorschlag: false } },
+            { equipment_model_id: "em1", exercises: { id: "b", muscles: [], plan_baustein: "ziehen", plan_typ: "mehrgelenk", plan_bereiche: [], plan_vorschlag: true } },
+          ],
+          error: null,
+        },
+      }),
+      LEERE_MERKLISTE,
+    );
+    expect(kandidaten.map((k) => [k.exerciseId, k.vorschlag])).toEqual([["a", false], ["b", undefined]]);
+  });
+});
+
 describe("ladeTrainingsteil", () => {
   const jetzt = new Date("2026-10-24T12:00:00Z");
 
@@ -235,6 +255,25 @@ describe("ladeTrainingsteil", () => {
     expect(t.trainingProfile).toEqual({ minutes: 60, experience: "neu", focus: [] });
     expect(t.plans).toHaveLength(1);
     expect(t.plans[0]!.alternativen).toEqual({ ziehen: [{ exerciseId: "zug", modelId: "em1" }] });
+  });
+
+  it("plan_vorschlag false: trotzdem in alternativen (frei waehlbar)", async () => {
+    const t = await ladeTrainingsteil(
+      falscherClient({
+        ...GESUND,
+        equipment_model_exercises: {
+          data: [
+            { equipment_model_id: "em1", exercises: { id: "zug", muscles: [], plan_baustein: "ziehen", plan_typ: "mehrgelenk", plan_bereiche: [], plan_vorschlag: true } },
+            { equipment_model_id: "em1", exercises: { id: "zug2", muscles: [], plan_baustein: "ziehen", plan_typ: "mehrgelenk", plan_bereiche: [], plan_vorschlag: false } },
+          ],
+          error: null,
+        },
+      }),
+      "u1", jetzt, () => {},
+    );
+    expect(t.plans[0]!.alternativen).toEqual({
+      ziehen: [{ exerciseId: "zug", modelId: "em1" }, { exerciseId: "zug2", modelId: "em1" }],
+    });
   });
 
   it("Beschwerden nicht lesbar: plans [] statt ungefilterter alternativen", async () => {

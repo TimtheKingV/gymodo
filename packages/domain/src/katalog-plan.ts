@@ -53,6 +53,8 @@ export type UebungZeile = {
   plan_baustein: string | null;
   plan_typ: string | null;
   plan_bereiche: string[];
+  /** false: nur frei waehlbar, kein Generator-Vorschlag. */
+  plan_vorschlag: boolean;
   /** In Reihenfolge der Katalogdatei; Name aus dem Muskelverzeichnis der Datei. */
   muscles: { key: string; name: string; role: "primary" | "secondary" }[];
 };
@@ -138,7 +140,7 @@ const GERAETETYP_FELDER = [
 const EINSTELLUNG_FELDER = [
   "label", "kind", "min_value", "max_value", "step_value", "unit", "allowed_values", "sort_order",
 ] as const;
-const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max", "plan_baustein", "plan_typ", "plan_bereiche", "muscles"] as const;
+const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max", "plan_baustein", "plan_typ", "plan_bereiche", "plan_vorschlag", "muscles"] as const;
 const PRODUKT_FELDER = [
   "manufacturer", "series", "name", "model_code", "product_url", "note", "photo_path", "photo_rights",
   "load_unit", "load_step", "load_min", "load_max", "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
@@ -261,6 +263,7 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
         plan_baustein: u.plan?.baustein ?? null,
         plan_typ: u.plan?.typ ?? null,
         plan_bereiche: u.plan?.bereiche ?? [],
+        plan_vorschlag: u.plan?.vorschlag ?? true,
         muscles: u.muscles.map((m) => ({ key: m.muscle, name: muskelName.get(m.muscle) ?? m.muscle, role: m.role })),
       },
       uebungNachKey.get(u.key),
