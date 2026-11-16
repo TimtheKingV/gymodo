@@ -16,6 +16,8 @@ export type DomainErrorCode =
   | "conflict"
   | "plan_nicht_moeglich"
   | "profil_unvollstaendig"
+  | "uebung_ohne_planmerkmale"
+  | "uebung_gemieden"
   | "internal";
 
 export class DomainError extends Error {

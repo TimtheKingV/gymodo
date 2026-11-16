@@ -307,6 +307,8 @@ export { PLAN_REGEL_VERSION, FOKUS_MUSKELN, strukturFuerTage, zielAusTrainingGoa
 export type { Struktur, Ziel as PlanZiel, Zielprofil } from "./trainingsplan-regeln.js";
 export { ZEIT, aufwaermenMinuten, cardioMinuten, pauseSekunden, uebungMinuten } from "./trainingsplan-zeit.js";
 export { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
+export { baueEinheit, positionMinuten, vorgabenAusEingabe } from "./plan-einheit-ersetzen.js";
+export type { EinheitEingabePosition, EinheitVorgaben, UebungsMerkmale } from "./plan-einheit-ersetzen.js";
 export type {
   GeneratorEingabe,
   GeneratorErgebnis,

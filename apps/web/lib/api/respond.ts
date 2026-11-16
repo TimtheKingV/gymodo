@@ -12,6 +12,8 @@ const STATUS_BY_CODE: Record<DomainErrorCode, number> = {
   conflict: 409,
   plan_nicht_moeglich: 422,
   profil_unvollstaendig: 422,
+  uebung_ohne_planmerkmale: 422,
+  uebung_gemieden: 422,
   internal: 500,
 };
 
