@@ -6,6 +6,9 @@ struct ZirkelUebungswahl: Identifiable, Hashable {
     let station: Station
     let offen: [ZirkelUebung]
     let schonDabei: [ZirkelUebung]
+    /// Gesetzt: statt "Schon im Zirkel" -- die Planauswahl nennt hier die
+    /// gesperrten Uebungen mit Grund (P4, Testnotiz 10.11. #5).
+    var eigenerHinweis: String? = nil
 
     var id: String { station.schluessel }
 
@@ -13,12 +16,14 @@ struct ZirkelUebungswahl: Identifiable, Hashable {
     // die Wahl als Wert im Navigationspfad reisen kann.
     static func == (a: Self, b: Self) -> Bool {
         a.station.schluessel == b.station.schluessel && a.offen == b.offen && a.schonDabei == b.schonDabei
+            && a.eigenerHinweis == b.eigenerHinweis
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(station.schluessel)
         hasher.combine(offen)
         hasher.combine(schonDabei)
+        hasher.combine(eigenerHinweis)
     }
 
     func name(_ uebung: ZirkelUebung) -> String {
@@ -26,7 +31,8 @@ struct ZirkelUebungswahl: Identifiable, Hashable {
     }
 
     var hinweis: String? {
-        schonDabei.isEmpty ? nil : "Schon im Zirkel: " + schonDabei.map(name).joined(separator: ", ")
+        if let eigenerHinweis { return eigenerHinweis }
+        return schonDabei.isEmpty ? nil : "Schon im Zirkel: " + schonDabei.map(name).joined(separator: ", ")
     }
 
     /// Die offenen Uebungen im Format der normalen Uebungsauswahl, in

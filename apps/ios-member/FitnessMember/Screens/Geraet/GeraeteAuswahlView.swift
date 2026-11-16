@@ -42,9 +42,14 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     let beiKachel: (GeraeteAuswahl.Kachel) -> Void
     /// Gesetzt: statt des Standardtitels ("Kategorie wählen" der Ersatzwahl).
     let eigenerTitel: String?
+    /// Gesetzt: Grund, warum eine Uebung an der Station nicht waehlbar ist;
+    /// die Zeile steht dann ausgegraut mit Grund und ohne Tipp (P4,
+    /// Testnotiz 10.11. #5). nil = alles waehlbar, wie bisher.
+    let gesperrt: ((Station, String) -> String?)?
 
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil, uebungId: String? = nil, titel eigenerTitel: String? = nil,
+         gesperrt: ((Station, String) -> String?)? = nil,
          @ViewBuilder kopfinhalt: () -> Kopfinhalt,
          @ViewBuilder trainingsinhalt: () -> Trainingsinhalt,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void,
@@ -54,6 +59,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
         self.gruppe = gruppe
         self.uebungId = uebungId
         self.eigenerTitel = eigenerTitel
+        self.gesperrt = gesperrt
         self.kopfinhalt = kopfinhalt()
         self.trainingsinhalt = trainingsinhalt()
         self.beiAuswahl = beiAuswahl
@@ -370,12 +376,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
             }
             VStack(spacing: DesignSystem.Spacing.s8) {
                 ForEach(sichtbar) { eintrag in
-                    if eintrag.gesperrt {
-                        zeile(eintrag).opacity(0.55)
-                    } else {
-                        Button { beiAuswahl(eintrag.station, eintrag.trefferUebung?.id) } label: { zeile(eintrag) }
-                            .buttonStyle(PressButtonStyle())
-                    }
+                    auswahlZeile(eintrag)
                 }
             }
             if liste.count > GeraeteAuswahl.zuletztSichtbar {
@@ -432,12 +433,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
     private func gruppe(_ titel: String, _ eintraege: [GeraeteAuswahl.Eintrag], ersteGruppe: Bool) -> some View {
         Section {
             ForEach(eintraege) { eintrag in
-                if eintrag.gesperrt {
-                    zeile(eintrag).opacity(0.55)
-                } else {
-                    Button { beiAuswahl(eintrag.station, eintrag.trefferUebung?.id) } label: { zeile(eintrag) }
-                        .buttonStyle(PressButtonStyle())
-                }
+                auswahlZeile(eintrag)
             }
         } header: {
             Text(titel)
@@ -506,13 +502,35 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
         .accessibilityAddTraits(.isButton)
     }
 
-    private func zeile(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
+    /// Eine Zeile, tippbar oder nicht: ein gesperrtes Geraet wie bisher
+    /// blass, ein fuer den Plan gesperrtes mit Grund statt Tipp (P4,
+    /// Testnotiz 10.11. #5).
+    @ViewBuilder
+    private func auswahlZeile(_ eintrag: GeraeteAuswahl.Eintrag) -> some View {
+        let grund = GeraeteAuswahl.sperrgrund(station: eintrag.station,
+                                              trefferUebungId: eintrag.trefferUebung?.id, gesperrt: gesperrt)
+        if eintrag.gesperrt {
+            zeile(eintrag).opacity(0.55)
+        } else if let grund {
+            zeile(eintrag, planGrund: grund)
+        } else {
+            Button { beiAuswahl(eintrag.station, eintrag.trefferUebung?.id) } label: { zeile(eintrag) }
+                .buttonStyle(PressButtonStyle())
+        }
+    }
+
+    private func zeile(_ eintrag: GeraeteAuswahl.Eintrag, planGrund: String? = nil) -> some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             vorschau(eintrag)
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
                 Text(eintrag.name)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(DesignSystem.Color.text)
+                    .foregroundStyle(planGrund == nil ? DesignSystem.Color.text : DesignSystem.Color.textFaint)
+                if let planGrund {
+                    Text(planGrund)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
                 if let anzahl = GeraeteAuswahl.uebungsanzahlText(eintrag.station.exercises.count) {
                     // Testnotiz 11.10., #3: vor dem Tipp sehen, ob das
                     // Geraet eine Auswahl bietet oder gleich losgeht.
@@ -553,7 +571,7 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
                 Marke(text: "NICHT SCANNBAR", farbe: DesignSystem.Color.textFaint)
             }
 
-            if !eintrag.gesperrt {
+            if !eintrag.gesperrt && planGrund == nil {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(DesignSystem.Color.textFaint)
@@ -750,9 +768,10 @@ struct GeraeteAuswahlView<Kopfinhalt: View, Trainingsinhalt: View>: View {
 extension GeraeteAuswahlView where Kopfinhalt == EmptyView, Trainingsinhalt == EmptyView {
     init(fotoLader: any GeraetefotosLoading & UebungsvideosLoading, vorschauLader: VorschauLader,
          gruppe: Geraetegruppe? = nil, uebungId: String? = nil,
+         gesperrt: ((Station, String) -> String?)? = nil,
          beiAuswahl: @escaping (Station, _ uebungId: String?) -> Void) {
         self.init(fotoLader: fotoLader, vorschauLader: vorschauLader, gruppe: gruppe, uebungId: uebungId,
-                  kopfinhalt: { EmptyView() }, trainingsinhalt: { EmptyView() },
+                  gesperrt: gesperrt, kopfinhalt: { EmptyView() }, trainingsinhalt: { EmptyView() },
                   beiAuswahl: beiAuswahl)
     }
 }
