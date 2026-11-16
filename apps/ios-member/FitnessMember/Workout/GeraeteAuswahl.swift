@@ -345,11 +345,13 @@ extension GeraeteAuswahl {
     /// Warum eine Zeile gesperrt ist, oder nil (P4, Testnotiz 10.11. #5).
     /// Ein Suchtreffer ueber eine Uebung zaehlt allein; sonst ist die Zeile
     /// frei, sobald eine ihrer Uebungen frei ist -- die Uebungswahl danach
-    /// bietet nur die freien an. Ohne Uebung bleibt die Zeile frei.
+    /// bietet nur die freien an. Ohne Uebung gibt es nichts fuer den Plan:
+    /// gesperrt wie ohne Katalogmodell.
     static func sperrgrund(station: Station, trefferUebungId: String?,
                            gesperrt: ((Station, String) -> String?)?) -> String? {
         guard let gesperrt else { return nil }
         let ids = trefferUebungId.map { [$0] } ?? station.exercises.map(\.id)
+        if ids.isEmpty { return PlanUebungWahl.text(.keinKatalogmodell) }
         var erster: String?
         for id in ids {
             guard let grund = gesperrt(station, id) else { return nil }

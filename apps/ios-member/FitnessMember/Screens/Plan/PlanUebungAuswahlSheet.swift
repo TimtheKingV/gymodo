@@ -86,7 +86,7 @@ struct PlanUebungAuswahlSheet: View {
 
     private var titel: String {
         switch zweck {
-        case .tauschen: "Übung ersetzen"
+        case .tauschen: "Übung tauschen"
         case .hinzufuegen: "Übung hinzufügen"
         }
     }
@@ -161,8 +161,8 @@ struct PlanUebungAuswahlSheet: View {
                 .tracking(1.2)
                 .foregroundStyle(DesignSystem.Color.accent)
             HStack(spacing: DesignSystem.Spacing.s12) {
-                UebungsVideoKachel(exerciseId: alt.exerciseId) {
-                    PlanZeilenFoto(foto: alt.vorschaubildModell.flatMap { bilder[$0] })
+                UebungsVideoKachel(exerciseId: alt.exerciseId, kante: 48) {
+                    PlanZeilenFoto(foto: alt.vorschaubildModell.flatMap { bilder[$0] }, kante: 48)
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(alt.name)

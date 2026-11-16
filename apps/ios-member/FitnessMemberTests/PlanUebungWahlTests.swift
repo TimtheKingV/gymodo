@@ -100,6 +100,13 @@ struct PlanUebungWahlTests {
         }
         #expect(GeraeteAuswahl.sperrgrund(station: station, trefferUebungId: nil, gesperrt: alleBelegt)
                 == "Schon in der Einheit")
+        // Ohne Uebung gibt es nichts fuer den Plan -- mit Katalogmodell wie ohne
+        // (P4, Testnotiz 10.11. #5).
+        for leer in [Self.geraet(katalog: nil, uebungen: []), Self.geraet(katalog: "kt1", uebungen: [])] {
+            #expect(GeraeteAuswahl.sperrgrund(station: leer, trefferUebungId: nil, gesperrt: grund)
+                    == "Nicht im Plan möglich")
+            #expect(GeraeteAuswahl.sperrgrund(station: leer, trefferUebungId: nil, gesperrt: nil) == nil)
+        }
     }
 
     @Test("Uebungswahl an einer Station mit mehreren Uebungen: offen nur die freien, die anderen im Hinweis")
