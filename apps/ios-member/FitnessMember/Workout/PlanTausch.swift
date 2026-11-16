@@ -332,6 +332,9 @@ enum PlanTausch {
             "Keine Verbindung. Dein Plan bleibt, wie er ist. Versuch es gleich noch einmal."
         case .conflict:
             "Dein Plan hat sich inzwischen geändert und ist neu geladen. Versuch es noch einmal."
+        // Der Server nennt den Grund selbst (P4, Testnotiz 10.11. #6).
+        case .validation(let message) where !message.isEmpty:
+            message
         case .validation, .notFound, .planNichtMoeglich, .profilUnvollstaendig:
             "Diese Übung passt gerade nicht in deinen Plan. Dein Plan bleibt, wie er ist."
         case .unauthorized:

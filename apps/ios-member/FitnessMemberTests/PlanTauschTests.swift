@@ -703,6 +703,15 @@ struct PlanTauschTests {
 
     static let merkliste = #"{"nichtVorhanden":{"s1":["e8"],"s2":["e7"]},"gefaelltNicht":["e9"]}"#
 
+    @Test("fehlerText zeigt bei .validation den Text des Servers (P4)")
+    func fehlerTextZeigtServerTextBeiValidation() {
+        let text = "Diese Übung ist noch nicht für Trainingspläne freigegeben."
+        #expect(PlanTausch.fehlerText(.validation(message: text)) == text)
+        // Ohne Text bleibt der allgemeine Satz.
+        #expect(PlanTausch.fehlerText(.validation(message: ""))
+                == "Diese Übung passt gerade nicht in deinen Plan. Dein Plan bleibt, wie er ist.")
+    }
+
     @Test("Kandidaten ohne die aktuelle Uebung")
     func kandidatenOhneAktuelle() {
         let plan = T.plan()

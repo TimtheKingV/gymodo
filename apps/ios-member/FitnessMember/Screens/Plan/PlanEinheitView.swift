@@ -28,7 +28,7 @@ struct PlanEinheitView: View {
 
     /// E7: nicht, solange an genau dieser Einheit eine Session haengt.
     private var darfBearbeiten: Bool {
-        PlanEinheitBearbeitung.darfBearbeiten(
+        PlanEinheitEntwurf.darfBearbeiten(
             einheitKey: einheitKey, laufEinheitKey: planAblauf.einheitKey,
             gebunden: planAblauf.gebundeneSessionId != nil)
     }
@@ -61,11 +61,12 @@ struct PlanEinheitView: View {
             }
         }
         .fullScreenCover(isPresented: $bearbeitenOffen) {
-            if let einheit = plan?.einheiten.first(where: { $0.key == einheitKey }) {
-                PlanEinheitBearbeitenView(einheit: einheit, apiClient: apiClient) { bearbeitenOffen = false }
+            if let plan, let einheit = plan.einheiten.first(where: { $0.key == einheitKey }) {
+                PlanEinheitBearbeitenView(plan: plan, einheit: einheit, apiClient: apiClient) { bearbeitenOffen = false }
                     .environment(katalog)
                     .environment(planAblauf)
                     .environment(videoVorrat)
+                    .environment(sessions)
             } else {
                 // Die Einheit ist weg (neuer Plan): nie ein leeres Cover ohne Ausweg.
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.s16) {
@@ -92,8 +93,9 @@ struct PlanEinheitView: View {
         bilder[modell] = await vorschauLader.bild(modellId: modell, url: url, kantePixel: 168)
     }
 
-    /// Fuer das Bearbeiten-Cover (Videos der Ersatz-Kandidaten).
+    /// Fuer das Bearbeiten-Cover (Videos und Geraeteauswahl der Uebungswahl, P4).
     @Environment(UebungsVideoVorrat.self) private var videoVorrat
+    @Environment(WorkoutSessionStore.self) private var sessions
 
     private func inhalt(plan: Trainingsplan, einheit: TrainingsplanEinheit) -> some View {
         let muskeln = HomeZeilen.muskelnJeUebung(katalog.bootstrap)

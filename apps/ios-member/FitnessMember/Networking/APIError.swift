@@ -99,6 +99,9 @@ enum APIError: Error, Equatable {
         switch code {
         case "unauthorized": .unauthorized(message: message)
         case "validation_failed": .validation(message: message)
+        // Plan-Uebung nicht freigegeben bzw. im gemiedenen Bereich: der Server-Text ist
+        // fuer das Mitglied geschrieben (P4, Testnotiz 10.11. #6).
+        case "uebung_ohne_planmerkmale", "uebung_gemieden": .validation(message: message)
         case "not_found": .notFound(message: message)
         case "conflict": .conflict(message: message)
         case "profil_unvollstaendig": .profilUnvollstaendig(message: message, fehlt: detail?.textliste("fehlt") ?? [])

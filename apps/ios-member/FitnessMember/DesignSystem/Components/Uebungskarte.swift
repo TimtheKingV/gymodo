@@ -92,10 +92,28 @@ struct UebungskarteModell: Equatable {
 struct Uebungskarte<Rechts: View>: View {
     let modell: UebungskarteModell
     let foto: UIImage?
+    /// Tipp auf Bild und Texte (Bearbeiten: Anpassen-Blatt). Der rechte Platz bleibt
+    /// ein eigenes Element, damit VoiceOver den Griff getrennt ansagt (P4, Testnotiz 10.11. #3).
+    var beiTippen: (() -> Void)? = nil
     @ViewBuilder let rechts: () -> Rechts
 
     var body: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
+            koerper
+            rechts()
+        }
+        .padding(12)
+        .background(DesignSystem.Color.surface)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(DesignSystem.Color.line, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+extension Uebungskarte {
+    /// Bild und Texte als ein Element mit der Beschreibung der Karte.
+    @ViewBuilder
+    private var koerper: some View {
+        let inhalt = HStack(alignment: .top, spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: modell.exerciseId) {
                 PlanZeilenFoto(foto: foto)
             }
@@ -112,14 +130,18 @@ struct Uebungskarte<Rechts: View>: View {
                 ChipZeile(chips: modell.chips)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(modell.beschreibung)
-            rechts()
         }
-        .padding(12)
-        .background(DesignSystem.Color.surface)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(DesignSystem.Color.line, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(modell.beschreibung)
+        if let beiTippen {
+            inhalt
+                .onTapGesture(perform: beiTippen)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { beiTippen() }
+        } else {
+            inhalt
+        }
     }
 }
 

@@ -1,13 +1,12 @@
 import SwiftUI
 import UIKit
 
-/// "Einheit bearbeiten" (Entwurf 2b): Positionen ziehen, entfernen und
-/// ersetzen -- alles dauerhaft als neue Planversion (E3). Ziehen und Entfernen
-/// sammeln sich in `PlanEinheitBearbeitung` und gehen mit "Fertig" in einem
-/// Aufruf an den Server (E6); Ersetzen schreibt sofort (E5).
-///
-/// Ohne Umschalter "Nur dieses Mal", ohne "Übung hinzufügen" und ohne
-/// "Plan-Vorschlag wiederherstellen" (E3, E4). Akzent nur als Text auf "Fertig".
+/// "Bearbeiten" einer Planeinheit (P4, Testnotiz 10.11. #3 #4 #6, Tafel 3): die ganze
+/// Seite scrollt, Uebungen als Karten. Ziehen am Griff ordnet, Wischen nach links
+/// entfernt (eine bleibt), Tipp auf eine Karte oeffnet "Übung anpassen", unten
+/// "Übung hinzufügen". Alles sammelt sich in `PlanEinheitEntwurf` und geht mit
+/// "Fertig" in einem Aufruf an den Server (`ersetzePlanEinheit`).
+/// Akzent nur als Text auf "Fertig".
 struct PlanEinheitBearbeitenView: View {
     let einheitKey: String
     let apiClient: APIClient
@@ -15,28 +14,54 @@ struct PlanEinheitBearbeitenView: View {
 
     @Environment(CatalogStore.self) private var katalog
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
+    @Environment(UebungsVideoVorrat.self) private var videoVorrat
+    @Environment(WorkoutSessionStore.self) private var sessions
 
-    @State private var bearbeitung: PlanEinheitBearbeitung
+    @State private var entwurf: PlanEinheitEntwurf
+    /// Schluessel -> Uebung der Ausgangsposition, fuer "statt X" nur bei echtem Tausch.
+    @State private var ausgangUebungen: [String: String]
     @State private var schreibt = false
     @State private var fehler: APIError?
     @State private var verwerfenFragen = false
-    /// Ein Tausch ist schon geschrieben (E5) -- "Abbrechen" nimmt ihn nicht
-    /// zurueck, deshalb heisst der Knopf danach "Schließen" (Final-Review 3).
-    @State private var hatGetauscht = false
-    @State private var ersetzen: ErsatzZiel?
+    @State private var anpassen: Ziel?
+    @State private var auswahl: AuswahlZiel?
+    /// "Übung tauschen" im Anpassen-Blatt: erst schliessen, dann die Auswahl oeffnen.
+    @State private var nachAnpassen: AuswahlZiel?
     @State private var vorschauLader = VorschauLader(ablage: .fotos)
     @State private var fotos: [String: URL] = [:]
     @State private var bilder: [String: UIImage] = [:]
 
-    private struct ErsatzZiel: Identifiable {
-        let id: String
+    /// Hoechstens so viele Positionen je Einheit (wie der Server).
+    static let hoechstePositionen = 20
+
+    private struct Ziel: Identifiable {
+        let id: UUID
     }
 
-    init(einheit: TrainingsplanEinheit, apiClient: APIClient, beiSchliessen: @escaping () -> Void) {
+    private enum AuswahlZiel: Identifiable {
+        case tauschen(UUID)
+        case hinzufuegen
+
+        var id: String {
+            switch self {
+            case .tauschen(let id): "t-\(id.uuidString)"
+            case .hinzufuegen: "neu"
+            }
+        }
+    }
+
+    init(plan: Trainingsplan, einheit: TrainingsplanEinheit, apiClient: APIClient,
+         beiSchliessen: @escaping () -> Void) {
         self.einheitKey = einheit.key
         self.apiClient = apiClient
         self.beiSchliessen = beiSchliessen
-        _bearbeitung = State(initialValue: PlanEinheitBearbeitung(einheit: einheit))
+        _entwurf = State(initialValue: PlanEinheitEntwurf(
+            einheit: einheit, vorgaben: plan.vorgaben, merkmale: plan.planUebungen))
+        _ausgangUebungen = State(initialValue: Self.ausgang(einheit))
+    }
+
+    private static func ausgang(_ einheit: TrainingsplanEinheit) -> [String: String] {
+        Dictionary(einheit.positionen.map { ($0.key, $0.exerciseId) }, uniquingKeysWith: { erste, _ in erste })
     }
 
     private var plan: Trainingsplan? { PlanAnzeige.plan(bootstrap: katalog.bootstrap) }
@@ -46,23 +71,19 @@ struct PlanEinheitBearbeitenView: View {
         NavigationStack {
             inhalt
                 .background(DesignSystem.Color.bg)
-                .navigationTitle("Einheit bearbeiten")
+                .navigationTitle("Bearbeiten")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     // Der Titel selbst gezeichnet: mit eigener Leistenfarbe
-                    // fiel er auf die dunkle Systemschrift zurueck und war
-                    // auf dem dunklen Grund unsichtbar (Final-Review 4).
+                    // fiel er auf die dunkle Systemschrift zurueck (Final-Review 4).
                     ToolbarItem(placement: .principal) {
-                        Text("Einheit bearbeiten")
+                        Text("Bearbeiten")
                             .font(.system(size: 17, weight: .heavy))
                             .foregroundStyle(DesignSystem.Color.text)
-                            // Neben "Abbrechen" knapp: lieber etwas kleiner als "bearbeit…".
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
                             .accessibilityAddTraits(.isHeader)
                     }
                     ToolbarItem(placement: .cancellationAction) {
-                        Button(PlanEinheitBearbeitung.schliessenTitel(hatGetauscht: hatGetauscht)) { abbrechen() }
+                        Button("Abbrechen") { abbrechen() }
                             .foregroundStyle(DesignSystem.Color.textMuted)
                             .disabled(schreibt)
                     }
@@ -81,69 +102,63 @@ struct PlanEinheitBearbeitenView: View {
                     }
                 }
         }
-        .interactiveDismissDisabled(schreibt)
+        .interactiveDismissDisabled(schreibt || entwurf.geaendert)
         .confirmationDialog("Änderungen verwerfen?", isPresented: $verwerfenFragen, titleVisibility: .visible) {
             Button("Verwerfen", role: .destructive) { beiSchliessen() }
             Button("Weiter bearbeiten", role: .cancel) {}
-        } message: {
-            if let hinweis = PlanEinheitBearbeitung.verwerfenHinweis(hatGetauscht: hatGetauscht) {
-                Text(hinweis)
-            }
         }
-        .sheet(item: $ersetzen) { ziel in
-            ersatzSheet(positionKey: ziel.id)
+        .sheet(item: $anpassen, onDismiss: {
+            if let ziel = nachAnpassen {
+                nachAnpassen = nil
+                auswahl = ziel
+            }
+        }) { ziel in
+            anpassenSheet(id: ziel.id)
+        }
+        .sheet(item: $auswahl) { ziel in
+            auswahlSheet(ziel)
         }
         .task {
-            // Ein fehlendes Foto ist kein Zustand: die Zeile bleibt mit dem Platzhalter.
+            // Ein fehlendes Foto ist kein Zustand: die Karte bleibt mit dem Platzhalter.
             fotos = await GeraeteFotos.laden(von: apiClient)
         }
         .testnotizScreen()
     }
 
+    // MARK: - Seite
+
     @ViewBuilder
     private var inhalt: some View {
-        if let plan, let einheit {
-            let zeilen = Dictionary(
-                PlanAnzeige.zeilen(plan: plan, einheitKey: einheitKey, zustand: nil, bloecke: [],
-                                   bootstrap: katalog.bootstrap).map { ($0.id, $0) },
-                uniquingKeysWith: { erste, _ in erste })
-            let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                    Text(namen.name(einheitKey))
-                        .font(DesignSystem.Typography.detailScreentitel)
-                        .foregroundStyle(DesignSystem.Color.text)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Der Name passt sich an, wenn du Übungen tauschst")
-                        .font(.system(size: 14))
-                        .foregroundStyle(DesignSystem.Color.textMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let fehler {
-                        InlineBanner(tone: .danger, message: PlanTausch.fehlerText(fehler))
-                            .padding(.top, DesignSystem.Spacing.s8)
-                    }
+        if let plan, einheit != nil {
+            List {
+                kopf(plan: plan)
+                    .listRowInsets(EdgeInsets(top: DesignSystem.Spacing.s12, leading: 20, bottom: 10, trailing: 20))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                ForEach(entwurf.positionen) { position in
+                    karte(position)
+                        .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .moveDisabled(schreibt)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if entwurf.darfEntfernen {
+                                Button("Entfernen", role: .destructive) {
+                                    withAnimation { _ = entwurf.entfernen(id: position.id) }
+                                }
+                                .disabled(schreibt)
+                            }
+                        }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, DesignSystem.Spacing.s12)
-                .padding(.bottom, DesignSystem.Spacing.s16)
-
-                List {
-                    ForEach(bearbeitung.positionen(in: einheit), id: \.key) { position in
-                        zeile(position: position, modell: zeilen[position.key])
-                            .deleteDisabled(!bearbeitung.darfEntfernen || schreibt)
-                            .moveDisabled(schreibt)
-                            .listRowBackground(DesignSystem.Color.surface)
-                            .listRowSeparatorTint(DesignSystem.Color.line)
-                    }
-                    .onMove { von, nach in bearbeitung.verschieben(von: von, nach: nach) }
-                    .onDelete { offsets in bearbeitung.entfernen(offsets) }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .environment(\.editMode, .constant(.active))
-                .disabled(schreibt)
+                .onMove { von, nach in entwurf.verschieben(von: von, nach: nach) }
+                fuss
+                    .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: DesignSystem.Spacing.s24, trailing: 20))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .disabled(schreibt)
         } else {
             Text("Diese Einheit gibt es in deinem Plan nicht mehr.")
                 .font(.system(size: 15))
@@ -153,40 +168,124 @@ struct PlanEinheitBearbeitenView: View {
         }
     }
 
-    private func zeile(position: TrainingsplanPosition, modell: PlanZeilenModell?) -> some View {
-        let modell = modell ?? PlanZeilenModell.aus(position, bootstrap: katalog.bootstrap)
-        return HStack(spacing: DesignSystem.Spacing.s12) {
-            UebungsVideoKachel(exerciseId: modell.exerciseId) {
-                PlanZeilenFoto(foto: modell.vorschaubildModell.flatMap { bilder[$0] })
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(modell.name)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(DesignSystem.Color.text)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(modell.untertitel)
-                    .font(.system(size: 12.5))
-                    .monospacedDigit()
-                    .foregroundStyle(DesignSystem.Color.textFaint)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-            Button { ersetzen = ErsatzZiel(id: position.key) } label: {
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 15, weight: .bold))
+    private func kopf(plan: Trainingsplan) -> some View {
+        let namen = EinheitNamen(plan: plan, muskeln: HomeZeilen.muskelnJeUebung(katalog.bootstrap))
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+            Text(namen.name(einheitKey))
+                .font(DesignSystem.Typography.detailScreentitel)
+                .foregroundStyle(DesignSystem.Color.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text("Tippe auf eine Übung, um Sätze, Wiederholungen und Pause anzupassen.")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignSystem.Color.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+            if let minuten = minuten(plan: plan) {
+                Text("ca. \(minuten) min")
+                    .font(.system(size: 14, weight: .semibold).monospacedDigit())
                     .foregroundStyle(DesignSystem.Color.textMuted)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .padding(.top, 2)
             }
-            .buttonStyle(.borderless)
-            .disabled(schreibt)
-            .accessibilityLabel("\(modell.name) ersetzen")
-            .testnotizElement("einheit.bearbeiten.ersetzen", typ: "Button")
+            if let fehler {
+                InlineBanner(tone: .danger, message: PlanTausch.fehlerText(fehler))
+                    .padding(.top, DesignSystem.Spacing.s8)
+            }
         }
-        .padding(.vertical, DesignSystem.Spacing.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moveDisabled(true)
+    }
+
+    /// Lokal mitgerechnet; ohne Vorgaben (alter Server) nur der Stand des Servers,
+    /// solange nichts geaendert ist.
+    private func minuten(plan: Trainingsplan) -> Int? {
+        if plan.vorgaben != nil { return Int(entwurf.geschaetzteMinuten.rounded()) }
+        guard !entwurf.geaendert, let m = einheit?.geschaetzteMinuten else { return nil }
+        return Int(m.rounded())
+    }
+
+    private func karte(_ position: EntwurfsPosition) -> some View {
+        let modell = kartenModell(position)
+        return Uebungskarte(
+            modell: modell, foto: modell.vorschaubildModell.flatMap { bilder[$0] },
+            beiTippen: { if !schreibt { anpassen = Ziel(id: position.id) } }
+        ) {
+            griff(position: position, name: modell.name)
+        }
+        .testnotizElement("einheit.bearbeiten.karte", typ: "Button")
         .task(id: modell.vorschaubildModell.flatMap { fotos[$0] }) {
             await fotoLaden(modell: modell.vorschaubildModell)
         }
+    }
+
+    /// Zieh-Hinweis; gezogen wird die ganze Zeile (`onMove`). Fuer VoiceOver ein eigenes
+    /// Element mit Aktionen nach oben/unten (P4, Testnotiz 10.11. #3).
+    private func griff(position: EntwurfsPosition, name: String) -> some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(DesignSystem.Color.textFaint)
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+            .accessibilityElement()
+            .accessibilityLabel("\(name) verschieben")
+            .accessibilityAction(named: "Nach oben") { verschieben(position.id, um: -1) }
+            .accessibilityAction(named: "Nach unten") { verschieben(position.id, um: 1) }
+    }
+
+    private func verschieben(_ id: UUID, um schritt: Int) {
+        guard !schreibt, let i = entwurf.positionen.firstIndex(where: { $0.id == id }) else { return }
+        let ziel = i + schritt
+        guard entwurf.positionen.indices.contains(ziel) else { return }
+        // move(fromOffsets:toOffset:): nach unten zaehlt der Platz hinter dem Ziel.
+        entwurf.verschieben(von: IndexSet(integer: i), nach: schritt > 0 ? ziel + 1 : ziel)
+    }
+
+    private var fuss: some View {
+        let voll = entwurf.positionen.count >= Self.hoechstePositionen
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
+            Button { auswahl = .hinzufuegen } label: {
+                Label("Übung hinzufügen", systemImage: "plus")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Color.textMuted)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(DesignSystem.Color.line, style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
+                    .contentShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(PressButtonStyle())
+            .disabled(voll || schreibt)
+            .opacity(voll ? 0.5 : 1)
+            .testnotizElement("einheit.bearbeiten.hinzufuegen", typ: "Button")
+            Text(voll
+                 ? "Mehr als \(Self.hoechstePositionen) Übungen passen nicht in eine Einheit."
+                 : "Nach links wischen zum Entfernen. Eine Übung bleibt immer.")
+                .font(.system(size: 12.5))
+                .foregroundStyle(DesignSystem.Color.textFaint)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .moveDisabled(true)
+    }
+
+    // MARK: - Karte
+
+    private func name(_ p: EntwurfsPosition) -> String {
+        let bootstrap = katalog.bootstrap
+        let maschine = bootstrap?.machines.first {
+            ($0.equipmentModel.id == p.modelId || $0.equipmentModel.catalogModelId == p.modelId)
+                && $0.exercises.contains { $0.id == p.exerciseId }
+        }
+        return PlanZeilenModell.uebungsname(exerciseId: p.exerciseId, maschine: maschine, bootstrap: bootstrap)
+    }
+
+    private func kartenModell(_ p: EntwurfsPosition) -> UebungskarteModell {
+        UebungskarteModell.aus(
+            p, name: name(p),
+            bild: PlanAnzeige.bildmodell(exerciseId: p.exerciseId, modelId: p.modelId, bootstrap: katalog.bootstrap),
+            geaendert: entwurf.geaenderteWerte(id: p.id),
+            ausgangExerciseId: p.key.flatMap { ausgangUebungen[$0] })
     }
 
     private func fotoLaden(modell: String?) async {
@@ -195,61 +294,100 @@ struct PlanEinheitBearbeitenView: View {
         bilder[modell] = await vorschauLader.bild(modellId: modell, url: url, kantePixel: 168)
     }
 
-    // MARK: - Ersetzen
+    // MARK: - Blaetter
 
     @ViewBuilder
-    private func ersatzSheet(positionKey: String) -> some View {
-        if let plan, let einheit, let position = einheit.positionen.first(where: { $0.key == positionKey }) {
-            // Was die Einheit beim Server fuehrt, auch gerade entfernte
-            // Positionen: die stehen dort bis "Fertig" noch drin.
-            let belegt = Set(einheit.positionen.map(\.exerciseId))
-            let kandidaten = PlanTausch.kandidaten(
-                position: position, plan: plan,
-                ort: PlanTausch.ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap),
-                belegt: belegt, uebungen: katalog.bootstrap)
-            PlanEinheitErsatzSheet(
-                alt: PlanZeilenModell.aus(position, bootstrap: katalog.bootstrap).name,
-                kandidaten: kandidaten, fotoLader: apiClient, vorschauLader: vorschauLader,
-                beiKandidat: { kandidat in await tauschen(position: position, kandidat: kandidat) },
-                beiAbbrechen: { ersetzen = nil })
+    private func anpassenSheet(id: UUID) -> some View {
+        if let position = entwurf.positionen.first(where: { $0.id == id }) {
+            let modell = kartenModell(position)
+            PlanPositionAnpassenSheet(
+                modell: modell, foto: modell.vorschaubildModell.flatMap { bilder[$0] }, position: position,
+                darfEntfernen: entwurf.darfEntfernen,
+                beiUebernehmen: { saetze, wdhVon, wdhBis, pauseSek, dauerMin in
+                    entwurf.werteSetzen(id: id, saetze: saetze, wdhVon: wdhVon, wdhBis: wdhBis,
+                                        pauseSek: pauseSek, dauerMin: dauerMin)
+                },
+                beiTauschen: {
+                    nachAnpassen = .tauschen(id)
+                    anpassen = nil
+                },
+                beiEntfernen: {
+                    anpassen = nil
+                    withAnimation { _ = entwurf.entfernen(id: id) }
+                })
         }
     }
 
-    /// Dauerhafter Tausch ohne `grund` (E5). `nil` = geschrieben und neu geladen.
-    private func tauschen(position: TrainingsplanPosition, kandidat: TauschKandidat) async -> APIError? {
-        guard let planId = plan?.planId else { return .conflict(message: "Kein Plan geladen") }
-        schreibt = true
-        defer { schreibt = false }
-        do throws(APIError) {
-            _ = try await apiClient.swapPlanPosition(
-                planId: planId, einheitKey: einheitKey, positionKey: position.key,
-                exerciseId: kandidat.exerciseId, modelId: kandidat.modelId)
-        } catch {
-            if case .conflict = error { await neuLadenUndUebernehmen() }
-            return error
+    @ViewBuilder
+    private func auswahlSheet(_ ziel: AuswahlZiel) -> some View {
+        if let plan {
+            let belegt = Set(entwurf.positionen.map(\.exerciseId))
+            switch ziel {
+            case .hinzufuegen:
+                auswahlBlatt(zweck: .hinzufuegen, plan: plan, belegt: belegt) { exerciseId, modelId, _ in
+                    entwurf.hinzufuegen(exerciseId: exerciseId, modelId: modelId)
+                }
+            case .tauschen(let id):
+                if let position = entwurf.positionen.first(where: { $0.id == id }) {
+                    let kandidaten = PlanTausch.kandidaten(
+                        position: stelle(position), plan: plan,
+                        ort: PlanTausch.ort(aktivesStudio: katalog.activeStudioId, bootstrap: katalog.bootstrap),
+                        belegt: belegt, uebungen: katalog.bootstrap)
+                    let alt = kartenModell(position)
+                    auswahlBlatt(zweck: .tauschen(alt: alt, kandidaten: kandidaten), plan: plan, belegt: belegt) {
+                        exerciseId, modelId, _ in
+                        entwurf.tauschen(id: id, exerciseId: exerciseId, modelId: modelId, alterName: alt.name)
+                    }
+                }
+            }
         }
-        await neuLadenUndUebernehmen()
-        hatGetauscht = true
-        fehler = nil
-        ersetzen = nil
-        return nil
+    }
+
+    private func auswahlBlatt(
+        zweck: PlanUebungAuswahlZweck, plan: Trainingsplan, belegt: Set<String>,
+        beiWahl: @escaping (_ exerciseId: String, _ modelId: String, _ name: String) -> Void
+    ) -> some View {
+        PlanUebungAuswahlSheet(
+            zweck: zweck, merkmale: plan.planUebungen, belegt: belegt,
+            fotoLader: apiClient, vorschauLader: vorschauLader,
+            beiWahl: { exerciseId, modelId, name in
+                beiWahl(exerciseId, modelId, name)
+                auswahl = nil
+            },
+            beiAbbrechen: { auswahl = nil })
+        .environment(katalog)
+        .environment(videoVorrat)
+        .environment(sessions)
+    }
+
+    /// Die Stelle fuer "Passt an diese Stelle": der Baustein der Uebung, die jetzt dort
+    /// steht, sonst der der Ausgangsposition. `PlanTausch.kandidaten` liest nur
+    /// Baustein und Uebung.
+    private func stelle(_ p: EntwurfsPosition) -> TrainingsplanPosition {
+        let alt = p.key.flatMap { key in einheit?.positionen.first { $0.key == key } }
+        let baustein = plan?.planUebungen[p.exerciseId]?.baustein ?? alt?.baustein ?? ""
+        return TrainingsplanPosition(
+            key: p.key ?? "", baustein: baustein, rolle: alt?.rolle ?? "pflicht", exerciseId: p.exerciseId,
+            modelId: p.modelId, typ: alt?.typ ?? "", saetze: p.saetze, wdhVon: p.wdhVon, wdhBis: p.wdhBis,
+            reserveVon: alt?.reserveVon ?? 0, reserveBis: alt?.reserveBis ?? 0, pauseSek: p.pauseSek,
+            aufwaermsatz: p.aufwaermsatz, dauerMin: p.dauerMin, hauptmuskeln: alt?.hauptmuskeln ?? [])
     }
 
     // MARK: - Fertig / Abbrechen
 
     private func abbrechen() {
-        if bearbeitung.geaendert {
+        if entwurf.geaendert {
             verwerfenFragen = true
         } else {
             beiSchliessen()
         }
     }
 
-    /// Unveraendert nur schliessen; sonst Reihenfolge und Entfernen in einem
-    /// Aufruf (E6). Bei einem Fehler bleibt die Liste im bearbeiteten Stand.
+    /// Unveraendert nur schliessen; sonst die ganze Einheit in einem Aufruf. Bei einem
+    /// Fehler bleibt der Entwurf, wie er ist.
     private func fertig() async {
         guard !schreibt else { return }
-        guard bearbeitung.geaendert else {
+        guard entwurf.geaendert else {
             beiSchliessen()
             return
         }
@@ -260,13 +398,19 @@ struct PlanEinheitBearbeitenView: View {
         schreibt = true
         defer { schreibt = false }
         do throws(APIError) {
-            _ = try await apiClient.ordnePlanEinheit(
-                planId: planId, einheitKey: einheitKey, positionKeys: bearbeitung.keys)
+            _ = try await apiClient.ersetzePlanEinheit(
+                planId: planId, einheitKey: einheitKey, positionen: entwurf.rumpf)
         } catch {
             fehler = error
-            // 409: eine andere Version ist aktiv. Neu laden, damit ein
-            // Wiederholen die richtige trifft (wie `PlanTauschSitzung`).
-            if case .conflict = error { await neuLadenUndUebernehmen() }
+            // 409: eine andere Version ist aktiv. Neu laden und den Entwurf auf sie
+            // setzen, damit ein Wiederholen die richtige trifft.
+            if case .conflict = error {
+                await neuLaden()
+                if let einheit {
+                    entwurf.nachKonflikt(neueEinheit: einheit)
+                    ausgangUebungen = Self.ausgang(einheit)
+                }
+            }
             return
         }
         fehler = nil
@@ -274,17 +418,10 @@ struct PlanEinheitBearbeitenView: View {
         beiSchliessen()
     }
 
-    // MARK: - Neu laden
-
     /// Wie `PlanPositionSheet`: Bootstrap neu, dann den Ablauf darauf setzen.
     private func neuLaden() async {
         await katalog.load()
         guard let bootstrap = katalog.bootstrap else { return }
         planAblauf.vorbereiten(bootstrap: bootstrap)
-    }
-
-    private func neuLadenUndUebernehmen() async {
-        await neuLaden()
-        if let einheit { bearbeitung.uebernehmen(neueEinheit: einheit) }
     }
 }
