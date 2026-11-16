@@ -3,6 +3,7 @@ import { GET, POST } from "@/app/api/v1/me/plans/route";
 import { POST as acceptPOST } from "@/app/api/v1/me/plans/[id]/accept/route";
 import { POST as swapPOST } from "@/app/api/v1/me/plans/[id]/swap/route";
 import { POST as ordnenPOST } from "@/app/api/v1/me/plans/[id]/ordnen/route";
+import { PUT as einheitPUT } from "@/app/api/v1/me/plans/[id]/einheiten/[einheitKey]/route";
 import { POST as completePOST } from "@/app/api/v1/workout-sessions/[sessionId]/complete/route";
 import { fromDomainError } from "@/lib/api/respond";
 import { DomainError, zielSchluessel } from "@fitretro/domain";
@@ -28,6 +29,12 @@ const ordnen = (auth: string | undefined, id: string, rumpf: unknown) =>
   ordnenPOST(new Request(`${BASIS}/${id}/ordnen`, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }), {
     params: Promise.resolve({ id }),
   });
+
+const ersetzen = (auth: string | undefined, id: string, einheitKey: string, rumpf: unknown) =>
+  einheitPUT(
+    new Request(`${BASIS}/${id}/einheiten/${einheitKey}`, { method: "PUT", headers: kopf(auth), body: JSON.stringify(rumpf) }),
+    { params: Promise.resolve({ id, einheitKey }) },
+  );
 
 type Fehler = { error: { code: string; message: string; detail?: Record<string, unknown> } };
 

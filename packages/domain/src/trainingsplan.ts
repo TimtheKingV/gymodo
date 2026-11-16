@@ -12,6 +12,8 @@ import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
 import { uebungMinuten } from "./trainingsplan-zeit.js";
+import { baueEinheit, vorgabenAusEingabe } from "./plan-einheit-ersetzen.js";
+import type { EinheitEingabePosition, UebungsMerkmale } from "./plan-einheit-ersetzen.js";
 import { initialisierePlanGewichte, ohneAbbruch, uebernehmePlanGewichte } from "./plangewichte.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
 import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
@@ -377,6 +379,90 @@ export async function ordnePlanEinheit(
   const plan = zuPlan(zeile);
   // Unveraenderte Positionen behalten ihr Ziel (wie G9 beim Tausch).
   await ohneAbbruch("Ziele nach Ordnen", async () => {
+    await uebernehmePlanGewichte(client, userId, planId, plan);
+    await initialisierePlanGewichte(client, userId, plan);
+  });
+  return plan;
+}
+
+export type PlanEinheitErsetzen = { einheitKey: string; positionen: EinheitEingabePosition[] };
+
+/**
+ * Speichert eine Einheit als Ganzes (Reihenfolge, Entfernen, Hinzufuegen, Tauschen, Werte) in einem
+ * Schritt (P4): baueEinheit prueft und ergaenzt, replace_training_plan_einheit (0074) legt sofort
+ * eine neue aktive Version an. Fremd oder nicht aktiv ist ein Konflikt (plan_nicht_annehmbar).
+ */
+export async function ersetzePlanEinheit(
+  client: SupabaseClient,
+  userId: string,
+  planId: string,
+  input: PlanEinheitErsetzen,
+): Promise<TrainingPlan> {
+  const { data: alt, error: e } = await client
+    .from("training_plans")
+    .select("einheiten, eingabe")
+    .eq("id", planId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (e) throw new DomainError("internal", "Die Einheit konnte nicht gespeichert werden.");
+  if (!alt) throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
+  const { einheiten, eingabe } = alt as { einheiten: PlanEinheit[]; eingabe: PlanEingabe };
+  const einheitAlt = einheiten.find((x) => x.key === input.einheitKey);
+  if (!einheitAlt) throw new DomainError("validation_failed", "Diese Einheit kann so nicht gespeichert werden.");
+
+  const ids = [...new Set(input.positionen.map((p) => p.exerciseId))];
+  const merkmale: Record<string, UebungsMerkmale> = {};
+  if (ids.length > 0) {
+    const { data: uebungen, error: ue } = await client
+      .from("exercises")
+      .select("id, plan_baustein, plan_typ, muscles")
+      .in("id", ids);
+    if (ue) throw new DomainError("internal", "Die Einheit konnte nicht gespeichert werden.");
+    for (const u of (uebungen ?? []) as Array<{
+      id: string;
+      plan_baustein: UebungsMerkmale["baustein"];
+      plan_typ: UebungsMerkmale["typ"];
+      muscles: Array<{ key: string; role: string }> | null;
+    }>) {
+      merkmale[u.id] = {
+        baustein: u.plan_baustein,
+        typ: u.plan_typ,
+        hauptmuskeln: (u.muscles ?? []).filter((x) => x.role === "primary").map((x) => x.key),
+      };
+    }
+  }
+  const einheit = baueEinheit(einheitAlt, input.positionen, merkmale, vorgabenAusEingabe(eingabe));
+
+  const { data, error } = await client
+    .rpc("replace_training_plan_einheit", {
+      p_plan_id: planId,
+      p_einheit_key: input.einheitKey,
+      p_positionen: einheit.positionen,
+      p_minuten: einheit.geschaetzteMinuten,
+    })
+    .single();
+  if (error?.code === "P0001") {
+    switch (error.message) {
+      case "plan_nicht_annehmbar":
+        throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
+      case "plan_ungueltig":
+        throw new DomainError("validation_failed", "Diese Einheit kann so nicht gespeichert werden.");
+      case "modell_ungueltig":
+        throw new DomainError("validation_failed", "Diese Übung gibt es an diesem Gerät nicht.");
+      case "uebung_ohne_planmerkmale":
+        throw new DomainError("uebung_ohne_planmerkmale", "Diese Übung ist noch nicht für Trainingspläne freigegeben.");
+      case "uebung_gemieden":
+        throw new DomainError("uebung_gemieden", "Diese Übung belastet einen Bereich, den du schonen willst.");
+    }
+  }
+  if (istUniqueVerstoss(error)) {
+    throw new DomainError("conflict", "Der Plan wurde gerade geändert. Bitte noch einmal versuchen.");
+  }
+  if (error || !data) throw new DomainError("internal", "Die Einheit konnte nicht gespeichert werden.");
+  const zeile = data as PlanZeile & { user_id: string };
+  if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
+  const plan = zuPlan(zeile);
+  await ohneAbbruch("Ziele nach Ersetzen", async () => {
     await uebernehmePlanGewichte(client, userId, planId, plan);
     await initialisierePlanGewichte(client, userId, plan);
   });
