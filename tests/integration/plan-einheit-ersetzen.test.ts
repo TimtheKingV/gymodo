@@ -233,12 +233,14 @@ describe("replace_training_plan_einheit", () => {
     const cardio = positionen.find((p) => p.baustein === "cardio")!;
     const { data, error } = await ersetze(m.client, plan.id, key, positionen);
     expect(error).toBeNull();
-    const c = (data as NeuerPlan).einheiten.find((e) => e.key === key)!.positionen.find((p) => p.key === cardio.key)!;
+    const neu = data as NeuerPlan;
+    const c = neu.einheiten.find((e) => e.key === key)!.positionen.find((p) => p.key === cardio.key)!;
     expect(c).toMatchObject({ reserveVon: 1, reserveBis: 3, wdhVon: null, wdhBis: null, saetze: 1, pauseSek: 0 });
     // Ohne Reserve ist die Cardio-Position ungueltig.
     cardio.reserveVon = null;
-    const e = await fehlerVon(ersetze(m.client, plan.id, key, positionen));
+    const e = await fehlerVon(ersetze(m.client, neu.id, key, positionen));
     expect(e).toMatchObject({ code: "P0001", message: "plan_ungueltig" });
+    expect(await status(neu.id)).toBe("aktiv");
   });
 
   it("gemiedene Uebung, die schon in der Einheit steht, blockiert das Entfernen einer anderen Position nicht", async () => {

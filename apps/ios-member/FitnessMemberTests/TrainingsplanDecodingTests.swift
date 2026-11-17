@@ -39,4 +39,18 @@ struct TrainingsplanDecodingTests {
         #expect(plan.vorgaben == nil)
         #expect(plan.planUebungen.isEmpty)
     }
+
+    @Test("kaputte vorgaben brechen den Plan nicht")
+    func kaputteVorgabenBrechenDenPlanNicht() throws {
+        // `isolation` fehlt: das Objekt ist unbrauchbar, der Plan soll trotzdem laden.
+        let json = """
+        {\(Self.kopf),
+         "vorgaben":{"typ":{
+           "mehrgelenk":{"typ":"mehrgelenk","wdhVon":8,"wdhBis":12,"reserveVon":1,"reserveBis":3,"pauseSek":90,"aufwaermsatz":true}},
+          "saetze":3,"cardioMin":10,"aufwaermenMin":7.5}}
+        """
+        let plan = try dekodiere(json)
+        #expect(plan.vorgaben == nil)
+        #expect(plan.version == 1)
+    }
 }

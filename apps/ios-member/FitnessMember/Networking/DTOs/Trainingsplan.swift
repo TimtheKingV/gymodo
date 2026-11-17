@@ -77,7 +77,8 @@ struct Trainingsplan: Decodable, Equatable, Sendable {
         wochenraster = try c.decodeIfPresent([Rasterplatz].self, forKey: .wochenraster) ?? []
         erledigt = try c.decodeIfPresent([ErledigteEinheit].self, forKey: .erledigt) ?? []
         beginn = try c.decodeIfPresent(String.self, forKey: .beginn)
-        vorgaben = try c.decodeIfPresent(PlanVorgaben.self, forKey: .vorgaben)
+        // Nachsichtig: ein kaputtes Vorgaben-Objekt darf den ganzen Bootstrap nicht brechen.
+        vorgaben = (try? c.decodeIfPresent(PlanVorgaben.self, forKey: .vorgaben)) ?? nil
         planUebungen = try c.decodeIfPresent([String: PlanUebungsMerkmal].self, forKey: .planUebungen) ?? [:]
     }
 
