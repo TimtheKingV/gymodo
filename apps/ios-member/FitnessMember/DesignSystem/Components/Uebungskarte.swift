@@ -95,6 +95,8 @@ struct Uebungskarte<Rechts: View>: View {
     /// Tipp auf Bild und Texte (Bearbeiten: Anpassen-Blatt). Der rechte Platz bleibt
     /// ein eigenes Element, damit VoiceOver den Griff getrennt ansagt (P4, Testnotiz 10.11. #3).
     var beiTippen: (() -> Void)? = nil
+    /// Testnotiz-Kennung nur fuer Bild und Texte, nicht fuer den Griff.
+    var testnotizKennung: String? = nil
     @ViewBuilder let rechts: () -> Rechts
 
     var body: some View {
@@ -134,7 +136,13 @@ extension Uebungskarte {
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(modell.beschreibung)
-        if let beiTippen {
+        if let beiTippen, let testnotizKennung {
+            inhalt
+                .onTapGesture(perform: beiTippen)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { beiTippen() }
+                .testnotizElement(testnotizKennung, typ: "Button")
+        } else if let beiTippen {
             inhalt
                 .onTapGesture(perform: beiTippen)
                 .accessibilityAddTraits(.isButton)

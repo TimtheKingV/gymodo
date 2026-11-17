@@ -333,9 +333,9 @@ enum PlanTausch {
         case .conflict:
             "Dein Plan hat sich inzwischen geändert und ist neu geladen. Versuch es noch einmal."
         // Der Server nennt den Grund selbst (P4, Testnotiz 10.11. #6).
-        case .validation(let message) where !message.isEmpty:
+        case .planUebungGesperrt(let message) where !message.isEmpty:
             message
-        case .validation, .notFound, .planNichtMoeglich, .profilUnvollstaendig:
+        case .validation, .notFound, .planNichtMoeglich, .profilUnvollstaendig, .planUebungGesperrt:
             "Diese Übung passt gerade nicht in deinen Plan. Dein Plan bleibt, wie er ist."
         case .unauthorized:
             "Deine Anmeldung ist abgelaufen. Dein Plan bleibt, wie er ist."

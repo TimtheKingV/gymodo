@@ -703,12 +703,17 @@ struct PlanTauschTests {
 
     static let merkliste = #"{"nichtVorhanden":{"s1":["e8"],"s2":["e7"]},"gefaelltNicht":["e9"]}"#
 
-    @Test("fehlerText zeigt bei .validation den Text des Servers (P4)")
+    @Test("fehlerText zeigt bei gesperrter Plan-Uebung den Text des Servers (P4)")
     func fehlerTextZeigtServerTextBeiValidation() {
-        let text = "Diese Übung ist noch nicht für Trainingspläne freigegeben."
-        #expect(PlanTausch.fehlerText(.validation(message: text)) == text)
-        // Ohne Text bleibt der allgemeine Satz.
-        #expect(PlanTausch.fehlerText(.validation(message: ""))
+        let freigabe = "Diese Übung ist noch nicht für Trainingspläne freigegeben."
+        let gemieden = "Diese Übung belastet einen Bereich, den du schonen willst."
+        #expect(PlanTausch.fehlerText(APIError.map(code: "uebung_ohne_planmerkmale", message: freigabe)) == freigabe)
+        #expect(PlanTausch.fehlerText(APIError.map(code: "uebung_gemieden", message: gemieden)) == gemieden)
+    }
+
+    @Test("fehlerText: einfaches validation_failed bleibt beim allgemeinen Satz (P4)")
+    func fehlerTextValidationFailedAllgemein() {
+        #expect(PlanTausch.fehlerText(APIError.map(code: "validation_failed", message: "Die Plan-ID ist ungueltig."))
                 == "Diese Übung passt gerade nicht in deinen Plan. Dein Plan bleibt, wie er ist.")
     }
 

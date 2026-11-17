@@ -251,10 +251,15 @@ struct APIClientTests {
         #expect(APIError.profilUnvollstaendig(message: "x", fehlt: []).istDauerhaft)
     }
 
-    @Test("map: uebung_ohne_planmerkmale und uebung_gemieden werden .validation mit Server-Text (P4)")
+    @Test("map: uebung_ohne_planmerkmale und uebung_gemieden werden .planUebungGesperrt mit Server-Text (P4)")
     func mapPlanUebungCodes() {
-        #expect(APIError.map(code: "uebung_ohne_planmerkmale", message: "a") == .validation(message: "a"))
-        #expect(APIError.map(code: "uebung_gemieden", message: "b") == .validation(message: "b"))
+        let a = APIError.map(code: "uebung_ohne_planmerkmale", message: "a")
+        let b = APIError.map(code: "uebung_gemieden", message: "b")
+        #expect(a == .planUebungGesperrt(message: "a"))
+        #expect(b == .planUebungGesperrt(message: "b"))
+        #expect(a.istDauerhaft)
+        #expect(b.servertext == "b")
+        #expect(APIError.map(code: "validation_failed", message: "c") == .validation(message: "c"))
     }
 
     @Test("unbekannter Code bleibt .server")

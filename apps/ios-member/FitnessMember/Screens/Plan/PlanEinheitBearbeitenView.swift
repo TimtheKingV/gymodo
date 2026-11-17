@@ -33,6 +33,7 @@ struct PlanEinheitBearbeitenView: View {
 
     /// Hoechstens so viele Positionen je Einheit (wie der Server).
     static let hoechstePositionen = 20
+    private static let kopfId = "kopf"
 
     private struct Ziel: Identifiable {
         let id: UUID
@@ -97,7 +98,8 @@ struct PlanEinheitBearbeitenView: View {
                                     .foregroundStyle(DesignSystem.Color.accent)
                             }
                         }
-                        .disabled(schreibt)
+                        // Nach einem 409 kann die Einheit weg sein: dann gibt es nichts zu speichern.
+                        .disabled(schreibt || einheit == nil)
                         .testnotizElement("einheit.bearbeiten.fertig", typ: "Button")
                     }
                 }
@@ -130,35 +132,44 @@ struct PlanEinheitBearbeitenView: View {
     @ViewBuilder
     private var inhalt: some View {
         if let plan, einheit != nil {
-            List {
-                kopf(plan: plan)
-                    .listRowInsets(EdgeInsets(top: DesignSystem.Spacing.s12, leading: 20, bottom: 10, trailing: 20))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                ForEach(entwurf.positionen) { position in
-                    karte(position)
-                        .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+            ScrollViewReader { proxy in
+                List {
+                    kopf(plan: plan)
+                        .id(Self.kopfId)
+                        .listRowInsets(EdgeInsets(top: DesignSystem.Spacing.s12, leading: 20, bottom: 10, trailing: 20))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
-                        .moveDisabled(schreibt)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            if entwurf.darfEntfernen {
-                                Button("Entfernen", role: .destructive) {
-                                    withAnimation { _ = entwurf.entfernen(id: position.id) }
+                    ForEach(entwurf.positionen) { position in
+                        karte(position)
+                            .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .moveDisabled(schreibt)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                if entwurf.darfEntfernen {
+                                    Button("Entfernen", role: .destructive) {
+                                        withAnimation { _ = entwurf.entfernen(id: position.id) }
+                                    }
+                                    .disabled(schreibt)
                                 }
-                                .disabled(schreibt)
                             }
-                        }
+                    }
+                    .onMove { von, nach in entwurf.verschieben(von: von, nach: nach) }
+                    fuss
+                        .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: DesignSystem.Spacing.s24, trailing: 20))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
-                .onMove { von, nach in entwurf.verschieben(von: von, nach: nach) }
-                fuss
-                    .listRowInsets(EdgeInsets(top: 5, leading: 20, bottom: DesignSystem.Spacing.s24, trailing: 20))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .disabled(schreibt)
+                // Der Fehlerbanner steht im Kopf: nach "Fertig" von weiter unten dorthin
+                // scrollen, sonst sieht ein Fehlschlag aus wie nichts (P4, Testnotiz 10.11. #3).
+                .onChange(of: fehler) { _, neu in
+                    guard neu != nil else { return }
+                    withAnimation { proxy.scrollTo(Self.kopfId, anchor: .top) }
+                }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .disabled(schreibt)
         } else {
             Text("Diese Einheit gibt es in deinem Plan nicht mehr.")
                 .font(.system(size: 15))
@@ -207,11 +218,11 @@ struct PlanEinheitBearbeitenView: View {
         let modell = kartenModell(position)
         return Uebungskarte(
             modell: modell, foto: modell.vorschaubildModell.flatMap { bilder[$0] },
-            beiTippen: { if !schreibt { anpassen = Ziel(id: position.id) } }
+            beiTippen: { if !schreibt { anpassen = Ziel(id: position.id) } },
+            testnotizKennung: "einheit.bearbeiten.karte"
         ) {
             griff(position: position, name: modell.name)
         }
-        .testnotizElement("einheit.bearbeiten.karte", typ: "Button")
         .task(id: modell.vorschaubildModell.flatMap { fotos[$0] }) {
             await fotoLaden(modell: modell.vorschaubildModell)
         }
@@ -397,6 +408,8 @@ struct PlanEinheitBearbeitenView: View {
         }
         schreibt = true
         defer { schreibt = false }
+        // Erst leeren: derselbe Fehler noch einmal soll wieder nach oben scrollen.
+        fehler = nil
         do throws(APIError) {
             _ = try await apiClient.ersetzePlanEinheit(
                 planId: planId, einheitKey: einheitKey, positionen: entwurf.rumpf)
