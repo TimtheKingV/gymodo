@@ -314,4 +314,25 @@ Aufbau wie Tafel 3:
 
 ## Geprüft
 
-(nach der Umsetzung ausfüllen)
+Stand 17.11.2026, Branch `claude/p4-einheit-bearbeiten`.
+
+**Gelaufen**
+- `pnpm turbo run test typecheck`: 5 von 5 Aufgaben grün (Web: 49 Dateien, 311 Tests). Ein `lint`-Skript gibt es im Repo nicht (turbo: „Could not find task `lint`“), daher nicht gelaufen. Root-`tsc --noEmit`: grün.
+- Integrationstests gegen den lokalen Supabase-Stack (Projekt `m0-fundament`, ohne `db reset`): `api-plans` 36/36, `plan-schreibwege` 25/25, `domain-trainingsplan` 29/29 grün; `plan-einheit-ersetzen` 10 von 11 grün. Fehlschlag: „Cardio-Position behaelt reserveVon/reserveBis“ (Zeile 241). Ursache im Test: der erste `ersetze`-Aufruf legt eine neue aktive Planversion an und setzt die alte auf `ersetzt`; der zweite Aufruf mit der alten `plan.id` liefert deshalb `plan_nicht_annehmbar` statt `plan_ungueltig`. Der Test muss die `id` des neuen Plans verwenden. Auf diesem Branch verursacht, noch nicht behoben.
+- Lokal: 0073 war als Funktion schon vorhanden (Rumpf identisch, vermutlich von Hand eingespielt), aber nicht im Migrationsverlauf; per `migration repair --status applied 0073 --local` nachgetragen. 0074 lief fehlerfrei durch. Der Kong-Container musste neu erzeugt werden (`supabase stop`/`start`, Daten blieben erhalten).
+- iOS-Gesamtsuite (`xcodebuild test`, Simulator AE2ECAA2): 2055 Tests in 173 Suites, `TEST SUCCEEDED`.
+
+**Nicht gelaufen**
+- Simulator-Durchgang (Task 10 Schritt 2): braucht eine Anmeldung, daher ausgelassen. Keine Screenshots für den PR.
+- Prod: nichts angewendet. Status-Zeile P4 in `2026-11-10-testnotizen-pakete.md` noch nicht aktualisiert.
+
+**Tim prüft auf dem Gerät**
+- Ziehen zum Umsortieren gegenüber Tippen auf die Karten (Tipp öffnet das Blatt, Ziehen verschiebt nur).
+- Nach links wischen zum Entfernen; die letzte Übung bleibt.
+- Werte im Anpassen-Blatt (Chips grün bei Änderung, unberührte Werte unverändert).
+- Tauschen mit Vorschlag und per freier Suche.
+- Übung hinzufügen.
+- Fertig (Plan zeigt alles) und Abbrechen (verwirft alles, Rückfrage bei Änderungen).
+
+**Reihenfolge beim Ausrollen**
+1. PR #102 und Migration 0073 zuerst, 2. dann 0074 (nur mit Tims ausdrücklicher Freigabe auf Prod), 3. API deployen, 4. erst danach die App.
