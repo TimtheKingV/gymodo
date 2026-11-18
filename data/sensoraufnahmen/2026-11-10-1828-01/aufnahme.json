@@ -1,0 +1,162 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : "Bei beiden Handelsketten an der Handelstage wir müssen hier wohl Anfang und ende rausfiltern. Satz 1 links satz2 rechts",
+  "befestigungsart" : "kurzhantel",
+  "befestigungsartQuelle" : "vorschlag",
+  "endedAt" : "2026-11-10T18:29:41+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "7ef892a2-0e86-424b-b357-ce4186547437",
+    "exerciseId" : "d4474851-56c3-4106-8642-5aea86fce89d",
+    "exerciseName" : "Kurzhantel-Bankdrücken",
+    "machineId" : null,
+    "machineName" : "Kurzhantel",
+    "sessionId" : "644F08F2-D1A0-4AAD-B2A0-F191A4665688",
+    "setId" : "7158F581-2A52-46A6-8BD5-E0BEC4E55DD4",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : 16,
+    "weightKg" : 16
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-11-10T18:28:54+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 267.17,
+      "median" : 0,
+      "p95" : 60.85
+    },
+    "luecken" : 0,
+    "pakete" : 2318,
+    "rateIstHz" : 49.7,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : {
+    "algo" : "kurzhantel/takt2",
+    "ereignisse" : {
+      "algo" : "kurzhantel/takt2",
+      "befestigungsart" : "kurzhantel",
+      "unsicher" : null,
+      "wiederholungen" : [
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 12,
+          "ende" : 13.7,
+          "sicherheit" : 0.55,
+          "umkehr" : 12.85
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 13.7,
+          "ende" : 15.4,
+          "sicherheit" : 0.55,
+          "umkehr" : 14.55
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 15.4,
+          "ende" : 17.09,
+          "sicherheit" : 0.55,
+          "umkehr" : 16.24
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 17.09,
+          "ende" : 18.79,
+          "sicherheit" : 0.55,
+          "umkehr" : 17.94
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 18.79,
+          "ende" : 20.49,
+          "sicherheit" : 0.55,
+          "umkehr" : 19.64
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 20.49,
+          "ende" : 22.19,
+          "sicherheit" : 0.55,
+          "umkehr" : 21.34
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 22.19,
+          "ende" : 23.89,
+          "sicherheit" : 0.55,
+          "umkehr" : 23.04
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 23.89,
+          "ende" : 25.58,
+          "sicherheit" : 0.55,
+          "umkehr" : 24.73
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 25.58,
+          "ende" : 27.28,
+          "sicherheit" : 0.55,
+          "umkehr" : 26.43
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 27.28,
+          "ende" : 28.98,
+          "sicherheit" : 0.55,
+          "umkehr" : 28.13
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 28.98,
+          "ende" : 30.68,
+          "sicherheit" : 0.55,
+          "umkehr" : 29.83
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 30.68,
+          "ende" : 32.38,
+          "sicherheit" : 0.55,
+          "umkehr" : 31.53
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 32.38,
+          "ende" : 34.07,
+          "sicherheit" : 0.55,
+          "umkehr" : 33.23
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 34.07,
+          "ende" : 35.77,
+          "sicherheit" : 0.55,
+          "umkehr" : 34.92
+        },
+        {
+          "ausschlag" : 0.2,
+          "beginn" : 35.77,
+          "ende" : 37.47,
+          "sicherheit" : 0.55,
+          "umkehr" : 36.62
+        }
+      ]
+    },
+    "gezaehlt" : 15,
+    "herkunft" : "korrigiert"
+  }
+}

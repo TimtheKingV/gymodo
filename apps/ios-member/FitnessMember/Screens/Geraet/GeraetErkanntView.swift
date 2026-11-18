@@ -139,19 +139,15 @@ struct GeraetErkanntView: View {
     /// das Geraet danach einstellt. Ohne Historie das Ziel.
     private func untertitel(_ uebung: GeraetUebung) -> (text: String, hatHistorie: Bool) {
         guard let belastungText = modell.letzterSatzText(fuer: uebung.id) else {
-            return ("Noch nie · Ziel \(Zahlformat.korridorMitEinheit(uebung.targetMin, uebung.targetMax, uebung.volumeKind))", false)
+            return (UebungsHistorie.nochNie(uebung), false)
         }
         return ([altersangabe(fuer: uebung.id), belastungText].compactMap { $0 }.joined(separator: " · "), true)
     }
 
-    /// "heute" statt "vor 0 Tagen" -- Letzteres liest sich wie ein
-    /// Rechenfehler. Ohne Historie oder mit einem Datum, das sich nicht
-    /// parsen laesst, faellt die Alterangabe ganz weg statt eine falsche
-    /// Zahl zu zeigen.
+    /// Ohne Historie oder mit einem Datum, das sich nicht parsen laesst,
+    /// faellt die Alterangabe ganz weg statt eine falsche Zahl zu zeigen.
     private func altersangabe(fuer uebungId: String) -> String? {
-        guard let tage = modell.letzteNutzungInTagen(fuer: uebungId) else { return nil }
-        if tage <= 0 { return "heute" }
-        return tage == 1 ? "vor 1 Tag" : "vor \(tage) Tagen"
+        modell.letzteNutzungInTagen(fuer: uebungId).map(UebungsHistorie.alter(tage:))
     }
 
     private var hinweis: some View {

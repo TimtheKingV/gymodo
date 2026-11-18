@@ -146,7 +146,7 @@ describe("Kraft pro Woche im Plan (1.4.0)", () => {
     expect(plan.struktur).toBe(erwartet.struktur);
     expect(plan.einheiten.map((e) => e.key)).toEqual(erwartet.einheiten.map((e) => e.key));
     expect(plan.wochenraster).toEqual([]);
-    expect(plan.regelVersion).toBe("1.4.0");
+    expect(plan.regelVersion).toBe("1.5.0");
   });
 
   it("kraft_pro_woche 1 bei weekly_days 3: gk_eine mit Einheit A (Profil wird durchgereicht)", async () => {

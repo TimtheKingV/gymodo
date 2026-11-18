@@ -253,7 +253,8 @@ struct TrainingRootView: View {
                 ersatzNachSchliessen = nil
                 ersatzAnwenden(wahl.station, uebungId: wahl.uebungId)
             }) { wahl in
-                ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
+                ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                       bootstrap: katalog.bootstrap) { uebung in
                     ersatzNachSchliessen = (wahl.station, uebung.exerciseId)
                     ersatzUebungswahl = nil
                 }
@@ -906,7 +907,7 @@ struct TrainingRootView: View {
             }
         case .geraet(let station, let exerciseId, let token, let start, let zirkel):
             if let modell = modell(station: station, exerciseId: exerciseId, token: token,
-                                   startwerte: start, zirkel: zirkel != nil) {
+                                   startwerte: start, zirkel: zirkel != nil, zirkelSlot: zirkel) {
                 GeraetScreen(modell: modell, beiZurueckZumTraining: { pfad.removeAll() },
                              beiTrainingBeenden: beenden,
                              // Ein Zirkel-Geraet erweitert ueber die Pause des
@@ -1025,7 +1026,8 @@ struct TrainingRootView: View {
     /// ohne Countdown (der Mitschnitt startet dann mit dem Erscheinen des
     /// Screens, siehe GeraetModel.init).
     private func modell(station schluessel: String, exerciseId: String?, token: String?,
-                        startwerte: Startwerte? = nil, zirkel: Bool = false) -> GeraetModel? {
+                        startwerte: Startwerte? = nil, zirkel: Bool = false,
+                        zirkelSlot: Int? = nil) -> GeraetModel? {
         if zirkel, vorbereiteterSlot == zirkelAblauf.zirkel?.schritt,
            let vorbereitetesModell, vorbereitetesModell.station.schluessel == schluessel,
            vorbereitetesModell.uebungId == exerciseId {
@@ -1064,6 +1066,11 @@ struct TrainingRootView: View {
         )
         if zirkel {
             modell.beiZirkelSatzGesichert = { zirkelSatzGesichert() }
+        }
+        // Der Slot der Route: nur solange er dran ist, darf das Modell Sensor
+        // und Zaehler nehmen (GeraetModel.zirkelSlotAktiv).
+        if let zirkelSlot {
+            modell.zirkelSlotAktiv = { [zirkelAblauf] in zirkelAblauf.zirkel?.schritt == zirkelSlot }
         }
         return modell
     }
@@ -1438,7 +1445,8 @@ struct TrainingRootView: View {
                     // Die Wahl reist im Pfad: die Closure hier haelt den State
                     // vom Aufbau des Sheets und sah zirkelUebungswahl noch leer.
                     ZirkelUebungswahlSheet(wahl: wahl, eingebettet: true,
-                                           bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
+                                           bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                           bootstrap: katalog.bootstrap) { uebung in
                         beiWahl(wahl.station, uebung.exerciseId)
                     }
                     .environment(videoVorrat)
@@ -1459,7 +1467,8 @@ struct TrainingRootView: View {
         // Zurueck. Die Wahl geht ueber denselben beiWahl-Weg zurueck, jetzt
         // mit Uebung -- ZirkelAuswahl.angebot fragt dann nicht noch einmal.
         .sheet(item: inStapel ? Binding<ZirkelUebungswahl?>.constant(nil) : $zirkelUebungswahl) { wahl in
-            ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? []) { uebung in
+            ZirkelUebungswahlSheet(wahl: wahl, bloecke: sessions.aktiveSession()?.bloecke ?? [],
+                                   bootstrap: katalog.bootstrap) { uebung in
                 zirkelUebungswahl = nil
                 beiWahl(wahl.station, uebung.exerciseId)
             }
@@ -1686,7 +1695,7 @@ struct TrainingRootView: View {
         guard satzZaehler.automatikAktiv, let zirkel = zirkelAblauf.zirkel,
               let naechste = zirkel.naechste,
               let neu = modell(station: naechste.station, exerciseId: naechste.exerciseId,
-                               token: naechste.token, zirkel: true),
+                               token: naechste.token, zirkel: true, zirkelSlot: zirkel.schritt),
               neu.volumeKind == .reps, !neu.istCardio else { return }
         let werte = zirkelVormerkung.entnehmen(naechste, runde: zirkel.runde)
         // Fehlende Vorbereitung und Historie brauchen weiterhin den Drawer.
@@ -1989,6 +1998,12 @@ struct TrainingRootView: View {
     /// den Zirkel auf nil setzt. Die Vormerkung leert erst "Weiter" auf der
     /// Uebersicht (zirkelUebersichtWeiter).
     private func zirkelBeenden() {
+        // Wer Sensor und Zaehler gerade haelt, gibt sie hier ab -- nicht nur
+        // das vorbereitete Modell. Sonst lief am 10.11. eine Aufnahme 22
+        // Minuten weiter, weil ihr Besitzer keinen Screen mehr hatte.
+        #if DEBUG
+        satzZaehler.aktivesModell?.screenVerlassen()
+        #endif
         vorbereitetesModell?.screenVerlassen()
         vorbereitetesModell = nil
         vorbereiteterSlot = nil

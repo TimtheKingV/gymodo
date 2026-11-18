@@ -38,7 +38,7 @@ enum TaktBericht {
                 .keys.sorted()
                 .filter { fm.fileExists(atPath: Pfade.aufnahmen.appendingPathComponent($0).appendingPathComponent("messwerte.csv").path) }
             let frueh = namen.filter { art == .kurzhantel && $0.hasPrefix("2026-10-16-") }
-            let gegenprobe = namen.filter { $0.hasPrefix("2026-10-26-") || $0.hasPrefix("2026-11-03-") }
+            let gegenprobe = namen.filter { $0.hasPrefix("2026-10-26-") || $0.hasPrefix("2026-11-03-") || $0.hasPrefix("2026-11-10-") }
             let rest = namen.filter { !frueh.contains($0) && !gegenprobe.contains($0) }
             let gruppen = aufteilen(rest)
             let alle = frueh.map { ($0, Gruppe.frueherAbgestimmt) } + zip(rest, gruppen).map { ($0, $1) }
@@ -88,7 +88,7 @@ enum TaktBericht {
             return text
         }
         var text = "# Takt-Bericht (Satztakt, ganzer Satz)\n\nZiel: höchstens ±1 neben der Wahrheit. Erzeugt von `TaktBerichtTests.berichtSchreiben`.\n\n"
-        text += "**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und fünf Trainingstagen (14., 16., 18. und 26.10., 3.11.); die Aussage gilt nur dafür. "
+        text += "**Grenzen:** Alle Sätze stammen von einer Person, ihren Geräten und sechs Trainingstagen (14., 16., 18. und 26.10., 3. und 10.11.); die Aussage gilt nur dafür. "
         text += "Beinpresse, Waden und Kniebeuge haben 2 bis 4 Sätze, die Blindprüfung ist dort nur ein Hinweis. "
         text += "Aufteilung: je Art jeder zweite Satz (nach Ordnername) zum Abstimmen, der Rest blind. "
         text += "Die Blindsätze wurden erst nach dem Einfrieren der Parameter gelesen; eine Ausnahme: Der erste Bericht vor jedem Abstimmen zeigte schon die Baseline der Blindsätze (Stapel 56 % bei ±1).\n\n"
@@ -110,15 +110,17 @@ enum TaktBericht {
             }
             text += "\n"
         }
-        let frisch = zeilen.filter { $0.gruppe == .gegenprobe && $0.ordner.hasPrefix("2026-11-03-") }
-        if !frisch.isEmpty {
-            text += tabelle("Gegenprobe 3.11. – aktuell neu berechnet", frisch)
-            text += "Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintragen eingefroren. Wahrheit sind die in der App gespeicherten Werte (`gemessen` = Live-Zahl bestätigt, `korrigiert` = geändert); eine ausdrückliche Zählbestätigung wie am 26.10. gibt es nicht.\n\n"
-            text += "| Ordner | Art | wahr (gespeichert) | App live | Replay aktuell | unsicher |\n|---|---|---|---|---|---|\n"
-            for z in frisch {
-                text += "| \(z.ordner) | \(z.art.rawValue) | \(z.wahr) | \(z.gespeichert.map(String.init) ?? "–") | \(z.gezaehlt.map(String.init) ?? "–") | \(z.unsicher?.rawValue ?? "–") |\n"
+        for (praefix, tag) in [("2026-11-03-", "3.11."), ("2026-11-10-", "10.11.")] {
+            let frisch = zeilen.filter { $0.gruppe == .gegenprobe && $0.ordner.hasPrefix(praefix) }
+            if !frisch.isEmpty {
+                text += tabelle("Gegenprobe \(tag) – aktuell neu berechnet", frisch)
+                text += "Frische Sätze, nicht zum Abstimmen verwendet; die Profile waren vor dem Eintragen eingefroren. Wahrheit sind die in der App gespeicherten Werte (`gemessen` = Live-Zahl bestätigt, `korrigiert` = geändert); eine ausdrückliche Zählbestätigung wie am 26.10. gibt es nicht.\n\n"
+                text += "| Ordner | Art | wahr (gespeichert) | App live | Replay aktuell | unsicher |\n|---|---|---|---|---|---|\n"
+                for z in frisch {
+                    text += "| \(z.ordner) | \(z.art.rawValue) | \(z.wahr) | \(z.gespeichert.map(String.init) ?? "–") | \(z.gezaehlt.map(String.init) ?? "–") | \(z.unsicher?.rawValue ?? "–") |\n"
+                }
+                text += "\n"
             }
-            text += "\n"
         }
         text += "### Sätze außerhalb ±1\n\n| Ordner | Art | Gruppe | wahr | gezählt |\n|---|---|---|---|---|\n"
         for z in zeilen where !(z.gezaehlt.map { abs($0 - z.wahr) <= 1 } ?? false) {

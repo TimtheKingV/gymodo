@@ -86,6 +86,16 @@ const k = (
 });
 
 describe("alternativenJeBaustein", () => {
+  it("bietet auch Uebungen an, die der Generator nicht vorschlaegt", () => {
+    const a = alternativenJeBaustein([{ ...k("1", "beine_knie"), vorschlag: false }, k("2", "beine_knie")], {});
+    expect(a).toEqual({
+      beine_knie: [
+        { exerciseId: "1", modelId: "m-1" },
+        { exerciseId: "2", modelId: "m-2" },
+      ],
+    });
+  });
+
   it("Alternativen tragen modelId und haben gefaellt_nicht am Ende", () => {
     const a = alternativenJeBaustein(
       [

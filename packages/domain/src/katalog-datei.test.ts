@@ -270,7 +270,7 @@ describe("pruefeKatalog plan", () => {
     (roh.exercises[0] as Record<string, unknown>).plan = plan;
     const pruefung = pruefeKatalog(roh);
     expect(pruefung.ok).toBe(true);
-    if (pruefung.ok) expect(pruefung.wert.exercises[0]?.plan).toEqual(plan);
+    if (pruefung.ok) expect(pruefung.wert.exercises[0]?.plan).toEqual({ ...plan, vorschlag: true });
   });
 
   it("setzt bereiche auf leer, wenn sie fehlen", () => {
@@ -284,6 +284,19 @@ describe("pruefeKatalog plan", () => {
     const fehler = fehlerVon((roh) => ((roh.exercises[0] as Record<string, unknown>).plan = { ...plan, baustein: "waden" }));
     expect(fehler).toHaveLength(1);
     expect(fehler[0]).toContain("plan.baustein");
+  });
+
+  it("plan.vorschlag fehlt: true; false bleibt false; kein Boolean: Fehler", () => {
+    const mit = (wert: unknown) => {
+      const roh = beispielKatalog().roh;
+      (roh.exercises[0] as Record<string, unknown>).plan = wert === undefined ? plan : { ...plan, vorschlag: wert };
+      return pruefeKatalog(roh);
+    };
+    const ohne = mit(undefined);
+    expect(ohne.ok && ohne.wert.exercises[0]?.plan?.vorschlag).toBe(true);
+    const falsch = mit(false);
+    expect(falsch.ok && falsch.wert.exercises[0]?.plan?.vorschlag).toBe(false);
+    expect(mit("nein").ok).toBe(false);
   });
 
   it("lehnt plan ohne typ ab", () => {

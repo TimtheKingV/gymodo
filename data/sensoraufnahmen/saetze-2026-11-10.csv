@@ -1,0 +1,13 @@
+set_id,zeit,uebung,set_index,kg,reps_wahr,quelle,reps_app_live
+4A6D1880-B17E-402A-896C-E99D81538486,18:21:54,Kurzhantel-Bizepscurl,1,10,12,gemessen,12
+EB2E2579-0D96-46F6-8D2A-741FB631564B,18:22:45,Kurzhantel-Schulterdruecken,1,10,10,korrigiert,9
+32C9B3E4-80E3-4AA1-96D3-3754B074E3BD,18:23:22,Trizepsstrecken ueber Kopf,1,10,5,korrigiert,6
+67EFDAA8-FACC-43F4-85FD-A7B6A05BC955,18:24:43,Kurzhantel-Bizepscurl,2,10,10,gemessen,10
+54FD8366-CDB2-4A05-B990-B14E8856CBB7,18:25:20,Kurzhantel-Schulterdruecken,2,10,9,gemessen,9
+28DCA41A-B2BD-4A89-9883-E28D45C1EE5D,18:25:46,Trizepsstrecken ueber Kopf,2,10,4,korrigiert,3
+8E5C5707-FC3A-4EDE-A7E4-CC19924003B6,18:26:31,Kurzhantel-Bizepscurl,3,10,10,korrigiert,8
+03904D5D-BE29-4923-ADCD-F4233007DF52,18:27:07,Kurzhantel-Schulterdruecken,3,10,10,korrigiert,7
+AB5C0C0D-7432-4540-B731-288017C68C4C,18:27:34,Trizepsstrecken ueber Kopf,3,10,4,korrigiert,3
+7158F581-2A52-46A6-8BD5-E0BEC4E55DD4,18:29:41,Kurzhantel-Bankdruecken,1,16,16,korrigiert,15
+74C67CF3-24C3-4819-AA5C-97FFE4C703E0,18:30:50,Kurzhantelrudern einarmig,1,16,16,gemessen,16
+5EACD4EE-3715-4AB1-818B-01134F67266A,18:32:18,Kurzhantel-Bankdruecken,2,16,16,gemessen,16

@@ -1,0 +1,46 @@
+{
+  "abschluss" : "gesichert",
+  "befestigung" : null,
+  "befestigungsart" : null,
+  "befestigungsartQuelle" : null,
+  "endedAt" : "2026-11-10T18:55:14+01:00",
+  "format" : "gymodo.sensoraufnahme/1",
+  "geraet" : {
+    "appBuild" : "",
+    "model" : "iPhone14,4",
+    "os" : "iOS 26.6.2"
+  },
+  "kontext" : {
+    "equipmentModelId" : "3f7ec1c2-3c31-4e98-9806-1265252cb210",
+    "exerciseId" : "2b9f2c86-128b-4fb1-8a16-cb13c817069a",
+    "exerciseName" : "Ruderergometer",
+    "machineId" : null,
+    "machineName" : "Ruderergometer mit Rollsitz",
+    "sessionId" : "644F08F2-D1A0-4AAD-B2A0-F191A4665688",
+    "setId" : "D7C82E3A-7C1A-4DF5-9E6B-F9EDFB84147E",
+    "setIndex" : 1
+  },
+  "label" : {
+    "problemFlag" : false,
+    "reps" : null,
+    "weightKg" : null
+  },
+  "sensor" : {
+    "akkuProzent" : 100,
+    "name" : "WT901BLE67",
+    "rateSollHz" : 50
+  },
+  "startedAt" : "2026-11-10T18:54:48+01:00",
+  "statistik" : {
+    "abstandMs" : {
+      "max" : 183.47,
+      "median" : 0,
+      "p95" : 61.59
+    },
+    "luecken" : 0,
+    "pakete" : 1296,
+    "rateIstHz" : 49.8,
+    "verworfeneBytes" : 0
+  },
+  "zaehler" : null
+}
