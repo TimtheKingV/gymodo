@@ -731,6 +731,25 @@ struct GeraetModelTests {
         #expect(erfasser.geschriebene.allSatisfy { $0.body.plan == nil })
     }
 
+    /// E8, Review Focus 5: das freie Training aus der Auswahl baut das Modell
+    /// ohne Ablauf. Ein Satz an einer Uebung, die im Plan steht, traegt dann
+    /// keine Momentaufnahme, und das Modell kennt keine Planstelle.
+    @Test func ohneAblaufKeineMomentaufnahme() async throws {
+        let erfasser = Erfassungswarteschlange()
+        let plan = Self.planMitSechs()
+        let bootstrap = BootstrapResponse(member: .init(displayName: nil, plans: [plan]), studios: [],
+                                          machines: [GeraetTestdaten.maschine], calibrations: [], lastSets: [])
+        let sut = modell(maschine: GeraetTestdaten.maschine, bootstrap: bootstrap,
+                         enqueue: { erfasser.geschriebene.append($0) }, ablauf: nil)
+
+        #expect(sut.planStelle == nil)
+        await sut.satzSichern(problemFlag: false, problemReason: nil)
+
+        let write = try #require(erfasser.geschriebene.first)
+        #expect(write.body.plan == nil)
+        #expect(sut.planStelle == nil)
+    }
+
     /// Der Plan gehoert dem Mitglied, nicht einem Ort: auch im Freien Training
     /// traegt der Satz die Momentaufnahme.
     @Test func imFreienTrainingTraegtDerSatzDenPlan() async throws {

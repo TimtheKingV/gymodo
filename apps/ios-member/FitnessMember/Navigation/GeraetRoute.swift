@@ -27,6 +27,9 @@ enum GeraetRoute: Hashable {
     /// "Übung hinzufügen" im Plan-Modus: dieselbe Auswahl ohne Kopf; die Wahl
     /// startet die Uebung, sie erscheint danach unter "Zusätzlich gemacht".
     case planHinzufuegen
+    /// Die Einheit aus der Auswahl ansehen (E2): `PlanEinheitView`, deren
+    /// Knopf in den Plan-Einstieg fuehrt.
+    case planEinheit(key: String)
     /// Die Satzseite. `start` kommt aus dem Drawer vor der Uebung (Testnotiz
     /// 11.10., #10) und laesst sie mit dem Countdown beginnen; ohne (Zirkel
     /// ueber die Blockliste) stehen gleich die Raeder.

@@ -22,8 +22,11 @@ struct HomeRootView: View {
     /// Wechselt auf den Training-Tab -- derselbe Ort wie ein Tipp auf
     /// "Training" unten (Testnotiz 05.10., #8).
     var beiTrainingZeigen: () -> Void = {}
-    /// Wechselt auf den Plan-Tab (Spec 1.1): ein Tag der Streak-Woche auf
-    /// diesen Tag, "Nächste Einheit" auf die Einheit bzw. den Tag.
+    /// "Training starten" fuer die naechste Einheit: Training-Tab im Plan-Einstieg.
+    var beiPlanStarten: () -> Void = {}
+    /// Wechselt auf den Plan-Tab: "Im Plan" am gewaehlten Plantag auf diesen
+    /// Tag, "Nächste Einheit" als Kurs oder Cardio auf den Tag, ohne
+    /// Trainingstage auf die Woche. Eine Einheit bleibt im Home-Stack (E2).
     var beiPlanZeigen: (PlanSprung) -> Void = { _ in }
 
     @Environment(VerlaufStore.self) private var verlauf
@@ -59,6 +62,9 @@ struct HomeRootView: View {
     /// Die gewaehlte Muskelgruppe im Uebungsfortschritt; nil = Alle
     /// (Testnotiz 17.10., #2).
     @State private var fortschrittGruppe: MuskelHauptgruppe?
+    /// Der gewaehlte kuenftige Tag mit Planmarke ("yyyy-MM-dd", E1): an
+    /// der Stelle von "Nächste Einheit" stehen dann seine Termine.
+    @State private var planTagId: String?
     /// Muskelgruppen | Übungen oben im Uebungsfortschritt; gemerkt wie die
     /// Uebungsansicht am Geraet.
     @AppStorage(Einstellungen.fortschrittsansichtKey)
@@ -137,6 +143,7 @@ struct HomeRootView: View {
                             geschlecht: geschlecht,
                             beiKursAuswahl: { id in pfad.append(.kursDetail(sessionId: id)) },
                             geplant: HomeSerie.planMarken(woche.marken, kalender: planKalender),
+                            beiPlanAuswahl: { planTagId = $0 },
                             zielZeile: zielZeile?.text,
                             zielVorlesetext: zielZeile?.vorlesen,
                             // Die Hantel nur an Tagen mit Sitzung: Cardio-Handhaken
@@ -146,19 +153,20 @@ struct HomeRootView: View {
                                 zeitzone: zeitzone),
                             cardioOderKursTage: HomeSerie.cardioOderKursTage(woche.marken, kalender: planKalender),
                             laufenderTag: HomeSerie.laufenderTag(
-                                sessions.aktiveSession(jetzt: jetzt)?.startedAt, zeitzone: zeitzone),
-                            beiPlanTag: { id in
-                                if let tag = PlanKalenderKontext.tag(id: id, kalender: planKalender) {
-                                    beiPlanZeigen(.tag(tag))
-                                }
-                            })
+                                sessions.aktiveSession(jetzt: jetzt)?.startedAt, zeitzone: zeitzone))
                     }
 
                     // Spec 1.1: die EINE Karte "Nächste Einheit" (ersetzt
                     // "Heute dran" und die Woche). Schliesst Karte 1.5 aus
                     // (die gibt es nur ohne Plan).
+                    // E1: ein gewaehlter Plantag ersetzt sie durch seine
+                    // Termine -- Home bleibt Home.
                     if let plan {
-                        naechsteEinheit(plan: plan)
+                        if HomeSerie.zeigtNaechsteEinheit(planTagId: planTagId) {
+                            naechsteEinheit(plan: plan)
+                        } else if let planTagId {
+                            planTag(planTagId, plan: plan, woche: woche)
+                        }
                     }
 
                     // Entwurf 1.5: ueber den Zielen, weil sie der naechste
@@ -215,6 +223,14 @@ struct HomeRootView: View {
                 case .muskelgruppe(let gruppe):
                     MuskelgruppeDetailView(
                         gruppe: gruppe, auswertung: muskelAuswertung, namen: muskelNamen, geschlecht: geschlecht)
+                case .einheit(let key):
+                    PlanEinheitView(einheitKey: key, apiClient: apiClient, beiTrainingStarten: {
+                        pfad.removeAll()
+                        beiPlanStarten()
+                    }, beiZumTraining: {
+                        pfad.removeAll()
+                        beiTrainingZeigen()
+                    })
                 }
             }
             .sheet(isPresented: $eintragenOffen) {
@@ -380,10 +396,30 @@ private extension HomeRootView {
         let laufend = NaechsteEinheitKarte.laufend(heute, gebunden: planAblauf.gebundeneSessionId != nil)
         let key = laufend?.einheitKey ?? heute?.einheitKey ?? plan.naechsteEinheitKey
         if let key, let modell = einheitModell(key: key, plan: plan, laufend: laufend) {
+            // E2: die Karte oeffnet die Einheit im Home-Stack, der Knopf startet
+            // sie im Plan-Einstieg des Training-Tabs.
             NaechsteEinheitKarte(
                 modell: modell, laeuft: laufend != nil, geschlecht: geschlecht,
-                beiTippen: { beiPlanZeigen(.einheit(key: key)) },
-                beiStart: beiTrainingZeigen)
+                beiTippen: { pfad.append(.einheit(key: key)) },
+                beiStart: beiPlanStarten)
+        }
+    }
+
+    /// Die gebuchten Kurse des gewaehlten kuenftigen Tages (E1). Ein
+    /// unlesbarer Tag oder einer ohne Kurse laesst "Nächste Einheit" stehen,
+    /// statt die Stelle leer zu lassen.
+    @ViewBuilder
+    func planTag(_ id: String, plan: Trainingsplan, woche: PlanWochenStand) -> some View {
+        let kalender = planKalender
+        if let tag = PlanKalenderKontext.tag(id: id, kalender: kalender),
+           case let liste = HomePlanTagAbschnitt.kurse(am: tag, karten: woche.karten, kalender: kalender),
+           !liste.isEmpty {
+            HomePlanTagAbschnitt(
+                tag: tag, kurse: liste, kalender: kalender,
+                beiKurs: { pfad.append(.kursDetail(sessionId: $0)) },
+                beiPlanZeigen: beiPlanZeigen)
+        } else {
+            naechsteEinheit(plan: plan)
         }
     }
 

@@ -412,4 +412,26 @@ struct APIClientTests {
         #expect(neu.planId == "p2")
         #expect(pfade == ["POST /api/v1/me/plans/p1/accept", "POST /api/v1/me/plans/p1/swap"])
     }
+
+    @Test("ordnePlanEinheit sendet POST me/plans/P1/ordnen mit Schluesseln")
+    func ordnenSendetReihenfolge() async throws {
+        nonisolated(unsafe) var gesehen: (String?, String?, [String: Any])?
+        StubURLProtocol.handler = { request in
+            let data = request.httpBodyStream.map { s -> Data in
+                s.open(); defer { s.close() }
+                var d = Data(); var buf = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&buf, maxLength: 1024); if n <= 0 { break }; d.append(buf, count: n) }
+                return d
+            } ?? Data()
+            let json = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+            gesehen = (request.httpMethod, request.url?.path, json)
+            return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
+        }
+        let neu = try await stubbedClient().ordnePlanEinheit(planId: "P1", einheitKey: "A", positionKeys: ["1", "0"])
+        #expect(neu.planId == "p2")
+        #expect(gesehen?.0 == "POST")
+        #expect(gesehen?.1 == "/api/v1/me/plans/P1/ordnen")
+        #expect(gesehen?.2["einheitKey"] as? String == "A")
+        #expect(gesehen?.2["positionKeys"] as? [String] == ["1", "0"])
+    }
 }

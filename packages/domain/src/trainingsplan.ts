@@ -11,6 +11,7 @@ import type { Struktur } from "./trainingsplan-regeln.js";
 import { generierePlan, tauschVorgaben } from "./trainingsplan-generator.js";
 import { anfaengerphaseVorbei, ladeGezaehlteEinheiten } from "./trainingsplan-bootstrap.js";
 import { ladeKandidaten, ladeKatalogStudioId, ladeMerkliste } from "./trainingsplan-kandidaten.js";
+import { uebungMinuten } from "./trainingsplan-zeit.js";
 import { initialisierePlanGewichte, ohneAbbruch, uebernehmePlanGewichte } from "./plangewichte.js";
 import { zielAusTrainingGoal } from "./trainingsplan-regeln.js";
 import { getTrainingLimits, getTrainingProfile } from "./trainingsprofil.js";
@@ -311,6 +312,71 @@ export async function tauschePlanPosition(
   }
   // G9: unveraenderte Positionen behalten ihr Ziel, die getauschte bekommt einen Startwert.
   await ohneAbbruch("Ziele nach Tausch", async () => {
+    await uebernehmePlanGewichte(client, userId, planId, plan);
+    await initialisierePlanGewichte(client, userId, plan);
+  });
+  return plan;
+}
+
+export type PlanOrdnen = { einheitKey: string; positionKeys: string[] };
+
+/**
+ * Geschaetzte Minuten der Einheit nach dem Ordnen: alter Wert minus die Minuten der entfernten
+ * Positionen (Cardio: dauerMin, sonst uebungMinuten(typ, saetze)), nie unter 0. Reihenfolge aendert nichts.
+ */
+export function minutenNachOrdnen(einheit: PlanEinheit, positionKeys: string[]): number {
+  const bleibt = new Set(positionKeys);
+  const entfernt = einheit.positionen
+    .filter((p) => !bleibt.has(p.key))
+    .reduce((summe, p) => summe + (p.baustein === "cardio" ? (p.dauerMin ?? 0) : uebungMinuten(p.typ, p.saetze)), 0);
+  return Math.max(0, einheit.geschaetzteMinuten - entfernt);
+}
+
+/**
+ * Ordnet die Positionen einer Einheit neu und entfernt die, die in positionKeys fehlen (mindestens eine bleibt):
+ * order_training_plan_einheit legt sofort eine neue aktive Version an (0073). Fremd oder nicht aktiv ist ein
+ * Konflikt (plan_nicht_annehmbar), alles andere Ungueltige validation_failed.
+ */
+export async function ordnePlanEinheit(
+  client: SupabaseClient,
+  userId: string,
+  planId: string,
+  input: PlanOrdnen,
+): Promise<TrainingPlan> {
+  const { data: alt, error: e } = await client
+    .from("training_plans")
+    .select("einheiten")
+    .eq("id", planId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (e) throw new DomainError("internal", "Die Einheit konnte nicht gespeichert werden.");
+  if (!alt) throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
+  const einheit = (alt as { einheiten: PlanEinheit[] }).einheiten.find((x) => x.key === input.einheitKey);
+  if (!einheit) throw new DomainError("validation_failed", "Diese Einheit kann so nicht gespeichert werden.");
+  const { data, error } = await client
+    .rpc("order_training_plan_einheit", {
+      p_plan_id: planId,
+      p_einheit_key: input.einheitKey,
+      p_position_keys: input.positionKeys,
+      p_minuten: minutenNachOrdnen(einheit, input.positionKeys),
+    })
+    .single();
+  if (error?.code === "P0001" && error.message === "plan_nicht_annehmbar") {
+    throw new DomainError("conflict", "Dieser Plan kann nicht mehr geändert werden.");
+  }
+  if (error?.code === "P0001" && error.message === "plan_ungueltig") {
+    throw new DomainError("validation_failed", "Diese Einheit kann so nicht gespeichert werden.");
+  }
+  // Nicht ueber 42501 (auch verlorenes EXECUTE-Recht, ein Serverfehler); 23505: gleichzeitige Anfrage war schneller.
+  if (istUniqueVerstoss(error)) {
+    throw new DomainError("conflict", "Der Plan wurde gerade geändert. Bitte noch einmal versuchen.");
+  }
+  if (error || !data) throw new DomainError("internal", "Die Einheit konnte nicht gespeichert werden.");
+  const zeile = data as PlanZeile & { user_id: string };
+  if (zeile.user_id !== userId) throw new DomainError("internal", "Der Plan gehoert nicht zum Aufrufer.");
+  const plan = zuPlan(zeile);
+  // Unveraenderte Positionen behalten ihr Ziel (wie G9 beim Tausch).
+  await ohneAbbruch("Ziele nach Ordnen", async () => {
     await uebernehmePlanGewichte(client, userId, planId, plan);
     await initialisierePlanGewichte(client, userId, plan);
   });
