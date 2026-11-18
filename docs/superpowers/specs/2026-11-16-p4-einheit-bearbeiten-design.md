@@ -59,7 +59,7 @@ Neu in `packages/domain/src/trainingsplan.ts` (oder eigene Datei `plan-einheit-e
 - **geschaetzteMinuten:** vollständig neu gerechnet wie im Generator (Aufwärmen + Σ `uebungMinuten(typ, saetze)` + Cardio-Dauer). `minutenNachOrdnen` entfällt für diesen Weg.
 - Danach wie `ordnePlanEinheit`: `uebernehmePlanGewichte`, `initialisierePlanGewichte`.
 
-### Datenbank – Migration `0074_plan_einheit_ersetzen.sql`
+### Datenbank – Migration `0075_plan_einheit_ersetzen.sql`
 
 `replace_training_plan_einheit(p_plan_id uuid, p_einheit_key text, p_positionen jsonb, p_minuten numeric) returns training_plans`, `security definer`, Muster von 0073/0070:
 - auth, Besitz, Advisory-Lock `'training_plans:'||user||':'||studio`, `FOR UPDATE`, Status `aktiv` + Katalog-Studio, sonst `plan_nicht_annehmbar`.

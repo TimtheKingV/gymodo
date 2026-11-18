@@ -12,7 +12,7 @@ import {
   type PlanStudios,
 } from "./helpers/plan-studio.js";
 
-// P4: replace_training_plan_einheit (0074) ersetzt eine Einheit als Ganzes und legt eine
+// P4: replace_training_plan_einheit (0075) ersetzt eine Einheit als Ganzes und legt eine
 // neue aktive Version an. Alle Aufrufe mit dem Client des Mitglieds.
 const admin = serviceClient();
 let s: PlanStudios;

@@ -389,7 +389,7 @@ export type PlanEinheitErsetzen = { einheitKey: string; positionen: EinheitEinga
 
 /**
  * Speichert eine Einheit als Ganzes (Reihenfolge, Entfernen, Hinzufuegen, Tauschen, Werte) in einem
- * Schritt (P4): baueEinheit prueft und ergaenzt, replace_training_plan_einheit (0074) legt sofort
+ * Schritt (P4): baueEinheit prueft und ergaenzt, replace_training_plan_einheit (0075) legt sofort
  * eine neue aktive Version an. Fremd oder nicht aktiv ist ein Konflikt (plan_nicht_annehmbar).
  */
 export async function ersetzePlanEinheit(

@@ -4,7 +4,7 @@
 
 **Goal:** Eine Planeinheit als Ganzes bearbeiten – ordnen, entfernen, beliebige Übung hinzufügen oder tauschen, Sätze/Wdh/Pause (Cardio: Dauer) ändern – und mit „Fertig“ als eine neue Planversion speichern; Ansehen und Bearbeiten zeigen dieselbe Übungskarte.
 
-**Architecture:** Neue Reinfunktion `baueEinheit` in der Domain rechnet aus alter Einheit + Client-Eingabe + Übungsmerkmalen die neue Einheit (Werte, Rollen, Schlüssel, Minuten). `ersetzePlanEinheit` ruft damit die neue RPC `replace_training_plan_einheit` (Migration 0074), die prüft und eine Version schreibt; Route `PUT /api/v1/me/plans/{id}/einheiten/{einheitKey}`. Der Plan-Bootstrap liefert zusätzlich Vorgaben und Übungsmerkmale, damit die App Werte vorab zeigt und Unmarkiertes ausgraut. iOS: Entwurfsmodell `PlanEinheitEntwurf` statt `PlanEinheitBearbeitung`, Komponente `Uebungskarte`, Anpassen-Blatt, Plan-Übungsauswahl, umgebaute Bearbeiten- und Ansehen-Seite.
+**Architecture:** Neue Reinfunktion `baueEinheit` in der Domain rechnet aus alter Einheit + Client-Eingabe + Übungsmerkmalen die neue Einheit (Werte, Rollen, Schlüssel, Minuten). `ersetzePlanEinheit` ruft damit die neue RPC `replace_training_plan_einheit` (Migration 0075), die prüft und eine Version schreibt; Route `PUT /api/v1/me/plans/{id}/einheiten/{einheitKey}`. Der Plan-Bootstrap liefert zusätzlich Vorgaben und Übungsmerkmale, damit die App Werte vorab zeigt und Unmarkiertes ausgraut. iOS: Entwurfsmodell `PlanEinheitEntwurf` statt `PlanEinheitBearbeitung`, Komponente `Uebungskarte`, Anpassen-Blatt, Plan-Übungsauswahl, umgebaute Bearbeiten- und Ansehen-Seite.
 
 **Tech Stack:** TypeScript (packages/domain, vitest), Next.js Route Handler (apps/web), Supabase Postgres (plpgsql, tests/integration mit lokalem Supabase), SwiftUI iOS 17+ (Swift Testing, `xcodebuild test`).
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Branch `claude/p4-einheit-bearbeiten`, Basis `claude/training-flows` (PR #102). Merge erst nach #102.
-- Neue Migration heißt `0074_plan_einheit_ersetzen.sql`; 0073 (`order_training_plan_einheit`) und `swap_training_plan_position` bleiben unverändert.
+- Neue Migration heißt `0075_plan_einheit_ersetzen.sql`; 0073 (`order_training_plan_einheit`) und `swap_training_plan_position` bleiben unverändert.
 - Grenzen: saetze 1–10 (ganz), wdhVon 1–50, wdhBis wdhVon–50, pauseSek 0–600 (ganz), dauerMin 5–120; Cardio: saetze 1, wdhVon/wdhBis null, pauseSek 0. 1–20 Positionen je Einheit.
 - Reserve, Aufwärmsatz, baustein, typ, rolle, hauptmuskeln kommen nie vom Client.
 - Übungen ohne `plan_baustein`/`plan_typ` → 422 Code `uebung_ohne_planmerkmale`, Text „Diese Übung ist noch nicht für Trainingspläne freigegeben.“
@@ -83,10 +83,10 @@ Regeln (aus der Spec, hier verbindlich):
 - [ ] **Step 4:** Test → PASS; `npx vitest run` im Paket ganz grün.
 - [ ] **Step 5:** Commit `feat(domain): Einheit als Ganzes neu bauen (P4)`.
 
-### Task 2: Migration 0074 – `replace_training_plan_einheit`
+### Task 2: Migration 0075 – `replace_training_plan_einheit`
 
 **Files:**
-- Create: `supabase/migrations/0074_plan_einheit_ersetzen.sql`
+- Create: `supabase/migrations/0075_plan_einheit_ersetzen.sql`
 - Test: `tests/integration/plan-einheit-ersetzen.test.ts`
 
 **Interfaces:**
@@ -106,7 +106,7 @@ SQL-Ablauf (Muster 0073 Zeilen 8–110 und 0070 Zeilen 67–222):
 - [ ] **Step 2:** `supabase db reset && pnpm vitest run tests/integration/plan-einheit-ersetzen.test.ts` → FAIL (Funktion fehlt).
 - [ ] **Step 3:** Migration schreiben.
 - [ ] **Step 4:** Tests → PASS; `pnpm vitest run tests/integration/plan-schreibwege.test.ts tests/integration/api-plans.test.ts` weiter grün. Läuft lokales Supabase nicht: Migration mit `node scripts/smoke-migrations.mjs` prüfen und im Plan unter „Geprüft“ als nicht gesehen vermerken.
-- [ ] **Step 5:** Commit `feat(db): replace_training_plan_einheit (0074, P4)`.
+- [ ] **Step 5:** Commit `feat(db): replace_training_plan_einheit (0075, P4)`.
 
 ### Task 3: Domain `ersetzePlanEinheit` + API-Route
 
@@ -310,7 +310,7 @@ Aufbau wie Tafel 3:
 - [ ] **Step 1:** `pnpm -w turbo run test typecheck lint` (bzw. die Skripte aus `package.json`) grün; Integrationstests mit lokalem Supabase grün oder als nicht gelaufen vermerkt.
 - [ ] **Step 2:** Im Simulator (Testkonto aus den Seed-Dateien): Einheit ansehen (Karten, ganze Seite scrollt), Bearbeiten: ziehen, wischen, Werte ändern (Chips grün), tauschen mit Vorschlag und frei, hinzufügen, Fertig → Plan zeigt alles, Abbrechen verwirft alles. Screenshots in den PR.
 - [ ] **Step 3:** Abschnitt „Geprüft“ unten ausfüllen; Status-Zeile P4 in `/Users/timbuttner/Documents/gymtavo/fitness-app/docs/superpowers/plans/2026-11-10-testnotizen-pakete.md` aktualisieren.
-- [ ] **Step 4:** Commit; PR gegen `claude/training-flows` (bzw. `master`, falls #102 gemergt ist) erst nach Tims Freigabe; Migration 0074 auf Prod nur mit Tims ausdrücklicher Freigabe.
+- [ ] **Step 4:** Commit; PR gegen `claude/training-flows` (bzw. `master`, falls #102 gemergt ist) erst nach Tims Freigabe; Migration 0075 auf Prod nur mit Tims ausdrücklicher Freigabe.
 
 ## Geprüft
 
@@ -319,7 +319,7 @@ Stand 17.11.2026, Branch `claude/p4-einheit-bearbeiten`.
 **Gelaufen**
 - `pnpm turbo run test typecheck`: 5 von 5 Aufgaben grün (Web: 49 Dateien, 311 Tests). Ein `lint`-Skript gibt es im Repo nicht (turbo: „Could not find task `lint`“), daher nicht gelaufen. Root-`tsc --noEmit`: grün.
 - Integrationstests gegen den lokalen Supabase-Stack (Projekt `m0-fundament`, ohne `db reset`): `api-plans` 36/36, `plan-schreibwege` 25/25, `domain-trainingsplan` 29/29 grün; `plan-einheit-ersetzen` 10 von 11 grün. Fehlschlag: „Cardio-Position behaelt reserveVon/reserveBis“ (Zeile 241). Ursache im Test: der erste `ersetze`-Aufruf legt eine neue aktive Planversion an und setzt die alte auf `ersetzt`; der zweite Aufruf mit der alten `plan.id` liefert deshalb `plan_nicht_annehmbar` statt `plan_ungueltig`. Der Test muss die `id` des neuen Plans verwenden. Auf diesem Branch verursacht, noch nicht behoben.
-- Lokal: 0073 war als Funktion schon vorhanden (Rumpf identisch, vermutlich von Hand eingespielt), aber nicht im Migrationsverlauf; per `migration repair --status applied 0073 --local` nachgetragen. 0074 lief fehlerfrei durch. Der Kong-Container musste neu erzeugt werden (`supabase stop`/`start`, Daten blieben erhalten).
+- Lokal: 0073 war als Funktion schon vorhanden (Rumpf identisch, vermutlich von Hand eingespielt), aber nicht im Migrationsverlauf; per `migration repair --status applied 0073 --local` nachgetragen. 0074 (jetzt 0075) lief fehlerfrei durch. Der Kong-Container musste neu erzeugt werden (`supabase stop`/`start`, Daten blieben erhalten).
 - iOS-Gesamtsuite (`xcodebuild test`, Simulator AE2ECAA2): 2055 Tests in 173 Suites, `TEST SUCCEEDED`.
 
 **Nicht gelaufen**
@@ -335,4 +335,4 @@ Stand 17.11.2026, Branch `claude/p4-einheit-bearbeiten`.
 - Fertig (Plan zeigt alles) und Abbrechen (verwirft alles, Rückfrage bei Änderungen).
 
 **Reihenfolge beim Ausrollen**
-1. PR #102 und Migration 0073 zuerst, 2. dann 0074 (nur mit Tims ausdrücklicher Freigabe auf Prod), 3. API deployen, 4. erst danach die App.
+1. PR #102 und Migration 0073 zuerst, 2. dann 0075 (nur mit Tims ausdrücklicher Freigabe auf Prod), 3. API deployen, 4. erst danach die App.
