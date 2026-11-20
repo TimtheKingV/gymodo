@@ -251,6 +251,17 @@ struct APIClientTests {
         #expect(APIError.profilUnvollstaendig(message: "x", fehlt: []).istDauerhaft)
     }
 
+    @Test("map: uebung_ohne_planmerkmale und uebung_gemieden werden .planUebungGesperrt mit Server-Text (P4)")
+    func mapPlanUebungCodes() {
+        let a = APIError.map(code: "uebung_ohne_planmerkmale", message: "a")
+        let b = APIError.map(code: "uebung_gemieden", message: "b")
+        #expect(a == .planUebungGesperrt(message: "a"))
+        #expect(b == .planUebungGesperrt(message: "b"))
+        #expect(a.istDauerhaft)
+        #expect(b.servertext == "b")
+        #expect(APIError.map(code: "validation_failed", message: "c") == .validation(message: "c"))
+    }
+
     @Test("unbekannter Code bleibt .server")
     func mapUnbekannterCode() {
         #expect(APIError.map(code: "irgendwas", message: "m", detail: .object([:])) == .server(message: "m"))
@@ -413,8 +424,8 @@ struct APIClientTests {
         #expect(pfade == ["POST /api/v1/me/plans/p1/accept", "POST /api/v1/me/plans/p1/swap"])
     }
 
-    @Test("ordnePlanEinheit sendet POST me/plans/P1/ordnen mit Schluesseln")
-    func ordnenSendetReihenfolge() async throws {
+    @Test("ersetzePlanEinheit sendet PUT me/plans/P1/einheiten/A mit positionen")
+    func ersetzenSendetPositionen() async throws {
         nonisolated(unsafe) var gesehen: (String?, String?, [String: Any])?
         StubURLProtocol.handler = { request in
             let data = request.httpBodyStream.map { s -> Data in
@@ -427,11 +438,17 @@ struct APIClientTests {
             gesehen = (request.httpMethod, request.url?.path, json)
             return (200, Data(#"{"id":"p2","studioId":"s1","version":2,"regelVersion":"1","struktur":"gk_ab","einheiten":[],"gruende":[]}"#.utf8))
         }
-        let neu = try await stubbedClient().ordnePlanEinheit(planId: "P1", einheitKey: "A", positionKeys: ["1", "0"])
+        let neu = try await stubbedClient().ersetzePlanEinheit(planId: "P1", einheitKey: "A", positionen: [
+            ErsetzenPosition(key: "1", exerciseId: "e1", modelId: "m1", saetze: 4),
+            ErsetzenPosition(key: nil, exerciseId: "e2", modelId: "m2", dauerMin: 15),
+        ])
         #expect(neu.planId == "p2")
-        #expect(gesehen?.0 == "POST")
-        #expect(gesehen?.1 == "/api/v1/me/plans/P1/ordnen")
-        #expect(gesehen?.2["einheitKey"] as? String == "A")
-        #expect(gesehen?.2["positionKeys"] as? [String] == ["1", "0"])
+        #expect(gesehen?.0 == "PUT")
+        #expect(gesehen?.1 == "/api/v1/me/plans/P1/einheiten/A")
+        let liste = gesehen?.2["positionen"] as? [[String: Any]]
+        #expect(liste?.count == 2)
+        #expect(liste?[0]["key"] as? String == "1" && liste?[0]["saetze"] as? Int == 4)
+        #expect(liste?[0]["dauerMin"] == nil)
+        #expect(liste?[1]["key"] is NSNull && liste?[1]["dauerMin"] as? Int == 15 && liste?[1]["saetze"] == nil)
     }
 }

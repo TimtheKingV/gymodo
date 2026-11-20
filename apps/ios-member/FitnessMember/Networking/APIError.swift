@@ -15,6 +15,10 @@ enum APIError: Error, Equatable {
     /// 422: fuer einen Baustein gibt es keine passende Uebung; `grund` ist der
     /// feste Servercode, nicht zur Anzeige.
     case planNichtMoeglich(message: String, baustein: String, grund: String)
+    /// 422: die Uebung ist nicht fuer Plaene freigegeben (`uebung_ohne_planmerkmale`) oder
+    /// liegt im gemiedenen Bereich (`uebung_gemieden`). Der Servertext ist fuer das
+    /// Mitglied geschrieben und wird gezeigt (P4, Testnotiz 10.11. #6).
+    case planUebungGesperrt(message: String)
     /// Die Anfrage konnte gar nicht erst codiert werden -- der Schreibvorgang
     /// hat das Geraet nie verlassen. Getrennt von .decodingFailed, weil die
     /// beiden Faelle das Gegenteil bedeuten (siehe istDauerhaft).
@@ -49,7 +53,7 @@ enum APIError: Error, Equatable {
         // Dieselbe Anfrage ergibt dasselbe Profil und denselben Katalog -- ein
         // Wiederholen aendert nichts, erst eine Eingabe des Mitglieds.
         case .unauthorized, .validation, .notFound, .conflict, .encodingFailed,
-             .profilUnvollstaendig, .planNichtMoeglich: true
+             .profilUnvollstaendig, .planNichtMoeglich, .planUebungGesperrt: true
         }
     }
 
@@ -86,7 +90,8 @@ enum APIError: Error, Equatable {
             "Keine Verbindung."
         case .unauthorized(let message), .validation(let message),
              .notFound(let message), .conflict(let message), .server(let message),
-             .profilUnvollstaendig(let message, _), .planNichtMoeglich(let message, _, _):
+             .profilUnvollstaendig(let message, _), .planNichtMoeglich(let message, _, _),
+             .planUebungGesperrt(let message):
             message
         case .encodingFailed:
             "Die Anfrage konnte nicht gesendet werden."
@@ -99,6 +104,7 @@ enum APIError: Error, Equatable {
         switch code {
         case "unauthorized": .unauthorized(message: message)
         case "validation_failed": .validation(message: message)
+        case "uebung_ohne_planmerkmale", "uebung_gemieden": .planUebungGesperrt(message: message)
         case "not_found": .notFound(message: message)
         case "conflict": .conflict(message: message)
         case "profil_unvollstaendig": .profilUnvollstaendig(message: message, fehlt: detail?.textliste("fehlt") ?? [])

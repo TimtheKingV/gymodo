@@ -148,11 +148,13 @@ struct PlanZeile: View {
 /// ihre Kandidaten mit demselben Vorschaubild.
 struct PlanZeilenFoto: View {
     let foto: UIImage?
+    /// Kantenlaenge in pt; der Kasten "Du ersetzt" nimmt 48 (P4, Testnotiz 10.11. #5).
+    var kante: CGFloat = 56
 
     var body: some View {
         RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
             .fill(DesignSystem.Color.surfaceRaised)
-            .frame(width: 56, height: 56)
+            .frame(width: kante, height: kante)
             .overlay {
                 Image(systemName: "dumbbell")
                     .font(.system(size: 20, weight: .semibold))
@@ -163,7 +165,7 @@ struct PlanZeilenFoto: View {
                     Image(uiImage: foto)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 56, height: 56)
+                        .frame(width: kante, height: kante)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                 }
             }

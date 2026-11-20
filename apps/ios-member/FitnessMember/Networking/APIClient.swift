@@ -280,13 +280,13 @@ actor APIClient {
             grund: grund, ortId: ortId))
     }
 
-    /// Neue Reihenfolge einer Einheit; fehlende Schluessel sind entfernt (mindestens einer bleibt).
-    func ordnePlanEinheit(
-        planId: String, einheitKey: String, positionKeys: [String]
+    /// Ersetzt die Einheit als Ganzes (P4): Listenreihenfolge ist die neue Reihenfolge,
+    /// fehlende Keys sind entfernt, key nil ist neu. 409/422 kommen als APIError.
+    func ersetzePlanEinheit(
+        planId: String, einheitKey: String, positionen: [ErsetzenPosition]
     ) async throws(APIError) -> Trainingsplan {
-        struct Rumpf: Encodable { let einheitKey: String; let positionKeys: [String] }
-        return try await send("me/plans/\(planId)/ordnen", method: "POST", body: Rumpf(
-            einheitKey: einheitKey, positionKeys: positionKeys))
+        struct Rumpf: Encodable { let positionen: [ErsetzenPosition] }
+        return try await send("me/plans/\(planId)/einheiten/\(einheitKey)", method: "PUT", body: Rumpf(positionen: positionen))
     }
 
     // MARK: - Cardio-Checks

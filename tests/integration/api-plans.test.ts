@@ -3,6 +3,7 @@ import { GET, POST } from "@/app/api/v1/me/plans/route";
 import { POST as acceptPOST } from "@/app/api/v1/me/plans/[id]/accept/route";
 import { POST as swapPOST } from "@/app/api/v1/me/plans/[id]/swap/route";
 import { POST as ordnenPOST } from "@/app/api/v1/me/plans/[id]/ordnen/route";
+import { PUT as einheitPUT } from "@/app/api/v1/me/plans/[id]/einheiten/[einheitKey]/route";
 import { POST as completePOST } from "@/app/api/v1/workout-sessions/[sessionId]/complete/route";
 import { fromDomainError } from "@/lib/api/respond";
 import { DomainError, zielSchluessel } from "@fitretro/domain";
@@ -28,6 +29,12 @@ const ordnen = (auth: string | undefined, id: string, rumpf: unknown) =>
   ordnenPOST(new Request(`${BASIS}/${id}/ordnen`, { method: "POST", headers: kopf(auth), body: JSON.stringify(rumpf) }), {
     params: Promise.resolve({ id }),
   });
+
+const ersetzen = (auth: string | undefined, id: string, einheitKey: string, rumpf: unknown) =>
+  einheitPUT(
+    new Request(`${BASIS}/${id}/einheiten/${einheitKey}`, { method: "PUT", headers: kopf(auth), body: JSON.stringify(rumpf) }),
+    { params: Promise.resolve({ id, einheitKey }) },
+  );
 
 type Fehler = { error: { code: string; message: string; detail?: Record<string, unknown> } };
 
@@ -445,6 +452,100 @@ describe("Zielgewichte bei Annahme und Tausch", () => {
     expect(nochmal.status).toBe(200);
     const v3 = (await nochmal.json()) as PlanJson;
     expect((await zieleVon(v3.id))[bleibt.ziel]).toEqual({ load: 77.5, grund: "korridor_oben_erreicht" });
+  });
+});
+
+describe("PUT /me/plans/[id]/einheiten/[einheitKey]", () => {
+  type EinheitPos = { key: string; baustein: string; exerciseId: string; modelId: string; saetze: number; wdhVon: number | null };
+  type EinheitPlan = {
+    id: string;
+    version: number;
+    status: string;
+    einheiten: Array<{ key: string; positionen: EinheitPos[] }>;
+  };
+  async function aktiverPlan(): Promise<EinheitPlan> {
+    const plan = (await (await post(bearer, { studioId: s.voll })).json()) as { id: string };
+    return (await (await accept(bearer, plan.id)).json()) as EinheitPlan;
+  }
+  const alsEingabe = (p: EinheitPos) => ({ key: p.key, exerciseId: p.exerciseId, modelId: p.modelId });
+
+  it("401 ohne Token", async () => {
+    expect((await ersetzen(undefined, crypto.randomUUID(), "A", {})).status).toBe(401);
+  });
+
+  it("200 ordnet, tauscht und fuegt hinzu in einem Aufruf (eine neue Version)", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten.find((e) => e.positionen.filter((p) => p.baustein !== "cardio").length >= 2)!;
+    const [erste, zweite] = einheit.positionen.filter((p) => p.baustein !== "cardio") as [EinheitPos, EinheitPos];
+    const genutzt = new Set(einheit.positionen.map((p) => p.exerciseId));
+    const neue = Object.values(s.uebungen).find((id) => !genutzt.has(id))!;
+    const antwort = await ersetzen(bearer, plan.id, einheit.key, {
+      positionen: [
+        { ...alsEingabe(zweite), saetze: 4 },
+        alsEingabe(erste),
+        { key: null, exerciseId: neue, modelId: s.katalogModell },
+      ],
+    });
+    expect(antwort.status).toBe(200);
+    const neuerPlan = (await antwort.json()) as EinheitPlan;
+    expect(neuerPlan).toMatchObject({ status: "aktiv", version: plan.version + 1 });
+    expect(neuerPlan.id).not.toBe(plan.id);
+    const nachher = neuerPlan.einheiten.find((e) => e.key === einheit.key)!.positionen;
+    expect(nachher).toHaveLength(3);
+    expect(nachher[0]).toMatchObject({ key: zweite.key, saetze: 4 });
+    expect(nachher[1]!.key).toBe(erste.key);
+    expect(nachher[2]).toMatchObject({ exerciseId: neue });
+  });
+
+  it("409 fuer fremden Plan", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    const antwort = await ersetzen(fremd, plan.id, einheit.key, { positionen: einheit.positionen.map(alsEingabe) });
+    expect(antwort.status).toBe(409);
+  });
+
+  it("422 bei ungueltigem Rumpf", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    for (const rumpf of [{}, { positionen: [] }, { positionen: [{ key: null, exerciseId: "x", modelId: "y" }] }]) {
+      const antwort = await ersetzen(bearer, plan.id, einheit.key, rumpf);
+      expect(antwort.status).toBe(422);
+      expect(((await antwort.json()) as Fehler).error.code).toBe("validation_failed");
+    }
+    const zuViele = await ersetzen(bearer, plan.id, einheit.key, {
+      positionen: [{ ...alsEingabe(einheit.positionen[0]!), saetze: 11 }],
+    });
+    expect(zuViele.status).toBe(422);
+  });
+
+  it("422 Uebung ohne Planmerkmale mit eigenem Code", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten[0]!;
+    const { data, error } = await admin
+      .from("exercises")
+      .insert({ studio_id: GYMTAVO, name: `Ohne Merkmale ${crypto.randomUUID()}`, muscles: [], target_min: 8, target_max: 12 })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const antwort = await ersetzen(bearer, plan.id, einheit.key, {
+      positionen: [...einheit.positionen.map(alsEingabe), { key: null, exerciseId: data.id as string, modelId: s.katalogModell }],
+    });
+    expect(antwort.status).toBe(422);
+    expect(((await antwort.json()) as Fehler).error.code).toBe("uebung_ohne_planmerkmale");
+  });
+
+  it("das Zielgewicht einer unveraenderten Position bleibt erhalten", async () => {
+    const plan = await aktiverPlan();
+    const einheit = plan.einheiten.find((e) => e.positionen.some((p) => p.baustein !== "cardio" && p.wdhVon !== null))!;
+    const bleibt = einheit.positionen.find((p) => p.baustein !== "cardio" && p.wdhVon !== null)!;
+    await setzeZiel(plan.id, { einheitKey: einheit.key, key: bleibt.key }, 62.5, "korridor_oben_erreicht");
+    const antwort = await ersetzen(bearer, plan.id, einheit.key, {
+      positionen: [...einheit.positionen].reverse().map(alsEingabe),
+    });
+    expect(antwort.status).toBe(200);
+    const neu = (await antwort.json()) as EinheitPlan;
+    const z = await zieleVon(neu.id);
+    expect(z[zielSchluessel(einheit.key, bleibt.key)]).toEqual({ load: 62.5, grund: "korridor_oben_erreicht" });
   });
 });
 

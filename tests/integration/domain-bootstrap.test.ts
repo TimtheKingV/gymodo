@@ -431,9 +431,13 @@ describe("getBootstrap -- Trainingsplan", () => {
     // Die Beschwerden selbst stehen nirgends im Bootstrap (Gesundheitsdaten).
     expect(Object.keys(p).sort()).toEqual([
       "alternativen", "anfaengerUebergang", "beginn", "einheiten", "einheitenErledigt", "erledigt", "gruende", "merkliste",
-      "naechsteEinheitKey", "planId", "regelVersion", "struktur", "studioId", "version", "wochenraster",
-      "zielgewichte", "zuletztEinheitKey",
+      "naechsteEinheitKey", "planId", "planUebungen", "regelVersion", "struktur", "studioId", "version", "vorgaben",
+      "wochenraster", "zielgewichte", "zuletztEinheitKey",
     ]);
+    // P4: planUebungen kommt aus den ungefilterten Kandidaten und nennt nur Baustein und Typ.
+    // Gemiedene Uebungen fehlen dort nicht, sonst liesse sich die Beschwerde daraus ablesen.
+    expect(ps.knieUebungen.every((id) => id in p.planUebungen)).toBe(true);
+    for (const m of Object.values(p.planUebungen)) expect(Object.keys(m).sort()).toEqual(["baustein", "typ"]);
     const { gruende: _gruende, ...ohneGruende } = p;
     const roh = JSON.stringify({ ...b, member: { ...b.member, plans: [ohneGruende] } });
     for (const wort of ["meiden", "vorsichtig", "consent", "areas", "limits", "beschwerden"]) {
