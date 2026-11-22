@@ -34,14 +34,16 @@ struct GeraeteAuswahlTests {
         studio: String = "s1", status: String = "active",
         tags: [String] = ["hash"], besuche: Int = 0,
         kategorie: String = "kraft", einheit: String = "kg", gruppe: String? = nil,
-        uebungen: [(String, String)] = [("u1", "Latzug breit")]
+        uebungen: [(String, String)] = [("u1", "Latzug breit")],
+        etikett: String? = nil
     ) -> String {
+        let etikettJSON = etikett.map { ", \"geraetLabel\": \"\($0)\"" } ?? ""
         let gruppeJSON = gruppe.map { ", \"equipmentGroup\": \"\($0)\"" } ?? ""
         let ortJSON = ort.map { "\"\($0)\"" } ?? "null"
         let tagsJSON = tags.map { "\"\($0)\"" }.joined(separator: ", ")
         let uebungenJSON = uebungen.map {
             """
-            { "id": "\($0.0)", "name": "\($0.1)", "volumeKind":"reps","targetMin":8, "targetMax":12 }
+            { "id": "\($0.0)", "name": "\($0.1)", "volumeKind":"reps","targetMin":8, "targetMax":12\(etikettJSON) }
             """
         }.joined(separator: ", ")
         return """
@@ -318,6 +320,22 @@ struct GeraeteAuswahlTests {
 
         #expect(gruppen.treffer.first(where: { $0.name == "Beinpresse" })?.trefferUebung == nil)
         #expect(gruppen.treffer.first(where: { $0.name == "Bauchtrainer" })?.trefferUebung?.name == "Beinheben hängend")
+    }
+
+    /// Seit der Uebungsname das Geraet nicht mehr nennt, muss die Suche das
+    /// Etikett mitlesen -- auch am Studiogeraet, das anders heisst als der Typ.
+    @Test func dieSucheTrifftUebungUeberNameUndEtikett() {
+        let daten = bootstrap(maschinen: [
+            maschineJSON(id: "m1", name: "Hantelbereich", label: "A", ort: nil,
+                         uebungen: [("u1", "Bizepscurl")], etikett: "Kurzhantel"),
+            maschineJSON(id: "m2", name: "Turm links", label: "B", ort: nil,
+                         uebungen: [("u2", "Bizepscurl")], etikett: "Kabelzug"),
+        ])
+
+        let gruppen = GeraeteAuswahl.gruppen(bootstrap: daten, ort: .studio("s1"), suchtext: "kurzhantel curl")
+
+        #expect(gruppen.treffer.map(\.name) == ["Hantelbereich"])
+        #expect(gruppen.treffer.first?.trefferUebung?.id == "u1")
     }
 
     /// Ein Tipp auf einen Uebungstreffer oeffnet genau diese Uebung

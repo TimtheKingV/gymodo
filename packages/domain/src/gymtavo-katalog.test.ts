@@ -44,6 +44,15 @@ describe("catalog/gymtavo.json", () => {
     expect(freihantel.map((g) => g.key).sort()).toEqual(["barbell", "dumbbell", "ez_bar"]);
   });
 
+  it("gibt jedem aktiven Geraetetyp ein Etikett und jeder Uebung genau einen aktiven Typ", () => {
+    const k = katalog();
+    const aktiv = k.equipment.filter((g) => !g.retired);
+    expect(aktiv.filter((g) => !g.label).map((g) => g.key)).toEqual([]);
+    const typen = new Map<string, string[]>();
+    for (const g of aktiv) for (const u of g.exercises) typen.set(u, [...(typen.get(u) ?? []), g.key]);
+    expect(k.exercises.filter((u) => typen.get(u.key)?.length !== 1).map((u) => u.key)).toEqual([]);
+  });
+
   it("nennt in der Ausstattung keinen abgeloesten Kabelzug mehr", () => {
     const k = katalog();
     const alteNamen = k.equipment.filter((g) => g.retired).map((g) => g.name);

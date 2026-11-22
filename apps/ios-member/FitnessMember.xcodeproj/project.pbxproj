@@ -13,6 +13,7 @@
 		013D40E89B567A7C02B5A99A /* GewichtsverlaufHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA471448D3B4B628A0BD6D5 /* GewichtsverlaufHilfenTests.swift */; };
 		016753249B5CB49B03D514B4 /* Trainingsuhr.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECD3248CAD211A17B23D8826 /* Trainingsuhr.swift */; };
 		029CFC2CAB97744920578EE2 /* PlanAbschlussBereich.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E8DFCD399030A03462AC1F /* PlanAbschlussBereich.swift */; };
+		0335589908D2E062C6403BAB /* GeraetEtikett.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1077E85FD6245A5971E5C6C /* GeraetEtikett.swift */; };
 		03442DF5E1A6C5FDABCEBC16 /* UebungskarteModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC4A8AD1E1541C488239F73D /* UebungskarteModellTests.swift */; };
 		0382DA5E0E287C3C9870CAAC /* SensorAufnahmeKoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */; };
 		042F6324294F8E5E71B29B11 /* TestnotizScreenStapel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20C077400AA8EF5A0B1AE96 /* TestnotizScreenStapel.swift */; };
@@ -746,6 +747,7 @@
 		9E6DCA4E4FAD5D5B706EE9F4 /* PlanWarumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanWarumView.swift; sourceTree = "<group>"; };
 		9F1FAF157EB2A28C0B73123B /* TrainingAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAuswahlView.swift; sourceTree = "<group>"; };
 		A0A1ECDFB1937B39B38E3EA2 /* TestnotizKnopf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizKnopf.swift; sourceTree = "<group>"; };
+		A1077E85FD6245A5971E5C6C /* GeraetEtikett.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetEtikett.swift; sourceTree = "<group>"; };
 		A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HaeufigkeitTests.swift; sourceTree = "<group>"; };
 		A2D588E7E4F6611509CF03B1 /* KursZustandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursZustandTests.swift; sourceTree = "<group>"; };
 		A345B4FFB60F21B4B9322675 /* UebungsstartSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungsstartSheet.swift; sourceTree = "<group>"; };
@@ -1172,6 +1174,7 @@
 				25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */,
 				8D8E52BC8202E83D789FC2E5 /* DangerOutlineButton.swift */,
 				6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */,
+				A1077E85FD6245A5971E5C6C /* GeraetEtikett.swift */,
 				13D8C4AC64870FF3423C494F /* InlineBanner.swift */,
 				A96F27D1E2E9BE4F4CC5F986 /* Kalenderzelle.swift */,
 				58D512A8A7F6C5D60CF41B25 /* LabeledField.swift */,
@@ -1822,6 +1825,7 @@
 				3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
+				0335589908D2E062C6403BAB /* GeraetEtikett.swift in Sources */,
 				356B55A3EC5DF1C40CF07351 /* GeraetLoading.swift in Sources */,
 				48FFCA86209C664A9A0E6964 /* GeraetModel.swift in Sources */,
 				9145F7245C5D69AA90AD9B7A /* GeraetRoute.swift in Sources */,

@@ -15,6 +15,8 @@ struct UebungskarteModell: Equatable {
     let vorschaubildModell: String?
     let chips: [Chip]
     let markierung: String?
+    /// Etikett des Geraetetyps unter dem Namen ("Kurzhantel"); nil = keins.
+    var geraetLabel: String? = nil
 
     private static let symbolSaetze = "square.stack.3d.up"
     private static let symbolWdh = "arrow.triangle.2.circlepath"
@@ -30,7 +32,7 @@ struct UebungskarteModell: Equatable {
     /// wirklich unterscheidet (A->B->A zeigt nichts); ohne Angabe gilt `ersetzt`.
     static func aus(
         _ p: EntwurfsPosition, name: String, bild: String?, geaendert: Set<WertFeld>,
-        ausgangExerciseId: String? = nil
+        ausgangExerciseId: String? = nil, geraetLabel: String? = nil
     ) -> UebungskarteModell {
         var chips: [Chip] = []
         if p.werteOffen {
@@ -51,7 +53,8 @@ struct UebungskarteModell: Equatable {
             markierung = "statt \(alt)"
         }
         return UebungskarteModell(
-            name: name, exerciseId: p.exerciseId, vorschaubildModell: bild, chips: chips, markierung: markierung)
+            name: name, exerciseId: p.exerciseId, vorschaubildModell: bild, chips: chips, markierung: markierung,
+            geraetLabel: geraetLabel)
     }
 
     static func aus(_ p: TrainingsplanPosition, bootstrap: BootstrapResponse?) -> UebungskarteModell {
@@ -69,7 +72,7 @@ struct UebungskarteModell: Equatable {
         }
         return UebungskarteModell(
             name: zeile.name, exerciseId: zeile.exerciseId, vorschaubildModell: zeile.vorschaubildModell,
-            chips: werte, markierung: nil)
+            chips: werte, markierung: nil, geraetLabel: zeile.geraetLabel)
     }
 
     /// Ein Satz fuer VoiceOver: "Name, 3 Sätze, 8 bis 12 Wiederholungen, 150 Sekunden Pause".
@@ -83,7 +86,8 @@ struct UebungskarteModell: Equatable {
             if chip.text.hasSuffix(" min") { return chip.text.dropLast(4) + " Minuten" }
             return chip.text
         }
-        return ([name] + teile + [markierung].compactMap { $0 }).joined(separator: ", ")
+        return ([name] + [geraetLabel].compactMap { $0 } + teile + [markierung].compactMap { $0 })
+            .joined(separator: ", ")
     }
 }
 
@@ -124,6 +128,7 @@ extension Uebungskarte {
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.text)
                     .fixedSize(horizontal: false, vertical: true)
+                if let etikett = modell.geraetLabel { GeraetEtikett(text: etikett) }
                 if let markierung = modell.markierung {
                     Text(markierung)
                         .font(.system(size: 12.5, weight: .semibold))

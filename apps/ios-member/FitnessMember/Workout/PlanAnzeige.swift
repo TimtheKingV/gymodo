@@ -101,10 +101,10 @@ enum PlanAnzeige {
                     untertitel = !stelle.cardio && saetze > 0 ? satzText(saetze) : vorgabeText(stelle)
                 case .optional:
                     untertitel = ausloeser(hauptmuskeln: stelle.hauptmuskeln, ungeplant: ungeplant, muskeln: muskeln)
-                        .map { "Optional: \(uebungsname($0.exerciseId, bootstrap)) zählt für \($0.gruppe)" }
+                        .map { "Optional: \(uebungstitel($0.exerciseId, bootstrap)) zählt für \($0.gruppe)" }
                         ?? "Optional"
                 case .getauscht:
-                    untertitel = "Heute: \(uebungsname(wirksam, bootstrap))"
+                    untertitel = "Heute: \(uebungstitel(wirksam, bootstrap))"
                 }
             }
             return PlanZeilenModell(
@@ -115,7 +115,8 @@ enum PlanAnzeige {
                 vorschaubildModell: bild,
                 status: stelle.status.anzeige,
                 ausgelassen: istAusgelassen,
-                satzFortschritt: istAusgelassen ? nil : satzFortschritt(stelle, bloecke: bloecke))
+                satzFortschritt: istAusgelassen ? nil : satzFortschritt(stelle, bloecke: bloecke),
+                geraetLabel: geraetLabel(stelle.geplant, bootstrap))
         }
     }
 
@@ -248,7 +249,8 @@ enum PlanAnzeige {
                 vorschaubildModell: uebung.equipmentModelId
                     ?? bootstrap?.machines.first { $0.id == uebung.machineId }?.equipmentModel.id,
                 status: .erledigt,
-                zusatz: true)
+                zusatz: true,
+                geraetLabel: geraetLabel(uebung.exerciseId, bootstrap))
         }
     }
 
@@ -491,6 +493,14 @@ enum PlanAnzeige {
 
     private static func uebungsname(_ exerciseId: String, _ bootstrap: BootstrapResponse?) -> String {
         PlanZeilenModell.uebungsname(exerciseId: exerciseId, maschine: nil, bootstrap: bootstrap)
+    }
+
+    private static func uebungstitel(_ exerciseId: String, _ bootstrap: BootstrapResponse?) -> String {
+        PlanZeilenModell.uebungstitel(exerciseId: exerciseId, maschine: nil, bootstrap: bootstrap)
+    }
+
+    private static func geraetLabel(_ exerciseId: String, _ bootstrap: BootstrapResponse?) -> String? {
+        PlanZeilenModell.geraetLabel(exerciseId: exerciseId, maschine: nil, bootstrap: bootstrap)
     }
 }
 

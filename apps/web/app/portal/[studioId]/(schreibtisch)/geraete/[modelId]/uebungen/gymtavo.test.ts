@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { CatalogType } from "@fitretro/domain";
 import { anhaengbareUebungen, eigeneUebungen, gymtavoZeilen, uebungenStand } from "./gymtavo";
 
-function uebung(id: string, video: string | null = null) {
+function uebung(id: string, video: string | null = null, geraetLabel: string | null = null) {
   return {
+    geraetLabel,
     exerciseId: id,
     name: `Übung ${id}`,
     description: null,
@@ -103,6 +104,19 @@ describe("anhaengbareUebungen", () => {
     const angebot = anhaengbareUebungen({ catalogModelId: null, exercises: [] }, typen);
     expect(angebot.map((u) => u.exerciseId)).toEqual(["e1", "e2", "e3"]);
     expect(angebot[0]!.typName).toBe("Kabelzug");
+  });
+});
+
+describe("anhaengbareUebungen Etikett", () => {
+  it("zeigt das Etikett der Uebung und nie den Namen eines abgeloesten Typs", () => {
+    const alt: CatalogType = { ...typen[0]!, id: "t0", name: "Doppel-Kabelzug + zwei Einzelgriffe", retired: true, exercises: [uebung("e1"), uebung("e9", null, "Kabelzug")] };
+    const angebot = anhaengbareUebungen({ catalogModelId: null, exercises: [] }, [alt, ...typen]);
+    expect(Object.fromEntries(angebot.map((u) => [u.exerciseId, u.typName]))).toEqual({
+      e1: "Kabelzug",
+      e2: "Kabelzug",
+      e3: "Langhantel",
+      e9: "Kabelzug",
+    });
   });
 });
 

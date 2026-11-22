@@ -328,6 +328,7 @@
     {
       "key": "chest_press",
       "name": "Brustpresse",
+      "label": "Brustpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -366,6 +367,7 @@
     {
       "key": "horizontal_leg_press",
       "name": "Horizontale Beinpresse, feste Sitzposition",
+      "label": "Beinpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -403,6 +405,7 @@
     {
       "key": "seated_leg_curl",
       "name": "Beinbeuger sitzend",
+      "label": "Beinbeuger",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -496,6 +499,7 @@
     {
       "key": "dumbbell",
       "name": "Kurzhantel",
+      "label": "Kurzhantel",
       "category": "kraft",
       "group": "freihantel",
       "manufacturer": null,
@@ -553,6 +557,7 @@
     {
       "key": "pec_deck",
       "name": "Butterfly / Reverse-Fly-Kombigerät",
+      "label": "Butterfly",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -590,6 +595,7 @@
     {
       "key": "shoulder_press",
       "name": "Schulterpresse",
+      "label": "Schulterpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -627,6 +633,7 @@
     {
       "key": "reverse_fly",
       "name": "Butterfly / Reverse-Fly-Kombigerät",
+      "label": "Butterfly",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -664,6 +671,7 @@
     {
       "key": "supported_row",
       "name": "Rudermaschine",
+      "label": "Rudermaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -701,6 +709,7 @@
     {
       "key": "assist_dip_chin",
       "name": "Klimmzug-/Dip-Assistenzmaschine",
+      "label": "Klimmzug-/Dip-Gerät",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -732,6 +741,7 @@
     {
       "key": "preacher_curl",
       "name": "Bizepsmaschine",
+      "label": "Bizepsmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -778,6 +788,7 @@
     {
       "key": "leg_press_45",
       "name": "45-Grad-Schlittenpresse",
+      "label": "Beinpresse 45°",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -815,6 +826,7 @@
     {
       "key": "leg_extension",
       "name": "Beinstreckermaschine",
+      "label": "Beinstrecker",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -861,6 +873,7 @@
     {
       "key": "hip_ab_adduction",
       "name": "Ab-/Adduktorenmaschine",
+      "label": "Ab-/Adduktoren",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -908,6 +921,7 @@
     {
       "key": "standing_calf",
       "name": "Stehende Wadenmaschine",
+      "label": "Wadenmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -936,6 +950,7 @@
     {
       "key": "seated_calf",
       "name": "Sitzende Wadenmaschine",
+      "label": "Wadenmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -973,6 +988,7 @@
     {
       "key": "ab_crunch",
       "name": "Bauchmaschine",
+      "label": "Bauchmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1019,6 +1035,7 @@
     {
       "key": "back_extension",
       "name": "Rückenstreckmaschine",
+      "label": "Rückenstrecker",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1065,6 +1082,7 @@
     {
       "key": "incline_press",
       "name": "Schrägbrustpresse",
+      "label": "Schrägbrustpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1102,6 +1120,7 @@
     {
       "key": "lateral_raise",
       "name": "Seithebemaschine",
+      "label": "Seithebemaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1139,6 +1158,7 @@
     {
       "key": "row_pronated",
       "name": "Rudermaschine",
+      "label": "Rudermaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1176,6 +1196,7 @@
     {
       "key": "high_row",
       "name": "High-Row-Maschine",
+      "label": "High-Row-Maschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1213,6 +1234,7 @@
     {
       "key": "lever_lat",
       "name": "Latmaschine mit geführten Hebeln",
+      "label": "Latmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1250,6 +1272,7 @@
     {
       "key": "pullover",
       "name": "Pullovermaschine",
+      "label": "Pullovermaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1287,6 +1310,7 @@
     {
       "key": "triceps_extension",
       "name": "Trizepsmaschine",
+      "label": "Trizepsmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1324,6 +1348,7 @@
     {
       "key": "seated_dip",
       "name": "Sitz-Dip-Maschine",
+      "label": "Dip-Maschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1361,6 +1386,7 @@
     {
       "key": "hack_squat",
       "name": "Hackenschmidt-Schlitten",
+      "label": "Hackenschmidt",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1398,6 +1424,7 @@
     {
       "key": "prone_curl",
       "name": "Liegender Beinbeuger",
+      "label": "Beinbeuger",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1435,6 +1462,7 @@
     {
       "key": "standing_curl",
       "name": "Stehender Beinbeuger",
+      "label": "Beinbeuger",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1472,6 +1500,7 @@
     {
       "key": "hip_extension",
       "name": "Gluteus-/Hüftstreckmaschine",
+      "label": "Gluteusmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1509,6 +1538,7 @@
     {
       "key": "torso_rotation",
       "name": "Rotationsmaschine",
+      "label": "Rotationsmaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1546,6 +1576,7 @@
     {
       "key": "cable_lat",
       "name": "Latzugstation + V-Griff",
+      "label": "Latzug",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1585,6 +1616,7 @@
     {
       "key": "cable_row",
       "name": "Tiefe Ruderstation + V-Griff",
+      "label": "Ruderzug",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1706,6 +1738,7 @@
     {
       "key": "hip_thrust",
       "name": "Hip Thrust am Gerät",
+      "label": "Hip-Thrust-Maschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1734,6 +1767,7 @@
     {
       "key": "belt_squat",
       "name": "Belt Squat am Gerät",
+      "label": "Belt-Squat-Maschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1762,6 +1796,7 @@
     {
       "key": "single_leg_press",
       "name": "Horizontale Beinpresse – einbeinig",
+      "label": "Beinpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1790,6 +1825,7 @@
     {
       "key": "single_leg_extension",
       "name": "Beinstrecker – einbeinig",
+      "label": "Beinstrecker",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1818,6 +1854,7 @@
     {
       "key": "single_seated_curl",
       "name": "Beinbeuger sitzend – einbeinig",
+      "label": "Beinbeuger",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1846,6 +1883,7 @@
     {
       "key": "independent_chest_press",
       "name": "Brustpresse – einarmig",
+      "label": "Brustpresse",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1874,6 +1912,7 @@
     {
       "key": "independent_row",
       "name": "Rudern am Gerät – einarmig",
+      "label": "Rudermaschine",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1902,6 +1941,7 @@
     {
       "key": "calf_leg_press",
       "name": "Wadenpressen an der 45°-Beinpresse",
+      "label": "Beinpresse 45°",
       "category": "kraft",
       "group": "geraete",
       "manufacturer": null,
@@ -1930,6 +1970,7 @@
     {
       "key": "dual_cable_station",
       "name": "Kabelzug",
+      "label": "Kabelzug",
       "category": "kraft",
       "group": "kabelzug",
       "manufacturer": null,
@@ -2001,6 +2042,7 @@
     {
       "key": "barbell",
       "name": "Langhantel",
+      "label": "Langhantel",
       "category": "kraft",
       "group": "freihantel",
       "manufacturer": null,
@@ -2033,6 +2075,7 @@
     {
       "key": "ez_bar",
       "name": "SZ-Hantel",
+      "label": "SZ-Hantel",
       "category": "kraft",
       "group": "freihantel",
       "manufacturer": null,
@@ -2055,6 +2098,7 @@
     {
       "key": "treadmill",
       "name": "Laufband",
+      "label": "Laufband",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2075,6 +2119,7 @@
     {
       "key": "upright_bike",
       "name": "Aufrechtes Fahrradergometer",
+      "label": "Fahrradergometer",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2104,6 +2149,7 @@
     {
       "key": "recumbent_bike",
       "name": "Liegeergometer",
+      "label": "Liegeergometer",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2133,6 +2179,7 @@
     {
       "key": "indoor_bike",
       "name": "Indoor Bike",
+      "label": "Indoor Bike",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2180,6 +2227,7 @@
     {
       "key": "airbike",
       "name": "AirBike",
+      "label": "AirBike",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2218,6 +2266,7 @@
     {
       "key": "elliptical",
       "name": "Crosstrainer mit beweglichen Griffen",
+      "label": "Crosstrainer",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2247,6 +2296,7 @@
     {
       "key": "rowing_ergometer",
       "name": "Ruderergometer mit Rollsitz",
+      "label": "Ruderergometer",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2285,6 +2335,7 @@
     {
       "key": "stair_climber",
       "name": "Rotierende Treppenmaschine",
+      "label": "Treppensteiger",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,
@@ -2314,6 +2365,7 @@
     {
       "key": "ski_ergometer",
       "name": "Ski-Ergometer mit zwei Zuggriffen",
+      "label": "Ski-Ergometer",
       "category": "cardio",
       "group": "cardio",
       "manufacturer": null,

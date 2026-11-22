@@ -64,7 +64,7 @@ enum AblaufListe {
             }
             return AblaufZeile(
                 id: stelle.key,
-                name: PlanZeilenModell.uebungsname(exerciseId: wirksam, maschine: nil, bootstrap: bootstrap),
+                name: PlanZeilenModell.uebungstitel(exerciseId: wirksam, maschine: nil, bootstrap: bootstrap),
                 detail: detail, stand: stand, exerciseId: wirksam,
                 bildModellId: PlanAnzeige.bildmodell(exerciseId: wirksam, modelId: modelId, bootstrap: bootstrap))
         }
@@ -84,7 +84,7 @@ enum AblaufListe {
             let eigene = bloecke.filter { $0.exerciseId == extra.id }
             zeilen.append(AblaufZeile(
                 id: "zusatz:\(extra.id)",
-                name: PlanZeilenModell.uebungsname(exerciseId: extra.id, maschine: nil, bootstrap: bootstrap),
+                name: PlanZeilenModell.uebungstitel(exerciseId: extra.id, maschine: nil, bootstrap: bootstrap),
                 detail: istJetzt ? jetztText(eigene) : (erledigtText(eigene) ?? ""),
                 stand: istJetzt ? .jetzt : .erledigt, exerciseId: extra.id,
                 bildModellId: PlanAnzeige.bildmodell(exerciseId: extra.id, modelId: extra.modell, bootstrap: bootstrap)))

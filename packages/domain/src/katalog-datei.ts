@@ -76,10 +76,17 @@ const nebenbelastungSchema = z
   .object({ unit: z.enum(LOAD_UNITS), step: positiv, min: nichtNegativ, max: nichtNegativ })
   .strict();
 
+/** Laenge, die als Etikett neben einem Uebungsnamen noch in eine Zeile passt. */
+export const MAX_ETIKETT = 20;
+
 const geraetetypSchema = z
   .object({
     key: schluessel,
     name: text,
+    // Kurzes Etikett neben dem Uebungsnamen ("Bizepscurl [Kurzhantel]"); der
+    // Uebungsname nennt das Geraet nicht mehr (docs/katalog-stilleitfaden.md).
+    // Ohne Angabe traegt die Uebung den vollen Typnamen.
+    label: text.max(MAX_ETIKETT, `darf hoechstens ${MAX_ETIKETT} Zeichen haben`).nullable().default(null),
     category: z.enum(CATEGORIES),
     group: z.enum(GROUPS),
     // Testnotiz 12.10., #1: der Import loescht nie (Spec 9.1). Ein Typ, der

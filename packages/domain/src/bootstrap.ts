@@ -208,6 +208,8 @@ type Uebung = {
   targetMax: number;
   /** Muskeln fuer das Muskelmodell der Einweisung; nie null, ohne Pflege []. */
   muscles: UebungsMuskel[];
+  /** Kurzes Etikett des Geraetetyps neben dem Namen ("Kurzhantel"); null bei eigenen Studio-Uebungen. */
+  geraetLabel: string | null;
 };
 
 type UebungZeile = {
@@ -218,6 +220,7 @@ type UebungZeile = {
   target_min: number;
   target_max: number;
   muscles?: UebungsMuskel[] | null;
+  geraet_label?: string | null;
 };
 
 export function uebungAusZeile(z: UebungZeile): Uebung {
@@ -229,6 +232,7 @@ export function uebungAusZeile(z: UebungZeile): Uebung {
     targetMin: z.target_min,
     targetMax: z.target_max,
     muscles: muskelnAusSpalte(z.muscles),
+    geraetLabel: z.geraet_label ?? null,
   };
 }
 
@@ -476,7 +480,7 @@ export async function getBootstrap(
   const { data: linkRows } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label)",
     )
     .order("sort_order", { ascending: true });
 

@@ -17,6 +17,18 @@ struct UebungskarteModellTests {
         UebungskarteModell.aus(p, name: "Brustpresse", bild: nil, geaendert: geaendert, ausgangExerciseId: ausgang)
     }
 
+    @Test func etikettStehtImModellUndInDerBeschreibung() {
+        let m = UebungskarteModell.aus(kraft(), name: "Bankdrücken", bild: nil, geaendert: [], geraetLabel: "Langhantel")
+        #expect(m.geraetLabel == "Langhantel")
+        #expect(m.beschreibung.hasPrefix("Bankdrücken, Langhantel, 3 Sätze"))
+        #expect(modell(kraft()).geraetLabel == nil)
+    }
+
+    @Test func titelHaengtDasEtikettInKlammernAn() {
+        #expect(PlanZeilenModell.titel(name: "Bankdrücken", geraetLabel: "Langhantel") == "Bankdrücken (Langhantel)")
+        #expect(PlanZeilenModell.titel(name: "Hausübung", geraetLabel: nil) == "Hausübung")
+    }
+
     @Test func chipsKraft() {
         #expect(modell(kraft()).chips.map(\.text) == ["3 Sätze", "8–12 Wdh", "150 s"])
     }

@@ -181,6 +181,20 @@ describe("pruefeKatalog products", () => {
 
 // Testnotiz 12.10., #1-#5: die Kategorie-Kacheln der App und das Abloesen
 // zusammengelegter Kabelzug-Typen.
+describe("pruefeKatalog label", () => {
+  it("ist optional, aber hoechstens 20 Zeichen lang", () => {
+    const pruefung = pruefeKatalog(beispielKatalog().roh);
+    expect(pruefung.ok && pruefung.wert.equipment.map((g) => g.label)).toEqual([null, null, null]);
+    const mitLabel = beispielKatalog().roh;
+    (mitLabel.equipment[0] as Record<string, unknown>).label = "Kurzhantel";
+    const zweite = pruefeKatalog(mitLabel);
+    expect(zweite.ok && zweite.wert.equipment[0]?.label).toBe("Kurzhantel");
+    expect(fehlerVon((roh) => ((roh.equipment[0] as Record<string, unknown>).label = "x".repeat(21)))).toEqual([
+      'equipment[0] "brustpresse" label: darf hoechstens 20 Zeichen haben',
+    ]);
+  });
+});
+
 describe("pruefeKatalog group und retired", () => {
   it("verlangt die Gruppe und setzt retired ohne Angabe auf false", () => {
     expect(fehlerVon((roh) => delete (roh.equipment[0] as Record<string, unknown>).group)).toEqual([

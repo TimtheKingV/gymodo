@@ -208,6 +208,10 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// Server, gespeicherter Bootstrap), ist die Liste leer -- siehe
         /// `init(from:)` unten.
         var muscles: [GeraetMuskel] = []
+        /// Kurzes Etikett des Geraetetyps ("Kurzhantel"). Der Uebungsname nennt
+        /// das Geraet nicht mehr, deshalb steht es ueberall daneben, wo der
+        /// Geraetekontext fehlt. nil: eigene Studio-Uebung oder alter Server.
+        var geraetLabel: String? = nil
     }
 
     struct Machine: Decodable, Equatable, Identifiable {
@@ -311,7 +315,7 @@ struct ProfilAntwort: Decodable, Equatable, Sendable {
 
 extension BootstrapResponse.Exercise {
     private enum CodingKeys: String, CodingKey {
-        case id, name, description, volumeKind, targetMin, targetMax, muscles
+        case id, name, description, volumeKind, targetMin, targetMax, muscles, geraetLabel
     }
 
     /// Eigener Decoder, weil die synthetisierte Variante ein fehlendes
@@ -326,5 +330,6 @@ extension BootstrapResponse.Exercise {
         targetMin = try c.decode(Int.self, forKey: .targetMin)
         targetMax = try c.decode(Int.self, forKey: .targetMax)
         muscles = c.decodeMuskeln(forKey: .muscles)
+        geraetLabel = try c.decodeIfPresent(String.self, forKey: .geraetLabel)
     }
 }

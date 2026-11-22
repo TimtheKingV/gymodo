@@ -71,6 +71,8 @@ export type MachineContext = {
     targetMax: number;
     /** Muskeln fuer das Muskelmodell der Einweisung; nie null. */
     muscles: UebungsMuskel[];
+    /** Kurzes Etikett des Geraetetyps; null bei eigenen Studio-Uebungen. */
+    geraetLabel: string | null;
     /** Ebenfalls signiert; null, solange kein Video da ist (Spec 6.8). */
     instructionVideoUrl: string | null;
   }>;
@@ -232,6 +234,7 @@ type LinkRow = {
     target_min: number;
     target_max: number;
     muscles?: UebungsMuskel[] | null;
+    geraet_label?: string | null;
   };
   instruction_assets: Array<{ storage_path: string }>;
 };
@@ -291,7 +294,7 @@ async function kontextAufbauen(
   const { data: links } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles), instruction_assets (storage_path)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label), instruction_assets (storage_path)",
     )
     .in("equipment_model_id", modellIds)
     .order("sort_order", { ascending: true });
@@ -322,6 +325,7 @@ async function kontextAufbauen(
     targetMin: uebung.target_min,
     targetMax: uebung.target_max,
     muscles: muskelnAusSpalte(uebung.muscles),
+    geraetLabel: uebung.geraet_label ?? null,
     instructionVideoUrl: (videoPfad && videoUrls.get(videoPfad)) || null,
   }));
 

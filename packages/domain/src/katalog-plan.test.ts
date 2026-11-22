@@ -327,6 +327,30 @@ describe("planeImport Produkte", () => {
   });
 });
 
+describe("planeImport Geraete-Etikett", () => {
+  it("nimmt das label des ersten nicht abgeloesten Typs, ohne label den Typnamen", () => {
+    const b = beispielKatalog();
+    (b.roh.equipment[0] as Record<string, unknown>).label = "Presse";
+    const plan = plane(b, LEER);
+    const etikett = Object.fromEntries(plan.uebungen.map((p) => [p.schluessel, p.zeile.geraet_label]));
+    expect(etikett).toEqual({ brustpresse_neutral: "Presse", trizeps_druecken: "Presse", gehen: b.roh.equipment[2]?.name });
+  });
+
+  it("ueberspringt abgeloeste Typen und erkennt ein neues label als Aenderung", () => {
+    const b = beispielKatalog();
+    (b.roh.equipment[0] as Record<string, unknown>).label = "Presse";
+    (b.roh.equipment[1] as Record<string, unknown>).label = "Trizeps";
+    const erster = plane(b, LEER);
+    (b.roh.equipment[0] as Record<string, unknown>).retired = true;
+    (b.roh.equipment[0] as Record<string, unknown>).exercises = [b.roh.equipment[0]?.exercises[1]];
+    (b.roh.equipment[1] as Record<string, unknown>).exercises = [...(b.roh.equipment[1]?.exercises ?? []), b.roh.exercises[0]?.key];
+    const zweiter = plane(b, istAus(erster));
+    const trizeps = zweiter.uebungen.find((p) => p.schluessel === "trizeps_druecken");
+    expect(trizeps?.zeile.geraet_label).toBe("Trizeps");
+    expect(trizeps?.felder).toEqual(["geraet_label"]);
+  });
+});
+
 describe("planeImport Planfelder", () => {
   const mitPlan = () => {
     const b = beispielKatalog();

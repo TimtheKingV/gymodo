@@ -2027,7 +2027,8 @@ struct TrainingRootView: View {
     }
 
     private func zirkelUebungsname(_ uebung: ZirkelUebung) -> String {
-        zirkelStation(uebung)?.exercises.first { $0.id == uebung.exerciseId }?.name ?? "Übung"
+        let treffer = zirkelStation(uebung)?.exercises.first { $0.id == uebung.exerciseId }
+        return PlanZeilenModell.titel(name: treffer?.name ?? "Übung", geraetLabel: treffer?.geraetLabel)
     }
 
     private func zirkelStation(_ uebung: ZirkelUebung) -> Station? {

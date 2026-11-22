@@ -27,6 +27,8 @@ struct PlanZeilenModell: Equatable, Identifiable {
     /// "2/3" bei einer angefangenen Kraftposition (auch schon erledigt:
     /// der erste Satz hakt ab); ersetzt den Haken.
     var satzFortschritt: String? = nil
+    /// Etikett des Geraetetyps vor dem Untertitel ("Kurzhantel"); nil = keins.
+    var geraetLabel: String? = nil
 
     /// Durchgestrichen und gedimmt: erledigt ohne offene Saetze, oder heute
     /// ausgelassen. Eine angefangene Position ("1/3") ist im Ablauf schon
@@ -52,7 +54,8 @@ extension PlanZeilenModell {
             untertitel: vorgabe(position),
             exerciseId: position.exerciseId,
             vorschaubildModell: PlanAnzeige.bildmodell(exerciseId: position.exerciseId, modelId: position.modelId,
-                                                       bootstrap: bootstrap))
+                                                       bootstrap: bootstrap),
+            geraetLabel: geraetLabel(exerciseId: position.exerciseId, maschine: maschine, bootstrap: bootstrap))
     }
 
     /// "3 × 8–12" (Entwurf 1.4); Cardio "20 Min"; ohne Wiederholungsbereich
@@ -70,14 +73,39 @@ extension PlanZeilenModell {
     /// Nicht privat: die Plankarte loest Ersatz- und Zusatzuebungen genauso auf.
     static func uebungsname(exerciseId: String, maschine: BootstrapResponse.Machine?,
                                     bootstrap: BootstrapResponse?) -> String {
-        if let name = maschine?.exercises.first(where: { $0.id == exerciseId })?.name { return name }
+        uebung(exerciseId: exerciseId, maschine: maschine, bootstrap: bootstrap)?.name ?? "Übung"
+    }
+
+    /// Das Etikett des Geraetetyps neben dem Namen ("Kurzhantel"); nil bei
+    /// eigenen Studio-Uebungen und solange der Server es nicht liefert.
+    static func geraetLabel(exerciseId: String, maschine: BootstrapResponse.Machine?,
+                            bootstrap: BootstrapResponse?) -> String? {
+        uebung(exerciseId: exerciseId, maschine: maschine, bootstrap: bootstrap)?.geraetLabel
+    }
+
+    /// Name mit Etikett fuer Fliesstext und Listen ohne eigenes Etikett:
+    /// "Bankdrücken (Langhantel)". Gleichnamige Uebungen bleiben so unterscheidbar.
+    static func uebungstitel(exerciseId: String, maschine: BootstrapResponse.Machine?,
+                             bootstrap: BootstrapResponse?) -> String {
+        let uebung = uebung(exerciseId: exerciseId, maschine: maschine, bootstrap: bootstrap)
+        return titel(name: uebung?.name ?? "Übung", geraetLabel: uebung?.geraetLabel)
+    }
+
+    static func titel(name: String, geraetLabel: String?) -> String {
+        guard let geraetLabel, !geraetLabel.isEmpty else { return name }
+        return "\(name) (\(geraetLabel))"
+    }
+
+    private static func uebung(exerciseId: String, maschine: BootstrapResponse.Machine?,
+                               bootstrap: BootstrapResponse?) -> BootstrapResponse.Exercise? {
+        if let uebung = maschine?.exercises.first(where: { $0.id == exerciseId }) { return uebung }
         for maschine in bootstrap?.machines ?? [] {
-            if let name = maschine.exercises.first(where: { $0.id == exerciseId })?.name { return name }
+            if let uebung = maschine.exercises.first(where: { $0.id == exerciseId }) { return uebung }
         }
         for typ in bootstrap?.catalog?.equipmentTypes ?? [] {
-            if let name = typ.exercises.first(where: { $0.id == exerciseId })?.name { return name }
+            if let uebung = typ.exercises.first(where: { $0.id == exerciseId }) { return uebung }
         }
-        return "Übung"
+        return nil
     }
 }
 
@@ -115,10 +143,13 @@ struct PlanZeile: View {
                                      ? DesignSystem.Color.textMuted : DesignSystem.Color.text)
                     .strikethrough(abgehakt, color: DesignSystem.Color.textFaint)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(modell.untertitel)
-                    .font(.system(size: 12.5))
-                    .monospacedDigit()
-                    .foregroundStyle(DesignSystem.Color.textFaint)
+                HStack(spacing: 6) {
+                    if let etikett = modell.geraetLabel { GeraetEtikett(text: etikett) }
+                    Text(modell.untertitel)
+                        .font(.system(size: 12.5))
+                        .monospacedDigit()
+                        .foregroundStyle(DesignSystem.Color.textFaint)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if let status {
@@ -133,12 +164,13 @@ struct PlanZeile: View {
     /// "<Übung>, <Status>, <Vorgabe>" (Task 11, VoiceOver); ohne Status nur
     /// Name und Vorgabe.
     private var voLabel: String {
-        if modell.ausgelassen { return "\(modell.name), heute ausgelassen" }
+        let name = [modell.name, modell.geraetLabel].compactMap { $0 }.joined(separator: ", ")
+        if modell.ausgelassen { return "\(name), heute ausgelassen" }
         if let satz = modell.satzFortschritt {
-            return "\(modell.name), \(satz) Sätze gemacht, \(modell.untertitel)"
+            return "\(name), \(satz) Sätze gemacht, \(modell.untertitel)"
         }
-        guard let status = wirksamerStatus else { return "\(modell.name), \(modell.untertitel)" }
-        return "\(modell.name), \(PlanStatusMarke.gesprochen(status)), \(modell.untertitel)"
+        guard let status = wirksamerStatus else { return "\(name), \(modell.untertitel)" }
+        return "\(name), \(PlanStatusMarke.gesprochen(status)), \(modell.untertitel)"
     }
 }
 

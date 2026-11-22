@@ -244,7 +244,7 @@ final class GeraetModel {
                                                           aktuelleUebung: uebungId)
         else { return nil }
         return (stelle.key,
-                PlanZeilenModell.uebungsname(exerciseId: stelle.wirksam, maschine: nil, bootstrap: bootstrap))
+                PlanZeilenModell.uebungstitel(exerciseId: stelle.wirksam, maschine: nil, bootstrap: bootstrap))
     }
 
     var kannSichern: Bool { !zirkelSatzAbgegeben && (!istCardio || !cardio.istLeer) }
@@ -908,7 +908,7 @@ final class GeraetModel {
                                     aktuelleUebung: uebungId, bootstrap: bootstrap)
         }
         return AblaufListe.frei(bloecke: bloecke, aktuell: (station.schluessel, uebungId)) { [bootstrap] block in
-            PlanZeilenModell.uebungsname(exerciseId: block.exerciseId, maschine: nil, bootstrap: bootstrap)
+            PlanZeilenModell.uebungstitel(exerciseId: block.exerciseId, maschine: nil, bootstrap: bootstrap)
         }
     }
 
