@@ -53,6 +53,44 @@ describe("catalog/gymtavo.json", () => {
     expect(k.exercises.filter((u) => typen.get(u.key)?.length !== 1).map((u) => u.key)).toEqual([]);
   });
 
+  // docs/katalog-stilleitfaden.md, Abschnitt Name.
+  it("haelt das Namensschema ein: kein Geraet im Namen, nur \" – \" als Trenner", () => {
+    const k = katalog();
+    const geraet = /Kurzhantel|Langhantel|\bSZ\b|Kabel|am Gerät|[Mm]aschine/;
+    expect(k.exercises.filter((u) => geraet.test(u.name)).map((u) => u.name)).toEqual([]);
+    const trenner = k.exercises.filter((u) => / · | - |—/.test(u.name) || u.name.split(" – ").length > 2);
+    expect(trenner.map((u) => u.name)).toEqual([]);
+  });
+
+  it("macht jede Uebung ueber Name und Etikett eindeutig", () => {
+    const k = katalog();
+    const etikett = new Map<string, string>();
+    for (const g of k.equipment.filter((x) => !x.retired)) for (const u of g.exercises) etikett.set(u, g.label ?? g.name);
+    const paare = k.exercises.map((u) => `${u.name} [${etikett.get(u.key)}]`);
+    expect(paare.filter((p, i) => paare.indexOf(p) !== i)).toEqual([]);
+  });
+
+  // docs/katalog-stilleitfaden.md, Abschnitt Beschreibung. Gilt fuer jede
+  // schon umgeschriebene Uebung (erkennbar an "Achte auf:"); die uebrigen
+  // folgen paketweise, am Ende faellt der Filter weg.
+  it("haelt in umgeschriebenen Beschreibungen das Drei-Abschnitte-Format ein", () => {
+    const neu = katalog().exercises.filter((u) => u.description?.includes("Achte auf:"));
+    expect(neu.length).toBeGreaterThanOrEqual(10);
+    for (const u of neu) {
+      const text = u.description!;
+      expect(text.length, u.key).toBeLessThanOrEqual(500);
+      expect(text, u.key).not.toMatch(/erfassen|Vorschau|Benötigte Ausstattung|Positionen:|Häufige Fehler|Hinweise:/);
+      const abschnitte = text.split("\n\n");
+      expect(abschnitte.map((a) => a.split("\n")[0]), u.key).toEqual(["Einstellen:", "Bewegung:", "Achte auf:"]);
+      for (const a of abschnitte) {
+        const punkte = a.split("\n").slice(1);
+        expect(punkte.length, u.key).toBeGreaterThanOrEqual(1);
+        expect(punkte.length, u.key).toBeLessThanOrEqual(3);
+        for (const punkt of punkte) expect(punkt, u.key).toMatch(/^- \S.*\.$/);
+      }
+    }
+  });
+
   it("nennt in der Ausstattung keinen abgeloesten Kabelzug mehr", () => {
     const k = katalog();
     const alteNamen = k.equipment.filter((g) => g.retired).map((g) => g.name);
