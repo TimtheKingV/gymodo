@@ -62,3 +62,9 @@ Pflicht: `key`, `name`, `description`, `volume_kind`, `target_min`/`target_max`,
 (mindestens ein primärer), `plan`-Block, `sources`, `review: "draft"`, Eintrag in genau einem nicht
 abgelösten `equipment[].exercises`. `video` darf `null` sein. `review` wird erst nach Tims Durchsicht
 `reviewed`.
+
+- Ohne Video steht im `plan`-Block `vorschlag: false`: Die Übung ist wählbar und tauschbar, der
+  Generator setzt sie aber nicht von selbst in einen Plan.
+- Halteübungen zählen Sekunden (`volume_kind: "seconds"`) und haben keinen `plan`-Block.
+- Übungen ohne Gerät hängen am Typ `bodyweight` (Etikett `Körpergewicht`), der Schlüssel beginnt mit `bw_`.
+- `sources` bleibt leer, solange keine Quelle geprüft wurde.

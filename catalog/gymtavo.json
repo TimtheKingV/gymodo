@@ -551,7 +551,19 @@
         "db_squat_sides",
         "db_calf_seated",
         "db_farmers_walk",
-        "db_side_bend"
+        "db_side_bend",
+        "db_russian_twist",
+        "db_single_leg_rdl",
+        "db_deadlift",
+        "db_walking_lunge",
+        "db_lateral_lunge",
+        "db_sumo_squat",
+        "db_calf_raise_single",
+        "db_decline_press",
+        "db_reverse_fly_incline",
+        "db_external_rotation_side",
+        "db_wrist_curl",
+        "db_wrist_extension"
       ]
     },
     {
@@ -735,7 +747,9 @@
         "assisted_pullup",
         "assisted_dip",
         "assisted_pullup_neutral",
-        "assisted_pullup_supinated"
+        "assisted_pullup_supinated",
+        "hanging_leg_raise",
+        "hanging_knee_raise"
       ]
     },
     {
@@ -2036,7 +2050,11 @@
         "cable_rotation",
         "cable_chop_high_low",
         "cable_lift_low_high",
-        "triceps_pushdown_rope"
+        "triceps_pushdown_rope",
+        "cable_side_bend",
+        "cable_crunch_standing",
+        "cable_upright_row",
+        "cable_curl_single"
       ]
     },
     {
@@ -2069,7 +2087,14 @@
         "bb_curl",
         "bb_shrug",
         "bb_glute_bridge",
-        "bb_reverse_lunge"
+        "bb_reverse_lunge",
+        "bb_hip_thrust",
+        "bb_good_morning",
+        "bb_bulgarian_split_squat",
+        "bb_calf_raise",
+        "bb_standing_press",
+        "bb_decline_bench",
+        "bb_reverse_grip_bench"
       ]
     },
     {
@@ -2092,7 +2117,8 @@
         "ez_reverse",
         "ez_preacher",
         "ez_lying_triceps",
-        "ez_overhead"
+        "ez_overhead",
+        "ez_upright_row"
       ]
     },
     {
@@ -2390,6 +2416,42 @@
       ],
       "exercises": [
         "cardio_skierg"
+      ]
+    },
+    {
+      "key": "bodyweight",
+      "name": "Körpergewicht",
+      "label": "Körpergewicht",
+      "category": "kraft",
+      "group": "eigengewicht",
+      "manufacturer": null,
+      "photo": null,
+      "load_unit": "kg",
+      "load_step": 2.5,
+      "load_min": 0,
+      "load_max": null,
+      "load_start": 0,
+      "secondary": null,
+      "settings": [],
+      "exercises": [
+        "bw_plank",
+        "bw_side_plank",
+        "bw_crunch",
+        "bw_leg_raise_lying",
+        "bw_dead_bug",
+        "bw_bird_dog",
+        "bw_back_extension_floor",
+        "bw_hollow_hold",
+        "bw_mountain_climber",
+        "bw_pushup",
+        "bw_pushup_incline",
+        "bw_pushup_knee",
+        "bw_squat",
+        "bw_reverse_lunge",
+        "bw_glute_bridge",
+        "bw_glute_bridge_single",
+        "bw_wall_sit",
+        "bw_side_leg_raise"
       ]
     }
   ],
@@ -8447,6 +8509,1442 @@
         "github_dataset",
         "lf_insignia"
       ]
+    },
+    {
+      "key": "hanging_leg_raise",
+      "name": "Beinheben – hängend",
+      "description": "Einstellen:\n- Im Obergriff an die Klimmzuggriffe hängen, Arme lang.\n- Beine geschlossen und fast gestreckt halten.\n\nBewegung:\n- Beine ruhig bis etwa zur Waagerechten anheben.\n- Kontrolliert absenken, bis der Körper wieder lang hängt.\n\nAchte auf:\n- Der Körper pendelt nicht, die Beine heben ohne Schwung.\n- Schultern bleiben aktiv und weg von den Ohren.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "hanging_knee_raise",
+      "name": "Knieheben – hängend",
+      "description": "Einstellen:\n- Im Obergriff an die Klimmzuggriffe hängen, Arme lang.\n- Beine geschlossen hängen lassen.\n\nBewegung:\n- Knie ruhig bis über Hüfthöhe zur Brust ziehen.\n- Kontrolliert absenken, bis der Körper wieder lang hängt.\n\nAchte auf:\n- Der Körper pendelt nicht, die Knie heben ohne Schwung.\n- Das Becken rollt oben leicht ein.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_russian_twist",
+      "name": "Russian Twist",
+      "description": "Einstellen:\n- Auf eine Matte setzen, Knie beugen, Fersen aufstellen.\n- Eine Hantel mit beiden Händen vor der Brust halten, Oberkörper leicht zurücklehnen.\n\nBewegung:\n- Oberkörper mit der Hantel ruhig zu einer Seite drehen.\n- Über die Mitte zur anderen Seite drehen.\n\nAchte auf:\n- Die Drehung kommt aus dem Rumpf, nicht nur aus den Armen.\n- Rücken bleibt lang, Brust bleibt aufgerichtet.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "cable_side_bend",
+      "name": "Seitneigen",
+      "description": "Einstellen:\n- Rolle ganz unten einstellen, Einzelgriff einhängen.\n- Seitlich zum Turm stehen, Griff mit der turmnahen Hand fassen, Arm lang.\n\nBewegung:\n- Oberkörper ruhig vom Turm weg zur Seite neigen.\n- Kontrolliert zurück zur Turmseite, danach die Seite wechseln.\n\nAchte auf:\n- Die Bewegung geht nur zur Seite, nicht nach vorne.\n- Hüfte bleibt ruhig über den Füßen.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "cable_crunch_standing",
+      "name": "Crunch – stehend",
+      "description": "Einstellen:\n- Rolle ganz oben einstellen, Seil einhängen.\n- Mit dem Rücken zum Turm stehen, Seilenden neben dem Kopf halten.\n\nBewegung:\n- Oberkörper einrollen, Brustkorb Richtung Becken ziehen.\n- Kontrolliert wieder aufrichten.\n\nAchte auf:\n- Die Hüfte bleibt ruhig, die Bewegung kommt aus dem Bauch.\n- Hände bleiben neben dem Kopf, die Arme ziehen nicht.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_hip_thrust",
+      "name": "Hip Thrust",
+      "description": "Einstellen:\n- Mit den Schulterblättern an eine feste Bank lehnen, Füße hüftbreit aufstellen.\n- Gepolsterte Stange über die Hüfte rollen und mit den Händen festhalten.\n\nBewegung:\n- Becken anheben, bis Oberkörper und Oberschenkel eine Linie bilden.\n- Kontrolliert absenken.\n\nAchte auf:\n- Die Bewegung kommt aus der Hüfte, kein Hohlkreuz.\n- Oben stehen die Unterschenkel senkrecht, das Kinn bleibt leicht zur Brust.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_good_morning",
+      "name": "Good Morning",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Stange auf den oberen Rücken legen, hüftbreit stehen, Knie leicht gebeugt.\n\nBewegung:\n- Hüfte nach hinten schieben und den Oberkörper mit langem Rücken vorneigen.\n- Über die Hüfte wieder aufrichten.\n\nAchte auf:\n- Rücken bleibt lang, die Knie bleiben leicht gebeugt.\n- Nur so tief neigen, wie der Rücken seine Form hält.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_single_leg_rdl",
+      "name": "Rumänisches Kreuzheben – einbeinig",
+      "description": "Einstellen:\n- Auf einem Bein stehen, Knie leicht gebeugt.\n- Eine Hantel in der Hand der Gegenseite halten.\n\nBewegung:\n- Hüfte nach hinten schieben, Oberkörper vorneigen, das freie Bein nach hinten strecken.\n- Über die Hüfte aufrichten, danach die Seite wechseln.\n\nAchte auf:\n- Becken bleibt gerade und dreht nicht auf.\n- Rücken bleibt lang, die Hantel bleibt nah am Standbein.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_deadlift",
+      "name": "Kreuzheben",
+      "description": "Einstellen:\n- Hüftbreit stehen, Hanteln seitlich neben den Füßen.\n- Hüfte und Knie beugen, Hanteln mit langen Armen fassen, Rücken lang.\n\nBewegung:\n- Über die ganzen Füße aufrichten, bis Hüfte und Knie gestreckt sind.\n- Hanteln kontrolliert nah am Körper absenken.\n\nAchte auf:\n- Rücken bleibt lang, Brust bleibt aufgerichtet.\n- Hüfte und Schultern heben gleichzeitig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_walking_lunge",
+      "name": "Ausfallschritt – gehend",
+      "description": "Einstellen:\n- Eine freie, ebene Strecke wählen.\n- Aufrecht stehen, Hanteln seitlich halten.\n\nBewegung:\n- Großen Schritt nach vorne setzen und beide Knie beugen.\n- Über das vordere Bein aufrichten und das hintere Bein direkt in den nächsten Schritt führen.\n\nAchte auf:\n- Das vordere Knie folgt der Fußrichtung.\n- Oberkörper bleibt aufrecht, der vordere Fuß steht ganz auf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_lateral_lunge",
+      "name": "Ausfallschritt – seitlich",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße hüftbreit.\n- Eine Hantel mit beiden Händen vor der Brust halten.\n\nBewegung:\n- Großen Schritt zur Seite setzen, Hüfte nach hinten schieben und das Schrittbein beugen.\n- Kräftig zurück in den Stand drücken, danach die Seite wechseln.\n\nAchte auf:\n- Das andere Bein bleibt gestreckt, beide Füße stehen ganz auf.\n- Das gebeugte Knie folgt der Fußrichtung.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abductors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_sumo_squat",
+      "name": "Sumo-Kniebeuge",
+      "description": "Einstellen:\n- Deutlich breiter als schulterbreit stehen, Fußspitzen zeigen nach außen.\n- Eine Hantel mit beiden Händen an langen Armen vor dem Körper halten.\n\nBewegung:\n- Knie und Hüfte beugen, bis die Oberschenkel etwa waagerecht sind.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Knie folgen der Fußrichtung nach außen.\n- Oberkörper bleibt aufrecht, Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_bulgarian_split_squat",
+      "name": "Bulgarian Split Squat",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen, eine Bank hinter sich stellen.\n- Stange auf den oberen Rücken legen, den hinteren Fuß auf der Bank ablegen.\n\nBewegung:\n- Vorderes Knie beugen und die Hüfte senkrecht absenken.\n- Über das vordere Bein aufrichten, danach die Seite wechseln.\n\nAchte auf:\n- Das vordere Knie folgt der Fußrichtung, die Ferse bleibt am Boden.\n- Oberkörper bleibt aufrecht, das hintere Bein trägt kaum Last.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_calf_raise_single",
+      "name": "Wadenheben – einbeinig",
+      "description": "Einstellen:\n- Mit einem Fußballen auf eine Stufe stellen, die Ferse steht frei.\n- Hantel auf der Seite des Standbeins halten, mit der anderen Hand abstützen.\n\nBewegung:\n- Ferse ruhig absenken, bis die Wade gedehnt ist.\n- Hoch auf den Fußballen drücken, danach die Seite wechseln.\n\nAchte auf:\n- Das Knie bleibt fast gestreckt.\n- Oben kurz halten, ohne zu wippen.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "calves",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_calf_raise",
+      "name": "Wadenheben – stehend",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Stange auf den oberen Rücken legen, hüftbreit stehen.\n\nBewegung:\n- Hoch auf die Fußballen drücken.\n- Fersen kontrolliert absenken.\n\nAchte auf:\n- Knie bleiben fast gestreckt, der Körper bleibt aufrecht.\n- Oben kurz halten, ohne zu wippen.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "calves",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_standing_press",
+      "name": "Schulterdrücken – stehend",
+      "description": "Einstellen:\n- Ablagen am Rack auf Schulterhöhe einstellen.\n- Stange etwas weiter als schulterbreit fassen, auf die obere Brust nehmen, hüftbreit stehen.\n\nBewegung:\n- Stange nah am Gesicht vorbei über den Kopf drücken.\n- Kontrolliert zur oberen Brust absenken.\n\nAchte auf:\n- Bauch und Gesäß bleiben fest, kein Hohlkreuz.\n- Oben steht die Stange über Schultern und Mittelfuß.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_decline_bench",
+      "name": "Negativbankdrücken",
+      "description": "Einstellen:\n- Ablagen und Sicherungen einstellen, Beine an der Negativbank fixieren.\n- Stange etwas weiter als schulterbreit im Obergriff fassen.\n\nBewegung:\n- Stange ruhig zur unteren Brust absenken.\n- Kontrolliert nach oben drücken.\n\nAchte auf:\n- Handgelenke stehen über den Unterarmen.\n- Schulterblätter bleiben auf der Bank, die Stange federt nicht ab.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_decline_press",
+      "name": "Negativbankdrücken",
+      "description": "Einstellen:\n- Beine an der Negativbank fixieren, Hanteln auf den Oberschenkeln aufnehmen.\n- Zurücklegen und die Hanteln über der unteren Brust halten.\n\nBewegung:\n- Hanteln ruhig neben die untere Brust absenken.\n- Kontrolliert nach oben drücken.\n\nAchte auf:\n- Handgelenke stehen über den Ellenbogen.\n- Schulterblätter bleiben auf der Bank.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bb_reverse_grip_bench",
+      "name": "Bankdrücken – Untergriff",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Füße fest aufstellen, Stange schulterbreit im Untergriff fassen.\n\nBewegung:\n- Stange ruhig zum unteren Brustbereich absenken.\n- Kontrolliert über die Brust nach oben drücken.\n\nAchte auf:\n- Ellenbogen bleiben nah am Körper.\n- Daumen umschließen die Stange, Handgelenke bleiben gerade.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "supinated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "ez_upright_row",
+      "name": "Aufrechtes Rudern",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße hüftbreit.\n- Stange etwa schulterbreit im Obergriff an langen Armen halten.\n\nBewegung:\n- Stange nah am Körper bis auf Brusthöhe ziehen, Ellenbogen führen nach außen oben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Ellenbogen steigen höchstens bis auf Schulterhöhe.\n- Schultern bleiben unten, der Oberkörper bleibt ruhig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "cable_upright_row",
+      "name": "Aufrechtes Rudern",
+      "description": "Einstellen:\n- Rolle ganz unten einstellen, gerade Stange einhängen.\n- Nah am Turm aufrecht stehen, Stange schulterbreit im Obergriff fassen.\n\nBewegung:\n- Stange nah am Körper bis auf Brusthöhe ziehen, Ellenbogen führen nach außen oben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Ellenbogen steigen höchstens bis auf Schulterhöhe.\n- Schultern bleiben unten, der Oberkörper bleibt ruhig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_reverse_fly_incline",
+      "name": "Reverse Flys – Schrägbank",
+      "description": "Einstellen:\n- Banklehne auf etwa 45 Grad stellen.\n- Mit der Brust an die Lehne legen, Hanteln hängen unter den Schultern.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich bis auf Schulterhöhe heben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Brust bleibt an der Lehne, der Kopf bleibt in Verlängerung des Rückens.\n- Schultern bleiben weg von den Ohren.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deltoid_posterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_external_rotation_side",
+      "name": "Schulter-Außenrotation – Seitlage",
+      "description": "Einstellen:\n- Auf die Seite legen, den Kopf ablegen.\n- Leichte Hantel in die obere Hand nehmen, Ellenbogen 90 Grad gebeugt an der Taille.\n\nBewegung:\n- Unterarm ruhig nach oben drehen, so weit es ohne Ausweichen geht.\n- Kontrolliert absenken, danach die Seite wechseln.\n\nAchte auf:\n- Der Ellenbogen bleibt an der Taille.\n- Bei Schmerzen in der Schulter aufhören.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "rotator_cuff",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_posterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_wrist_curl",
+      "name": "Handgelenkcurl",
+      "description": "Einstellen:\n- Auf eine Bank setzen, Unterarme auf die Oberschenkel legen.\n- Hanteln im Untergriff halten, die Hände ragen über die Knie.\n\nBewegung:\n- Hände ruhig absenken.\n- Handgelenke nach oben einrollen.\n\nAchte auf:\n- Unterarme bleiben auf den Oberschenkeln liegen.\n- Die Bewegung ist klein und ruhig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "supinated",
+      "muscles": [
+        {
+          "muscle": "forearms",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "db_wrist_extension",
+      "name": "Handgelenkstrecken",
+      "description": "Einstellen:\n- Auf eine Bank setzen, Unterarme auf die Oberschenkel legen.\n- Leichte Hanteln im Obergriff halten, die Hände ragen über die Knie.\n\nBewegung:\n- Hände ruhig absenken.\n- Handrücken nach oben anheben.\n\nAchte auf:\n- Unterarme bleiben auf den Oberschenkeln liegen.\n- Die Bewegung ist klein und ruhig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "forearms",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "cable_curl_single",
+      "name": "Bizepscurl – einarmig",
+      "description": "Einstellen:\n- Rolle ganz unten einstellen, Einzelgriff einhängen.\n- Aufrecht vor dem Turm stehen, Griff im Untergriff fassen, Arm lang.\n\nBewegung:\n- Unterarm beugen, bis die Hand vor der Schulter ist.\n- Kontrolliert strecken, danach die Seite wechseln.\n\nAchte auf:\n- Der Ellenbogen bleibt am Körper.\n- Der Oberkörper bleibt ruhig, ohne Schwung.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "supinated",
+      "muscles": [
+        {
+          "muscle": "biceps",
+          "role": "primary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "arme",
+        "typ": "isolation",
+        "bereiche": [
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_plank",
+      "name": "Plank",
+      "description": "Einstellen:\n- Auf einer Matte auf die Unterarme stützen, Ellenbogen unter den Schultern.\n- Beine nach hinten strecken, Fußspitzen aufstellen.\n\nBewegung:\n- Körper anheben, bis er von Kopf bis Ferse eine Linie bildet.\n- Position halten und ruhig weiteratmen.\n\nAchte auf:\n- Bauch und Gesäß bleiben fest, die Hüfte hängt nicht durch.\n- Der Blick geht zum Boden.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 60,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "primary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_side_plank",
+      "name": "Seitstütz",
+      "description": "Einstellen:\n- Auf einer Matte auf die Seite legen, Unterarm aufstützen, Ellenbogen unter der Schulter.\n- Beine strecken und Füße übereinanderlegen.\n\nBewegung:\n- Hüfte anheben, bis der Körper eine Linie bildet.\n- Position halten, danach die Seite wechseln.\n\nAchte auf:\n- Die Hüfte bleibt oben und kippt nicht nach hinten.\n- Die Schulter bleibt aktiv über dem Ellenbogen.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 45,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abductors",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_crunch",
+      "name": "Crunch",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, Knie beugen, Füße aufstellen.\n- Hände locker an die Schläfen legen.\n\nBewegung:\n- Kopf und Schulterblätter einrollen und vom Boden lösen.\n- Kontrolliert absenken.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Das Kinn bleibt frei, die Hände ziehen nicht am Kopf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_leg_raise_lying",
+      "name": "Beinheben – liegend",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, Arme neben den Körper.\n- Beine geschlossen und fast gestreckt halten.\n\nBewegung:\n- Beine ruhig anheben, bis sie senkrecht stehen.\n- Kontrolliert absenken, bis die Fersen knapp über dem Boden sind.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Nur so tief absenken, wie der Rücken liegen bleibt.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_dead_bug",
+      "name": "Dead Bug",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, Arme senkrecht nach oben strecken.\n- Hüfte und Knie auf 90 Grad anheben.\n\nBewegung:\n- Einen Arm und das gegenüberliegende Bein ruhig Richtung Boden strecken.\n- Zurückführen und die Seite wechseln.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Langsam bewegen und ruhig weiteratmen.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "deep_core",
+          "role": "primary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_bird_dog",
+      "name": "Bird Dog",
+      "description": "Einstellen:\n- Auf einer Matte in den Vierfüßlerstand gehen.\n- Hände stehen unter den Schultern, Knie unter der Hüfte.\n\nBewegung:\n- Einen Arm nach vorne und das gegenüberliegende Bein nach hinten strecken.\n- Kurz halten, zurückführen und die Seite wechseln.\n\nAchte auf:\n- Becken und Rücken bleiben ruhig und waagerecht.\n- Arm und Bein steigen höchstens bis auf Rumpfhöhe.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "erectors",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_back_extension_floor",
+      "name": "Rückenstrecken – liegend",
+      "description": "Einstellen:\n- Auf einer Matte auf den Bauch legen, Beine lang.\n- Hände an die Schläfen oder neben die Schultern nehmen.\n\nBewegung:\n- Brust und Arme ruhig ein Stück vom Boden heben.\n- Kurz halten und kontrolliert absenken.\n\nAchte auf:\n- Der Blick bleibt zum Boden, der Nacken bleibt lang.\n- Füße bleiben am Boden, ohne Schwung heben.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "erectors",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_hollow_hold",
+      "name": "Hollow Hold",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Arme über den Kopf strecken, Beine geschlossen strecken.\n\nBewegung:\n- Schultern und Beine ein Stück vom Boden heben.\n- Position halten und ruhig weiteratmen.\n\nAchte auf:\n- Der untere Rücken drückt in den Boden.\n- Arme und Beine nur so tief halten, wie der Rücken liegen bleibt.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 40,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_mountain_climber",
+      "name": "Mountain Climber",
+      "description": "Einstellen:\n- In den Liegestütz gehen, Hände unter den Schultern.\n- Körper von Kopf bis Ferse in eine Linie bringen.\n\nBewegung:\n- Ein Knie zügig Richtung Brust ziehen.\n- Bein zurückstellen und im Wechsel das andere Knie anziehen.\n\nAchte auf:\n- Die Hüfte bleibt auf Schulterhöhe und wippt nicht.\n- Schultern bleiben über den Händen.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 40,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_pushup",
+      "name": "Liegestütz",
+      "description": "Einstellen:\n- Hände etwas weiter als schulterbreit auf den Boden setzen.\n- Beine strecken, Fußspitzen aufstellen, Körper in eine Linie bringen.\n\nBewegung:\n- Arme beugen und die Brust bis knapp über den Boden absenken.\n- Kontrolliert nach oben drücken.\n\nAchte auf:\n- Bauch und Gesäß bleiben fest, die Hüfte hängt nicht durch.\n- Ellenbogen zeigen schräg nach hinten.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_pushup_incline",
+      "name": "Liegestütz – erhöht",
+      "description": "Einstellen:\n- Hände etwas weiter als schulterbreit auf eine feste Bank setzen.\n- Beine nach hinten strecken, Körper in eine Linie bringen.\n\nBewegung:\n- Arme beugen und die Brust zur Bankkante absenken.\n- Kontrolliert nach oben drücken.\n\nAchte auf:\n- Bauch und Gesäß bleiben fest, die Hüfte hängt nicht durch.\n- Ellenbogen zeigen schräg nach hinten.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_pushup_knee",
+      "name": "Liegestütz – kniend",
+      "description": "Einstellen:\n- Auf einer Matte knien, Hände etwas weiter als schulterbreit aufsetzen.\n- Hüfte nach vorne schieben, bis Knie, Hüfte und Schultern eine Linie bilden.\n\nBewegung:\n- Arme beugen und die Brust bis knapp über den Boden absenken.\n- Kontrolliert nach oben drücken.\n\nAchte auf:\n- Die Hüfte bleibt gestreckt und knickt nicht ab.\n- Ellenbogen zeigen schräg nach hinten.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_squat",
+      "name": "Kniebeuge",
+      "description": "Einstellen:\n- Schulterbreit stehen, Fußspitzen leicht nach außen.\n- Arme vor dem Körper halten.\n\nBewegung:\n- Knie und Hüfte beugen, so tief wie Fersen und Rumpf stabil bleiben.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben am Boden, Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_reverse_lunge",
+      "name": "Ausfallschritt – rückwärts",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße hüftbreit.\n- Hände an die Hüfte nehmen.\n\nBewegung:\n- Großen Schritt nach hinten setzen und beide Knie beugen.\n- Über das vordere Bein aufrichten, danach die Seite wechseln.\n\nAchte auf:\n- Das vordere Knie folgt der Fußrichtung.\n- Oberkörper bleibt aufrecht, der vordere Fuß steht ganz auf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_glute_bridge",
+      "name": "Glute Bridge",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, Knie beugen, Füße hüftbreit aufstellen.\n- Arme neben den Körper legen.\n\nBewegung:\n- Becken anheben, bis Oberkörper und Oberschenkel eine Linie bilden.\n- Kontrolliert absenken.\n\nAchte auf:\n- Die Bewegung kommt aus der Hüfte, kein Hohlkreuz.\n- Schultern bleiben am Boden.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_glute_bridge_single",
+      "name": "Glute Bridge – einbeinig",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, einen Fuß aufstellen.\n- Das andere Bein gestreckt anheben, Arme neben den Körper legen.\n\nBewegung:\n- Becken über das Standbein anheben, bis Oberkörper und Oberschenkel eine Linie bilden.\n- Kontrolliert absenken, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken bleibt gerade und kippt nicht zur freien Seite.\n- Schultern bleiben am Boden.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_wall_sit",
+      "name": "Wandsitzen",
+      "description": "Einstellen:\n- Mit dem Rücken an eine freie Wand lehnen.\n- Füße hüftbreit etwa zwei Fußlängen vor die Wand stellen.\n\nBewegung:\n- An der Wand abrutschen, bis Hüfte und Knie etwa 90 Grad gebeugt sind.\n- Position halten und ruhig weiteratmen.\n\nAchte auf:\n- Der Rücken bleibt an der Wand, die Knie stehen über den Fersen.\n- Die Hände stützen sich nicht auf den Oberschenkeln ab.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 60,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_side_leg_raise",
+      "name": "Hüftabduktion – Seitlage",
+      "description": "Einstellen:\n- Auf einer Matte auf die Seite legen, den Kopf auf dem unteren Arm ablegen.\n- Beine strecken und übereinanderlegen.\n\nBewegung:\n- Das obere Bein gestreckt ruhig anheben.\n- Kontrolliert absenken, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken bleibt senkrecht und rollt nicht nach hinten.\n- Die Fußspitze zeigt nach vorne, nicht nach oben.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abductors",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
     }
   ],
   "products": [

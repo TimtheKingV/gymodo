@@ -122,9 +122,10 @@ describe("Katalog und iOS-Muskelmodell", () => {
 
 // Testnotiz 12.10. abends, #3: kein aktiver Typ startet bei 0.
 describe("catalog/gymtavo.json Startwerte", () => {
-  it("gibt jedem aktiven Typ einen Startwert ueber dem Minimum", () => {
+  // Ausnahme Eigengewicht: dort ist die Last das Zusatzgewicht, und 0 kg ist der richtige Start.
+  it("gibt jedem aktiven Typ ausser Eigengewicht einen Startwert ueber dem Minimum", () => {
     const ohne = katalog()
-      .equipment.filter((g) => !g.retired)
+      .equipment.filter((g) => !g.retired && g.group !== "eigengewicht")
       .filter((g) => g.load_start === null || g.load_start <= g.load_min)
       .map((g) => g.key);
     expect(ohne).toEqual([]);
@@ -153,9 +154,29 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     }
   });
 
-  it("hat ausser Farmer's Walk fuer jede Uebung Plan-Merkmale (freie Wahl, P4)", () => {
-    // db_farmers_walk zaehlt Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
-    expect(katalog().exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(["db_farmers_walk"]);
+  it("hat ausser den Halteuebungen fuer jede Uebung Plan-Merkmale (freie Wahl, P4)", () => {
+    // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
+    const k = katalog();
+    const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
+    const sekunden = k.exercises.filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key)).map((u) => u.key);
+    expect(sekunden).toEqual([
+      "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
+    ]);
+    expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
+  });
+
+  // Ohne Video und ohne Tims Durchsicht waehlt der Generator eine Uebung nicht von selbst.
+  it("schlaegt keine Uebung ohne Video vor", () => {
+    for (const u of planUebungen().filter((x) => x.video === null)) {
+      expect(u.plan!.vorschlag, u.key).toBe(false);
+    }
+  });
+
+  it("fuehrt Uebungen ohne Geraet unter dem Typ Koerpergewicht in der Gruppe Eigengewicht", () => {
+    const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
+    expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
+    expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
+    expect(typen[0]!.exercises).toHaveLength(18);
   });
 
   it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {
