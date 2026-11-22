@@ -70,14 +70,11 @@ describe("catalog/gymtavo.json", () => {
     expect(paare.filter((p, i) => paare.indexOf(p) !== i)).toEqual([]);
   });
 
-  // docs/katalog-stilleitfaden.md, Abschnitt Beschreibung. Gilt fuer jede
-  // schon umgeschriebene Uebung (erkennbar an "Achte auf:"); die uebrigen
-  // folgen paketweise, am Ende faellt der Filter weg.
-  it("haelt in umgeschriebenen Beschreibungen das Drei-Abschnitte-Format ein", () => {
-    const neu = katalog().exercises.filter((u) => u.description?.includes("Achte auf:"));
-    expect(neu.length).toBeGreaterThanOrEqual(10);
+  // docs/katalog-stilleitfaden.md, Abschnitt Beschreibung.
+  it("haelt in jeder Beschreibung das Drei-Abschnitte-Format ein", () => {
+    const neu = katalog().exercises;
     for (const u of neu) {
-      const text = u.description!;
+      const text = u.description ?? "";
       expect(text.length, u.key).toBeLessThanOrEqual(500);
       expect(text, u.key).not.toMatch(/erfassen|Vorschau|Benötigte Ausstattung|Positionen:|Häufige Fehler|Hinweise:/);
       const abschnitte = text.split("\n\n");
@@ -88,16 +85,6 @@ describe("catalog/gymtavo.json", () => {
         expect(punkte.length, u.key).toBeLessThanOrEqual(3);
         for (const punkt of punkte) expect(punkt, u.key).toMatch(/^- \S.*\.$/);
       }
-    }
-  });
-
-  it("nennt in der Ausstattung keinen abgeloesten Kabelzug mehr", () => {
-    const k = katalog();
-    const alteNamen = k.equipment.filter((g) => g.retired).map((g) => g.name);
-    const kabelzug = new Set(k.equipment.find((g) => g.key === "dual_cable_station")!.exercises);
-    for (const u of k.exercises.filter((x) => kabelzug.has(x.key))) {
-      const ausstattung = u.description?.split("Benötigte Ausstattung:")[1] ?? "";
-      for (const name of alteNamen) expect(ausstattung, u.key).not.toContain(`1 × ${name}`);
     }
   });
 });

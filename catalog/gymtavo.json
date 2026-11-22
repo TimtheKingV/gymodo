@@ -2397,7 +2397,7 @@
     {
       "key": "chest_press_neutral",
       "name": "Brustpresse – Neutralgriff",
-      "description": "Einstellen:\n- Sitz so einstellen, dass die Griffe etwa auf Brustmitte liegen.\n- Rücken anlehnen, Füße stabil aufstellen und die senkrechten Griffe umfassen.\n\nBewegung:\n- Die Griffe ruhig nach vorne drücken.\n- Vor einer überstreckten Ellenbogenposition stoppen.\n- Die Griffe kontrolliert zur Ausgangsposition zurückführen.\n\nHinweise:\n- Rücken bleibt an der Lehne.\n- Handgelenke in Verlängerung der Unterarme halten.\n\nHäufige Fehler:\n- Schwung aus dem Oberkörper.\n- Schultern während des Drückens hochziehen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Griffe vor der Brust.\nEnde: Arme weitgehend gestreckt, Ellenbogen nicht überstreckt.\n\nBenötigte Ausstattung: 1 × Brustpresse",
+      "description": "Einstellen:\n- Sitz so einstellen, dass die Griffe auf Brustmitte liegen.\n- Rücken anlehnen, Füße aufstellen, die senkrechten Griffe fassen.\n\nBewegung:\n- Griffe ruhig nach vorne drücken, bis die Arme fast gestreckt sind.\n- Kontrolliert zurückführen.\n\nAchte auf:\n- Rücken bleibt an der Lehne, Schultern bleiben unten.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2435,7 +2435,7 @@
     {
       "key": "chest_press_pronated",
       "name": "Brustpresse – Obergriff",
-      "description": "Einstellen:\n- Sitz für Griffe auf mittlerer Brusthöhe einstellen; Obergriff wählen. Rücken anlehnen und Füße aufstellen.\n\nBewegung:\n- Griffe nach vorne drücken, bis die Ellenbogen weitgehend gestreckt sind.\n- Kontrolliert zurückführen; Ellenbogen nicht weit hinter den Rumpf sinken lassen.\n\nHinweise:\n- Handgelenke gerade und Rücken am Polster halten.\n\nHäufige Fehler:\n- Schultern hochziehen oder den Rücken von der Lehne lösen.\n\nPositionen:\nStart: Obergriffe neben der Brust, Ellenbogen gebeugt.\nEnde: Griffe vor der Brust, Arme lang.\n\nBenötigte Ausstattung: 1 × Brustpresse",
+      "description": "Einstellen:\n- Sitz so einstellen, dass die Griffe auf Brustmitte liegen.\n- Rücken anlehnen, Füße aufstellen, die waagerechten Griffe im Obergriff fassen.\n\nBewegung:\n- Griffe nach vorne drücken, bis die Arme fast gestreckt sind.\n- Kontrolliert zurückführen.\n\nAchte auf:\n- Rücken bleibt an der Lehne, Schultern bleiben unten.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2473,7 +2473,7 @@
     {
       "key": "incline_chest_press",
       "name": "Schrägbrustpresse",
-      "description": "Einstellen:\n- Schrägbrustpresse mit nach oben-vorne laufenden Hebeln wählen. Sitz für Griffe an der oberen Brust einstellen; Rücken und Becken anlegen.\n\nBewegung:\n- Griffe nach vorne oben bis zu gestreckten Armen führen, ohne die Ellenbogen nach hinten zu überstrecken.\n- Langsam bis zur kontrollierbaren Ausgangsposition absenken.\n\nHinweise:\n- Der Oberkörper bleibt an der schrägen Lehne.\n\nHäufige Fehler:\n- Mit einer Rückenüberstreckung zusätzliche Höhe erzeugen.\n\nPositionen:\nStart: Griffe vor der oberen Brust, Arme gebeugt.\nEnde: Arme nach vorne oben gestreckt; Rücken bleibt an der Lehne.\n\nBenötigte Ausstattung: 1 × Schrägbrustpresse",
+      "description": "Einstellen:\n- Sitz so einstellen, dass die Griffe auf Höhe der oberen Brust liegen.\n- Rücken und Becken anlehnen, Füße aufstellen.\n\nBewegung:\n- Griffe nach vorne oben drücken, bis die Arme fast gestreckt sind.\n- Langsam zurückführen.\n\nAchte auf:\n- Der Rücken bleibt an der Lehne.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2511,7 +2511,7 @@
     {
       "key": "pec_deck_handles",
       "name": "Butterfly",
-      "description": "Einstellen:\n- Sitzhöhe so wählen, dass die Griffe etwa auf Brusthöhe liegen und die Ellenbogen etwas unter den Schultern bleiben.\n- Rücken anlehnen, Füße aufstellen und beide Handgriffe umfassen.\n- Startweite so einstellen, dass die Arme ohne Ausweichen nach hinten geöffnet werden können.\n\nBewegung:\n- Die Griffe in einem Bogen vor der Brust zusammenführen.\n- Die leichte Ellenbogenbeugung während der Bewegung beibehalten.\n- Die Arme kontrolliert bis zur eingestellten Startweite öffnen.\n\nHinweise:\n- Rücken bleibt an der Lehne.\n- Die Bewegung kommt aus den Schultern; die Hände drücken nicht abwechselnd.\n\nHäufige Fehler:\n- Ellenbogen während der Bewegung stark beugen und strecken.\n- Die Schultern nach vorne schieben oder die Gewichte zusammenschlagen lassen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Ellenbogen leicht gebeugt.\nEnde: Griffe vor der Brust angenähert, Oberkörper unverändert.\n\nBenötigte Ausstattung: 1 × Butterfly / Reverse-Fly-Kombigerät",
+      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Griffe auf Brusthöhe liegen.\n- Startweite so wählen, dass sich die Arme bequem öffnen lassen.\n- Rücken anlehnen und beide Griffe fassen.\n\nBewegung:\n- Griffe in einem Bogen vor der Brust zusammenführen.\n- Arme kontrolliert bis zur Startweite öffnen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Rücken bleibt an der Lehne, Schultern bleiben hinten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2546,7 +2546,7 @@
     {
       "key": "shoulder_press_machine",
       "name": "Schulterpresse",
-      "description": "Einstellen:\n- Sitzhöhe so wählen, dass die Griffe ungefähr auf Schulterhöhe oder etwas darüber beginnen.\n- Rücken anlehnen und beide Füße fest aufstellen.\n- Die vorgesehenen Obergriffe umfassen; Unterarme liegen möglichst unter den Griffen.\n\nBewegung:\n- Beide Griffe gleichmäßig nach oben drücken.\n- Die Arme weitgehend strecken, ohne die Ellenbogen ruckartig durchzudrücken.\n- Die Griffe langsam zur eingestellten Ausgangshöhe zurückführen.\n\nHinweise:\n- Rippen und Becken bleiben übereinander.\n- Der Kopf bleibt zwischen den Armen, ohne vorgeschoben zu werden.\n\nHäufige Fehler:\n- Für die letzten Zentimeter ins Hohlkreuz ausweichen.\n- Die Griffe tiefer absenken, als es die kontrollierbare Schulterbewegung erlaubt.\n\nPositionen:\nStart: Griffe auf Schulterhöhe, Ellenbogen gebeugt.\nEnde: Griffe über dem Kopf, Arme weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Schulterpresse",
+      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Griffe auf Schulterhöhe beginnen.\n- Rücken anlehnen, Füße aufstellen, Griffe im Obergriff fassen.\n\nBewegung:\n- Beide Griffe gleichmäßig nach oben drücken, bis die Arme fast gestreckt sind.\n- Langsam zur Ausgangshöhe zurückführen.\n\nAchte auf:\n- Rücken bleibt an der Lehne, kein Hohlkreuz.\n- Unterarme stehen unter den Griffen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2585,7 +2585,7 @@
     {
       "key": "lateral_raise_machine",
       "name": "Seitheben",
-      "description": "Einstellen:\n- Sitz so einstellen, dass die Schultergelenke zur Hebelachse passen. Oberarme an die seitlichen Polster legen und Griffe locker halten.\n\nBewegung:\n- Die gebeugten Arme seitlich bis etwa Schulterhöhe anheben.\n- Polster langsam wieder absenken.\n\nHinweise:\n- Ellenbogenwinkel bleibt annähernd gleich.\n\nHäufige Fehler:\n- Schultern zu den Ohren ziehen oder mit dem Rumpf wippen.\n\nPositionen:\nStart: Oberarme seitlich abgesenkt, Ellenbogen gebeugt.\nEnde: Oberarme seitlich etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Seithebemaschine",
+      "description": "Einstellen:\n- Sitz so einstellen, dass die Schultern auf Höhe der Drehachse liegen.\n- Oberarme an die Polster legen, Griffe locker halten.\n\nBewegung:\n- Arme seitlich bis Schulterhöhe anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Schultern bleiben unten, weg von den Ohren.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2619,7 +2619,7 @@
     {
       "key": "reverse_fly_machine",
       "name": "Reverse Flys",
-      "description": "Einstellen:\n- Zum Polster hinsetzen und Brust anlegen; beide Füße sicher aufstellen.\n- Sitzhöhe für annähernd waagerechte Oberarme wählen.\n- Gerätearme in die vorgesehene Reverse-Fly-Stellung bringen und die Neutralgriffe umfassen.\n\nBewegung:\n- Die Griffe nach außen und hinten führen, ohne den Oberkörper vom Polster zu lösen.\n- Die leichte Ellenbogenbeugung ungefähr beibehalten.\n- Beide Arme ruhig vor den Körper zurückführen.\n\nHinweise:\n- Schultern bleiben vom Kopf entfernt.\n- Nur so weit öffnen, wie der Brustkontakt bestehen bleibt.\n\nHäufige Fehler:\n- Mit dem Rücken Schwung holen.\n- Aus der Bewegung ein Rudern mit stark gebeugten Ellenbogen machen.\n\nPositionen:\nStart: Arme nach vorne geführt, Brust am Polster.\nEnde: Arme seitlich geöffnet, Brust weiterhin am Polster.\n\nBenötigte Ausstattung: 1 × Butterfly / Reverse-Fly-Kombigerät",
+      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Arme waagerecht nach vorne zeigen.\n- Mit der Brust zum Polster setzen, Füße aufstellen, Griffe fassen.\n\nBewegung:\n- Griffe nach außen und hinten führen.\n- Ruhig vor den Körper zurückführen.\n\nAchte auf:\n- Die Brust bleibt am Polster.\n- Ellenbogen bleiben leicht gebeugt, Schultern unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2654,7 +2654,7 @@
     {
       "key": "row_machine_neutral",
       "name": "Rudern – enger Neutralgriff",
-      "description": "Einstellen:\n- Sitzhöhe und Brustpolster so einstellen, dass die engen Griffe erreichbar sind.\n- Füße auf den vorgesehenen Auflagen abstellen; Brust an das Polster bringen.\n- Neutralgriffe umfassen und die Arme nach vorne reichen lassen, ohne vom Sitz zu rutschen.\n\nBewegung:\n- Die Griffe zum unteren Brustkorb ziehen und die Ellenbogen nahe am Körper nach hinten führen.\n- Die Schulterblätter dürfen der Zugbewegung folgen; Brustkontakt halten.\n- Die Arme langsam nach vorne führen, ohne den Oberkörper mitzuziehen.\n\nHinweise:\n- Die Hände bleiben in Verlängerung der Unterarme.\n- Brustpolster und Füße stabilisieren den Körper.\n\nHäufige Fehler:\n- Den Oberkörper bei jeder Wiederholung zurückwerfen.\n- Schultern hochziehen oder Handgelenke abknicken.\n\nPositionen:\nStart: Arme nach vorne ausgestreckt, Brust gestützt.\nEnde: Griffe am Rumpf, Ellenbogen nach hinten geführt.\n\nBenötigte Ausstattung: 1 × Rudermaschine",
+      "description": "Einstellen:\n- Sitz und Brustpolster so einstellen, dass die Griffe mit langen Armen erreichbar sind.\n- Füße abstellen, Brust ans Polster, die engen Griffe fassen.\n\nBewegung:\n- Griffe zum unteren Brustkorb ziehen, Ellenbogen nah am Körper nach hinten führen.\n- Arme langsam nach vorne strecken.\n\nAchte auf:\n- Die Brust bleibt am Polster.\n- Schultern bleiben unten, Handgelenke gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2697,7 +2697,7 @@
     {
       "key": "row_machine_pronated",
       "name": "Rudern – Obergriff",
-      "description": "Einstellen:\n- Brustpolster und Sitz auf die breiten waagerechten Obergriffe einstellen. Füße auf die Auflagen stellen.\n\nBewegung:\n- Griffe zur Brust ziehen und Ellenbogen seitlich nach hinten führen.\n- Arme kontrolliert wieder nach vorne reichen lassen.\n\nHinweise:\n- Brustkontakt bleibt bestehen.\n\nHäufige Fehler:\n- Oberkörper zurückwerfen oder die Schultern hochziehen.\n\nPositionen:\nStart: Arme nach vorne, Hände im breiten Obergriff.\nEnde: Griffe an der Brust, Ellenbogen seitlich zurück.\n\nBenötigte Ausstattung: 1 × Rudermaschine",
+      "description": "Einstellen:\n- Sitz und Brustpolster so einstellen, dass die Griffe mit langen Armen erreichbar sind.\n- Füße abstellen, Brust ans Polster, die breiten Griffe im Obergriff fassen.\n\nBewegung:\n- Griffe zur Brust ziehen, Ellenbogen seitlich nach hinten führen.\n- Arme kontrolliert nach vorne strecken.\n\nAchte auf:\n- Die Brust bleibt am Polster.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2739,7 +2739,7 @@
     {
       "key": "high_row_machine",
       "name": "High Row",
-      "description": "Einstellen:\n- Sitz und Brustpolster einstellen; die hohen Griffe müssen ohne Aufstehen erreichbar sein. Füße fest abstellen.\n\nBewegung:\n- Hebel von vorne oben schräg nach unten zum Rumpf ziehen.\n- Griffe auf derselben Bahn kontrolliert nach vorne oben führen.\n\nHinweise:\n- Brust bleibt gestützt, Ellenbogen folgen der Hebelbahn.\n\nHäufige Fehler:\n- Aus dem Sitz aufstehen oder mit dem Rücken Schwung holen.\n\nPositionen:\nStart: Arme schräg nach vorne oben angehoben.\nEnde: Griffe zum oberen Rumpf gezogen.\n\nBenötigte Ausstattung: 1 × High-Row-Maschine",
+      "description": "Einstellen:\n- Sitz und Brustpolster so einstellen, dass die Griffe im Sitzen erreichbar sind.\n- Füße fest abstellen, Brust ans Polster.\n\nBewegung:\n- Griffe von vorne oben schräg nach unten zum Rumpf ziehen.\n- Kontrolliert nach vorne oben zurückführen.\n\nAchte auf:\n- Die Brust bleibt am Polster.\n- Das Gesäß bleibt auf dem Sitz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2781,7 +2781,7 @@
     {
       "key": "lat_machine_pronated",
       "name": "Latzug",
-      "description": "Einstellen:\n- Hebellatzug mit Obergriffen wählen. Sitzhöhe und Oberschenkelpolster passend einstellen; beide Füße aufstellen.\n\nBewegung:\n- Die unabhängigen Gerätehebel gleichmäßig nach unten ziehen.\n- Die Arme ruhig nach oben strecken lassen.\n\nHinweise:\n- Der Körper bleibt im Sitz, die Griffe bewegen sich.\n\nHäufige Fehler:\n- Die Schultern ruckartig hochziehen oder sich stark zurücklehnen.\n\nPositionen:\nStart: Arme oben an den Hebelgriffen.\nEnde: Griffe neben den Schultern, Ellenbogen unten.\n\nBenötigte Ausstattung: 1 × Latmaschine mit geführten Hebeln",
+      "description": "Einstellen:\n- Sitzhöhe und Oberschenkelpolster so einstellen, dass die Beine fest sitzen.\n- Griffe im Obergriff fassen.\n\nBewegung:\n- Beide Griffe gleichmäßig nach unten ziehen.\n- Arme ruhig nach oben strecken.\n\nAchte auf:\n- Oberkörper bleibt ruhig und nur leicht zurückgelehnt.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2819,7 +2819,7 @@
     {
       "key": "pullover_machine",
       "name": "Überzüge",
-      "description": "Einstellen:\n- Sitz und Startanschlag einstellen. Oberarme auf die vorgesehenen Polster legen, Haltegriff fassen und Rücken anlehnen.\n\nBewegung:\n- Oberarme mit den Polstern in einem Bogen nach vorne unten bewegen.\n- In die kontrollierbare Überkopfposition zurückführen.\n\nHinweise:\n- Ellenbogen bleiben gebeugt; Bewegung kommt aus den Schultern.\n\nHäufige Fehler:\n- Mit den Ellenbogen drücken und strecken oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Oberarme angehoben, Ellenbogen auf den Polstern.\nEnde: Oberarme neben dem Rumpf, Polster abgesenkt.\n\nBenötigte Ausstattung: 1 × Pullovermaschine",
+      "description": "Einstellen:\n- Sitz und Startposition einstellen.\n- Rücken anlehnen, Oberarme auf die Polster legen und den Griff fassen.\n\nBewegung:\n- Oberarme in einem Bogen nach vorne unten führen.\n- Kontrolliert über Kopf zurückführen.\n\nAchte auf:\n- Die Bewegung kommt aus den Schultern, die Ellenbogen bleiben gebeugt.\n- Rücken bleibt an der Lehne, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2853,7 +2853,7 @@
     {
       "key": "assisted_pullup",
       "name": "Klimmzug – Obergriff",
-      "description": "Einstellen:\n- Unterstützung einstellen: Mehr angezeigtes Gewicht macht die Übung leichter.\n- Über die Trittstufen einsteigen. Etwas weiter als schulterbreit im Obergriff fassen: Handflächen zeigen vom Gesicht weg. Knie auf das Assistenzpolster bringen.\n- Eine stabile hängende Startposition mit kontrollierten Schultern einnehmen.\n\nBewegung:\n- Den Körper zum festen Griff hochziehen; die Knie bleiben auf dem mitlaufenden Polster.\n- Die Ellenbogen nach unten führen und ohne Schwung so weit hochziehen, wie die Position kontrolliert bleibt.\n- Den Körper langsam wieder absenken. Zum Aussteigen das Polster nach Geräteanleitung sichern und die Trittstufen nutzen.\n\nHinweise:\n- Die Griffe bleiben fest; der Körper bewegt sich.\n- Kein Abspringen vom belasteten Polster.\n\nHäufige Fehler:\n- Mit den Knien auf dem Polster wippen.\n- Die Unterstützungsanzeige mit einer zusätzlich gehobenen Last verwechseln.\n\nPositionen:\nStart: Körper unter den Griffen, Arme lang, Knie auf dem Polster.\nEnde: Körper angehoben, Ellenbogen gebeugt, Polster folgt.\n\nBenötigte Ausstattung: 1 × Klimmzug-/Dip-Assistenzmaschine\n\nGegengewicht: Mehr Gewicht bedeutet mehr Unterstützung.",
+      "description": "Einstellen:\n- Unterstützung einstellen: mehr Gewicht macht die Übung leichter.\n- Über die Trittstufen einsteigen, die Stange etwas breiter als schulterbreit im Obergriff fassen und die Knie auf das Polster setzen.\n\nBewegung:\n- Körper ohne Schwung zu den Griffen hochziehen, Ellenbogen nach unten führen.\n- Langsam absenken, bis die Arme lang sind.\n\nAchte auf:\n- Knie bleiben ruhig auf dem Polster.\n- Zum Aussteigen die Trittstufen nutzen, nicht abspringen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2892,7 +2892,7 @@
     {
       "key": "assisted_dip",
       "name": "Dips",
-      "description": "Einstellen:\n- Unterstützung und Griffweite vor dem Einstieg einstellen; mehr Gegengewicht erleichtert die Übung.\n- Über die Trittstufen einsteigen, Neutralgriffe halten und Knie auf das Polster bringen.\n- Oben mit weitgehend gestreckten Armen und ruhigem Oberkörper beginnen.\n\nBewegung:\n- Den Körper durch Beugen der Ellenbogen langsam zwischen den Griffen absenken.\n- Nur bis zur kontrollierbaren Tiefe gehen; die Schultern nicht nach vorne fallen lassen.\n- Den Körper wieder hochdrücken. Nach dem Satz Polster und Ausstieg nach Geräteanleitung nutzen.\n\nHinweise:\n- Hände bleiben auf den festen Griffen.\n- Knie und Assistenzpolster bewegen sich gemeinsam.\n\nHäufige Fehler:\n- Sehr tief absinken und dabei die Schulterposition verlieren.\n- Das Polster durch Beinbewegungen zusätzlich nach unten drücken.\n\nPositionen:\nStart: Obere Stützposition, Arme nahezu gestreckt.\nEnde: Untere kontrollierte Position, Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Klimmzug-/Dip-Assistenzmaschine\n\nGegengewicht: Mehr Gewicht bedeutet mehr Unterstützung.",
+      "description": "Einstellen:\n- Unterstützung einstellen: mehr Gewicht macht die Übung leichter.\n- Über die Trittstufen einsteigen, Griffe fassen und die Knie auf das Polster setzen.\n\nBewegung:\n- Ellenbogen beugen und den Körper langsam absenken.\n- Wieder hochdrücken, bis die Arme fast gestreckt sind.\n\nAchte auf:\n- Nur so tief gehen, wie die Schultern stabil bleiben.\n- Zum Aussteigen die Trittstufen nutzen, nicht abspringen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2932,7 +2932,7 @@
     {
       "key": "preacher_curl_machine",
       "name": "Scottcurl",
-      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Oberarme auf dem Schrägpolster liegen und die Ellenbogen zur Geräteachse passen.\n- Füße aufstellen und die Untergriffe mit geraden Handgelenken umfassen.\n- Mit weitgehend gestreckten, nicht durchgedrückten Ellenbogen beginnen.\n\nBewegung:\n- Die Unterarme durch Beugen der Ellenbogen anheben.\n- Die Oberarme auf dem Polster lassen; den Rumpf ruhig halten.\n- Die Griffe langsam absenken, bis die Ellenbogen wieder weitgehend gestreckt sind.\n\nHinweise:\n- Ellenbogen bleiben an derselben Stelle.\n- Griff und Unterarm bleiben auf einer Linie.\n\nHäufige Fehler:\n- Die Oberarme vom Polster abheben.\n- Mit dem Oberkörper nach hinten ziehen oder die Handgelenke einknicken.\n\nPositionen:\nStart: Oberarme auf dem Polster, Unterarme abgesenkt.\nEnde: Ellenbogen gebeugt, Griffe zum Oberkörper angehoben.\n\nBenötigte Ausstattung: 1 × Bizepsmaschine",
+      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Oberarme auf dem Polster liegen und die Ellenbogen auf Höhe der Drehachse sind.\n- Griffe im Untergriff mit geraden Handgelenken fassen.\n\nBewegung:\n- Ellenbogen beugen und die Griffe anheben.\n- Langsam absenken, bis die Arme fast gestreckt sind.\n\nAchte auf:\n- Oberarme bleiben auf dem Polster.\n- Oberkörper bleibt ruhig, Handgelenke gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2968,7 +2968,7 @@
     {
       "key": "triceps_extension_machine",
       "name": "Trizepsstrecken",
-      "description": "Einstellen:\n- Sitzhöhe für Ellenbogen auf Höhe der Hebelachse wählen. Oberarme auf das vordere Polster legen und Neutralgriffe fassen.\n\nBewegung:\n- Ellenbogen strecken und die Griffe nach vorne unten bewegen.\n- Unterarme langsam zurückführen, ohne die Oberarme abzuheben.\n\nHinweise:\n- Ellenbogen bleiben auf dem Polster.\n\nHäufige Fehler:\n- Mit dem Oberkörper nach vorne drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hände nahe am Oberkörper.\nEnde: Ellenbogen weitgehend gestreckt, Hände vorne unten.\n\nBenötigte Ausstattung: 1 × Trizepsmaschine",
+      "description": "Einstellen:\n- Sitzhöhe so einstellen, dass die Ellenbogen auf Höhe der Drehachse liegen.\n- Oberarme auf das Polster legen und die Griffe fassen.\n\nBewegung:\n- Ellenbogen strecken und die Griffe nach vorne unten drücken.\n- Langsam zurückführen.\n\nAchte auf:\n- Ellenbogen bleiben auf dem Polster.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -2998,7 +2998,7 @@
     {
       "key": "seated_dip_machine",
       "name": "Dips – sitzend",
-      "description": "Einstellen:\n- Sitz und Griffweite einstellen. Rücken anlegen, Füße aufstellen und Griffe neben dem Rumpf fassen.\n\nBewegung:\n- Die beweglichen Griffe nach unten drücken und die Ellenbogen strecken.\n- Griffe kontrolliert wieder anheben lassen.\n\nHinweise:\n- Der Körper bleibt auf dem Sitz.\n\nHäufige Fehler:\n- Sich vom Sitz hochdrücken wie beim freien Dip.\n\nPositionen:\nStart: Griffe neben der Taille, Ellenbogen gebeugt.\nEnde: Griffe tiefer neben der Hüfte, Arme lang.\n\nBenötigte Ausstattung: 1 × Sitz-Dip-Maschine",
+      "description": "Einstellen:\n- Sitz und Griffweite einstellen.\n- Rücken anlehnen, Füße aufstellen, Griffe neben dem Rumpf fassen.\n\nBewegung:\n- Griffe nach unten drücken, bis die Arme fast gestreckt sind.\n- Kontrolliert wieder nach oben führen.\n\nAchte auf:\n- Das Gesäß bleibt auf dem Sitz.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3037,7 +3037,7 @@
     {
       "key": "leg_press_horizontal",
       "name": "Beinpresse",
-      "description": "Einstellen:\n- Rücken und Becken vollständig anlehnen.\n- Füße etwa hüftbreit aufsetzen; Sitzabstand für eine kontrollierbare Kniebeugung einstellen.\n\nBewegung:\n- Die bewegliche Platte mit beiden Füßen wegdrücken.\n- Die Knie weitgehend strecken, ohne sie zu überstrecken.\n- Die Platte langsam zurückführen, solange Becken und Rücken angelehnt bleiben.\n\nHinweise:\n- Fersen bleiben auf der Platte.\n- Knie folgen der Richtung der Füße.\n\nHäufige Fehler:\n- Becken hebt von der Lehne ab.\n- Knie werden ruckartig durchgedrückt.\n\nPositionen:\nStart: Knie gebeugt, ganze Füße auf der Druckplatte.\nEnde: Beine weitgehend gestreckt, Füße bleiben auf der Platte.\n\nBenötigte Ausstattung: 1 × Horizontale Beinpresse, feste Sitzposition",
+      "description": "Einstellen:\n- Sitzabstand so einstellen, dass die Knie am Start etwa rechtwinklig gebeugt sind.\n- Rücken und Becken anlehnen, Füße hüftbreit auf die Platte stellen.\n\nBewegung:\n- Platte wegdrücken, bis die Beine fast gestreckt sind.\n- Langsam zurückführen.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben auf der Platte, das Becken bleibt an der Lehne.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3071,7 +3071,7 @@
     {
       "key": "leg_press_45",
       "name": "Beinpresse",
-      "description": "Einstellen:\n- Scheiben beidseitig gleichmäßig auflegen und die Gesamtmenge der zusätzlich aufgelegten Scheiben erfassen.\n- Rücken und Becken anlehnen; ganze Füße ungefähr hüftbreit auf die Platte stellen.\n- Sicherheitsanschläge passend einstellen; den Schlitten erst nach Einweisung über die vorgesehenen Griffe entriegeln.\n\nBewegung:\n- Aus der gebeugten Position die Platte wegdrücken, ohne die Knie ruckartig zu verriegeln.\n- Die Knie wieder beugen und den Schlitten kontrolliert zum Körper führen; stoppen, bevor sich Becken oder Fersen lösen.\n- Am Satzende den Schlitten nach Geräteanleitung kontrolliert wieder einhängen.\n\nHinweise:\n- Knie bewegen sich in Richtung der Füße.\n- Beide Fußsohlen bleiben auf der Platte.\n\nHäufige Fehler:\n- Zu tief absenken und dabei das Becken einrollen.\n- Den Schlitten ungesichert verlassen.\n\nPositionen:\nStart: Knie gebeugt, ganze Füße auf dem schrägen Schlitten.\nEnde: Beine weitgehend gestreckt, Schlitten nach oben verschoben.\n\nBenötigte Ausstattung: 1 × 45-Grad-Schlittenpresse",
+      "description": "Einstellen:\n- Scheiben auf beiden Seiten gleich auflegen, Sicherheitsanschläge einstellen.\n- Rücken und Becken anlehnen, Füße hüftbreit auf die Platte stellen.\n- Schlitten über die Griffe entriegeln.\n\nBewegung:\n- Knie beugen und den Schlitten kontrolliert absenken.\n- Wegdrücken, bis die Beine fast gestreckt sind.\n- Am Satzende den Schlitten wieder einhängen.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben auf der Platte, das Becken bleibt an der Lehne.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3106,7 +3106,7 @@
     {
       "key": "hack_squat_machine",
       "name": "Hackenschmidt-Kniebeuge",
-      "description": "Einstellen:\n- Scheiben gleichmäßig auflegen. Rücken und Schultern an die Schlittenpolster legen; ganze Füße auf die Plattform stellen. Sicherheitsanschläge vor dem Entriegeln einstellen.\n- Die Hackenschmidt-Kniebeuge ist eine geführte Kniebeuge: Rücken und Schulterpolster bewegen sich gemeinsam auf schrägen Schienen; die Fußplatte bleibt fest.\n\nBewegung:\n- Aus der gebeugten Position den Schlitten entlang der Schienen hochdrücken.\n- Knie und Hüfte kontrolliert beugen; am Satzende nach Geräteanleitung einhängen.\n\nHinweise:\n- Fersen und Becken behalten Kontakt.\n\nHäufige Fehler:\n- Zu tief sinken und das Becken vom Polster lösen.\n\nPositionen:\nStart: Knie und Hüfte gebeugt, Schlitten unten.\nEnde: Beine weitgehend gestreckt, Schlitten oben.\n\nBenötigte Ausstattung: 1 × Hackenschmidt-Schlitten",
+      "description": "Einstellen:\n- Scheiben auf beiden Seiten gleich auflegen, Sicherheitsanschläge einstellen.\n- Rücken und Schultern an die Polster legen, Füße ganz auf die Plattform stellen.\n- Schlitten entriegeln.\n\nBewegung:\n- Knie und Hüfte beugen und kontrolliert absenken.\n- Hochdrücken, bis die Beine fast gestreckt sind.\n- Am Satzende den Schlitten wieder einhängen.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben auf der Plattform, das Becken bleibt am Polster.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3144,7 +3144,7 @@
     {
       "key": "leg_extension_machine",
       "name": "Beinstrecker",
-      "description": "Einstellen:\n- Lehne so einstellen, dass die Knie ungefähr mit der Geräteachse ausgerichtet sind.\n- Die Rolle vor dem unteren Unterschenkel oberhalb der Fußgelenke positionieren.\n- Rücken anlegen, Haltegriffe fassen und eine passende Startbeugung einstellen.\n\nBewegung:\n- Die Unterschenkel nach vorne oben führen und dabei die Knie strecken.\n- Vor einem ruckartigen Durchdrücken stoppen; Oberschenkel und Becken bleiben ruhig.\n- Die Rolle langsam in die Ausgangsposition zurückführen.\n\nHinweise:\n- Die Knieachse bleibt an derselben Stelle.\n- Die Rolle bleibt am unteren Unterschenkel.\n\nHäufige Fehler:\n- Hüfte vom Sitz abheben.\n- Die Rückbewegung fallen lassen.\n\nPositionen:\nStart: Knie gebeugt, Rolle vor den unteren Unterschenkeln.\nEnde: Unterschenkel nach vorne angehoben, Knie weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Beinstreckermaschine",
+      "description": "Einstellen:\n- Lehne so einstellen, dass die Knie auf Höhe der Drehachse liegen.\n- Rolle vor den unteren Unterschenkel legen, knapp über dem Fußgelenk.\n- Rücken anlehnen, Griffe fassen.\n\nBewegung:\n- Knie strecken und die Rolle nach vorne oben führen.\n- Langsam zurückführen.\n\nAchte auf:\n- Gesäß und Oberschenkel bleiben auf dem Sitz.\n- Auch der Rückweg bleibt kontrolliert.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3210,7 +3210,7 @@
     {
       "key": "leg_curl_prone",
       "name": "Beinbeuger – liegend",
-      "description": "Einstellen:\n- Bauchlage auf dem Polster einnehmen; Knie auf die Geräteachse ausrichten. Rolle oberhalb der Fersen an die unteren Unterschenkel legen und Griffe halten.\n\nBewegung:\n- Knie beugen und die Rolle mit den Unterschenkeln nach oben bewegen.\n- Die Beine langsam wieder weitgehend strecken.\n\nHinweise:\n- Becken bleibt auf dem Polster.\n\nHäufige Fehler:\n- Die Hüfte abheben oder die Bewegung aus dem Rücken erzeugen.\n\nPositionen:\nStart: Bauchlage, Beine fast gestreckt.\nEnde: Knie gebeugt, Fersen angehoben.\n\nBenötigte Ausstattung: 1 × Liegender Beinbeuger",
+      "description": "Einstellen:\n- Bauchlage auf dem Polster einnehmen, Knie auf Höhe der Drehachse.\n- Rolle knapp oberhalb der Fersen anlegen, Griffe fassen.\n\nBewegung:\n- Knie beugen und die Rolle nach oben führen.\n- Langsam zurück, bis die Beine fast gestreckt sind.\n\nAchte auf:\n- Das Becken bleibt auf dem Polster.\n- Auch der Rückweg bleibt kontrolliert.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3244,7 +3244,7 @@
     {
       "key": "leg_curl_standing",
       "name": "Beinbeuger – stehend",
-      "description": "Einstellen:\n- Stehenden einbeinigen Beinbeuger wählen. Standfuß aufstellen, vorderes Polster nutzen und Arbeitsknie zur Achse ausrichten; Rolle hinter den unteren Unterschenkel legen.\n\nBewegung:\n- Das Arbeitsknie beugen und die Ferse nach hinten oben führen.\n- Unterschenkel langsam absenken; anschließend Seite wechseln.\n\nHinweise:\n- Arbeitsoberschenkel bleibt ruhig.\n\nHäufige Fehler:\n- Die Hüfte mit nach hinten bewegen oder das Standbein strecken und beugen.\n\nPositionen:\nStart: Standbein fest, Arbeitsbein fast gestreckt.\nEnde: Arbeitsknie gebeugt, Ferse hinten angehoben.\n\nBenötigte Ausstattung: 1 × Stehender Beinbeuger",
+      "description": "Einstellen:\n- Standfuß aufstellen, Knie des Arbeitsbeins auf Höhe der Drehachse.\n- Rolle hinter den unteren Unterschenkel legen, Griffe fassen.\n\nBewegung:\n- Knie beugen und die Ferse nach hinten oben führen.\n- Langsam absenken, danach die Seite wechseln.\n\nAchte auf:\n- Der Oberschenkel bleibt am Polster.\n- Hüfte und Standbein bleiben ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3278,7 +3278,7 @@
     {
       "key": "hip_abduction_machine",
       "name": "Hüftabduktion",
-      "description": "Einstellen:\n- Im Kombigerät den Abduktionsmodus wählen; Polster liegen außen an den Oberschenkeln nahe den Knien.\n- Füße auf die vorgesehenen Auflagen stellen und Rücken anlehnen.\n- Eine kontrollierbare Startweite einstellen und Haltegriffe fassen.\n\nBewegung:\n- Die Oberschenkel gegen die äußeren Polster nach außen führen.\n- Becken und Rumpf ruhig am Sitz halten.\n- Die Beine langsam bis zur Startweite zusammenführen.\n\nHinweise:\n- Füße bleiben auf den mitlaufenden Auflagen.\n- Die Bewegung erfolgt an den Hüften.\n\nHäufige Fehler:\n- Mit dem Oberkörper nach vorne oder hinten schwingen.\n- Die Polster ruckartig auseinanderstoßen.\n\nPositionen:\nStart: Beine in engerer Startstellung, Außenpolster in Kontakt.\nEnde: Beine nach außen geöffnet, Becken bleibt auf dem Sitz.\n\nBenötigte Ausstattung: 1 × Ab-/Adduktorenmaschine",
+      "description": "Einstellen:\n- Polster außen an die Oberschenkel stellen, nah an den Knien.\n- Rücken anlehnen, Füße auf die Auflagen stellen, Startweite einstellen.\n\nBewegung:\n- Oberschenkel gegen die Polster nach außen führen.\n- Langsam bis zur Startweite zusammenführen.\n\nAchte auf:\n- Becken und Oberkörper bleiben ruhig am Sitz.\n- Ruhig öffnen, ohne Schwung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3309,7 +3309,7 @@
     {
       "key": "hip_adduction_machine",
       "name": "Hüftadduktion",
-      "description": "Einstellen:\n- Im Kombigerät den Adduktionsmodus wählen; Polster liegen innen an den Oberschenkeln nahe den Knien.\n- Rücken anlehnen, Füße aufstellen und eine angenehme geöffnete Startweite wählen.\n- Haltegriffe fassen; Verriegelung der Startposition nach Geräteanleitung nutzen.\n\nBewegung:\n- Die Oberschenkel gegen die inneren Polster zusammenführen.\n- Ohne Schwung bis zur vorgesehenen Endstellung schließen.\n- Die Beine langsam wieder öffnen, ohne sie vom Gewicht auseinanderziehen zu lassen.\n\nHinweise:\n- Becken bleibt mittig auf dem Sitz.\n- Die kontrollierbare Weite zählt, nicht die maximale Gerätestellung.\n\nHäufige Fehler:\n- Eine zu große Startweite erzwingen.\n- Bei der Rückbewegung die Kontrolle verlieren.\n\nPositionen:\nStart: Beine geöffnet, Innenpolster in Kontakt.\nEnde: Beine zusammengeführt, Oberkörper unverändert.\n\nBenötigte Ausstattung: 1 × Ab-/Adduktorenmaschine",
+      "description": "Einstellen:\n- Polster innen an die Oberschenkel stellen, nah an den Knien.\n- Rücken anlehnen, Füße auf die Auflagen stellen, eine bequeme Startweite wählen.\n\nBewegung:\n- Oberschenkel gegen die Polster zusammenführen.\n- Langsam wieder öffnen.\n\nAchte auf:\n- Das Becken bleibt mittig auf dem Sitz.\n- Die Startweite bleibt bequem, auch der Rückweg bleibt kontrolliert.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3340,7 +3340,7 @@
     {
       "key": "hip_extension_machine",
       "name": "Hüftstrecken",
-      "description": "Einstellen:\n- Stehende Hüftstreckmaschine mit Oberschenkelrolle wählen. Hüfte auf die Geräteachse ausrichten, Rolle hinter den unteren Oberschenkel legen und Haltegriffe fassen.\n\nBewegung:\n- Das Arbeitsbein aus der Hüfte kontrolliert nach hinten führen.\n- Zur Startposition zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken bleibt gerade; der Kniewinkel verändert sich wenig.\n- Die Rolle liegt auf der Rückseite des unteren Oberschenkels, nicht vor dem Bein.\n\nHäufige Fehler:\n- Den unteren Rücken überstrecken oder das Becken aufdrehen.\n\nPositionen:\nStart: Arbeitsbein leicht vor dem Körper, Rolle hinter dem Oberschenkel.\nEnde: Arbeitsbein leicht hinter dem Körper, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Gluteus-/Hüftstreckmaschine",
+      "description": "Einstellen:\n- Hüfte auf Höhe der Drehachse ausrichten.\n- Rolle hinter den unteren Oberschenkel legen, Griffe fassen.\n\nBewegung:\n- Bein aus der Hüfte nach hinten führen.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken bleibt gerade.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3404,7 +3404,7 @@
     {
       "key": "calf_raise_seated_machine",
       "name": "Wadenheben – sitzend",
-      "description": "Einstellen:\n- Vorfüße auf die Plattform stellen; Fersen frei lassen.\n- Kniepolster über den unteren Oberschenkeln positionieren, nicht direkt auf den Kniescheiben.\n- Mit gebeugten Knien sitzen, Griffe halten und den Hebel nach Geräteeinweisung entriegeln.\n\nBewegung:\n- Die Fersen anheben und damit das Kniepolster nach oben bewegen.\n- Oberschenkel unter dem Polster halten und den Rumpf ruhig lassen.\n- Die Fersen kontrolliert absenken. Den Hebel vor dem Aussteigen wieder sichern.\n\nHinweise:\n- Die Vorfüße bleiben auf der Plattform.\n- Die Hände halten die Griffe, statt beim Heben zu helfen.\n\nHäufige Fehler:\n- Das Kniepolster mit den Händen hochziehen.\n- Mit den Fersen federn oder die Füße nach innen kippen.\n\nPositionen:\nStart: Fersen abgesenkt, Knie unter dem Polster.\nEnde: Fersen angehoben, Kniepolster mitgeführt.\n\nBenötigte Ausstattung: 1 × Sitzende Wadenmaschine",
+      "description": "Einstellen:\n- Vorfüße auf die Plattform stellen, Fersen frei.\n- Kniepolster auf die unteren Oberschenkel legen, nicht auf die Kniescheiben.\n- Griffe fassen und den Hebel entriegeln.\n\nBewegung:\n- Fersen so weit wie möglich anheben.\n- Kontrolliert bis in die Dehnung absenken.\n- Am Satzende den Hebel wieder sichern.\n\nAchte auf:\n- Die Hände helfen nicht mit.\n- Unten ruhig umkehren, Füße bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3434,7 +3434,7 @@
     {
       "key": "ab_crunch_machine",
       "name": "Crunch",
-      "description": "Einstellen:\n- Sitz und Lendenpolster für einen stabilen Beckenkontakt einstellen.\n- Füße auf den vorgesehenen Auflagen abstellen und die Griffe des beweglichen Oberkörperhebels fassen.\n- Startposition so wählen, dass kein erzwungenes Zurücklehnen nötig ist.\n\nBewegung:\n- Den oberen Rumpf nach vorne einrollen und den Abstand zwischen Brustkorb und Becken verkürzen.\n- Die Arme führen den Hebel mit, ohne die Bewegung allein zu ziehen.\n- Den Rumpf langsam zur Ausgangsposition zurückführen.\n\nHinweise:\n- Becken bleibt auf dem Sitz.\n- Der Kopf folgt dem Oberkörper.\n\nHäufige Fehler:\n- Nur aus der Hüfte nach vorne kippen.\n- Mit Armen oder Nacken am Hebel ziehen.\n\nPositionen:\nStart: Rumpf aufgerichtet, Hände an den Griffen.\nEnde: Oberer Rumpf nach vorne eingerollt, Becken bleibt sitzen.\n\nBenötigte Ausstattung: 1 × Bauchmaschine",
+      "description": "Einstellen:\n- Sitz so einstellen, dass das Becken fest sitzt.\n- Füße auf die Auflagen stellen und die Griffe fassen.\n\nBewegung:\n- Oberkörper nach vorne einrollen, Brustkorb zum Becken führen.\n- Langsam zurück in die Ausgangsposition.\n\nAchte auf:\n- Das Becken bleibt auf dem Sitz.\n- Die Kraft kommt aus dem Bauch, nicht aus den Armen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3470,7 +3470,7 @@
     {
       "key": "back_extension_machine",
       "name": "Rückenstrecken",
-      "description": "Einstellen:\n- Becken am Sitz-/Lendenpolster positionieren und die Füße auf den vorgesehenen Stützen abstellen.\n- Das bewegliche Rückenpolster passend anlegen und die Startneigung einstellen.\n- Griffe halten und den Kopf in Verlängerung des Oberkörpers lassen.\n\nBewegung:\n- Den geneigten Oberkörper gegen das Rückenpolster langsam aufrichten.\n- In einer kontrollierten aufrechten Endstellung stoppen, ohne ins Hohlkreuz zu drücken.\n- Den Oberkörper ruhig in die eingestellte Startneigung zurückführen.\n\nHinweise:\n- Becken und Füße bleiben gestützt.\n- Nur den eingestellten Bewegungsbereich nutzen.\n\nHäufige Fehler:\n- Über die aufrechte Position hinaus nach hinten drücken.\n- Mit Beinen oder Schwung den Hebel beschleunigen.\n\nPositionen:\nStart: Oberkörper leicht nach vorne geneigt, Rückenpolster liegt an.\nEnde: Oberkörper aufgerichtet, Becken weiterhin fixiert.\n\nBenötigte Ausstattung: 1 × Rückenstreckmaschine",
+      "description": "Einstellen:\n- Becken ans Polster setzen, Füße auf die Stützen stellen.\n- Rückenpolster anlegen und die Startneigung einstellen.\n\nBewegung:\n- Oberkörper langsam gegen das Polster aufrichten.\n- Ruhig in die Startneigung zurückführen.\n\nAchte auf:\n- In der aufrechten Position stoppen, kein Hohlkreuz.\n- Becken und Füße bleiben fest.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3506,7 +3506,7 @@
     {
       "key": "torso_rotation_machine",
       "name": "Rumpfrotation",
-      "description": "Einstellen:\n- Variante mit festem Sitz und drehbarer Oberkörpereinheit wählen. Becken und Beine fixieren, Brustpolster und Griffe einstellen; kleinen kontrollierbaren Startwinkel wählen.\n\nBewegung:\n- Den oberen Rumpf mit der Polstereinheit zur Mitte drehen.\n- Langsam zur eingestellten Seite zurückkehren; anschließend die andere Richtung einstellen.\n\nHinweise:\n- Becken bleibt auf dem festen Sitz ausgerichtet.\n\nHäufige Fehler:\n- Mit Hüfte und Füßen mitdrehen oder in die Endstellung rucken.\n\nPositionen:\nStart: Oberkörper leicht seitlich gedreht, Becken nach vorne.\nEnde: Oberkörper zur Mitte gedreht, Becken unverändert.\n\nBenötigte Ausstattung: 1 × Rotationsmaschine",
+      "description": "Einstellen:\n- Becken und Beine fixieren, Brustpolster und Griffe einstellen.\n- Einen kleinen Startwinkel wählen.\n\nBewegung:\n- Oberkörper zur Mitte drehen.\n- Langsam zurückdrehen, danach die andere Richtung einstellen.\n\nAchte auf:\n- Das Becken bleibt fest im Sitz.\n- Ruhig drehen, ohne Schwung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3578,7 +3578,7 @@
     {
       "key": "lat_pulldown_neutral",
       "name": "Latzug – enger Neutralgriff",
-      "description": "Einstellen:\n- Engen Parallelgriff am hohen Kabel befestigen. Oberschenkelpolster einstellen, Füße aufstellen und beide Griffe mit zueinander zeigenden Handflächen fassen.\n\nBewegung:\n- Den Griff vor dem Körper zur oberen Brust ziehen.\n- Arme kontrolliert nach oben strecken lassen.\n\nHinweise:\n- Ellenbogen nach unten führen, Oberkörper nur leicht zurückgeneigt.\n\nHäufige Fehler:\n- Weit zurücklehnen oder den Griff hinter den Kopf ziehen.\n\nPositionen:\nStart: Arme über Kopf am engen Parallelgriff.\nEnde: Parallelgriff vor der oberen Brust.\n\nBenötigte Ausstattung: 1 × Latzugstation + V-Griff",
+      "description": "Einstellen:\n- Engen Parallelgriff befestigen.\n- Oberschenkelpolster so einstellen, dass die Beine fest sitzen, und den Griff fassen.\n\nBewegung:\n- Griff vor dem Körper zur oberen Brust ziehen, Ellenbogen nach unten führen.\n- Kontrolliert nach oben zurückführen.\n\nAchte auf:\n- Oberkörper bleibt ruhig und nur leicht zurückgelehnt.\n- Der Griff bleibt vor dem Kopf.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3616,7 +3616,7 @@
     {
       "key": "lat_pulldown_supinated",
       "name": "Latzug – Untergriff",
-      "description": "Einstellen:\n- Latzugstange etwa schulterbreit im Untergriff fassen. Oberschenkelpolster einstellen und beide Füße aufstellen.\n\nBewegung:\n- Stange vor dem Körper zur oberen Brust ziehen.\n- Arme langsam nach oben zurückführen.\n\nHinweise:\n- Handgelenke bleiben möglichst gerade.\n\nHäufige Fehler:\n- Die Bewegung mit einem Rückwärtsschwung beginnen.\n\nPositionen:\nStart: Arme oben, Handflächen zum Körper.\nEnde: Stange vor der Brust, Ellenbogen unten.\n\nBenötigte Ausstattung: 1 × Latzugstation + V-Griff",
+      "description": "Einstellen:\n- Oberschenkelpolster so einstellen, dass die Beine fest sitzen.\n- Stange schulterbreit im Untergriff fassen.\n\nBewegung:\n- Stange vor dem Kopf zur oberen Brust ziehen.\n- Langsam nach oben zurückführen.\n\nAchte auf:\n- Oberkörper bleibt ruhig und nur leicht zurückgelehnt.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3654,7 +3654,7 @@
     {
       "key": "cable_row_neutral",
       "name": "Rudern – enger Neutralgriff",
-      "description": "Einstellen:\n- Engen Parallelgriff am tiefen Ruderzug befestigen. Auf die Bank setzen und die ganzen Füße auf die Stützen stellen; Knie leicht beugen.\n\nBewegung:\n- Griff zum unteren Brustkorb ziehen, Ellenbogen nahe am Körper.\n- Arme kontrolliert nach vorne führen.\n\nHinweise:\n- Rumpf bleibt annähernd aufrecht.\n\nHäufige Fehler:\n- Mit jeder Wiederholung weit nach vorne und hinten schaukeln.\n\nPositionen:\nStart: Arme nach vorne am engen Griff.\nEnde: Griff am unteren Brustkorb.\n\nBenötigte Ausstattung: 1 × Tiefe Ruderstation + V-Griff",
+      "description": "Einstellen:\n- Engen Parallelgriff befestigen.\n- Auf die Bank setzen, Füße auf die Stützen stellen, Knie leicht gebeugt.\n\nBewegung:\n- Griff zum unteren Brustkorb ziehen, Ellenbogen nah am Körper.\n- Arme kontrolliert nach vorne strecken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht und ruhig.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3696,7 +3696,7 @@
     {
       "key": "cable_row_wide",
       "name": "Rudern – breiter Obergriff",
-      "description": "Einstellen:\n- Breite Stange am tiefen Ruderzug befestigen und im Obergriff fassen. Bank und Fußstützen nutzen, Knie leicht gebeugt lassen.\n\nBewegung:\n- Stange zum oberen Bauch ziehen; Ellenbogen weiter seitlich zurückführen.\n- Arme kontrolliert nach vorne strecken.\n\nHinweise:\n- Schultern bleiben tief, der Rumpf ruhig.\n\nHäufige Fehler:\n- Die Stange zum Hals ziehen oder den Rücken überstrecken.\n\nPositionen:\nStart: Arme nach vorne, breiter Obergriff.\nEnde: Stange am oberen Bauch, Ellenbogen seitlich hinten.\n\nBenötigte Ausstattung: 1 × Tiefe Ruderstation + V-Griff",
+      "description": "Einstellen:\n- Breite Stange befestigen und im Obergriff fassen.\n- Auf die Bank setzen, Füße auf die Stützen stellen, Knie leicht gebeugt.\n\nBewegung:\n- Stange zum oberen Bauch ziehen, Ellenbogen seitlich nach hinten führen.\n- Arme kontrolliert nach vorne strecken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht und ruhig.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3738,7 +3738,7 @@
     {
       "key": "cable_row_single",
       "name": "Rudern – einarmig",
-      "description": "Einstellen:\n- Einzelgriff am tiefen Ruderzug befestigen. Aufrecht auf die Bank setzen, Füße abstützen und Griff mit einer Hand fassen.\n\nBewegung:\n- Den Griff zur gleichen Rumpfseite ziehen.\n- Arm kontrolliert strecken; nach dem Satz Seite wechseln.\n\nHinweise:\n- Becken und Brust bleiben nach vorne ausgerichtet.\n\nHäufige Fehler:\n- Den Oberkörper weit zur Arbeitsseite drehen.\n\nPositionen:\nStart: Ein Arm nach vorne, freie Hand am Oberschenkel.\nEnde: Arbeitsgriff an der Rumpfseite.\n\nBenötigte Ausstattung: 1 × Tiefe Ruderstation + V-Griff",
+      "description": "Einstellen:\n- Einzelgriff befestigen.\n- Aufrecht auf die Bank setzen, Füße auf die Stützen stellen, Griff mit einer Hand fassen.\n\nBewegung:\n- Griff zur gleichen Rumpfseite ziehen.\n- Arm kontrolliert strecken, danach die Seite wechseln.\n\nAchte auf:\n- Brust und Becken zeigen durchgehend nach vorne.\n- Der Oberkörper dreht sich nicht mit.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3780,7 +3780,7 @@
     {
       "key": "cable_face_pull",
       "name": "Face Pull",
-      "description": "Einstellen:\n- Seil ungefähr auf Augenhöhe befestigen. Zur Station schauen, Seilenden greifen und mit leicht gebeugten Knien einen stabilen Stand einnehmen.\n\nBewegung:\n- Seil zum Gesicht ziehen und die Enden auseinander zu den Schläfen führen.\n- Arme langsam nach vorne führen.\n\nHinweise:\n- Ellenbogen seitlich führen; Hals bleibt lang.\n\nHäufige Fehler:\n- Das Seil tief zur Brust rudern oder den Kopf vorstrecken.\n\nPositionen:\nStart: Arme nach vorne auf Augenhöhe.\nEnde: Hände neben den Schläfen, Ellenbogen seitlich.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil auf Augenhöhe am Kabelzug befestigen.\n- Zum Kabelzug gewandt stabil stehen, Seilenden fassen.\n\nBewegung:\n- Seil zum Gesicht ziehen und die Enden zu den Schläfen auseinanderführen.\n- Arme langsam nach vorne strecken.\n\nAchte auf:\n- Ellenbogen bleiben auf Schulterhöhe und zeigen zur Seite.\n- Kopf und Oberkörper bleiben ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3819,7 +3819,7 @@
     {
       "key": "cable_straight_arm_pulldown",
       "name": "Gestrecktes Armziehen",
-      "description": "Einstellen:\n- Stange am hohen Kabel befestigen. Etwas zurücktreten, Knie leicht beugen und den Oberkörper gering nach vorne neigen.\n\nBewegung:\n- Die annähernd gestreckten Arme im Bogen zu den Oberschenkeln führen.\n- Arme kontrolliert wieder anheben.\n\nHinweise:\n- Ellenbogenwinkel bleibt fast gleich.\n\nHäufige Fehler:\n- Die Arme stark beugen und daraus einen Latzug machen.\n\nPositionen:\nStart: Arme schräg nach vorne oben.\nEnde: Hände vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Stange oben am Kabelzug befestigen.\n- Einen Schritt zurücktreten, Knie leicht beugen, Oberkörper leicht vorneigen.\n\nBewegung:\n- Fast gestreckte Arme in einem Bogen zu den Oberschenkeln führen.\n- Kontrolliert wieder anheben.\n\nAchte auf:\n- Die Ellenbogen bleiben fast gestreckt.\n- Rumpf bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3853,7 +3853,7 @@
     {
       "key": "triceps_pushdown_rope",
       "name": "Trizepsdrücken – Seil",
-      "description": "Einstellen:\n- Seil am hohen Kabelzug befestigen.\n- Stabil stehen, die Seilenden greifen und Ellenbogen neben dem Körper halten.\n\nBewegung:\n- Die Hände durch Strecken der Ellenbogen nach unten führen.\n- Den Oberkörper ruhig halten.\n- Das Seil langsam zurückführen und die Ellenbogen wieder beugen.\n\nHinweise:\n- Oberarme bleiben weitgehend am Körper.\n- Handgelenke gerade halten.\n\nHäufige Fehler:\n- Mit dem Körpergewicht nach unten drücken.\n- Oberarme stark vor und zurück bewegen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hände vor dem Oberkörper.\nEnde: Arme neben dem Körper gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil oben am Kabelzug befestigen.\n- Stabil stehen, Seilenden greifen, Ellenbogen neben dem Körper.\n\nBewegung:\n- Ellenbogen strecken und die Hände nach unten führen.\n- Langsam zurück, bis die Ellenbogen wieder gebeugt sind.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Oberkörper bleibt ruhig, Handgelenke gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3883,7 +3883,7 @@
     {
       "key": "triceps_pushdown_bar",
       "name": "Trizepsdrücken – Stange",
-      "description": "Einstellen:\n- Kurze Stange am oberen Kabel befestigen und im Obergriff fassen. Stabil stehen, Ellenbogen neben den Rumpf bringen.\n\nBewegung:\n- Die Ellenbogen strecken und die Stange nach unten führen.\n- Unterarme kontrolliert wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Körper.\n\nHäufige Fehler:\n- Mit dem Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Arme weitgehend gestreckt, Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange oben am Kabelzug befestigen und im Obergriff fassen.\n- Stabil stehen, Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Ellenbogen strecken und die Stange nach unten führen.\n- Unterarme kontrolliert wieder anheben.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Die Kraft kommt aus den Armen, nicht aus dem Körpergewicht.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3913,7 +3913,7 @@
     {
       "key": "cable_triceps_overhead",
       "name": "Trizepsstrecken über Kopf – Seil",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen und mit dem Rücken zur Station in Schrittstellung stehen. Oberarme über Kopf anheben; Kabelbahn hinter dem Körper freihalten.\n\nBewegung:\n- Die Ellenbogen strecken und das Seil nach oben vorne führen.\n- Hände hinter den Kopf zurückführen.\n\nHinweise:\n- Oberarme bleiben annähernd ausgerichtet; Rippen nicht aufschieben.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schultern stark mitbewegen.\n\nPositionen:\nStart: Oberarme über Kopf, Ellenbogen gebeugt.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil unten am Kabelzug befestigen.\n- Mit dem Rücken zum Kabelzug in Schrittstellung stehen, Oberarme über Kopf heben.\n\nBewegung:\n- Ellenbogen strecken und das Seil nach oben vorne führen.\n- Hände kontrolliert hinter den Kopf zurückführen.\n\nAchte auf:\n- Oberarme bleiben ruhig neben dem Kopf.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3944,7 +3944,7 @@
     {
       "key": "cable_curl_bar",
       "name": "Bizepscurl – Stange",
-      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel befestigen und im Untergriff fassen. Zur Station schauen, stabil stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Ellenbogen beugen und die Stange zum Oberkörper anheben.\n- Stange kontrolliert absenken.\n\nHinweise:\n- Seitliche Ansicht: Ellenbogen bleiben ortsfest.\n\nHäufige Fehler:\n- Den Rumpf nach hinten werfen oder die Handgelenke einknicken.\n\nPositionen:\nStart: Arme fast gestreckt, Stange vorne unten.\nEnde: Ellenbogen gebeugt, Stange vor dem Oberkörper.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange unten am Kabelzug befestigen und im Untergriff fassen.\n- Zum Kabelzug gewandt stabil stehen.\n\nBewegung:\n- Ellenbogen beugen und die Stange zum Oberkörper anheben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Oberkörper bleibt ruhig, Handgelenke gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -3978,7 +3978,7 @@
     {
       "key": "cable_hammer_curl",
       "name": "Hammercurl – Seil",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Seilenden im Neutralgriff mit Daumen nach oben fassen und stabil zur Station stehen.\n\nBewegung:\n- Unterarme anheben, ohne die Oberarme nach vorne zu schieben.\n- Seilenden langsam wieder absenken.\n\nHinweise:\n- Neutralgriff beibehalten; Ellenbogen neben dem Rumpf.\n\nHäufige Fehler:\n- Unterarme während des Curls stark eindrehen oder Schwung holen.\n\nPositionen:\nStart: Seilenden unten, Handflächen zueinander.\nEnde: Seilenden angehoben, Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil unten am Kabelzug befestigen.\n- Seilenden mit den Daumen nach oben fassen und stabil stehen.\n\nBewegung:\n- Unterarme anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Daumen zeigen durchgehend nach oben.\n- Ellenbogen bleiben neben dem Rumpf.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4012,7 +4012,7 @@
     {
       "key": "cable_lateral_raise",
       "name": "Seitheben – einarmig",
-      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Seitlich zur Station stehen und den Griff mit der äußeren Hand vor dem Körper fassen.\n\nBewegung:\n- Den Arbeitsarm seitlich bis etwa Schulterhöhe anheben.\n- Arm kontrolliert wieder vor den Körper absenken; anschließend Seite wechseln.\n\nHinweise:\n- Ellenbogen leicht gebeugt und Oberkörper ruhig halten.\n\nHäufige Fehler:\n- Den Arm über Schulterhöhe ziehen oder seitlich mitkippen.\n\nPositionen:\nStart: Arbeitsarm unten vor dem Körper.\nEnde: Arbeitsarm seitlich etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff unten am Kabelzug befestigen.\n- Seitlich zum Kabelzug stehen, Griff mit der äußeren Hand vor dem Körper fassen.\n\nBewegung:\n- Arm seitlich bis Schulterhöhe anheben.\n- Kontrolliert absenken, danach die Seite wechseln.\n\nAchte auf:\n- Ellenbogen bleibt leicht gebeugt.\n- Oberkörper bleibt aufrecht und ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4046,7 +4046,7 @@
     {
       "key": "cable_fly_mid",
       "name": "Flys – Brusthöhe",
-      "description": "Einstellen:\n- Zwei Einzelgriffe ungefähr auf Brusthöhe einstellen. Mittig in Schrittstellung stehen und die Arme mit leicht gebeugten Ellenbogen öffnen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Die Hände in einem Bogen vor der Brust zusammenführen.\n- Arme kontrolliert wieder öffnen.\n\nHinweise:\n- Der Ellenbogenwinkel bleibt annähernd gleich.\n\nHäufige Fehler:\n- Aus dem Butterfly ein Drücken mit starkem Beugen und Strecken machen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Kabel auf Brusthöhe.\nEnde: Hände vor der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Zwei Einzelgriffe auf Brusthöhe einstellen.\n- Mittig in Schrittstellung stehen, Arme mit leicht gebeugten Ellenbogen öffnen.\n\nBewegung:\n- Hände in einem Bogen vor der Brust zusammenführen.\n- Arme kontrolliert wieder öffnen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4080,7 +4080,7 @@
     {
       "key": "cable_hip_extension",
       "name": "Hüftstrecken",
-      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Zur Station schauen, am festen Rahmen festhalten und Standbein leicht beugen.\n\nBewegung:\n- Das Arbeitsbein mit annähernd gleichbleibendem Kniewinkel etwas nach hinten führen.\n- Bein kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken bleibt nach vorne und Rumpf ruhig.\n\nHäufige Fehler:\n- Die Hüfte aufdrehen oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Arbeitsfuß knapp über dem Boden nahe dem Standbein.\nEnde: Arbeitsbein leicht nach hinten geführt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Fußmanschette unten am Kabelzug befestigen und anlegen.\n- Zum Kabelzug gewandt stehen, am Rahmen festhalten, Standbein leicht gebeugt.\n\nBewegung:\n- Bein aus der Hüfte nach hinten führen.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken zeigt durchgehend nach vorne.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4147,7 +4147,7 @@
     {
       "key": "cable_crunch_kneeling",
       "name": "Crunch – kniend",
-      "description": "Einstellen:\n- Seil am hohen Kabel befestigen. Nahe unter der oberen Umlenkrolle hinknien, Knie und Unterschenkel auflegen. Oberkörper leicht vorgebeugt und Seilenden neben dem Kopf halten; der Zug kommt steil von oben.\n\nBewegung:\n- Den Rumpf einrollen und Brustkorb zum Becken führen.\n- Den Rumpf langsam wieder aufrichten.\n\nHinweise:\n- Arme halten das Seil; Hüfte bewegt sich wenig.\n- Beim Einrollen wird Kabel gegen den Widerstand herausgezogen; das Aufrichten ist die kontrollierte Rückführung.\n\nHäufige Fehler:\n- Nur in der Hüfte abknicken oder das Seil mit den Armen herunterziehen.\n\nPositionen:\nStart: Kniend, Oberkörper leicht vorgebeugt, Seil neben dem Kopf, Zug steil von oben.\nEnde: Rumpf eingerollt, Brustkorb näher am Becken.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil oben am Kabelzug befestigen.\n- Nah unter der Rolle hinknien, Seilenden neben dem Kopf halten.\n\nBewegung:\n- Oberkörper einrollen, Brustkorb zum Becken führen.\n- Langsam wieder aufrichten.\n\nAchte auf:\n- Die Hüfte bleibt ruhig.\n- Die Hände bleiben am Kopf, die Kraft kommt aus dem Bauch.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4181,7 +4181,7 @@
     {
       "key": "hip_thrust_machine",
       "name": "Hip Thrust",
-      "description": "Einstellen:\n- Hip-Thrust-Gerät mit Hüftgurt wählen. Oberen Rücken am Polster abstützen, ganze Füße auf die Plattform stellen und Gurt nach Geräteanleitung sichern.\n\nBewegung:\n- Becken gegen den Gurt anheben, bis Rumpf und Oberschenkel annähernd eine Linie bilden.\n- Becken kontrolliert absenken; nach dem Satz Last ablegen und erst dann den Gurt lösen.\n\nHinweise:\n- Rippen unten halten; Füße bleiben vollständig aufgesetzt.\n\nHäufige Fehler:\n- Die Endposition durch Überstrecken des Rückens erzeugen.\n\nPositionen:\nStart: Becken abgesenkt, oberer Rücken gestützt.\nEnde: Becken angehoben, Hüfte gestreckt.\n\nBenötigte Ausstattung: 1 × Hip Thrust am Gerät",
+      "description": "Einstellen:\n- Oberen Rücken ans Polster lehnen, Füße ganz auf die Plattform stellen.\n- Hüftgurt anlegen und sichern.\n\nBewegung:\n- Becken anheben, bis Oberkörper und Oberschenkel eine Linie bilden.\n- Kontrolliert absenken.\n- Am Satzende die Last ablegen, erst dann den Gurt lösen.\n\nAchte auf:\n- Die Bewegung kommt aus der Hüfte, kein Hohlkreuz.\n- Füße bleiben ganz aufgesetzt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4216,7 +4216,7 @@
     {
       "key": "belt_squat_machine",
       "name": "Belt Squat",
-      "description": "Einstellen:\n- Hüftgurt am vorgesehenen Lastanschluss befestigen. Auf die Plattform stellen, Haltegriffe fassen und Sicherheitsablage nach Einweisung lösen.\n\nBewegung:\n- Knie und Hüften strecken, um aus der Kniebeuge aufzustehen.\n- Kontrolliert wieder beugen; Last vor dem Aussteigen sicher ablegen.\n\nHinweise:\n- Der Gurt belastet das Becken; die Hände helfen nur beim Gleichgewicht.\n\nHäufige Fehler:\n- Sich mit den Armen hochziehen oder die Fersen abheben.\n\nPositionen:\nStart: Knie und Hüfte gebeugt, Gurt gespannt.\nEnde: Aufrechter Stand, Knie nicht verriegelt.\n\nBenötigte Ausstattung: 1 × Belt Squat am Gerät",
+      "description": "Einstellen:\n- Hüftgurt anlegen und am Lastanschluss befestigen.\n- Auf die Plattform stellen, Griffe fassen und die Ablage lösen.\n\nBewegung:\n- Knie und Hüfte beugen und kontrolliert absenken.\n- Über die ganzen Füße aufrichten.\n- Am Satzende die Last ablegen, erst dann aussteigen.\n\nAchte auf:\n- Die Hände halten nur das Gleichgewicht.\n- Fersen bleiben am Boden, Knie folgen der Fußrichtung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4254,7 +4254,7 @@
     {
       "key": "leg_press_horizontal_single",
       "name": "Beinpresse – einbeinig",
-      "description": "Einstellen:\n- Nur eine für einbeinige Nutzung geeignete horizontale Beinpresse verwenden. Rücken anlehnen, Arbeitsfuß vollständig auf die Platte stellen und freien Fuß außerhalb der beweglichen Teile abstellen.\n\nBewegung:\n- Platte mit dem Arbeitsbein wegdrücken.\n- Knie langsam beugen, ohne das Becken seitlich zu verdrehen; danach Seite wechseln.\n\nHinweise:\n- Knie folgt der Fußrichtung; Ferse bleibt auf der Platte.\n\nHäufige Fehler:\n- Mit dem freien Bein mitdrücken oder das Becken anheben.\n\nPositionen:\nStart: Arbeitsknie gebeugt, freier Fuß auf fester Auflage.\nEnde: Arbeitsbein weitgehend gestreckt, freies Bein unverändert.\n\nBenötigte Ausstattung: 1 × Horizontale Beinpresse – einbeinig",
+      "description": "Einstellen:\n- Sitzabstand so einstellen, dass das Knie am Start etwa rechtwinklig gebeugt ist.\n- Rücken anlehnen, einen Fuß ganz auf die Platte stellen, den anderen daneben abstellen.\n\nBewegung:\n- Platte mit einem Bein wegdrücken, bis es fast gestreckt ist.\n- Langsam zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Das Knie folgt der Fußrichtung, die Ferse bleibt auf der Platte.\n- Das Becken bleibt gerade an der Lehne.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4292,7 +4292,7 @@
     {
       "key": "leg_extension_single",
       "name": "Beinstrecker – einbeinig",
-      "description": "Einstellen:\n- Einbeinige Nutzung am Beinstrecker bestätigen. Arbeitsknie zur Achse ausrichten, Rolle vor den unteren Unterschenkel legen und das freie Bein außerhalb der Rolle abstellen.\n\nBewegung:\n- Nur das Arbeitsknie strecken und die Rolle anheben.\n- Rolle langsam absenken; nach dem Satz Seite wechseln.\n\nHinweise:\n- Oberschenkel und Becken bleiben am Sitz.\n\nHäufige Fehler:\n- Mit dem freien Bein mithelfen oder den Oberkörper zurückwerfen.\n\nPositionen:\nStart: Arbeitsknie gebeugt, freier Fuß abgestellt.\nEnde: Arbeitsknie weitgehend gestreckt; freies Bein ruht.\n\nBenötigte Ausstattung: 1 × Beinstrecker – einbeinig",
+      "description": "Einstellen:\n- Lehne so einstellen, dass das Knie auf Höhe der Drehachse liegt.\n- Rolle vor einen unteren Unterschenkel legen, das andere Bein daneben abstellen.\n\nBewegung:\n- Knie strecken und die Rolle anheben.\n- Langsam absenken, danach die Seite wechseln.\n\nAchte auf:\n- Gesäß und Oberschenkel bleiben auf dem Sitz.\n- Oberkörper bleibt an der Lehne.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4322,7 +4322,7 @@
     {
       "key": "leg_curl_seated_single",
       "name": "Beinbeuger – sitzend, einbeinig",
-      "description": "Einstellen:\n- Sitzenden Beinbeuger mit geeigneter einseitiger Beinführung wählen. Knieachse, Oberschenkelhalter und untere Rolle einstellen; das freie Bein außerhalb des Hebelwegs abstellen.\n\nBewegung:\n- Arbeitsknie beugen und die Rolle nach hinten unten ziehen.\n- Arbeitsbein kontrolliert wieder strecken; danach Seite wechseln.\n\nHinweise:\n- Oberschenkel bleibt unter dem Haltepolster.\n\nHäufige Fehler:\n- Becken nach vorne rutschen lassen oder mit dem freien Bein unterstützen.\n\nPositionen:\nStart: Arbeitsbein nach vorne, Rolle unter dem Unterschenkel.\nEnde: Arbeitsknie gebeugt, freies Bein unverändert.\n\nBenötigte Ausstattung: 1 × Beinbeuger sitzend – einbeinig",
+      "description": "Einstellen:\n- Sitz und Lehne so einstellen, dass das Knie auf Höhe der Drehachse liegt.\n- Einen Unterschenkel auf das untere Polster legen, das andere Bein daneben abstellen.\n\nBewegung:\n- Knie beugen und das Polster nach unten und hinten führen.\n- Langsam zurück, danach die Seite wechseln.\n\nAchte auf:\n- Becken bleibt im Sitz, Hände an den Griffen.\n- Der Oberschenkel bleibt unter dem Haltepolster.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4356,7 +4356,7 @@
     {
       "key": "chest_press_single",
       "name": "Brustpresse – einarmig",
-      "description": "Einstellen:\n- Brustpresse mit unabhängig beweglichen Armen wählen. Sitz einstellen, Rücken anlehnen und beide Füße aufstellen; freie Hand am Oberschenkel lassen.\n\nBewegung:\n- Einen Neutralgriff nach vorne drücken.\n- Denselben Griff kontrolliert zurückführen; danach Seite wechseln.\n\nHinweise:\n- Rücken und Becken bleiben gerade zur Lehne.\n\nHäufige Fehler:\n- Den Rumpf zur Arbeitsseite drehen.\n\nPositionen:\nStart: Arbeitsgriff neben der Brust, freie Hand ruht.\nEnde: Arbeitsarm weitgehend gestreckt, anderer Hebel bleibt zurück.\n\nBenötigte Ausstattung: 1 × Brustpresse – einarmig",
+      "description": "Einstellen:\n- Sitz so einstellen, dass die Griffe auf Brustmitte liegen.\n- Rücken anlehnen, Füße aufstellen, einen Griff fassen.\n\nBewegung:\n- Den Griff nach vorne drücken, bis der Arm fast gestreckt ist.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Rücken und Becken bleiben gerade an der Lehne.\n- Der Rumpf dreht sich nicht mit.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4394,7 +4394,7 @@
     {
       "key": "row_machine_single",
       "name": "Rudern – einarmig",
-      "description": "Einstellen:\n- Rudergerät mit unabhängig beweglichen Armen wählen. Brustpolster anpassen und Füße abstützen; freie Hand am Oberschenkel lassen.\n\nBewegung:\n- Einen Neutralgriff zum unteren Brustkorb ziehen.\n- Arbeitsarm langsam nach vorne führen; danach Seite wechseln.\n\nHinweise:\n- Brust bleibt am Polster, Becken gerade.\n\nHäufige Fehler:\n- Schulter und Rumpf nach hinten aufdrehen.\n\nPositionen:\nStart: Ein Arm nach vorne am Griff, freie Hand ruht.\nEnde: Arbeitsgriff an der Rumpfseite, anderer Hebel unverändert.\n\nBenötigte Ausstattung: 1 × Rudern am Gerät – einarmig",
+      "description": "Einstellen:\n- Sitz und Brustpolster so einstellen, dass der Griff mit langem Arm erreichbar ist.\n- Füße abstellen, Brust ans Polster, einen Griff fassen.\n\nBewegung:\n- Griff zum unteren Brustkorb ziehen.\n- Langsam nach vorne strecken, danach die Seite wechseln.\n\nAchte auf:\n- Die Brust bleibt am Polster.\n- Schulter und Rumpf drehen sich nicht mit.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4436,7 +4436,7 @@
     {
       "key": "calf_press_45",
       "name": "Wadenpressen",
-      "description": "Einstellen:\n- Für Wadenpressen geeignete 45°-Beinpresse wählen. Rücken anlegen, Beine schräg nach oben zur Platte ausrichten. Beide Vorfüße sicher an der unteren Plattenkante aufsetzen; die Fersen ragen frei über die Kante. Anschläge nach Geräteeinweisung einstellen.\n\nBewegung:\n- Aus den Sprunggelenken die Platte wegdrücken und die Fersen anheben.\n- Fersen kontrolliert zurückführen; am Satzende Schlitten einhängen.\n\nHinweise:\n- Kniewinkel bleibt annähernd gleich; Fußballen rutschen nicht.\n\nHäufige Fehler:\n- Mit Kniebeugen nachhelfen oder die Fußballen über die Kante abrutschen lassen.\n\nPositionen:\nStart: Beine schräg nach oben, Vorfüße an der unteren Plattenkante, Fersen frei zurückgenommen.\nEnde: Sprunggelenke gestreckt, Schlitten leicht weiter entfernt.\n\nBenötigte Ausstattung: 1 × Wadenpressen an der 45°-Beinpresse",
+      "description": "Einstellen:\n- Sicherheitsanschläge einstellen, Rücken anlehnen.\n- Vorfüße an die untere Kante der Platte setzen, Fersen frei.\n- Schlitten entriegeln.\n\nBewegung:\n- Platte aus den Sprunggelenken wegdrücken, Fersen heben.\n- Kontrolliert bis in die Dehnung zurückführen.\n- Am Satzende den Schlitten wieder einhängen.\n\nAchte auf:\n- Knie bleiben fast gestreckt und bewegen sich nicht.\n- Die Fußballen stehen sicher auf der Platte.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4464,7 +4464,7 @@
     {
       "key": "cable_chest_press_standing",
       "name": "Brustdrücken – stehend",
-      "description": "Einstellen:\n- Zwei Einzelgriffe etwa auf Brusthöhe einstellen. Mit dem Rücken zur Station in Schrittstellung stehen und die Griffe neben die Brust bringen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Hände nach vorne drücken und die Ellenbogen strecken.\n- Hände kontrolliert neben die Brust zurückführen.\n\nHinweise:\n- Rumpf bleibt ruhig; Kabel verlaufen außen an den Armen vorbei.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Schulter nach oben ziehen.\n\nPositionen:\nStart: Griffe neben der Brust, Ellenbogen gebeugt.\nEnde: Hände vor dem Körper, Arme lang.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Zwei Einzelgriffe auf Brusthöhe einstellen.\n- Mit dem Rücken zum Kabelzug in Schrittstellung stehen, Griffe neben der Brust.\n\nBewegung:\n- Beide Hände nach vorne drücken, bis die Arme fast gestreckt sind.\n- Kontrolliert neben die Brust zurückführen.\n\nAchte auf:\n- Rumpf bleibt fest, kein Hohlkreuz.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4502,7 +4502,7 @@
     {
       "key": "cable_chest_press_single",
       "name": "Brustdrücken – einarmig",
-      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen. Mit dem Rücken zum Kabel in stabile Schrittstellung gehen; Griff neben der Brust halten.\n\nBewegung:\n- Mit einem Arm nach vorne drücken, ohne den Rumpf zu drehen.\n- Hand zurückführen; danach Seite wechseln.\n\nHinweise:\n- Brust und Becken bleiben nach vorne ausgerichtet.\n\nHäufige Fehler:\n- Den Oberkörper mit dem Griff mitdrehen.\n\nPositionen:\nStart: Arbeitsarm gebeugt, freie Hand an der Hüfte.\nEnde: Arbeitsarm nach vorne gestreckt, Rumpf unverändert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen.\n- Mit dem Rücken zum Kabelzug in Schrittstellung stehen, Griff neben der Brust.\n\nBewegung:\n- Mit einem Arm nach vorne drücken.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Brust und Becken zeigen durchgehend nach vorne.\n- Der Rumpf dreht sich nicht mit.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4540,7 +4540,7 @@
     {
       "key": "cable_lat_single_kneeling",
       "name": "Latzug – einarmig, kniend",
-      "description": "Einstellen:\n- Einzelgriff am hohen Kabel befestigen. Im Halbkniestand zur Station ausrichten: Knie der Arbeitsseite unten, anderer Fuß vorne aufgestellt.\n\nBewegung:\n- Arbeitsellenbogen nach unten zur Rumpfseite ziehen.\n- Arm langsam nach vorne oben strecken; anschließend Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz gehen oder mit der Hüfte nach hinten rutschen.\n\nHäufige Fehler:\n- Das Körpergewicht zum Herunterziehen nutzen.\n\nPositionen:\nStart: Arbeitsarm schräg oben, ein Knie auf dem Boden.\nEnde: Arbeitsgriff an der Schulter, Ellenbogen unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff oben am Kabelzug befestigen.\n- Im Halbkniestand zum Kabelzug: Knie der Arbeitsseite am Boden, anderer Fuß vorne.\n\nBewegung:\n- Ellenbogen nach unten zur Rumpfseite ziehen.\n- Arm langsam nach vorne oben strecken, danach die Seite wechseln.\n\nAchte auf:\n- Rumpf bleibt fest, kein Hohlkreuz.\n- Die Hüfte bleibt über dem Knie.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4578,7 +4578,7 @@
     {
       "key": "cable_reverse_fly_standing",
       "name": "Reverse Flys – stehend",
-      "description": "Einstellen:\n- Zwei Rollen ungefähr auf Schulterhöhe einstellen. Zur Station stehen und die jeweils gegenüberliegenden Einzelgriffe fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- Hände kontrolliert vor dem Körper zusammenführen.\n\nHinweise:\n- Die Ellenbogenbeugung bleibt annähernd gleich.\n\nHäufige Fehler:\n- Mit starkem Beugen der Ellenbogen daraus ein Rudern machen.\n\nPositionen:\nStart: Arme vor dem Körper, Kabel gekreuzt.\nEnde: Arme seitlich geöffnet, Rumpf ruhig.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Zwei Rollen auf Schulterhöhe einstellen.\n- Mittig zum Kabelzug gewandt stehen und die Kabel über Kreuz fassen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- Hände kontrolliert vor dem Körper zusammenführen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Schultern bleiben unten, Oberkörper ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4612,7 +4612,7 @@
     {
       "key": "cable_front_raise_bar",
       "name": "Frontheben",
-      "description": "Einstellen:\n- Kurze Stange am tiefen Kabel im Obergriff fassen. Mit dem Rücken zur Station stehen; Kabel zwischen den Beinen frei führen.\n- Ein einzelner tiefer Kabelzug mit Stangenaufsatz genügt; beide Hände greifen dieselbe Stange.\n\nBewegung:\n- Arme bei geringer Ellenbogenbeugung bis etwa Schulterhöhe nach vorne anheben.\n- Stange langsam zu den Oberschenkeln absenken.\n\nHinweise:\n- Oberkörper aufrecht lassen, Schultern nicht hochziehen.\n\nHäufige Fehler:\n- Mit den Hüften Schwung holen oder höher als kontrollierbar heben.\n\nPositionen:\nStart: Stange vor den Oberschenkeln.\nEnde: Stange vor den Schultern, Arme annähernd waagerecht.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange unten am Kabelzug befestigen.\n- Mit dem Rücken zum Kabelzug stehen, Stange im Obergriff fassen, das Kabel läuft zwischen den Beinen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen nach vorne bis Schulterhöhe heben.\n- Langsam zu den Oberschenkeln absenken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht und ruhig.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4646,7 +4646,7 @@
     {
       "key": "cable_pull_through",
       "name": "Pull-through",
-      "description": "Einstellen:\n- Seil am tiefen Kabel befestigen. Mit dem Rücken zur Station stehen, Seil zwischen den Beinen greifen und etwas nach vorne treten.\n\nBewegung:\n- Aus der Hüftbeuge die Hüfte strecken und aufrichten; die Arme bleiben lang.\n- Hüfte nach hinten schieben und den Oberkörper aus dem Hüftgelenk vorbeugen.\n\nHinweise:\n- Knie leicht gebeugt; Rücken bleibt kontrolliert in seiner Form.\n- Hüftstreckung für Gesäß und hintere Oberschenkel: Die Arme bleiben lang und halten nur das Seil. Kein aktiver Armzug.\n\nHäufige Fehler:\n- Aus der Bewegung eine tiefe Kniebeuge oder ein Ziehen mit den Armen machen.\n\nPositionen:\nStart: Hüfte hinten, Rumpf vorgebeugt, Seil zwischen den Beinen.\nEnde: Hüfte gestreckt, Hände vorne unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Seil unten am Kabelzug befestigen.\n- Mit dem Rücken zum Kabelzug stehen, Seil zwischen den Beinen fassen und einen Schritt vortreten.\n\nBewegung:\n- Hüfte nach hinten schieben und den Oberkörper vorbeugen.\n- Hüfte strecken und aufrichten.\n\nAchte auf:\n- Arme bleiben lang und halten nur das Seil.\n- Knie bleiben leicht gebeugt, Rücken bleibt lang.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4682,7 +4682,7 @@
     {
       "key": "cable_hip_abduction",
       "name": "Hüftabduktion",
-      "description": "Einstellen:\n- Fußmanschette am tiefen Kabel befestigen. Seitlich zur Station stehen, Manschette am äußeren Bein befestigen und mit einer Hand am Rahmen halten.\n\nBewegung:\n- Arbeitsbein seitlich von der Station wegführen.\n- Bein langsam zurückführen; danach Seite wechseln.\n\nHinweise:\n- Becken bleibt waagerecht, Standbein leicht gebeugt.\n\nHäufige Fehler:\n- Seitlich mit dem Oberkörper kippen oder den Fuß stark nach außen drehen.\n\nPositionen:\nStart: Arbeitsfuß nahe am Standbein, knapp über dem Boden.\nEnde: Arbeitsbein seitlich abgespreizt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Fußmanschette unten am Kabelzug befestigen und am äußeren Bein anlegen.\n- Seitlich zum Kabelzug stehen, am Rahmen festhalten.\n\nBewegung:\n- Bein seitlich vom Kabelzug wegführen.\n- Langsam zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken bleibt waagerecht, der Oberkörper aufrecht.\n- Standbein bleibt leicht gebeugt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4712,7 +4712,7 @@
     {
       "key": "cable_hip_adduction",
       "name": "Hüftadduktion",
-      "description": "Einstellen:\n- Fußmanschette am stationsnahen Bein befestigen. Seitlich zum tiefen Kabel stehen und am Rahmen festhalten.\n\nBewegung:\n- Das seitlich geöffnete Arbeitsbein zur Körpermitte führen.\n- Bein langsam nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Becken ruhig halten; Fuß bleibt knapp über dem Boden.\n\nHäufige Fehler:\n- Schwung holen oder mit dem Standbein ausweichen.\n\nPositionen:\nStart: Arbeitsbein zur Station hin geöffnet.\nEnde: Arbeitsbein zur Mitte geführt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Fußmanschette unten am Kabelzug befestigen und am inneren Bein anlegen.\n- Seitlich zum Kabelzug stehen, am Rahmen festhalten.\n\nBewegung:\n- Das geöffnete Bein zur Körpermitte führen.\n- Langsam nach außen zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Das Becken bleibt ruhig.\n- Der Fuß bleibt knapp über dem Boden.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4742,7 +4742,7 @@
     {
       "key": "cable_shoulder_external_rotation",
       "name": "Schulter-Außenrotation",
-      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Seitlich zur Station stehen und Griff in der äußeren Hand halten; Ellenbogen etwa 90° beugen und am Rumpf lassen.\n\nBewegung:\n- Unterarm nach außen drehen, während der Oberarm an derselben Stelle bleibt.\n- Langsam nach innen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Bewegung bleibt klein und kontrolliert; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen abheben oder den ganzen Rumpf mitdrehen.\n\nPositionen:\nStart: Unterarm schräg vor dem Bauch.\nEnde: Unterarm nach außen gedreht, Ellenbogen weiterhin am Rumpf.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen.\n- Seitlich zum Kabelzug stehen, Griff in der äußeren Hand, Ellenbogen rechtwinklig am Rumpf.\n\nBewegung:\n- Unterarm nach außen drehen.\n- Langsam zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Der Ellenbogen bleibt am Rumpf.\n- Kleine, ruhige Bewegung; bei Schmerzen aufhören.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4777,7 +4777,7 @@
     {
       "key": "cable_shoulder_internal_rotation",
       "name": "Schulter-Innenrotation",
-      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen. Stationsnahe Hand verwenden, Ellenbogen etwa 90° beugen und am Rumpf halten.\n\nBewegung:\n- Unterarm nach innen vor den Bauch drehen.\n- Kontrolliert nach außen zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig; bei Schmerzen stoppen.\n\nHäufige Fehler:\n- Den Ellenbogen nach vorne schieben oder das Handgelenk einknicken.\n\nPositionen:\nStart: Unterarm seitlich nach außen ausgerichtet.\nEnde: Unterarm vor dem Bauch, Ellenbogen unverändert.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff auf Ellenbogenhöhe einstellen.\n- Seitlich zum Kabelzug stehen, Griff in der inneren Hand, Ellenbogen rechtwinklig am Rumpf.\n\nBewegung:\n- Unterarm nach innen vor den Bauch drehen.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Der Ellenbogen bleibt am Rumpf.\n- Kleine, ruhige Bewegung; bei Schmerzen aufhören.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4816,7 +4816,7 @@
     {
       "key": "cable_high_curl",
       "name": "Bizepscurl – hoch, beidarmig",
-      "description": "Einstellen:\n- Zwei Einzelgriffe auf Schulterhöhe einstellen. Mittig stehen, Oberarme seitlich halten und Griffe im Untergriff fassen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Ellenbogen beugen und die Hände zu den Schläfen führen.\n- Unterarme langsam wieder nach außen strecken.\n\nHinweise:\n- Oberarme bleiben auf gleicher Höhe; die schräge Ansicht zeigt beide angehobenen Arme.\n\nHäufige Fehler:\n- Oberarme absenken oder die Handgelenke einknicken.\n\nPositionen:\nStart: Oberarme seitlich, Unterarme nach außen.\nEnde: Ellenbogen gebeugt, Hände nahe den Schläfen.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Zwei Einzelgriffe auf Schulterhöhe einstellen.\n- Mittig zwischen den Rollen stehen, Arme seitlich ausgestreckt, Griffe im Untergriff.\n\nBewegung:\n- Ellenbogen beugen und die Hände zu den Schläfen führen.\n- Unterarme langsam wieder nach außen strecken.\n\nAchte auf:\n- Oberarme bleiben auf Schulterhöhe.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4851,7 +4851,7 @@
     {
       "key": "cable_triceps_overhead_single",
       "name": "Trizepsstrecken über Kopf – einarmig",
-      "description": "Einstellen:\n- Einzelgriff am tiefen Kabel befestigen. Mit dem Rücken zur Station in Schrittstellung stehen; Arbeitsoberarm über Kopf anheben, freie Hand an der Hüfte.\n\nBewegung:\n- Arbeitsellenbogen strecken und die Hand nach oben vorne führen.\n- Hand kontrolliert hinter den Kopf zurückführen; danach Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ausgerichtet; Kabel verläuft frei neben dem Körper.\n\nHäufige Fehler:\n- Den unteren Rücken überstrecken oder die Schulter stark mitbewegen.\n\nPositionen:\nStart: Arbeitsellenbogen über Kopf gebeugt.\nEnde: Arbeitsarm über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff unten am Kabelzug befestigen.\n- Mit dem Rücken zum Kabelzug in Schrittstellung stehen, Arbeitsarm über Kopf heben.\n\nBewegung:\n- Ellenbogen strecken und die Hand nach oben vorne führen.\n- Kontrolliert hinter den Kopf zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Oberarm bleibt ruhig neben dem Kopf.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4882,7 +4882,7 @@
     {
       "key": "db_bench_press",
       "name": "Bankdrücken",
-      "description": "Einstellen:\n- Zwei gleich schwere Hanteln kontrolliert in Rückenlage bringen. Kopf, oberer Rücken und Becken auf die Flachbank legen; Füße ganz aufstellen.\n\nBewegung:\n- Hanteln aus Brustnähe nach oben drücken, ohne sie zusammenzuschlagen.\n- Langsam seitlich der Brust absenken; vor einer unkontrollierten Schulterdehnung stoppen.\n\nHinweise:\n- Unterarme unter den Hanteln halten.\n\nHäufige Fehler:\n- Hanteln abfedern lassen oder die Füße vom Boden lösen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hanteln neben der Brust.\nEnde: Hanteln über der Brust, Arme weitgehend gestreckt.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit zwei Hanteln auf die Flachbank legen, Füße aufstellen.\n- Hanteln seitlich der Brust halten.\n\nBewegung:\n- Hanteln nach oben über die Brust drücken.\n- Langsam seitlich der Brust absenken.\n\nAchte auf:\n- Unterarme stehen senkrecht unter den Hanteln.\n- Füße und Gesäß bleiben aufgesetzt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4920,7 +4920,7 @@
     {
       "key": "db_incline_press",
       "name": "Schrägbankdrücken",
-      "description": "Einstellen:\n- Lehne moderat schräg einstellen und verriegeln. Mit zwei Hanteln anlehnen, Kopf stützen und Füße aufstellen.\n\nBewegung:\n- Hanteln über den oberen Brustbereich nach oben drücken.\n- Kontrolliert neben die obere Brust zurückführen.\n\nHinweise:\n- Becken bleibt auf dem Sitz; Rippen nicht aufschieben.\n\nHäufige Fehler:\n- Die Lehnenneigung durch ein starkes Hohlkreuz ausgleichen.\n\nPositionen:\nStart: Hanteln neben der oberen Brust, Arme gebeugt.\nEnde: Hanteln oben über dem oberen Brustbereich.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Verstellbare Hantelbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Lehne der Schrägbank leicht schräg stellen.\n- Mit zwei Hanteln anlehnen, Füße aufstellen, Hanteln neben der oberen Brust halten.\n\nBewegung:\n- Hanteln nach oben drücken.\n- Kontrolliert neben die obere Brust absenken.\n\nAchte auf:\n- Gesäß bleibt auf dem Sitz, kein Hohlkreuz.\n- Unterarme stehen senkrecht unter den Hanteln.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4958,7 +4958,7 @@
     {
       "key": "db_flat_fly",
       "name": "Flys – Flachbank",
-      "description": "Einstellen:\n- Auf die Flachbank legen, Füße aufstellen und zwei Hanteln mit zueinander zeigenden Handflächen über der Brust halten.\n\nBewegung:\n- Aus der geöffneten Position die Arme in einem Bogen über der Brust zusammenführen.\n- Mit annähernd gleicher Ellenbogenbeugung seitlich öffnen; nur bis zur kontrollierbaren Tiefe.\n\nHinweise:\n- Die Arme bleiben leicht gebeugt.\n\nHäufige Fehler:\n- Zu tief öffnen oder aus dem Fly ein Bankdrücken machen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Ellenbogen leicht gebeugt.\nEnde: Hanteln über der Brust angenähert.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf die Flachbank legen, Füße aufstellen.\n- Hanteln über der Brust halten, Handflächen zueinander.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- In einem Bogen über der Brust zusammenführen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Nur so weit öffnen, wie die Schultern stabil bleiben.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -4992,7 +4992,7 @@
     {
       "key": "db_row_supported",
       "name": "Rudern – einarmig, abgestützt",
-      "description": "Einstellen:\n- Freie Hand und gleichseitiges Knie auf einer stabilen Bank abstützen. Den anderen Fuß auf den Boden stellen; Hantel in der Arbeitshand hängen lassen.\n\nBewegung:\n- Hantel zur Arbeitsseite des unteren Brustkorbs ziehen.\n- Arbeitsarm kontrolliert wieder strecken; nach dem Satz Seite wechseln.\n\nHinweise:\n- Brust und Becken bleiben zum Boden ausgerichtet.\n\nHäufige Fehler:\n- Den Rumpf beim Ziehen aufdrehen.\n\nPositionen:\nStart: Arbeitsarm hängt, freie Hand und Knie stützen.\nEnde: Arbeitsellenbogen hinten, Hantel am Rumpf.\n\nBenötigte Ausstattung: 1 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Freie Hand und gleichseitiges Knie auf der Bank abstützen.\n- Anderen Fuß auf den Boden stellen, Hantel am langen Arm hängen lassen.\n\nBewegung:\n- Hantel seitlich zum unteren Brustkorb ziehen.\n- Kontrolliert absenken, danach die Seite wechseln.\n\nAchte auf:\n- Brust und Becken zeigen durchgehend zum Boden.\n- Der Rumpf dreht sich nicht mit.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5034,7 +5034,7 @@
     {
       "key": "db_row_chest_supported",
       "name": "Rudern – brustgestützt",
-      "description": "Einstellen:\n- Schrägbank verriegeln und mit der Brust auflegen. Beide Füße aufstellen, zwei Hanteln unter den Schultern hängen lassen.\n\nBewegung:\n- Beide Ellenbogen nach hinten führen und die Hanteln zum Rumpf ziehen.\n- Hanteln kontrolliert unter die Schultern absenken.\n\nHinweise:\n- Brustkontakt bleibt bestehen.\n\nHäufige Fehler:\n- Den Oberkörper vom Polster abheben.\n\nPositionen:\nStart: Arme hängen unter den Schultern.\nEnde: Ellenbogen zurückgezogen, Hanteln neben dem Rumpf.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Verstellbare Hantelbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit der Brust auf die Schrägbank legen, Füße aufstellen.\n- Hanteln unter den Schultern hängen lassen.\n\nBewegung:\n- Ellenbogen nach hinten führen und die Hanteln zum Rumpf ziehen.\n- Kontrolliert absenken.\n\nAchte auf:\n- Die Brust bleibt auf der Bank.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5076,7 +5076,7 @@
     {
       "key": "db_shoulder_press_seated",
       "name": "Schulterdrücken – sitzend",
-      "description": "Einstellen:\n- Auf eine Bank mit hoher Rückenlehne setzen und Füße aufstellen. Zwei Hanteln auf Schulterhöhe in den Obergriff bringen.\n\nBewegung:\n- Hanteln nach oben drücken, ohne die Ellenbogen ruckartig zu verriegeln.\n- Langsam wieder auf Schulterhöhe absenken.\n\nHinweise:\n- Unterarme bleiben unter den Hanteln.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder den Kopf vorschieben.\n\nPositionen:\nStart: Hanteln neben den Schultern.\nEnde: Hanteln über dem Kopf, Arme lang.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Bank mit Rückenlehne\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Lehne der Bank steil stellen und anlehnen, Füße aufstellen.\n- Hanteln im Obergriff auf Schulterhöhe bringen.\n\nBewegung:\n- Hanteln nach oben drücken, bis die Arme fast gestreckt sind.\n- Langsam auf Schulterhöhe absenken.\n\nAchte auf:\n- Unterarme stehen senkrecht unter den Hanteln.\n- Rücken bleibt an der Lehne, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5153,7 +5153,7 @@
     {
       "key": "db_front_raise",
       "name": "Frontheben",
-      "description": "Einstellen:\n- Aufrecht stehen, zwei Hanteln im Obergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Beide Arme bei leichter Ellenbogenbeugung nach vorne bis etwa Schulterhöhe heben.\n- Kontrolliert vor die Oberschenkel absenken.\n\nHinweise:\n- Becken und Brustkorb bleiben übereinander.\n\nHäufige Fehler:\n- Nach hinten lehnen oder die Hanteln hochschwingen.\n\nPositionen:\nStart: Hanteln vorne unten.\nEnde: Hanteln vorne auf Schulterhöhe.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln im Obergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen nach vorne bis Schulterhöhe heben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht und ruhig.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5187,7 +5187,7 @@
     {
       "key": "db_reverse_fly",
       "name": "Reverse Flys – vorgebeugt",
-      "description": "Einstellen:\n- Mit leicht gebeugten Knien in die Hüftbeuge gehen. Rücken kontrolliert halten und zwei Hanteln unter den Schultern hängen lassen.\n\nBewegung:\n- Arme seitlich öffnen, ohne den Oberkörper aufzurichten.\n- Arme langsam unter dem Körper zusammenführen.\n\nHinweise:\n- Ellenbogenwinkel annähernd beibehalten.\n\nHäufige Fehler:\n- Mit stark gebeugten Ellenbogen rudern oder den Rücken aufrichten.\n\nPositionen:\nStart: Arme hängen unter dem vorgebeugten Rumpf.\nEnde: Arme seitlich geöffnet, Rumpf unverändert.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit leicht gebeugten Knien aus der Hüfte vorbeugen.\n- Hanteln unter den Schultern hängen lassen.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- Langsam unter dem Körper zusammenführen.\n\nAchte auf:\n- Rücken bleibt lang, der Oberkörper bleibt vorgebeugt.\n- Ellenbogen bleiben leicht gebeugt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5256,7 +5256,7 @@
     {
       "key": "db_hammer_curl",
       "name": "Hammercurl",
-      "description": "Einstellen:\n- Zwei Hanteln mit zueinander zeigenden Handflächen seitlich halten. Aufrecht und stabil stehen.\n\nBewegung:\n- Unterarme anheben und die Neutralstellung beibehalten.\n- Hanteln langsam wieder absenken.\n\nHinweise:\n- Daumen bleiben oben; keine Drehung in den Untergriff.\n\nHäufige Fehler:\n- Die Hanteln beim Curl eindrehen oder mit der Hüfte Schwung holen.\n\nPositionen:\nStart: Arme unten im Neutralgriff.\nEnde: Unterarme angehoben, Handflächen weiterhin zueinander.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln seitlich halten, Handflächen zeigen zueinander.\n\nBewegung:\n- Unterarme anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Daumen zeigen durchgehend nach oben.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5290,7 +5290,7 @@
     {
       "key": "db_incline_curl",
       "name": "Bizepscurl – Schrägbank",
-      "description": "Einstellen:\n- Auf einer moderat geneigten Schrägbank anlehnen. Füße aufstellen; zwei Hanteln im Untergriff seitlich frei hängen lassen.\n\nBewegung:\n- Ellenbogen beugen, ohne die Oberarme nach vorne zu schieben.\n- Unterarme langsam wieder absenken.\n\nHinweise:\n- Rücken bleibt an der Lehne; Oberarme liegen nicht auf einem Curlpolster.\n\nHäufige Fehler:\n- Schultern nach vorne rollen oder die Ellenbogen stark vorziehen.\n\nPositionen:\nStart: Arme hängen seitlich der schrägen Lehne.\nEnde: Ellenbogen gebeugt, Oberarme unverändert.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Verstellbare Hantelbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Lehne der Schrägbank leicht zurückstellen und anlehnen.\n- Hanteln im Untergriff seitlich hängen lassen.\n\nBewegung:\n- Ellenbogen beugen und die Hanteln anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Rücken und Schultern bleiben an der Lehne.\n- Oberarme zeigen senkrecht nach unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5325,7 +5325,7 @@
     {
       "key": "db_triceps_overhead",
       "name": "Trizepsstrecken über Kopf",
-      "description": "Einstellen:\n- Auf eine Bank setzen und Füße aufstellen. Eine Kurzhantel mit beiden Händen am oberen Hantelkopf sicher über Kopf halten.\n\nBewegung:\n- Aus gebeugten Ellenbogen die Hantel nach oben führen.\n- Kontrolliert hinter den Kopf absenken.\n\nHinweise:\n- Oberarme möglichst ruhig lassen; ausreichend Kopffreiheit halten.\n\nHäufige Fehler:\n- Den Rücken überstrecken oder den Griff am Hantelkopf lösen.\n\nPositionen:\nStart: Eine Hantel hinter dem Kopf, Ellenbogen gebeugt.\nEnde: Eine Hantel über Kopf, Ellenbogen weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf eine Bank setzen, Füße aufstellen.\n- Eine Hantel mit beiden Händen am oberen Hantelkopf über Kopf halten.\n\nBewegung:\n- Hantel kontrolliert hinter den Kopf absenken.\n- Ellenbogen strecken und die Hantel nach oben führen.\n\nAchte auf:\n- Oberarme bleiben ruhig neben dem Kopf.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5356,7 +5356,7 @@
     {
       "key": "db_triceps_lying",
       "name": "Trizepsstrecken – liegend",
-      "description": "Einstellen:\n- Mit zwei Hanteln auf die Flachbank legen, Füße aufstellen. Oberarme nach oben ausrichten, Handflächen zueinander.\n\nBewegung:\n- Aus gebeugten Ellenbogen die Hanteln nach oben strecken.\n- Hanteln kontrolliert neben den Kopf absenken.\n\nHinweise:\n- Oberarme bleiben annähernd senkrecht.\n\nHäufige Fehler:\n- Hanteln auf das Gesicht absenken oder mit den Schultern drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Hanteln neben dem Kopf.\nEnde: Hanteln oben, Ellenbogen weitgehend gestreckt.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit zwei Hanteln auf die Flachbank legen, Füße aufstellen.\n- Arme senkrecht nach oben strecken, Handflächen zueinander.\n\nBewegung:\n- Hanteln kontrolliert neben den Kopf absenken.\n- Ellenbogen strecken und die Hanteln nach oben führen.\n\nAchte auf:\n- Oberarme bleiben senkrecht.\n- Nur die Unterarme bewegen sich.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5386,7 +5386,7 @@
     {
       "key": "db_kickback_supported",
       "name": "Trizeps-Kickback – einarmig, abgestützt",
-      "description": "Einstellen:\n- Freie Hand und gleichseitiges Knie auf der Bank abstützen. Arbeitsoberarm neben dem vorgebeugten Rumpf anheben und Ellenbogen beugen.\n\nBewegung:\n- Arbeitsellenbogen strecken und die Hantel nach hinten führen.\n- Unterarm kontrolliert zurückschwenken; danach Seite wechseln.\n\nHinweise:\n- Der Oberarm bleibt oben und ruhig.\n\nHäufige Fehler:\n- Mit der Schulter pendeln oder den Rumpf aufdrehen.\n\nPositionen:\nStart: Arbeitsoberarm zurückgeführt, Unterarm hängt.\nEnde: Arbeitsarm nach hinten weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Freie Hand und gleichseitiges Knie auf der Bank abstützen.\n- Oberarm neben dem Rumpf anheben, Ellenbogen gebeugt.\n\nBewegung:\n- Ellenbogen strecken und die Hantel nach hinten führen.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Oberarm bleibt oben und ruhig.\n- Rumpf bleibt parallel zur Bank.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5456,7 +5456,7 @@
     {
       "key": "db_romanian_deadlift",
       "name": "Rumänisches Kreuzheben",
-      "description": "Einstellen:\n- Hüftbreit stehen und zwei Hanteln vor den Oberschenkeln halten. Knie leicht beugen und Rücken kontrolliert ausrichten.\n\nBewegung:\n- Aus der Hüftbeuge die Hüfte strecken und aufrichten.\n- Hüfte nach hinten schieben, Hanteln nahe an den Beinen absenken; vor Verlust der Rückenposition stoppen.\n\nHinweise:\n- Kniewinkel verändert sich nur wenig.\n\nHäufige Fehler:\n- Bis zum Boden erzwingen oder daraus eine tiefe Kniebeuge machen.\n\nPositionen:\nStart: Hüfte hinten, Oberkörper vorgebeugt, Hanteln nahe den Beinen.\nEnde: Aufrechter Stand, Hüfte gestreckt.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Hüftbreit stehen, Knie leicht gebeugt.\n- Hanteln vor den Oberschenkeln halten.\n\nBewegung:\n- Hüfte nach hinten schieben und die Hanteln nah an den Beinen absenken.\n- Hüfte strecken und aufrichten.\n\nAchte auf:\n- Rücken bleibt lang; nur so tief gehen, wie das gelingt.\n- Knie bleiben leicht gebeugt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5492,7 +5492,7 @@
     {
       "key": "db_reverse_lunge",
       "name": "Ausfallschritt – rückwärts",
-      "description": "Einstellen:\n- Mit zwei Hanteln seitlich aufrecht stehen und hinter sich Platz freihalten.\n\nBewegung:\n- Ein Bein nach hinten setzen und kontrolliert in den Ausfallschritt absenken.\n- Über das vordere Bein wieder aufrichten und den hinteren Fuß zurückholen; nach dem Satz Seite wechseln.\n\nHinweise:\n- Vorderer Fuß bleibt vollständig am Boden.\n\nHäufige Fehler:\n- Sehr schmal auf einer Linie treten oder unkontrolliert auf dem hinteren Knie landen.\n\nPositionen:\nStart: Aufrechter Stand, Füße nebeneinander.\nEnde: Ausfallschritt hinten, beide Knie gebeugt.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen, Hanteln seitlich halten.\n- Hinter sich Platz lassen.\n\nBewegung:\n- Ein Bein nach hinten setzen und beide Knie beugen.\n- Über das vordere Bein aufrichten und den Fuß zurückholen, danach die Seite wechseln.\n\nAchte auf:\n- Der vordere Fuß bleibt ganz am Boden.\n- Hüftbreit treten, das hintere Knie setzt sanft auf oder bleibt knapp über dem Boden.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5532,7 +5532,7 @@
     {
       "key": "db_bulgarian_split_squat",
       "name": "Bulgarian Split Squat",
-      "description": "Einstellen:\n- Hinteren Fußrücken auf einer stabilen, passend hohen Bank ablegen. Vorderen Fuß weit genug vorne aufstellen und zwei Hanteln seitlich halten.\n\nBewegung:\n- Aus der abgesenkten Position über das vordere Bein aufrichten.\n- Kontrolliert wieder absenken; anschließend Seite wechseln.\n\nHinweise:\n- Vorderer Fuß bleibt ganz aufgesetzt, hinterer Fuß locker auf der Auflage.\n\nHäufige Fehler:\n- Mit dem hinteren Bein stark abdrücken oder die Hüfte verdrehen.\n\nPositionen:\nStart: Vorderes Knie gebeugt, hinterer Fuß erhöht.\nEnde: Vorderes Bein weiter gestreckt, hinterer Fuß bleibt auf der Bank.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Hinteren Fußrücken auf eine Bank legen.\n- Vorderen Fuß einen großen Schritt davor aufstellen, Hanteln seitlich halten.\n\nBewegung:\n- Vorderes Knie beugen und kontrolliert absenken.\n- Über das vordere Bein aufrichten, danach die Seite wechseln.\n\nAchte auf:\n- Der vordere Fuß bleibt ganz am Boden.\n- Das hintere Bein liegt nur locker auf, die Hüfte bleibt gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5572,7 +5572,7 @@
     {
       "key": "db_calf_raise",
       "name": "Wadenheben – stehend",
-      "description": "Einstellen:\n- Auf ebenem Boden mit zwei Hanteln seitlich stabil stehen. Füße ungefähr hüftbreit aufstellen.\n\nBewegung:\n- Beide Fersen anheben und auf die Fußballen drücken.\n- Fersen langsam wieder auf den Boden absenken.\n\nHinweise:\n- Knie bleiben annähernd im gleichen Winkel.\n\nHäufige Fehler:\n- Mit den Knien federn oder nach außen über die Fußkante kippen.\n\nPositionen:\nStart: Fersen am Boden, Hanteln seitlich.\nEnde: Fersen angehoben, Fußballen bleiben am Boden.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Hüftbreit stehen.\n- Hanteln seitlich halten.\n\nBewegung:\n- Fersen so weit wie möglich anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Knie bleiben fast gestreckt und bewegen sich nicht.\n- Füße bleiben gerade, ohne zur Seite zu kippen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5600,7 +5600,7 @@
     {
       "key": "cable_decline_fly",
       "name": "Flys – Negativbank",
-      "description": "Einstellen:\n- Geeignete Negativbank mit Beinsicherung zwischen zwei tiefe Rollen stellen und verriegeln. Je einen Einzelgriff fassen; Kopf und Rücken auflegen, Beine sichern.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme aus der geöffneten Position in einem Bogen über der Brust zusammenführen.\n- Langsam wieder öffnen, nur bis zur kontrollierbaren Schulterposition.\n\nHinweise:\n- Ellenbogen leicht gebeugt lassen; Griffwege folgen dem geneigten Oberkörper.\n\nHäufige Fehler:\n- Ohne Beinsicherung abrutschen oder zu tief öffnen.\n\nPositionen:\nStart: Arme seitlich geöffnet, Rücken auf der Negativbank.\nEnde: Griffe über der Brust angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Negativbank mit Beinsicherung\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Negativbank mittig zwischen zwei untere Rollen stellen.\n- Je einen Einzelgriff fassen, Beine sichern, Kopf und Rücken auflegen.\n\nBewegung:\n- Arme in einem Bogen über der Brust zusammenführen.\n- Langsam wieder öffnen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Nur so weit öffnen, wie die Schultern stabil bleiben.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5634,7 +5634,7 @@
     {
       "key": "cable_low_fly",
       "name": "Flys – von unten",
-      "description": "Einstellen:\n- Zwei Einzelgriffe an tiefen Rollen fassen und zwischen den Stationen stabil stehen. Handflächen nach vorne/oben, Ellenbogen leicht gebeugt.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe schräg nach vorne oben vor die obere Brust zusammenführen.\n- Kontrolliert nach außen unten zurückführen.\n\nHinweise:\n- Kein Überkreuzen nötig; Rumpf bleibt ruhig.\n\nHäufige Fehler:\n- Die Griffe mit Schwung über Kopfhöhe werfen.\n\nPositionen:\nStart: Arme seitlich unten geöffnet.\nEnde: Griffe vor der oberen Brust nahe beieinander.\n\nBenötigte Ausstattung: 1 × Kabelzug\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Zwei Einzelgriffe ganz unten einstellen.\n- Mittig stabil stehen, Handflächen nach vorne, Ellenbogen leicht gebeugt.\n\nBewegung:\n- Griffe schräg nach vorne oben vor der oberen Brust zusammenführen.\n- Kontrolliert nach außen unten zurückführen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Rumpf bleibt ruhig, kein Schwung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5668,7 +5668,7 @@
     {
       "key": "cable_incline_fly",
       "name": "Flys – Schrägbank",
-      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Rücken und Kopf anlehnen, Füße aufstellen; zwei Einzelgriffe halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Arme bogenförmig vor dem oberen Brustbereich zusammenführen.\n- Mit annähernd gleichem Ellenbogenwinkel wieder öffnen.\n\nHinweise:\n- Schulterbewegung kontrollieren, Bankkontakt halten.\n\nHäufige Fehler:\n- Aus dem Fly eine Druckbewegung machen.\n\nPositionen:\nStart: Arme seitlich geöffnet.\nEnde: Griffe vor dem oberen Brustbereich angenähert.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Schrägbank mittig zwischen zwei untere Rollen stellen.\n- Je einen Einzelgriff fassen, anlehnen, Füße aufstellen.\n\nBewegung:\n- Arme in einem Bogen vor der oberen Brust zusammenführen.\n- Langsam wieder öffnen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Rücken und Kopf bleiben an der Lehne.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5702,7 +5702,7 @@
     {
       "key": "cable_bench_press",
       "name": "Bankdrücken",
-      "description": "Einstellen:\n- Flachbank zwischen zwei tiefe Kabelrollen stellen. Je einen Einzelgriff fassen, in Rückenlage gehen und beide Füße voll aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe aus Brustnähe senkrecht über die Brust drücken.\n- Langsam neben die Brust zurückführen.\n\nHinweise:\n- Handgelenke über den Unterarmen halten.\n\nHäufige Fehler:\n- Rücken oder Becken von der Bank abheben.\n\nPositionen:\nStart: Ellenbogen gebeugt, Griffe neben der Brust.\nEnde: Arme über der Brust weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Flachbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Flachbank mittig zwischen zwei untere Rollen stellen.\n- Je einen Einzelgriff fassen, hinlegen, Füße aufstellen.\n\nBewegung:\n- Griffe nach oben über die Brust drücken.\n- Langsam neben die Brust zurückführen.\n\nAchte auf:\n- Handgelenke stehen über den Unterarmen.\n- Rücken und Gesäß bleiben auf der Bank.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5740,7 +5740,7 @@
     {
       "key": "cable_incline_press",
       "name": "Schrägbankdrücken",
-      "description": "Einstellen:\n- Schrägbank zwischen zwei tiefe Rollen stellen und verriegeln. Mit zwei Einzelgriffen anlehnen, Füße fest aufstellen.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Griffe über den oberen Brustbereich nach oben drücken.\n- Kontrolliert neben die obere Brust absenken.\n\nHinweise:\n- Bankwinkel nicht durch ein starkes Hohlkreuz ausgleichen.\n\nHäufige Fehler:\n- Von hohen Rollen nach oben drücken und dadurch eine andere Zugrichtung erzeugen.\n\nPositionen:\nStart: Griffe neben der oberen Brust.\nEnde: Arme über dem oberen Brustbereich lang.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Schrägbank mittig zwischen zwei untere Rollen stellen.\n- Je einen Einzelgriff fassen, anlehnen, Füße aufstellen.\n\nBewegung:\n- Griffe nach oben drücken.\n- Kontrolliert neben die obere Brust absenken.\n\nAchte auf:\n- Rücken bleibt an der Lehne, kein Hohlkreuz.\n- Handgelenke stehen über den Unterarmen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5778,7 +5778,7 @@
     {
       "key": "cable_incline_row",
       "name": "Rudern – brustgestützt",
-      "description": "Einstellen:\n- Schrägbank mit dem Kopfende zur tiefen Rolle ausrichten. Brust auflegen, Füße aufstellen und engen Parallelgriff fassen; Kabel muss frei an der Bank vorbeilaufen.\n\nBewegung:\n- Ellenbogen zurückführen und Griff zum unteren Brustkorb ziehen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Brust bleibt am Polster.\n\nHäufige Fehler:\n- Zum Zug den Rumpf vom Polster abheben.\n\nPositionen:\nStart: Arme zur vorderen tiefen Rolle verlängert.\nEnde: Griff vor dem unteren Brustkorb.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Verstellbare Hantelbank",
+      "description": "Einstellen:\n- Schrägbank mit dem Kopfende zur unteren Rolle stellen.\n- Mit der Brust auflegen, Füße aufstellen, engen Parallelgriff fassen.\n\nBewegung:\n- Griff zum unteren Brustkorb ziehen, Ellenbogen nach hinten führen.\n- Arme kontrolliert strecken.\n\nAchte auf:\n- Die Brust bleibt auf der Bank.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5820,7 +5820,7 @@
     {
       "key": "cable_high_row_kneeling",
       "name": "High Row – kniend",
-      "description": "Einstellen:\n- Vor einer hohen Rolle knien. Knie unter den Hüften, kurze Stange im Obergriff fassen; bei Bedarf eine Matte verwenden.\n\nBewegung:\n- Stange schräg nach unten zum oberen Bauch ziehen.\n- Arme kontrolliert zur Rolle verlängern.\n\nHinweise:\n- Hüfte bleibt über den Knien; nicht auf die Fersen zurücksetzen.\n\nHäufige Fehler:\n- Mit dem gesamten Körper nach hinten reißen.\n\nPositionen:\nStart: Arme schräg nach vorne oben verlängert.\nEnde: Stange vor dem oberen Bauch.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange oben am Kabelzug befestigen und im Obergriff fassen.\n- Vor dem Kabelzug knien, Hüfte über den Knien.\n\nBewegung:\n- Stange schräg nach unten zum oberen Bauch ziehen.\n- Arme kontrolliert nach oben strecken.\n\nAchte auf:\n- Die Hüfte bleibt über den Knien.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5862,7 +5862,7 @@
     {
       "key": "cable_row_standing_v",
       "name": "Rudern – stehend, V-Griff",
-      "description": "Einstellen:\n- Rolle auf Bauchhöhe stellen. Engen Parallelgriff fassen und mit leicht gebeugten Knien stabil zur Station stehen.\n\nBewegung:\n- Griff zum Bauch ziehen und Ellenbogen nach hinten führen.\n- Arme langsam wieder nach vorne verlängern.\n\nHinweise:\n- Brust und Becken bleiben über den Füßen.\n\nHäufige Fehler:\n- Den Oberkörper als Gegengewicht weit zurücklehnen.\n\nPositionen:\nStart: Arme nach vorne verlängert.\nEnde: Griff am Bauch, Ellenbogen zurück.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Rolle auf Bauchhöhe stellen und engen Parallelgriff befestigen.\n- Mit leicht gebeugten Knien stabil zum Kabelzug stehen.\n\nBewegung:\n- Griff zum Bauch ziehen, Ellenbogen nach hinten führen.\n- Arme langsam nach vorne strecken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht über den Füßen.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5905,7 +5905,7 @@
     {
       "key": "cable_row_rope",
       "name": "Rudern – sitzend, Seil",
-      "description": "Einstellen:\n- An einer niedrigen Ruderstation sitzen. Beide Füße auf die Stützen setzen, Knie leicht beugen und beide Seilenden im Neutralgriff fassen.\n\nBewegung:\n- Seilenden zum Rumpf ziehen und dabei etwas auseinanderführen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Rumpf bleibt annähernd aufrecht.\n\nHäufige Fehler:\n- Mit starkem Vor- und Zurückschwingen rudern.\n\nPositionen:\nStart: Arme nach vorne verlängert, Füße auf den Stützen.\nEnde: Seilenden neben dem Bauch.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Ruderbank mit Fußstützen",
+      "description": "Einstellen:\n- Seil unten am Kabelzug befestigen.\n- Davor setzen, Füße abstützen, Knie leicht gebeugt, Seilenden fassen.\n\nBewegung:\n- Seilenden zum Rumpf ziehen und dabei leicht auseinanderführen.\n- Arme kontrolliert nach vorne strecken.\n\nAchte auf:\n- Oberkörper bleibt aufrecht und ruhig.\n- Schultern bleiben unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5947,7 +5947,7 @@
     {
       "key": "cable_preacher_curl",
       "name": "Scottcurl",
-      "description": "Einstellen:\n- Scottbank vor eine tiefe Rolle stellen. Oberarme auf das Polster legen und kurze Stange im Untergriff halten; Sitzhöhe passend einstellen.\n\nBewegung:\n- Ellenbogen beugen und Stange nach oben führen.\n- Kontrolliert absenken, ohne die Ellenbogen ruckartig durchzustrecken.\n\nHinweise:\n- Oberarme bleiben auf der Auflage.\n\nHäufige Fehler:\n- Vom Polster abheben oder am unteren Punkt federn.\n\nPositionen:\nStart: Unterarme nach vorne unten verlängert.\nEnde: Unterarme angehoben, Oberarme weiter gestützt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Scottbank / Oberarmauflage",
+      "description": "Einstellen:\n- Scottbank vor die untere Rolle stellen, Sitzhöhe einstellen.\n- Oberarme auf das Polster legen, kurze Stange im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Kontrolliert absenken, bis die Arme fast gestreckt sind.\n\nAchte auf:\n- Oberarme bleiben auf dem Polster.\n- Unten ruhig umkehren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -5981,7 +5981,7 @@
     {
       "key": "cable_concentration_curl",
       "name": "Konzentrationscurl",
-      "description": "Einstellen:\n- Seitlich vor der tiefen Rolle auf eine Bank setzen. Beine öffnen, Arbeitsoberarm an der Innenseite des gleichseitigen Oberschenkels abstützen und Einzelgriff im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und Griff zum Oberkörper führen.\n- Langsam absenken; nach dem Satz die Seite wechseln.\n\nHinweise:\n- Abstützpunkt bleibt ruhig.\n\nHäufige Fehler:\n- Mit Schulter oder Oberkörper nachhelfen.\n\nPositionen:\nStart: Arbeitsarm nach vorne unten verlängert.\nEnde: Arbeitsellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Kabelzug + 1 × Flachbank",
+      "description": "Einstellen:\n- Seitlich vor der unteren Rolle auf eine Bank setzen.\n- Oberarm innen am gleichseitigen Oberschenkel abstützen, Einzelgriff im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und den Griff zum Oberkörper führen.\n- Langsam absenken, danach die Seite wechseln.\n\nAchte auf:\n- Der Oberarm bleibt am Oberschenkel.\n- Schulter und Oberkörper bleiben ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6015,7 +6015,7 @@
     {
       "key": "cable_reverse_curl",
       "name": "Reverse Curl",
-      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Handrücken nach vorne und Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Stange durch Beugen der Ellenbogen anheben.\n- Kontrolliert wieder absenken.\n\nHinweise:\n- Obergriff beibehalten und Handgelenke neutral halten.\n\nHäufige Fehler:\n- In den Untergriff drehen oder die Handgelenke einrollen.\n\nPositionen:\nStart: Arme fast gestreckt, Stange unten.\nEnde: Unterarme angehoben, Oberarme ruhig.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange unten am Kabelzug befestigen und im Obergriff fassen.\n- Aufrecht stehen, Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Handrücken zeigen durchgehend nach oben.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6049,7 +6049,7 @@
     {
       "key": "cable_pushdown_supinated",
       "name": "Trizepsdrücken – Untergriff",
-      "description": "Einstellen:\n- Kurze Stange an hoher Rolle im Untergriff fassen. Zur Station stehen und Oberarme neben dem Rumpf halten.\n\nBewegung:\n- Stange durch Strecken der Ellenbogen nach unten führen.\n- Kontrolliert zurück bis zur gebeugten Ausgangsposition.\n\nHinweise:\n- Handflächen bleiben nach oben; Griff sicher halten.\n\nHäufige Fehler:\n- Mit Schultern und Körpergewicht auf die Stange drücken.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange vor dem Bauch.\nEnde: Ellenbogen weitgehend gestreckt, Stange unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange oben am Kabelzug befestigen und im Untergriff fassen.\n- Zum Kabelzug gewandt stehen, Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Ellenbogen strecken und die Stange nach unten führen.\n- Kontrolliert zurück, bis die Ellenbogen gebeugt sind.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Handflächen zeigen durchgehend nach oben.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6079,7 +6079,7 @@
     {
       "key": "cable_pushdown_vbar",
       "name": "Trizepsdrücken – V-Stange",
-      "description": "Einstellen:\n- V-förmige Trizepsstange an hoher Rolle befestigen; nicht mit dem engen Ruder-Parallelgriff verwechseln. Beide schrägen Griffstücke fassen.\n\nBewegung:\n- Ellenbogen strecken und die V-Stange nach unten drücken.\n- Unterarme langsam wieder anheben.\n\nHinweise:\n- Oberarme bleiben neben dem Rumpf.\n\nHäufige Fehler:\n- Die Ellenbogen nach hinten reißen oder das Handgelenk abknicken.\n\nPositionen:\nStart: V-Stange vor dem Bauch.\nEnde: V-Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- V-Stange oben am Kabelzug befestigen.\n- Beide Griffstücke fassen, Ellenbogen neben dem Rumpf.\n\nBewegung:\n- Ellenbogen strecken und die V-Stange nach unten drücken.\n- Unterarme langsam wieder anheben.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6109,7 +6109,7 @@
     {
       "key": "cable_kickback",
       "name": "Trizeps-Kickback – einarmig",
-      "description": "Einstellen:\n- Einzelgriff an tiefer Rolle fassen. Zur Station stehen, Hüfte beugen und den freien Unterarm am Oberschenkel abstützen. Arbeitsoberarm neben dem Rumpf nach hinten anheben.\n\nBewegung:\n- Arbeitsellenbogen strecken und Griff nach hinten führen.\n- Unterarm kontrolliert zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Oberarm bleibt ruhig, Kabel hat freien Weg.\n\nHäufige Fehler:\n- Mit dem ganzen Arm pendeln oder den Rücken aufrichten.\n\nPositionen:\nStart: Arbeitsellenbogen gebeugt, Unterarm hängt.\nEnde: Arbeitsarm nach hinten weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff unten am Kabelzug befestigen.\n- Zum Kabelzug gewandt vorbeugen, freie Hand am Oberschenkel abstützen, Oberarm neben dem Rumpf anheben.\n\nBewegung:\n- Ellenbogen strecken und den Griff nach hinten führen.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Oberarm bleibt oben und ruhig.\n- Rücken bleibt lang und vorgebeugt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6139,7 +6139,7 @@
     {
       "key": "cable_shoulder_press",
       "name": "Schulterdrücken – stehend",
-      "description": "Einstellen:\n- Zwischen zwei tiefen Rollen stehen und zwei Einzelgriffe auf Schulterhöhe bringen. Stabil stehen, Bauchspannung halten.\n- Darstellung: breite Crossover-Station mit zwei unabhängigen Rollen; mittig zwischen den Türmen positionieren. Abstand und Kabelweg an die konkrete Station anpassen.\n\nBewegung:\n- Beide Griffe kontrolliert nach oben drücken.\n- Griffe langsam wieder auf Schulterhöhe absenken.\n\nHinweise:\n- Unterarme unter den Griffen halten.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Griffe hinter den Kopf führen.\n\nPositionen:\nStart: Griffe neben den Schultern.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × Kabelzug\n\nGewicht pro Gewichtsstapel erfassen, nicht addieren.",
+      "description": "Einstellen:\n- Zwei Einzelgriffe ganz unten einstellen.\n- Mittig stabil stehen und die Griffe auf Schulterhöhe bringen.\n\nBewegung:\n- Beide Griffe nach oben drücken.\n- Langsam auf Schulterhöhe absenken.\n\nAchte auf:\n- Rumpf bleibt fest, kein Hohlkreuz.\n- Unterarme stehen unter den Griffen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6177,7 +6177,7 @@
     {
       "key": "cable_shrug",
       "name": "Schulterheben",
-      "description": "Einstellen:\n- Kurze Stange an tiefer Rolle im Obergriff fassen. Aufrecht stehen, Arme lang und Kopf neutral halten.\n\nBewegung:\n- Schultern kontrolliert nach oben heben.\n- Schultern langsam wieder absenken.\n\nHinweise:\n- Arme bleiben lang; Schultern nicht kreisen.\n\nHäufige Fehler:\n- Ellenbogen beugen und aus dem Schulterheben ein Rudern machen.\n\nPositionen:\nStart: Schultern entspannt unten, Stange vor den Oberschenkeln.\nEnde: Schultern angehoben, Arme unverändert lang.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Kurze Stange unten am Kabelzug befestigen und im Obergriff fassen.\n- Aufrecht stehen, Arme lang.\n\nBewegung:\n- Schultern gerade nach oben heben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Arme bleiben lang.\n- Kopf bleibt ruhig, die Schultern kreisen nicht.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6211,7 +6211,7 @@
     {
       "key": "cable_rotation",
       "name": "Rumpfrotation",
-      "description": "Einstellen:\n- Seitlich zur Rolle auf Brusthöhe stehen. Einen Einzelgriff mit beiden Händen halten, Arme leicht gebeugt vor der Brust.\n\nBewegung:\n- Oberkörper in einem kleinen kontrollierten Bogen von der Station wegdrehen.\n- Langsam zur Ausgangsseite zurückkehren; nach dem Satz Seite wechseln.\n\nHinweise:\n- Nur im kontrollierbaren Bereich drehen; Knie bleiben locker.\n\nHäufige Fehler:\n- Nur die Arme schwenken oder die Rotation ruckartig erzwingen.\n\nPositionen:\nStart: Griff zur Kabelseite ausgerichtet.\nEnde: Griff zur Gegenseite geführt, Rumpf moderat gedreht.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff auf Brusthöhe einstellen.\n- Seitlich zum Kabelzug stehen, Griff mit beiden Händen vor der Brust halten, Arme leicht gebeugt.\n\nBewegung:\n- Oberkörper vom Kabelzug wegdrehen.\n- Langsam zurückdrehen, danach die Seite wechseln.\n\nAchte auf:\n- Die Drehung kommt aus dem Rumpf, nicht aus den Armen.\n- Knie bleiben locker.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6249,7 +6249,7 @@
     {
       "key": "cable_chop_high_low",
       "name": "Holzhacken – von oben",
-      "description": "Einstellen:\n- Seitlich zur hohen Rolle stehen und einen Einzelgriff mit beiden Händen halten. Griff zunächst auf der Kabelseite oberhalb der Brust führen.\n\nBewegung:\n- Griff diagonal vor dem Körper zur gegenüberliegenden Hüftseite ziehen und den Oberkörper moderat mitdrehen.\n- Langsam diagonal zurückführen; anschließend Seite wechseln.\n\nHinweise:\n- Arme leicht gebeugt halten, Bewegung kontrolliert führen.\n\nHäufige Fehler:\n- Mit Schwung reißen oder nur die Ellenbogen beugen.\n\nPositionen:\nStart: Griff auf der Kabelseite oben.\nEnde: Griff vor der gegenüberliegenden Hüfte unten.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff oben am Kabelzug einstellen.\n- Seitlich zum Kabelzug stehen, Griff mit beiden Händen über der Schulter halten.\n\nBewegung:\n- Griff diagonal vor dem Körper zur gegenüberliegenden Hüfte ziehen, Oberkörper dreht mit.\n- Langsam zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Arme bleiben leicht gebeugt.\n- Ruhig ziehen, ohne Schwung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6288,7 +6288,7 @@
     {
       "key": "cable_lift_low_high",
       "name": "Holzhacken – von unten",
-      "description": "Einstellen:\n- Seitlich zur tiefen Rolle stehen und einen Einzelgriff mit beiden Händen auf der Kabelseite unten halten. Knie leicht lösen.\n\nBewegung:\n- Griff diagonal vor dem Körper in Richtung gegenüberliegende Schulter anheben und moderat mitdrehen.\n- Kontrolliert nach unten zurückführen; danach Seite wechseln.\n\nHinweise:\n- Nicht ins Hohlkreuz ausweichen; oberhalb der Schulter nicht weiter erzwingen.\n\nHäufige Fehler:\n- Ruckartig aus Beinen oder Rücken beschleunigen.\n\nPositionen:\nStart: Griff auf der Kabelseite unten.\nEnde: Griff auf der Gegenseite etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 1 × Kabelzug",
+      "description": "Einstellen:\n- Einzelgriff unten am Kabelzug einstellen.\n- Seitlich zum Kabelzug stehen, Griff mit beiden Händen neben der Hüfte halten.\n\nBewegung:\n- Griff diagonal vor dem Körper zur gegenüberliegenden Schulter heben, Oberkörper dreht mit.\n- Kontrolliert zurückführen, danach die Seite wechseln.\n\nAchte auf:\n- Arme bleiben leicht gebeugt.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6327,7 +6327,7 @@
     {
       "key": "db_arnold_press",
       "name": "Arnold Press",
-      "description": "Einstellen:\n- Auf einer Bank mit Rückenlehne sitzen; zwei Hanteln vor den Schultern halten, Handflächen zum Körper.\n\nBewegung:\n- Hanteln nach oben drücken und dabei die Arme öffnen, bis die Handflächen nach vorne zeigen.\n- Kontrolliert mit umgekehrter Drehung vor die Schultern zurückführen.\n\nHinweise:\n- Griffdrehung und Armbewegung verbinden, nicht im Handgelenk abknicken.\n\nHäufige Fehler:\n- Ins Hohlkreuz ausweichen oder die Drehung ruckartig erzwingen.\n\nPositionen:\nStart: Hanteln vor den Schultern, Handflächen zum Körper.\nEnde: Hanteln oben, Handflächen nach vorne.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Bank mit Rückenlehne\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Lehne der Bank steil stellen und anlehnen.\n- Hanteln vor den Schultern halten, Handflächen zum Körper.\n\nBewegung:\n- Hanteln nach oben drücken und dabei die Handflächen nach vorne drehen.\n- Mit umgekehrter Drehung vor die Schultern zurückführen.\n\nAchte auf:\n- Drehung und Drücken laufen gleichmäßig zusammen.\n- Rücken bleibt an der Lehne, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6365,7 +6365,7 @@
     {
       "key": "db_bench_neutral",
       "name": "Bankdrücken – Neutralgriff",
-      "description": "Einstellen:\n- Auf die Flachbank legen, Füße aufstellen und zwei Hanteln mit zueinander zeigenden Handflächen neben der Brust halten.\n\nBewegung:\n- Hanteln über die Brust drücken; Ellenbogen körpernäher als beim breiten Obergriff führen.\n- Langsam neben die Brust absenken.\n\nHinweise:\n- Neutralgriff durchgehend beibehalten.\n\nHäufige Fehler:\n- Die Ellenbogen weit nach außen spreizen oder Hanteln zusammenschlagen.\n\nPositionen:\nStart: Hanteln neben der Brust im Neutralgriff.\nEnde: Arme über der Brust lang.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit zwei Hanteln auf die Flachbank legen, Füße aufstellen.\n- Hanteln neben der Brust halten, Handflächen zueinander.\n\nBewegung:\n- Hanteln nach oben über die Brust drücken.\n- Langsam neben die Brust absenken.\n\nAchte auf:\n- Handflächen zeigen durchgehend zueinander.\n- Ellenbogen bleiben nah am Körper.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6403,7 +6403,7 @@
     {
       "key": "db_incline_fly",
       "name": "Flys – Schrägbank",
-      "description": "Einstellen:\n- Auf einer verriegelten Schrägbank anlehnen, Füße aufstellen und zwei Hanteln im Neutralgriff halten.\n\nBewegung:\n- Arme aus der geöffneten Position bogenförmig über dem oberen Brustbereich zusammenführen.\n- Langsam wieder seitlich öffnen.\n\nHinweise:\n- Ellenbogen leicht gebeugt lassen und Bankkontakt halten.\n\nHäufige Fehler:\n- Zu tief öffnen oder daraus eine Druckbewegung machen.\n\nPositionen:\nStart: Arme seitlich geöffnet.\nEnde: Hanteln vor dem oberen Brustbereich angenähert.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Verstellbare Hantelbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Lehne der Schrägbank leicht schräg stellen und anlehnen.\n- Hanteln über der oberen Brust halten, Handflächen zueinander.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich öffnen.\n- In einem Bogen über der oberen Brust zusammenführen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Nur so weit öffnen, wie die Schultern stabil bleiben.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6437,7 +6437,7 @@
     {
       "key": "db_pullover",
       "name": "Überzüge",
-      "description": "Einstellen:\n- Längs auf die Flachbank legen, Kopf und Becken auflegen. Eine Hantel sicher beidhändig am oberen Kopf halten; Füße aufstellen.\n\nBewegung:\n- Hantel aus der Position hinter dem Kopf in einem Bogen über die Brust führen.\n- Langsam hinter den Kopf zurückführen, nur im kontrollierten Schulterbereich.\n\nHinweise:\n- Ellenbogenwinkel annähernd beibehalten, Rippen nicht aufschieben.\n\nHäufige Fehler:\n- Mit dem Rücken überstrecken oder die Hantel ungesichert über das Gesicht führen.\n\nPositionen:\nStart: Hantel hinter dem Kopf, Arme leicht gebeugt.\nEnde: Hantel über der Brust.\n\nBenötigte Ausstattung: 1 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf die Flachbank legen, Füße aufstellen.\n- Eine Hantel mit beiden Händen am oberen Hantelkopf über der Brust halten.\n\nBewegung:\n- Hantel langsam in einem Bogen hinter den Kopf führen.\n- Auf demselben Weg über die Brust zurückführen.\n\nAchte auf:\n- Ellenbogen bleiben leicht gebeugt.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6475,7 +6475,7 @@
     {
       "key": "db_shrug",
       "name": "Schulterheben",
-      "description": "Einstellen:\n- Aufrecht stehen und zwei Hanteln seitlich im Neutralgriff halten.\n\nBewegung:\n- Schultern kontrolliert nach oben heben.\n- Langsam wieder absenken.\n\nHinweise:\n- Arme lang und Kopf ruhig halten.\n\nHäufige Fehler:\n- Schultern kreisen oder Ellenbogen beugen.\n\nPositionen:\nStart: Schultern unten.\nEnde: Schultern angehoben.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln seitlich halten, Handflächen zum Körper.\n\nBewegung:\n- Schultern gerade nach oben heben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Arme bleiben lang.\n- Kopf bleibt ruhig, die Schultern kreisen nicht.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6510,7 +6510,7 @@
     {
       "key": "db_row_bent",
       "name": "Rudern – vorgebeugt",
-      "description": "Einstellen:\n- Mit zwei Hanteln in die Hüftbeuge gehen, Knie leicht beugen und Arme unter den Schultern hängen lassen.\n\nBewegung:\n- Ellenbogen nach hinten führen und beide Hanteln zum Rumpf ziehen.\n- Hanteln kontrolliert absenken.\n\nHinweise:\n- Rumpfwinkel bleibt annähernd gleich.\n\nHäufige Fehler:\n- Beim Ziehen den Oberkörper aufrichten.\n\nPositionen:\nStart: Arme hängen unter dem Rumpf.\nEnde: Hanteln neben dem unteren Brustkorb.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit leicht gebeugten Knien aus der Hüfte vorbeugen.\n- Hanteln unter den Schultern hängen lassen.\n\nBewegung:\n- Ellenbogen nach hinten führen und die Hanteln zum Rumpf ziehen.\n- Kontrolliert absenken.\n\nAchte auf:\n- Rücken bleibt lang.\n- Der Oberkörper bleibt vorgebeugt und ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6553,7 +6553,7 @@
     {
       "key": "db_press_standing",
       "name": "Schulterdrücken – stehend",
-      "description": "Einstellen:\n- Stabil aufrecht stehen und zwei Hanteln im Obergriff auf Schulterhöhe bringen.\n\nBewegung:\n- Hanteln nach oben drücken.\n- Kontrolliert auf Schulterhöhe absenken.\n\nHinweise:\n- Brustkorb und Becken übereinander halten.\n\nHäufige Fehler:\n- Mit den Beinen Schwung holen oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Hanteln neben den Schultern.\nEnde: Arme oben weitgehend gestreckt.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Stabil aufrecht stehen.\n- Hanteln im Obergriff auf Schulterhöhe bringen.\n\nBewegung:\n- Hanteln nach oben drücken.\n- Kontrolliert auf Schulterhöhe absenken.\n\nAchte auf:\n- Rumpf bleibt fest, kein Hohlkreuz.\n- Die Kraft kommt aus den Schultern, nicht aus den Beinen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6598,7 +6598,7 @@
     {
       "key": "db_lateral_seated",
       "name": "Seitheben – sitzend",
-      "description": "Einstellen:\n- Auf eine Flachbank setzen, Füße aufstellen und zwei Hanteln seitlich halten.\n\nBewegung:\n- Arme bei leichter Ellenbogenbeugung bis etwa Schulterhöhe heben.\n- Langsam absenken.\n\nHinweise:\n- Rumpf bleibt ruhig.\n\nHäufige Fehler:\n- Mit dem Oberkörper wippen oder Schultern hochziehen.\n\nPositionen:\nStart: Hanteln neben dem Sitz.\nEnde: Arme seitlich etwa auf Schulterhöhe.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf eine Flachbank setzen, Füße aufstellen.\n- Hanteln seitlich halten.\n\nBewegung:\n- Arme mit leicht gebeugten Ellenbogen seitlich bis Schulterhöhe heben.\n- Langsam absenken.\n\nAchte auf:\n- Schultern bleiben unten, weg von den Ohren.\n- Oberkörper bleibt aufrecht und ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6632,7 +6632,7 @@
     {
       "key": "db_concentration",
       "name": "Konzentrationscurl",
-      "description": "Einstellen:\n- Auf eine Bank setzen, Beine öffnen und den Arbeitsoberarm innen am gleichseitigen Oberschenkel abstützen. Eine Hantel im Untergriff halten.\n\nBewegung:\n- Ellenbogen beugen und Hantel anheben.\n- Langsam absenken; nach dem Satz Seite wechseln.\n\nHinweise:\n- Abstützpunkt bleibt unverändert.\n\nHäufige Fehler:\n- Schulter nach vorne ziehen oder den Oberkörper aufrichten.\n\nPositionen:\nStart: Arbeitsarm nach unten verlängert.\nEnde: Arbeitsellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf eine Bank setzen, Beine öffnen.\n- Oberarm innen am gleichseitigen Oberschenkel abstützen, Hantel im Untergriff halten.\n\nBewegung:\n- Ellenbogen beugen und die Hantel anheben.\n- Langsam absenken, danach die Seite wechseln.\n\nAchte auf:\n- Der Oberarm bleibt am Oberschenkel.\n- Schulter und Oberkörper bleiben ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6666,7 +6666,7 @@
     {
       "key": "db_preacher",
       "name": "Scottcurl",
-      "description": "Einstellen:\n- Auf einer Scottbank beide Oberarme auflegen und zwei Hanteln im Untergriff halten.\n\nBewegung:\n- Beide Ellenbogen beugen und Hanteln anheben.\n- Langsam absenken, ohne unten abzufedern.\n\nHinweise:\n- Oberarme bleiben am Polster.\n\nHäufige Fehler:\n- Vom Polster abheben oder Ellenbogen ruckartig durchstrecken.\n\nPositionen:\nStart: Unterarme nach vorne unten verlängert.\nEnde: Unterarme angehoben.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Scottbank / Oberarmauflage\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- An der Scottbank beide Oberarme auf das Polster legen.\n- Hanteln im Untergriff halten.\n\nBewegung:\n- Ellenbogen beugen und die Hanteln anheben.\n- Langsam absenken, bis die Arme fast gestreckt sind.\n\nAchte auf:\n- Oberarme bleiben auf dem Polster.\n- Unten ruhig umkehren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6700,7 +6700,7 @@
     {
       "key": "db_spider",
       "name": "Spider Curl",
-      "description": "Einstellen:\n- Mit der Brust auf einer verriegelten Schrägbank aufliegen. Füße aufstellen und zwei Hanteln im Untergriff unter den Schultern hängen lassen.\n\nBewegung:\n- Ellenbogen beugen, Oberarme weitgehend senkrecht lassen.\n- Hanteln langsam wieder absenken.\n\nHinweise:\n- Brustkontakt halten.\n\nHäufige Fehler:\n- Im Obergriff arbeiten oder die Ellenbogen zum Rudern nach hinten ziehen.\n\nPositionen:\nStart: Arme hängen frei unter den Schultern.\nEnde: Ellenbogen gebeugt, Oberarme unverändert.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Verstellbare Hantelbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Mit der Brust auf die Schrägbank legen, Füße aufstellen.\n- Hanteln im Untergriff unter den Schultern hängen lassen.\n\nBewegung:\n- Ellenbogen beugen und die Hanteln anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Die Brust bleibt auf der Bank.\n- Oberarme zeigen senkrecht nach unten.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6734,7 +6734,7 @@
     {
       "key": "db_cross_hammer",
       "name": "Hammercurl – Cross-Body",
-      "description": "Einstellen:\n- Aufrecht stehen und zwei Hanteln seitlich im Neutralgriff halten. Ein Arm arbeitet, der andere hält die Hantel ruhig.\n\nBewegung:\n- Arbeitshantel diagonal in Richtung gegenüberliegende Brustseite anheben.\n- Langsam absenken; nach dem Satz Seite wechseln.\n\nHinweise:\n- Handfläche bleibt zum Körper, Oberarm möglichst ruhig.\n\nHäufige Fehler:\n- Beide Hanteln gleichzeitig kreuzen oder den Rumpf drehen.\n\nPositionen:\nStart: Arbeitshantel seitlich unten.\nEnde: Arbeitshantel diagonal vor der gegenüberliegenden Brustseite.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln seitlich halten, Handflächen zeigen zum Körper.\n\nBewegung:\n- Eine Hantel diagonal zur gegenüberliegenden Brustseite anheben.\n- Langsam absenken, danach die Seite wechseln.\n\nAchte auf:\n- Die Handfläche zeigt durchgehend zum Körper.\n- Oberarm und Rumpf bleiben ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6768,7 +6768,7 @@
     {
       "key": "db_zottman",
       "name": "Zottman Curl",
-      "description": "Einstellen:\n- Aufrecht stehen, zwei Hanteln halten und Handflächen nach vorne drehen.\n\nBewegung:\n- Im Untergriff hochcurlen, oben kontrolliert in den Obergriff drehen.\n- Im Obergriff absenken; unten wieder in den Untergriff drehen.\n\nHinweise:\n- Griffwechsel über die Unterarmdrehung, Handgelenke bleiben gerade.\n\nHäufige Fehler:\n- Auf dem Rückweg wieder im Untergriff absenken.\n\nPositionen:\nStart: Hanteln unten im Untergriff.\nEnde: Hanteln oben; dort erfolgt der Wechsel in den Obergriff.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln im Untergriff neben dem Körper halten.\n\nBewegung:\n- Im Untergriff anheben und oben in den Obergriff drehen.\n- Im Obergriff langsam absenken, unten zurück in den Untergriff drehen.\n\nAchte auf:\n- Die Drehung kommt aus den Unterarmen.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6802,7 +6802,7 @@
     {
       "key": "db_reverse_curl",
       "name": "Reverse Curl",
-      "description": "Einstellen:\n- Aufrecht stehen und zwei Hanteln im Obergriff vor dem Körper halten.\n\nBewegung:\n- Ellenbogen beugen und Hanteln anheben.\n- Kontrolliert absenken.\n\nHinweise:\n- Handrücken bleiben nach oben/vorne ausgerichtet.\n\nHäufige Fehler:\n- In den Untergriff drehen oder mit dem Rücken schwingen.\n\nPositionen:\nStart: Arme unten im Obergriff.\nEnde: Unterarme angehoben, Obergriff bleibt erhalten.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Hanteln im Obergriff vor dem Körper halten.\n\nBewegung:\n- Ellenbogen beugen und die Hanteln anheben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Handrücken zeigen durchgehend nach oben.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6836,7 +6836,7 @@
     {
       "key": "db_forward_lunge",
       "name": "Ausfallschritt – vorwärts",
-      "description": "Einstellen:\n- Mit zwei Hanteln seitlich aufrecht stehen und vor sich Platz freihalten.\n\nBewegung:\n- Ein Bein nach vorne setzen, Fuß voll aufstellen und beide Knie kontrolliert beugen.\n- Über den vorderen Fuß zurückdrücken und in den Ausgangsstand zurückkehren; nach dem Satz Seite wechseln.\n\nHinweise:\n- Vorderes Knie folgt der Fußrichtung.\n\nHäufige Fehler:\n- Sehr schmal treten oder unkontrolliert auf dem hinteren Knie landen.\n\nPositionen:\nStart: Füße nebeneinander.\nEnde: Vorderer Fuß vollständig aufgesetzt, beide Knie gebeugt.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen, Hanteln seitlich halten.\n- Vor sich Platz lassen.\n\nBewegung:\n- Ein Bein nach vorne setzen und beide Knie beugen.\n- Über den vorderen Fuß zurückdrücken in den Stand, danach die Seite wechseln.\n\nAchte auf:\n- Das vordere Knie folgt der Fußrichtung.\n- Hüftbreit treten, das hintere Knie setzt sanft auf oder bleibt knapp über dem Boden.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6876,7 +6876,7 @@
     {
       "key": "db_step_up",
       "name": "Step-up",
-      "description": "Einstellen:\n- Vor einer niedrigen rutschfesten Stufe stehen und zwei Hanteln seitlich halten. Einen Fuß vollständig auf die Stufe setzen.\n\nBewegung:\n- Über das vordere Bein aufsteigen und den anderen Fuß auf der Stufe dazustellen.\n- Freien Fuß zuerst kontrolliert absenken; führenden Fuß für weitere Wiederholungen auf der Stufe lassen, danach Seite wechseln.\n\nHinweise:\n- Über den aufgesetzten Fuß arbeiten, nicht vom unteren Bein abspringen.\n\nHäufige Fehler:\n- Nur die Zehenspitzen aufsetzen oder beim Abstieg fallen lassen.\n\nPositionen:\nStart: Ein Fuß auf der Stufe, der andere auf dem Boden.\nEnde: Beide Füße auf der Stufe, Körper aufgerichtet.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Niedrige rutschfeste Stufe\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Vor eine niedrige, rutschfeste Stufe stellen, Hanteln seitlich halten.\n- Einen Fuß ganz auf die Stufe setzen.\n\nBewegung:\n- Über das obere Bein aufsteigen und den anderen Fuß dazustellen.\n- Den freien Fuß kontrolliert wieder absetzen, danach die Seite wechseln.\n\nAchte auf:\n- Die Kraft kommt aus dem oberen Bein, das untere springt nicht ab.\n- Der ganze Fuß steht auf der Stufe.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6916,7 +6916,7 @@
     {
       "key": "db_squat_sides",
       "name": "Kniebeuge",
-      "description": "Einstellen:\n- Stabil stehen und zwei Hanteln seitlich neben den Oberschenkeln halten.\n\nBewegung:\n- Aus der Kniebeuge kontrolliert aufrichten.\n- Knie und Hüften beugen und zwischen den Füßen absenken.\n\nHinweise:\n- Füße ganz aufgesetzt lassen, Hanteln frei neben den Beinen führen.\n\nHäufige Fehler:\n- Fersen anheben oder Hanteln auf den Boden schlagen.\n\nPositionen:\nStart: Knie und Hüften gebeugt.\nEnde: Aufrechter Stand, Hanteln seitlich.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Schulterbreit stehen.\n- Hanteln seitlich neben den Oberschenkeln halten.\n\nBewegung:\n- Knie und Hüfte beugen und absenken.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben am Boden, Rücken bleibt lang.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6956,7 +6956,7 @@
     {
       "key": "db_calf_seated",
       "name": "Wadenheben – sitzend",
-      "description": "Einstellen:\n- Auf eine Bank setzen, beide Füße flach auf den Boden stellen. Je eine Hantel quer auf dem unteren Oberschenkel nahe dem Knie ablegen und mit den Händen sichern.\n\nBewegung:\n- Fersen anheben; die Hanteln bleiben auf den Oberschenkeln.\n- Fersen langsam zum Boden absenken.\n\nHinweise:\n- Vorfüße bleiben fest am Boden; Hanteln gegen Rollen sichern.\n\nHäufige Fehler:\n- Hanteln direkt auf die Kniescheiben drücken oder mit den Beinen federn.\n\nPositionen:\nStart: Fersen unten, Hanteln auf den Oberschenkeln.\nEnde: Fersen angehoben, Vorfüße am Boden.\n\nBenötigte Ausstattung: 2 × Kurzhantel + 1 × Flachbank\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Auf eine Bank setzen, Füße flach aufstellen.\n- Je eine Hantel auf den unteren Oberschenkel legen und festhalten.\n\nBewegung:\n- Fersen so weit wie möglich anheben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Die Hanteln liegen auf den Oberschenkeln, nicht auf den Kniescheiben.\n- Vorfüße bleiben fest am Boden.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -6984,7 +6984,7 @@
     {
       "key": "db_farmers_walk",
       "name": "Farmer’s Walk",
-      "description": "Einstellen:\n- Eine freie ebene Strecke wählen und zwei gleich schwere Hanteln sicher aufnehmen. Aufrecht stehen, Arme seitlich lang.\n\nBewegung:\n- Mit kleinen kontrollierten Schritten vorwärts gehen.\n- Am Streckenende anhalten und Hanteln kontrolliert absetzen; die Vorschau zeigt nur den Gehzyklus.\n\nHinweise:\n- Gewicht je Hantel sowie Strecke in Metern oder Dauer in Sekunden erfassen.\n\nHäufige Fehler:\n- Mit den Hanteln schwingen oder den Oberkörper stark seitlich kippen.\n\nPositionen:\nStart: Eine Schrittstellung im laufenden Gehzyklus.\nEnde: Die entgegengesetzte Schrittstellung, Arme weiter lang.\n\nBenötigte Ausstattung: 2 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Eine freie, ebene Strecke wählen.\n- Zwei gleich schwere Hanteln aufnehmen, aufrecht stehen, Arme lang.\n\nBewegung:\n- Mit kleinen, ruhigen Schritten vorwärts gehen.\n- Am Ende anhalten und die Hanteln kontrolliert absetzen.\n\nAchte auf:\n- Oberkörper bleibt aufrecht, ohne zur Seite zu kippen.\n- Die Hanteln hängen ruhig neben dem Körper.",
       "volume_kind": "seconds",
       "target_min": 30,
       "target_max": 30,
@@ -7023,7 +7023,7 @@
     {
       "key": "db_side_bend",
       "name": "Seitneigen",
-      "description": "Einstellen:\n- Aufrecht stehen, eine Hantel seitlich halten und die freie Hand an die Hüfte legen.\n\nBewegung:\n- Aus einer kleinen Seitneigung zur Hantelseite den Rumpf wieder aufrichten.\n- Kontrolliert zur Hantelseite neigen; anschließend Seite wechseln.\n\nHinweise:\n- Nur seitlich neigen, nicht drehen oder nach vorne beugen.\n\nHäufige Fehler:\n- In beide Richtungen Schwung holen oder maximal tief abknicken.\n\nPositionen:\nStart: Kleine Seitneigung zur Hantelseite.\nEnde: Aufrechter Stand.\n\nBenötigte Ausstattung: 1 × Kurzhantel\n\nGewicht pro Kurzhantel erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Eine Hantel seitlich halten, freie Hand an die Hüfte.\n\nBewegung:\n- Oberkörper kontrolliert zur Hantelseite neigen.\n- Wieder aufrichten, danach die Seite wechseln.\n\nAchte auf:\n- Die Bewegung geht nur zur Seite, nicht nach vorne.\n- Ruhig neigen, ohne Schwung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7097,7 +7097,7 @@
     {
       "key": "bb_incline",
       "name": "Schrägbankdrücken",
-      "description": "Einstellen:\n- Verriegelte Schrägbank im Rack einstellen; Ablagen und Sicherungen anpassen. Füße aufstellen, Stange im Obergriff halten.\n\nBewegung:\n- Stange über den oberen Brustbereich nach oben drücken.\n- Kontrolliert zum oberen Brustbereich absenken.\n\nHinweise:\n- Rücken bleibt an der Lehne, Unterarme tragen die Stange.\n\nHäufige Fehler:\n- Zur Halsregion absenken oder ins Hohlkreuz ausweichen.\n\nPositionen:\nStart: Stange nahe dem oberen Brustbereich.\nEnde: Stange oben, Arme lang.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Verstellbare Hantelbank + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Schrägbank im Rack ausrichten, Ablagen und Sicherungen einstellen.\n- Anlehnen, Füße aufstellen, Stange im Obergriff fassen.\n\nBewegung:\n- Stange kontrolliert zur oberen Brust absenken.\n- Nach oben drücken.\n\nAchte auf:\n- Rücken bleibt an der Lehne, kein Hohlkreuz.\n- Handgelenke stehen über den Unterarmen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7137,7 +7137,7 @@
     {
       "key": "bb_close_bench",
       "name": "Bankdrücken – eng",
-      "description": "Einstellen:\n- Auf die Flachbank im gesicherten Rack legen. Stange etwa schulterbreit fassen; Hände nicht unmittelbar nebeneinander setzen.\n\nBewegung:\n- Mit körpernahen Ellenbogen nach oben drücken.\n- Kontrolliert zum unteren Brustbereich absenken.\n\nHinweise:\n- Handgelenke bleiben gerade; Griff enger als beim normalen Bankdrücken.\n\nHäufige Fehler:\n- Extrem eng greifen oder Ellenbogen weit ausstellen.\n\nPositionen:\nStart: Stange nahe der Brust, Ellenbogen körpernah.\nEnde: Arme über der Brust lang.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Flachbank + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Auf die Flachbank legen, Stange schulterbreit im Obergriff fassen.\n\nBewegung:\n- Stange kontrolliert zum unteren Brustbereich absenken.\n- Nach oben drücken.\n\nAchte auf:\n- Ellenbogen bleiben nah am Körper.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7177,7 +7177,7 @@
     {
       "key": "bb_high_squat",
       "name": "Kniebeuge",
-      "description": "Einstellen:\n- Stange aus einem gesicherten Rack aufnehmen und auf dem oberen Trapezmuskel ablegen, nicht auf dem Hals. Stabil stehen.\n\nBewegung:\n- Aus der Kniebeuge Hüften und Knie kontrolliert strecken.\n- Hüften und Knie beugen, Füße vollständig belastet lassen.\n\nHinweise:\n- Knie folgen der Fußrichtung; Stange bleibt über der Standfläche.\n\nHäufige Fehler:\n- Fersen heben oder den Rumpf unkontrolliert einknicken.\n\nPositionen:\nStart: Knie und Hüften gebeugt.\nEnde: Aufrechter Stand.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Stange auf den oberen Rücken legen, nicht auf den Nacken, und aus dem Rack heben.\n- Schulterbreit stehen.\n\nBewegung:\n- Knie und Hüfte beugen und absenken.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben am Boden, Rumpf bleibt fest.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7223,7 +7223,7 @@
     {
       "key": "bb_front_squat",
       "name": "Frontkniebeuge",
-      "description": "Einstellen:\n- Stange aus dem Rack auf den vorderen Schultern ablegen. Ellenbogen nach vorne oben führen; Hände unterstützen im Front-Rack-Griff.\n\nBewegung:\n- Aus der Kniebeuge kontrolliert aufrichten.\n- Mit angehobenen Ellenbogen wieder absenken.\n\nHinweise:\n- Die Schultern tragen die Stange; nicht nur die Handgelenke.\n\nHäufige Fehler:\n- Ellenbogen absinken lassen oder Stange in den Händen tragen.\n\nPositionen:\nStart: Stange auf den vorderen Schultern, Knie gebeugt.\nEnde: Aufrechter Stand, Front-Rack erhalten.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Stange auf die vorderen Schultern legen, Ellenbogen nach vorne oben, und aus dem Rack heben.\n\nBewegung:\n- Knie und Hüfte beugen und absenken.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Ellenbogen bleiben oben, die Schultern tragen die Stange.\n- Fersen bleiben am Boden, Knie folgen der Fußrichtung.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7269,7 +7269,7 @@
     {
       "key": "bb_deadlift",
       "name": "Kreuzheben",
-      "description": "Einstellen:\n- Stange am Boden nahe den Schienbeinen platzieren; etwa hüftbreit stehen und außen an den Beinen im Obergriff fassen.\n\nBewegung:\n- Boden wegdrücken und Hüften sowie Knie strecken; Stange nah am Körper führen.\n- Hüften zurückschieben, dann Knie beugen und Stange kontrolliert absetzen.\n\nHinweise:\n- Rumpf stabil, Arme lang und Stange körpernah.\n\nHäufige Fehler:\n- Ruckartig anreißen oder oben nach hinten überstrecken.\n\nPositionen:\nStart: Stange am Boden, Hüften und Knie gebeugt.\nEnde: Aufrechter Stand, Stange vor den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Hüftbreit an die Stange stellen, Schienbeine nah an der Stange.\n- Stange außerhalb der Beine im Obergriff fassen, Rücken lang.\n\nBewegung:\n- Mit den Beinen vom Boden wegdrücken und aufrichten.\n- Hüfte nach hinten schieben, dann Knie beugen und die Stange absetzen.\n\nAchte auf:\n- Die Stange bleibt nah am Körper, Arme bleiben lang.\n- Rücken bleibt lang, oben nicht nach hinten lehnen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7318,7 +7318,7 @@
     {
       "key": "bb_rdl",
       "name": "Rumänisches Kreuzheben",
-      "description": "Einstellen:\n- Im Stand Stange vor den Oberschenkeln im Obergriff halten. Knie leicht beugen.\n\nBewegung:\n- Aus der Hüftbeuge über die Hüftstreckung aufrichten.\n- Hüften zurückschieben und Stange eng an den Beinen absenken; kontrollierten Bewegungsumfang wählen.\n\nHinweise:\n- Knie bleiben leicht gebeugt; Rückenform stabil halten.\n\nHäufige Fehler:\n- Die Bewegung in eine tiefe Kniebeuge verwandeln.\n\nPositionen:\nStart: Stange auf Kniehöhe, Hüfte nach hinten.\nEnde: Aufrechter Stand.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Hüftbreit stehen, Knie leicht gebeugt.\n- Stange im Obergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Hüfte nach hinten schieben und die Stange nah an den Beinen absenken.\n- Hüfte strecken und aufrichten.\n\nAchte auf:\n- Rücken bleibt lang; nur so tief gehen, wie das gelingt.\n- Knie bleiben leicht gebeugt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7362,7 +7362,7 @@
     {
       "key": "bb_sumo",
       "name": "Kreuzheben – Sumo",
-      "description": "Einstellen:\n- Breiter Stand mit nach außen gerichteten Füßen. Stange am Boden greifen, Hände innerhalb der Beine.\n\nBewegung:\n- Knie und Hüften strecken, Stange nah am Körper heben.\n- Kontrolliert wieder zum Boden absetzen.\n\nHinweise:\n- Knie folgen den Fußspitzen, Arme bleiben lang.\n\nHäufige Fehler:\n- Knie nach innen fallen lassen oder Stange vom Körper entfernen.\n\nPositionen:\nStart: Breiter Stand, Stange am Boden.\nEnde: Aufrechter Stand, Stange vor dem Körper.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Breit stehen, Fußspitzen nach außen, Schienbeine nah an der Stange.\n- Stange zwischen den Beinen im Obergriff fassen, Rücken lang.\n\nBewegung:\n- Mit den Beinen vom Boden wegdrücken und aufrichten.\n- Kontrolliert wieder absetzen.\n\nAchte auf:\n- Knie zeigen in Richtung der Fußspitzen.\n- Die Stange bleibt nah am Körper, Arme bleiben lang.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7415,7 +7415,7 @@
     {
       "key": "bb_row_over",
       "name": "Rudern – Obergriff",
-      "description": "Einstellen:\n- Mit Stange im Obergriff in die Hüftbeuge gehen. Knie leicht gebeugt halten.\n\nBewegung:\n- Stange zum unteren Brustkorb bzw. oberen Bauch ziehen.\n- Arme kontrolliert wieder verlängern.\n\nHinweise:\n- Rumpfwinkel bleibt gleich.\n\nHäufige Fehler:\n- Beim Ziehen aufrichten oder mit der Hüfte schwingen.\n\nPositionen:\nStart: Arme hängen unter den Schultern.\nEnde: Stange nahe dem Rumpf.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Stange im Obergriff fassen.\n- Mit leicht gebeugten Knien aus der Hüfte vorbeugen.\n\nBewegung:\n- Stange zum oberen Bauch ziehen.\n- Arme kontrolliert strecken.\n\nAchte auf:\n- Rücken bleibt lang.\n- Der Oberkörper bleibt vorgebeugt und ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7459,7 +7459,7 @@
     {
       "key": "bb_row_under",
       "name": "Rudern – Untergriff",
-      "description": "Einstellen:\n- Mit Stange im Untergriff in die Hüftbeuge gehen. Knie leicht beugen.\n\nBewegung:\n- Stange in Richtung oberer Bauch ziehen, Ellenbogen nah am Körper führen.\n- Kontrolliert absenken.\n\nHinweise:\n- Untergriff und stabilen Rumpfwinkel beibehalten.\n\nHäufige Fehler:\n- Handgelenke abknicken oder die Stange hochreißen.\n\nPositionen:\nStart: Arme unten im Untergriff.\nEnde: Stange nahe dem Bauch.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Stange im Untergriff fassen.\n- Mit leicht gebeugten Knien aus der Hüfte vorbeugen.\n\nBewegung:\n- Stange zum oberen Bauch ziehen, Ellenbogen nah am Körper.\n- Kontrolliert absenken.\n\nAchte auf:\n- Rücken bleibt lang, der Oberkörper bleibt vorgebeugt.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7504,7 +7504,7 @@
     {
       "key": "bb_seated_press",
       "name": "Schulterdrücken – sitzend",
-      "description": "Einstellen:\n- Auf einer Bank mit Rückenlehne im Rack sitzen. Sicherungen und Ablagen einstellen; Stange im Obergriff vor dem oberen Brustbereich halten.\n\nBewegung:\n- Stange vor dem Kopf nach oben drücken.\n- Kontrolliert vor das Gesicht zum oberen Brustbereich absenken.\n\nHinweise:\n- Rumpf ruhig und Füße aufgesetzt halten.\n\nHäufige Fehler:\n- Hinter den Kopf absenken oder stark ins Hohlkreuz gehen.\n\nPositionen:\nStart: Stange vor dem oberen Brustbereich.\nEnde: Arme über Kopf lang.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Bank mit Rückenlehne + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Bank mit steiler Lehne im Rack ausrichten, Ablagen und Sicherungen einstellen.\n- Stange im Obergriff vor der oberen Brust halten.\n\nBewegung:\n- Stange vor dem Kopf nach oben drücken.\n- Kontrolliert zur oberen Brust absenken.\n\nAchte auf:\n- Die Stange bleibt vor dem Kopf.\n- Rücken bleibt an der Lehne, Füße bleiben aufgesetzt.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7549,7 +7549,7 @@
     {
       "key": "bb_curl",
       "name": "Bizepscurl",
-      "description": "Einstellen:\n- Aufrecht stehen, Stange etwa schulterbreit im Untergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Ellenbogen beugen und Stange anheben.\n- Kontrolliert wieder absenken.\n\nHinweise:\n- Oberarme bleiben neben dem Rumpf.\n\nHäufige Fehler:\n- Mit dem Rücken schwingen oder Handgelenke einknicken.\n\nPositionen:\nStart: Arme unten im Untergriff.\nEnde: Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Stange schulterbreit im Untergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Kontrolliert wieder absenken.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Oberkörper bleibt ruhig, Handgelenke gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7584,7 +7584,7 @@
     {
       "key": "bb_shrug",
       "name": "Schulterheben",
-      "description": "Einstellen:\n- Aufrecht stehen und Stange im Obergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Schultern kontrolliert nach oben heben.\n- Langsam wieder senken.\n\nHinweise:\n- Kopf ruhig und Arme lang halten.\n\nHäufige Fehler:\n- Schultern kreisen oder die Stange mit den Ellenbogen ziehen.\n\nPositionen:\nStart: Schultern abgesenkt.\nEnde: Schultern angehoben.\n\nBenötigte Ausstattung: 1 × Langhantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Stange im Obergriff vor den Oberschenkeln halten.\n\nBewegung:\n- Schultern gerade nach oben heben.\n- Langsam wieder absenken.\n\nAchte auf:\n- Arme bleiben lang.\n- Kopf bleibt ruhig, die Schultern kreisen nicht.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7620,7 +7620,7 @@
     {
       "key": "bb_glute_bridge",
       "name": "Glute Bridge",
-      "description": "Einstellen:\n- Auf einer Matte liegen, Knie beugen und Füße aufstellen. Gepolsterte Stange über der Hüftfalte platzieren und mit den Händen sichern.\n\nBewegung:\n- Becken anheben, bis Rumpf und Oberschenkel annähernd eine Linie bilden.\n- Becken kontrolliert zum Boden absenken.\n\nHinweise:\n- Schultern bleiben am Boden, Bewegung aus der Hüfte.\n\nHäufige Fehler:\n- Ins Hohlkreuz drücken oder Stange ungesichert rollen lassen.\n\nPositionen:\nStart: Becken bodennah, Knie gebeugt.\nEnde: Becken angehoben.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Trainingsmatte + 1 × Hantelpolster\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Auf eine Matte legen, Knie beugen, Füße aufstellen.\n- Gepolsterte Stange über die Hüfte legen und mit den Händen festhalten.\n\nBewegung:\n- Becken anheben, bis Oberkörper und Oberschenkel eine Linie bilden.\n- Kontrolliert absenken.\n\nAchte auf:\n- Die Bewegung kommt aus der Hüfte, kein Hohlkreuz.\n- Schultern bleiben am Boden.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7660,7 +7660,7 @@
     {
       "key": "bb_reverse_lunge",
       "name": "Ausfallschritt – rückwärts",
-      "description": "Einstellen:\n- Stange aus dem Rack auf dem oberen Rücken aufnehmen und stabil stehen. Hinter sich Platz freihalten.\n\nBewegung:\n- Ein Bein zurücksetzen und beide Knie kontrolliert beugen.\n- Über den vorderen Fuß aufrichten und hinteren Fuß zurückstellen; nach dem Satz Seite wechseln.\n\nHinweise:\n- Vorderer Fuß bleibt vollständig aufgesetzt.\n\nHäufige Fehler:\n- Sehr schmal zurücktreten oder auf das hintere Knie fallen.\n\nPositionen:\nStart: Aufrechter Stand.\nEnde: Ein Bein zurückgesetzt, Knie gebeugt.\n\nBenötigte Ausstattung: 1 × Langhantel + 1 × Rack mit Ablagen und Sicherungen\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Ablagen und Sicherungen am Rack einstellen.\n- Stange auf den oberen Rücken legen und aus dem Rack heben, hinter sich Platz lassen.\n\nBewegung:\n- Ein Bein nach hinten setzen und beide Knie beugen.\n- Über das vordere Bein aufrichten und den Fuß zurückholen, danach die Seite wechseln.\n\nAchte auf:\n- Der vordere Fuß bleibt ganz am Boden.\n- Hüftbreit treten, Rumpf bleibt aufrecht.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7702,7 +7702,7 @@
     {
       "key": "ez_curl",
       "name": "Bizepscurl",
-      "description": "Einstellen:\n- SZ-Stange an den angewinkelten Griffstellen im schrägen Untergriff halten; aufrecht stehen.\n\nBewegung:\n- Ellenbogen beugen und Stange anheben.\n- Ruhig wieder absenken.\n\nHinweise:\n- Handgelenke folgen dem natürlichen Griffwinkel.\n\nHäufige Fehler:\n- Schwung aus dem Rücken holen.\n\nPositionen:\nStart: Arme unten.\nEnde: Ellenbogen gebeugt.\n\nBenötigte Ausstattung: 1 × SZ-Hantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Stange an den schrägen Griffstellen im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Ruhig wieder absenken.\n\nAchte auf:\n- Oberarme bleiben neben dem Rumpf.\n- Oberkörper bleibt ruhig.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7737,7 +7737,7 @@
     {
       "key": "ez_reverse",
       "name": "Reverse Curl",
-      "description": "Einstellen:\n- SZ-Stange an den angewinkelten Griffstellen im schrägen Obergriff halten.\n\nBewegung:\n- Stange durch Beugen der Ellenbogen anheben.\n- Kontrolliert absenken.\n\nHinweise:\n- Handrücken bleiben oben; kein Wechsel zum Untergriff.\n\nHäufige Fehler:\n- Handgelenke abknicken oder den Griff unbemerkt drehen.\n\nPositionen:\nStart: Arme unten im Obergriff.\nEnde: Ellenbogen gebeugt, Obergriff erhalten.\n\nBenötigte Ausstattung: 1 × SZ-Hantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Aufrecht stehen.\n- Stange an den schrägen Griffstellen im Obergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Kontrolliert absenken.\n\nAchte auf:\n- Handrücken zeigen durchgehend nach oben.\n- Handgelenke bleiben gerade.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7772,7 +7772,7 @@
     {
       "key": "ez_preacher",
       "name": "Scottcurl",
-      "description": "Einstellen:\n- An einer Scottbank Oberarme vollständig auflegen; SZ-Stange an den inneren schrägen Griffstellen fassen.\n\nBewegung:\n- Ellenbogen beugen und Stange anheben.\n- Langsam absenken; nicht unten abfedern.\n\nHinweise:\n- Oberarme bleiben am Polster.\n\nHäufige Fehler:\n- Vom Polster lösen oder Ellenbogen ruckartig durchstrecken.\n\nPositionen:\nStart: Unterarme nach vorne unten verlängert.\nEnde: Unterarme angehoben.\n\nBenötigte Ausstattung: 1 × SZ-Hantel + 1 × Scottbank / Oberarmauflage\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- An der Scottbank beide Oberarme vollständig auf das Polster legen.\n- Stange an den inneren schrägen Griffstellen im Untergriff fassen.\n\nBewegung:\n- Ellenbogen beugen und die Stange anheben.\n- Langsam absenken, bis die Arme fast gestreckt sind.\n\nAchte auf:\n- Oberarme bleiben auf dem Polster.\n- Unten ruhig umkehren.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7807,7 +7807,7 @@
     {
       "key": "ez_lying_triceps",
       "name": "Trizepsstrecken – liegend",
-      "description": "Einstellen:\n- Längs auf eine Flachbank legen, Füße aufstellen. SZ-Stange mit engem schrägem Obergriff halten; Oberarme leicht zum Kopf neigen.\n\nBewegung:\n- Aus der Position hinter dem Kopf die Ellenbogen strecken.\n- Unterarme kontrolliert hinter den Kopf zurückführen.\n\nHinweise:\n- Oberarme bleiben annähernd gleich ausgerichtet.\n\nHäufige Fehler:\n- Die Stange Richtung Gesicht fallen lassen oder daraus Bankdrücken machen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange hinter dem Kopf.\nEnde: Ellenbogen weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × SZ-Hantel + 1 × Flachbank\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Auf die Flachbank legen, Füße aufstellen.\n- Stange eng im Obergriff fassen, Oberarme leicht zum Kopf geneigt.\n\nBewegung:\n- Stange kontrolliert hinter den Kopf absenken.\n- Ellenbogen strecken und die Stange nach oben führen.\n\nAchte auf:\n- Oberarme bleiben in ihrer Position.\n- Nur die Unterarme bewegen sich.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7839,7 +7839,7 @@
     {
       "key": "ez_overhead",
       "name": "Trizepsstrecken über Kopf",
-      "description": "Einstellen:\n- Stabil stehen und SZ-Stange mit schrägem Obergriff über Kopf halten. Oberarme neben dem Kopf ausrichten.\n\nBewegung:\n- Ellenbogen strecken und Stange anheben.\n- Stange kontrolliert hinter den Kopf absenken.\n\nHinweise:\n- Rumpf stabil und Oberarme möglichst ruhig halten.\n\nHäufige Fehler:\n- Im Rücken ausweichen oder die Stange ruckartig bewegen.\n\nPositionen:\nStart: Ellenbogen gebeugt, Stange hinter dem Kopf.\nEnde: Arme über Kopf weitgehend gestreckt.\n\nBenötigte Ausstattung: 1 × SZ-Hantel\n\nGesamtgewicht von Stange und Scheiben erfassen.",
+      "description": "Einstellen:\n- Stabil stehen.\n- Stange an den schrägen Griffstellen im Obergriff über Kopf halten.\n\nBewegung:\n- Stange kontrolliert hinter den Kopf absenken.\n- Ellenbogen strecken und die Stange nach oben führen.\n\nAchte auf:\n- Oberarme bleiben ruhig neben dem Kopf.\n- Rumpf bleibt fest, kein Hohlkreuz.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
@@ -7871,7 +7871,7 @@
     {
       "key": "cardio_treadmill_walk",
       "name": "Gehen",
-      "description": "Einstellen:\n- Not-Stopp und Bedienung am konkreten Laufband prüfen; Sicherheitsclip an der Kleidung befestigen. Mit niedrigem Tempo starten.\n\nBewegung:\n- Aufrecht und mit ruhigem Blick nach vorne gehen; Arme natürlich mitschwingen.\n- Schritte gleichmäßig an die Bandgeschwindigkeit anpassen; zum Beenden kontrolliert verlangsamen und stoppen.\n\nHinweise:\n- Auf dem Band mittig bleiben. Die Vorschau zeigt ebenes Gehen.\n\nHäufige Fehler:\n- An den Handläufen hängen oder das laufende Band seitlich verlassen.\n\nPositionen:\nStart: Linkes und rechtes Bein in versetzter Schrittphase.\nEnde: Die Gegenseite übernimmt den Schritt.\n\nBenötigte Ausstattung: 1 × Laufband\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sicherheitsclip an der Kleidung befestigen.\n- Mit niedrigem Tempo starten.\n\nBewegung:\n- Aufrecht gehen, Arme schwingen locker mit.\n- Zum Beenden das Tempo senken und das Band stoppen.\n\nAchte auf:\n- Mittig auf dem Band bleiben, Blick nach vorne.\n- Die Hände bleiben frei, nicht an den Handläufen hängen.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -7930,7 +7930,7 @@
     {
       "key": "cardio_treadmill_run",
       "name": "Laufen",
-      "description": "Einstellen:\n- Not-Stopp kennen und Sicherheitsclip befestigen. Erst gehen, dann kontrolliert auf ein passendes Lauftempo erhöhen.\n\nBewegung:\n- Mit ruhigem Oberkörper auf dem Band laufen; Arme locker gegengleich führen.\n- Rhythmus halten; zum Beenden erst das Tempo reduzieren und dann stoppen.\n\nHinweise:\n- Die Laufdarstellung enthält eine kurze Flugphase und zeigt keine Steigung.\n\nHäufige Fehler:\n- Sehr weit nach vorne greifen oder sich dauerhaft am Handlauf festhalten.\n\nPositionen:\nStart: Ein Bein trägt, das andere schwingt nach vorne.\nEnde: Seitenwechsel im Laufzyklus.\n\nBenötigte Ausstattung: 1 × Laufband\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sicherheitsclip an der Kleidung befestigen.\n- Im Gehen starten und das Tempo schrittweise erhöhen.\n\nBewegung:\n- Mit ruhigem Oberkörper laufen, Arme schwingen locker mit.\n- Zum Beenden erst das Tempo senken, dann stoppen.\n\nAchte auf:\n- Mittig auf dem Band bleiben, Blick nach vorne.\n- Die Hände bleiben frei, nicht am Handlauf festhalten.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -7984,7 +7984,7 @@
     {
       "key": "cardio_upright_bike",
       "name": "Fahrradergometer",
-      "description": "Einstellen:\n- Sattelhöhe im Stillstand einstellen und verriegeln. Beim entferntesten Pedal bleibt das Knie leicht gebeugt; Füße auf den Pedalen sichern.\n\nBewegung:\n- Im Sitzen gleichmäßig vorwärts treten.\n- Lenker locker halten, Becken ruhig lassen und Widerstand am Gerät anpassen.\n\nHinweise:\n- Die Füße bleiben mit den Pedalen verbunden.\n\nHäufige Fehler:\n- Zu niedriger Sitz, seitliches Wippen oder durchgedrücktes Knie.\n\nPositionen:\nStart: Pedale in versetzter Position.\nEnde: Pedale eine halbe Umdrehung weiter.\n\nBenötigte Ausstattung: 1 × Aufrechtes Fahrradergometer\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sattelhöhe so einstellen, dass das Knie am tiefsten Pedalpunkt leicht gebeugt bleibt.\n- Füße in die Pedalschlaufen stellen.\n\nBewegung:\n- Im Sitzen gleichmäßig treten.\n- Widerstand am Gerät anpassen.\n\nAchte auf:\n- Das Becken bleibt ruhig auf dem Sattel.\n- Hände liegen locker am Lenker.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8024,7 +8024,7 @@
     {
       "key": "cardio_recumbent_bike",
       "name": "Liegeergometer",
-      "description": "Einstellen:\n- Sitzabstand im Stillstand einstellen und verriegeln. Rücken anlehnen; am entferntesten Pedal bleibt das Knie leicht gebeugt.\n\nBewegung:\n- Mit angelehntem Rücken gleichmäßig treten.\n- Seitliche Griffe locker halten; Füße auf den Pedalen lassen.\n\nHinweise:\n- Sitz und Rückenlehne tragen den Körper.\n\nHäufige Fehler:\n- Vom Sitz nach vorne rutschen oder nach den Pedalen strecken.\n\nPositionen:\nStart: Ein Pedal weiter vorne.\nEnde: Das andere Pedal weiter vorne.\n\nBenötigte Ausstattung: 1 × Liegeergometer\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sitzabstand so einstellen, dass das Knie am entferntesten Pedalpunkt leicht gebeugt bleibt.\n- Rücken anlehnen, Füße in die Pedalschlaufen stellen.\n\nBewegung:\n- Gleichmäßig treten.\n- Widerstand am Gerät anpassen.\n\nAchte auf:\n- Der Rücken bleibt an der Lehne.\n- Hände liegen locker an den Griffen.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8064,7 +8064,7 @@
     {
       "key": "cardio_indoor_bike",
       "name": "Indoor Bike",
-      "description": "Einstellen:\n- Sattel in Höhe und Längsrichtung sowie Lenker passend einstellen und sichern. Pedalbindung bzw. Körbchen nach Gerätevorgabe verwenden.\n\nBewegung:\n- Sitzend mit ruhigem Becken und leicht geneigtem Rumpf treten.\n- Widerstand und Trittfrequenz kontrolliert wählen; zum Anhalten die gerätespezifische Bremse verwenden.\n\nHinweise:\n- Diese Variante zeigt ausschließlich sitzendes Fahren.\n\nHäufige Fehler:\n- Auf dem Sattel hüpfen oder bei weiterlaufenden Pedalen absteigen.\n\nPositionen:\nStart: Eine Tretphase im Sitzen.\nEnde: Gegenüberliegende Tretphase.\n\nBenötigte Ausstattung: 1 × Indoor Bike\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sattelhöhe, Sattelposition und Lenker einstellen und festziehen.\n- Füße in den Pedalen sichern.\n\nBewegung:\n- Im Sitzen mit ruhigem Becken treten.\n- Widerstand und Trittfrequenz anpassen.\n- Zum Anhalten die Bremse nutzen, erst dann absteigen.\n\nAchte auf:\n- Das Becken bleibt ruhig auf dem Sattel.\n- Absteigen erst, wenn die Pedale stehen.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8108,7 +8108,7 @@
     {
       "key": "cardio_airbike",
       "name": "AirBike",
-      "description": "Einstellen:\n- Sattel in Höhe und Längsrichtung einstellen. Beide Pedale und die beweglichen Griffe sicher erreichen.\n\nBewegung:\n- Gleichmäßig treten und die Griffe abwechselnd drücken und ziehen.\n- Arme und Beine koordinieren, ohne den Oberkörper stark hin und her zu bewegen.\n\nHinweise:\n- Der Luftwiderstand entsteht durch den eigenen Antrieb; keine Kilogrammangabe.\n\nHäufige Fehler:\n- Einseitig reißen oder vom Sattel abheben.\n\nPositionen:\nStart: Gegengleiche Arm- und Beinphase.\nEnde: Umgekehrte Arm- und Beinphase.\n\nBenötigte Ausstattung: 1 × AirBike\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Sattelhöhe und Sattelposition einstellen.\n- Füße auf die Pedale stellen, beide Griffe fassen.\n\nBewegung:\n- Gleichmäßig treten und die Griffe abwechselnd drücken und ziehen.\n- Tempo erhöhen, um den Widerstand zu steigern.\n\nAchte auf:\n- Arme und Beine arbeiten im gleichen Rhythmus.\n- Der Oberkörper bleibt ruhig, das Gesäß auf dem Sattel.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8168,7 +8168,7 @@
     {
       "key": "cardio_elliptical",
       "name": "Crosstrainer",
-      "description": "Einstellen:\n- Zum Aufsteigen feste Griffe verwenden und zuerst auf die untere Fußplatte treten. Für diese Variante anschließend die beweglichen Griffe fassen.\n\nBewegung:\n- Die Fußplatten gleichmäßig vorwärts bewegen und die Arme mitführen.\n- Füße auf den Platten lassen; zum Absteigen die Bewegung vollständig anhalten und feste Griffe nutzen.\n\nHinweise:\n- Die Griff- und Pedalführung hängt vom Gerätemodell ab.\n\nHäufige Fehler:\n- Füße von den Platten lösen oder sich mit dem Oberkörper aufstützen.\n\nPositionen:\nStart: Ein Fuß vorn, der andere hinten.\nEnde: Gegenseitige Schrittphase.\n\nBenötigte Ausstattung: 1 × Crosstrainer mit beweglichen Griffen\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- An den festen Griffen aufsteigen, zuerst auf die untere Fußplatte.\n- Danach die beweglichen Griffe fassen.\n\nBewegung:\n- Fußplatten gleichmäßig vorwärts bewegen, Arme mitführen.\n- Zum Absteigen ganz anhalten und die festen Griffe nutzen.\n\nAchte auf:\n- Die Füße bleiben ganz auf den Platten.\n- Oberkörper bleibt aufrecht.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8276,7 +8276,7 @@
     {
       "key": "cardio_stairclimber",
       "name": "Treppensteigen",
-      "description": "Einstellen:\n- Handläufe und Aufstiegshilfen zum Aufsteigen nutzen; mit langsamem Stufentempo beginnen.\n\nBewegung:\n- Abwechselnd eine Stufe nach der anderen betreten.\n- Aufrecht bleiben und die Hände nur leicht zur Orientierung nutzen; Gerät vor dem Absteigen stoppen.\n\nHinweise:\n- Füße ausreichend auf die Trittfläche setzen.\n\nHäufige Fehler:\n- Mit dem Körpergewicht auf den Handläufen hängen oder Stufen überspringen.\n\nPositionen:\nStart: Ein Fuß auf einer höheren Stufe.\nEnde: Die Gegenseite steigt auf.\n\nBenötigte Ausstattung: 1 × Rotierende Treppenmaschine\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- An den Handläufen aufsteigen.\n- Mit langsamem Tempo starten.\n\nBewegung:\n- Eine Stufe nach der anderen steigen.\n- Vor dem Absteigen das Gerät stoppen.\n\nAchte auf:\n- Den ganzen Fuß auf die Stufe setzen.\n- Aufrecht bleiben, die Hände liegen nur leicht auf.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8320,7 +8320,7 @@
     {
       "key": "cardio_skierg",
       "name": "Ski-Ergometer",
-      "description": "Einstellen:\n- Mit stabilem Stand vor dem Ski-Ergometer stehen. Griffe etwas über Augenhöhe halten, Ellenbogen gebeugt.\n\nBewegung:\n- Den Zug aus Rumpf und Hüftbeuge einleiten und die Griffe bis neben die Oberschenkel führen.\n- Kontrolliert aufrichten und die Griffe für den nächsten Zug nach oben zurückführen.\n\nHinweise:\n- Bewegung über Hüfte und Rumpf koordinieren; Arme folgen.\n\nHäufige Fehler:\n- Nur mit den Armen ziehen oder daraus eine tiefe Kniebeuge machen.\n\nPositionen:\nStart: Aufrechter Stand, Griffe oben.\nEnde: Hüfte gebeugt, Griffe neben den Oberschenkeln.\n\nBenötigte Ausstattung: 1 × Ski-Ergometer mit zwei Zuggriffen\n\nZeit ist die Basis. Weitere Werte nur erfassen, wenn Gerät bzw. Sensor sie liefert; keine Messwerterfassung in dieser Vorschau. Geräteabhängige Strecke, Stufen und Widerstandsskalen sind nicht herstellerübergreifend gleichwertig. Luftklappenstellung und Drag Factor sind unterschiedliche Angaben.",
+      "description": "Einstellen:\n- Stabil vor das Gerät stellen.\n- Griffe etwas über Augenhöhe fassen, Ellenbogen gebeugt.\n\nBewegung:\n- Aus Rumpf und Hüfte nach unten ziehen, Griffe bis neben die Oberschenkel führen.\n- Aufrichten und die Griffe nach oben zurückführen.\n\nAchte auf:\n- Der Zug beginnt im Rumpf, die Arme folgen.\n- Knie bleiben nur leicht gebeugt.",
       "volume_kind": "seconds",
       "target_min": 60,
       "target_max": 60,
@@ -8411,7 +8411,7 @@
     {
       "key": "assisted_pullup_supinated",
       "name": "Klimmzug – Untergriff",
-      "description": "Einstellen:\n- Unterstützung einstellen: Mehr angezeigtes Gewicht macht die Übung leichter.\n- Über die Trittstufen einsteigen. Quergriff etwa schulterbreit fassen; die Handflächen zeigen zum Gesicht. Knie auf das Assistenzpolster bringen.\n- Eine stabile hängende Startposition mit kontrollierten Schultern einnehmen.\n\nBewegung:\n- Den Körper zum festen Griff hochziehen; die Knie bleiben auf dem mitlaufenden Polster.\n- Die Ellenbogen nach unten führen und ohne Schwung so weit hochziehen, wie die Position kontrolliert bleibt.\n- Den Körper langsam wieder absenken. Zum Aussteigen das Polster nach Geräteanleitung sichern und die Trittstufen nutzen.\n\nHinweise:\n- Die Griffe bleiben fest; der Körper bewegt sich.\n- Kein Abspringen vom belasteten Polster.\n- Diese Griffvariante nur an entsprechend ausgestatteten Geräten verwenden.\n\nHäufige Fehler:\n- Mit den Knien auf dem Polster wippen.\n- Die Unterstützungsanzeige mit einer zusätzlich gehobenen Last verwechseln.\n\nPositionen:\nStart: Körper unter den Griffen, Arme lang, Knie auf dem Polster.\nEnde: Körper angehoben, Ellenbogen gebeugt, Polster folgt.\n\nBenötigte Ausstattung: 1 × Klimmzug-/Dip-Assistenzmaschine\n\nGegengewicht: Mehr Gewicht bedeutet mehr Unterstützung.",
+      "description": "Einstellen:\n- Unterstützung einstellen: mehr Gewicht macht die Übung leichter.\n- Über die Trittstufen einsteigen, die Stange schulterbreit im Untergriff fassen und die Knie auf das Polster setzen.\n\nBewegung:\n- Körper ohne Schwung zu den Griffen hochziehen, Ellenbogen nach unten führen.\n- Langsam absenken, bis die Arme lang sind.\n\nAchte auf:\n- Knie bleiben ruhig auf dem Polster.\n- Zum Aussteigen die Trittstufen nutzen, nicht abspringen.",
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
