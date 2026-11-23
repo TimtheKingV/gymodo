@@ -2481,7 +2481,8 @@
         "bw_clamshell",
         "bw_y_raise_prone",
         "bw_reverse_fly_prone",
-        "bw_scapula_pushup"
+        "bw_scapula_pushup",
+        "bw_tibialis_raise"
       ]
     }
   ],
@@ -11007,6 +11008,30 @@
           "schulter",
           "ellenbogen_handgelenk"
         ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_tibialis_raise",
+      "name": "Schienbeinheben – an der Wand",
+      "description": "Einstellen:\n- Mit Gesäß und Rücken an eine freie Wand lehnen.\n- Füße hüftbreit etwa eine Fußlänge vor die Wand stellen, Beine gestreckt.\n\nBewegung:\n- Fußspitzen so weit wie möglich zum Schienbein anheben.\n- Oben kurz halten und kontrolliert absenken.\n\nAchte auf:\n- Die Fersen bleiben am Boden, die Knie gestreckt.\n- Das Gesäß bleibt an der Wand.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "tibialis",
+          "role": "primary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_ergaenzung",
+        "typ": "isolation",
+        "bereiche": [],
         "vorschlag": false
       },
       "review": "draft",

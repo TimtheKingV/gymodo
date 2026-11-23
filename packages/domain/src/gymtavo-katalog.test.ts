@@ -177,7 +177,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(48);
+    expect(typen[0]!.exercises).toHaveLength(49);
   });
 
   it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {
