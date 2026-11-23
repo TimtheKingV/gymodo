@@ -291,12 +291,17 @@ struct PlanEinheitBearbeitenView: View {
         return PlanZeilenModell.uebungsname(exerciseId: p.exerciseId, maschine: maschine, bootstrap: bootstrap)
     }
 
+    private func geraetLabel(_ p: EntwurfsPosition) -> String? {
+        PlanZeilenModell.geraetLabel(exerciseId: p.exerciseId, maschine: nil, bootstrap: katalog.bootstrap)
+    }
+
     private func kartenModell(_ p: EntwurfsPosition) -> UebungskarteModell {
         UebungskarteModell.aus(
             p, name: name(p),
             bild: PlanAnzeige.bildmodell(exerciseId: p.exerciseId, modelId: p.modelId, bootstrap: katalog.bootstrap),
             geaendert: entwurf.geaenderteWerte(id: p.id),
-            ausgangExerciseId: p.key.flatMap { ausgangUebungen[$0] })
+            ausgangExerciseId: p.key.flatMap { ausgangUebungen[$0] },
+            geraetLabel: geraetLabel(p))
     }
 
     private func fotoLaden(modell: String?) async {
@@ -347,7 +352,7 @@ struct PlanEinheitBearbeitenView: View {
                     let alt = kartenModell(position)
                     auswahlBlatt(zweck: .tauschen(alt: alt, kandidaten: kandidaten), plan: plan, belegt: belegt) {
                         exerciseId, modelId, _ in
-                        entwurf.tauschen(id: id, exerciseId: exerciseId, modelId: modelId, alterName: alt.name)
+                        entwurf.tauschen(id: id, exerciseId: exerciseId, modelId: modelId, alterName: PlanZeilenModell.titel(name: alt.name, geraetLabel: alt.geraetLabel))
                     }
                 }
             }

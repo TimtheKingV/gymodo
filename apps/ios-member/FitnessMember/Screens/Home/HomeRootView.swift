@@ -580,14 +580,20 @@ private extension HomeRootView {
     func fortschrittsZeile(_ uebung: ExerciseProgress) -> some View {
         let trend = HomeZeilen.trend(uebung.changeLoad)
         let werte = HomeZeilen.sparkWerte(uebung.points)
+        let etikett = PlanZeilenModell.geraetLabel(exerciseId: uebung.id, maschine: nil, bootstrap: katalog.bootstrap)
         return HStack(spacing: DesignSystem.Spacing.s12) {
             UebungsVideoKachel(exerciseId: uebung.id, kante: 48) {
                 Uebungsbild(kante: 48)
             }
-            Text(uebung.exerciseName)
-                .font(DesignSystem.Typography.uebungsname)
-                .foregroundStyle(DesignSystem.Color.text)
-                .multilineTextAlignment(.leading)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
+                Text(uebung.exerciseName)
+                    .font(DesignSystem.Typography.uebungsname)
+                    .foregroundStyle(DesignSystem.Color.text)
+                    .multilineTextAlignment(.leading)
+                // Gleichnamige Uebungen (Bankdruecken an Lang- und Kurzhantel)
+                // unterscheidet nur das Etikett.
+                if let etikett { GeraetEtikett(text: etikett) }
+            }
             Spacer(minLength: DesignSystem.Spacing.s8)
             VStack(alignment: .trailing, spacing: DesignSystem.Spacing.s4) {
                 Text(Zahlformat.belastungMitEinheit(uebung.currentLoad, uebung.loadUnit))
@@ -610,7 +616,7 @@ private extension HomeRootView {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(uebung.exerciseName), \(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit)), \(Self.trendGesprochen(trend))")
+            "\(PlanZeilenModell.titel(name: uebung.exerciseName, geraetLabel: etikett)), \(Zahlformat.belastungGesprochen(uebung.currentLoad, uebung.loadUnit)), \(Self.trendGesprochen(trend))")
     }
 
     /// Bewusste Ausnahme von designsystem.md SS2/SS13, nur fuer diese Zeile

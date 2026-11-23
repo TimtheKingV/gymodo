@@ -44,13 +44,47 @@ describe("catalog/gymtavo.json", () => {
     expect(freihantel.map((g) => g.key).sort()).toEqual(["barbell", "dumbbell", "ez_bar"]);
   });
 
-  it("nennt in der Ausstattung keinen abgeloesten Kabelzug mehr", () => {
+  it("gibt jedem aktiven Geraetetyp ein Etikett und jeder Uebung genau einen aktiven Typ", () => {
     const k = katalog();
-    const alteNamen = k.equipment.filter((g) => g.retired).map((g) => g.name);
-    const kabelzug = new Set(k.equipment.find((g) => g.key === "dual_cable_station")!.exercises);
-    for (const u of k.exercises.filter((x) => kabelzug.has(x.key))) {
-      const ausstattung = u.description?.split("Benötigte Ausstattung:")[1] ?? "";
-      for (const name of alteNamen) expect(ausstattung, u.key).not.toContain(`1 × ${name}`);
+    const aktiv = k.equipment.filter((g) => !g.retired);
+    expect(aktiv.filter((g) => !g.label).map((g) => g.key)).toEqual([]);
+    const typen = new Map<string, string[]>();
+    for (const g of aktiv) for (const u of g.exercises) typen.set(u, [...(typen.get(u) ?? []), g.key]);
+    expect(k.exercises.filter((u) => typen.get(u.key)?.length !== 1).map((u) => u.key)).toEqual([]);
+  });
+
+  // docs/katalog-stilleitfaden.md, Abschnitt Name.
+  it("haelt das Namensschema ein: kein Geraet im Namen, nur \" – \" als Trenner", () => {
+    const k = katalog();
+    const geraet = /Kurzhantel|Langhantel|\bSZ\b|Kabel|am Gerät|[Mm]aschine/;
+    expect(k.exercises.filter((u) => geraet.test(u.name)).map((u) => u.name)).toEqual([]);
+    const trenner = k.exercises.filter((u) => / · | - |—/.test(u.name) || u.name.split(" – ").length > 2);
+    expect(trenner.map((u) => u.name)).toEqual([]);
+  });
+
+  it("macht jede Uebung ueber Name und Etikett eindeutig", () => {
+    const k = katalog();
+    const etikett = new Map<string, string>();
+    for (const g of k.equipment.filter((x) => !x.retired)) for (const u of g.exercises) etikett.set(u, g.label ?? g.name);
+    const paare = k.exercises.map((u) => `${u.name} [${etikett.get(u.key)}]`);
+    expect(paare.filter((p, i) => paare.indexOf(p) !== i)).toEqual([]);
+  });
+
+  // docs/katalog-stilleitfaden.md, Abschnitt Beschreibung.
+  it("haelt in jeder Beschreibung das Drei-Abschnitte-Format ein", () => {
+    const neu = katalog().exercises;
+    for (const u of neu) {
+      const text = u.description ?? "";
+      expect(text.length, u.key).toBeLessThanOrEqual(500);
+      expect(text, u.key).not.toMatch(/erfassen|Vorschau|Benötigte Ausstattung|Positionen:|Häufige Fehler|Hinweise:/);
+      const abschnitte = text.split("\n\n");
+      expect(abschnitte.map((a) => a.split("\n")[0]), u.key).toEqual(["Einstellen:", "Bewegung:", "Achte auf:"]);
+      for (const a of abschnitte) {
+        const punkte = a.split("\n").slice(1);
+        expect(punkte.length, u.key).toBeGreaterThanOrEqual(1);
+        expect(punkte.length, u.key).toBeLessThanOrEqual(3);
+        for (const punkt of punkte) expect(punkt, u.key).toMatch(/^- \S.*\.$/);
+      }
     }
   });
 });
@@ -88,9 +122,10 @@ describe("Katalog und iOS-Muskelmodell", () => {
 
 // Testnotiz 12.10. abends, #3: kein aktiver Typ startet bei 0.
 describe("catalog/gymtavo.json Startwerte", () => {
-  it("gibt jedem aktiven Typ einen Startwert ueber dem Minimum", () => {
+  // Ausnahme Eigengewicht: dort ist die Last das Zusatzgewicht, und 0 kg ist der richtige Start.
+  it("gibt jedem aktiven Typ ausser Eigengewicht einen Startwert ueber dem Minimum", () => {
     const ohne = katalog()
-      .equipment.filter((g) => !g.retired)
+      .equipment.filter((g) => !g.retired && g.group !== "eigengewicht")
       .filter((g) => g.load_start === null || g.load_start <= g.load_min)
       .map((g) => g.key);
     expect(ohne).toEqual([]);
@@ -119,9 +154,29 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     }
   });
 
-  it("hat ausser Farmer's Walk fuer jede Uebung Plan-Merkmale (freie Wahl, P4)", () => {
-    // db_farmers_walk zaehlt Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
-    expect(katalog().exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(["db_farmers_walk"]);
+  it("hat ausser den Halteuebungen fuer jede Uebung Plan-Merkmale (freie Wahl, P4)", () => {
+    // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
+    const k = katalog();
+    const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
+    const sekunden = k.exercises.filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key)).map((u) => u.key);
+    expect(sekunden).toEqual([
+      "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
+    ]);
+    expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
+  });
+
+  // Ohne Video und ohne Tims Durchsicht waehlt der Generator eine Uebung nicht von selbst.
+  it("schlaegt keine Uebung ohne Video vor", () => {
+    for (const u of planUebungen().filter((x) => x.video === null)) {
+      expect(u.plan!.vorschlag, u.key).toBe(false);
+    }
+  });
+
+  it("fuehrt Uebungen ohne Geraet unter dem Typ Koerpergewicht in der Gruppe Eigengewicht", () => {
+    const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
+    expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
+    expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
+    expect(typen[0]!.exercises).toHaveLength(18);
   });
 
   it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {

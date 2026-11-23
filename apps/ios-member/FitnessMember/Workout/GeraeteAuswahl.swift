@@ -247,8 +247,11 @@ enum GeraeteAuswahl {
             // Die Uebungszeile nur setzen, wenn das Geraet selbst NICHT
             // trifft -- sonst bekaeme bei "bein" auch die Beinpresse eine,
             // und die Zeile verloere ihren Zweck.
+            // Auch mit Etikett: "kurzhantel curl" trifft "Bizepscurl" an der
+            // Kurzhantel, seit der Uebungsname das Geraet nicht mehr nennt.
             let uebung = imGeraet ? nil : station.exercises.first {
-                normalisiert($0.name).contains(gesucht)
+                let text = normalisiert([$0.geraetLabel, $0.name].compactMap { $0 }.joined(separator: " "))
+                return gesucht.split(separator: " ").allSatisfy { text.contains($0) }
             }
             guard imGeraet || uebung != nil else { return nil }
             return eintrag(station, trefferUebung: uebung)

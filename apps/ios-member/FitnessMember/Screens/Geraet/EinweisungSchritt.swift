@@ -50,7 +50,7 @@ struct EinweisungSchritt: View {
 
                 if let beschreibung = modell.beschreibung {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.s8) {
-                        Text("Worauf du achten musst")
+                        Text("So geht’s")
                             .font(DesignSystem.Typography.uebungsname)
                             .foregroundStyle(DesignSystem.Color.text)
                         Text(beschreibung)

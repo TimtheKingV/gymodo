@@ -357,7 +357,7 @@ enum PlanTausch {
     }
 
     private static func name(_ exerciseId: String, _ bootstrap: BootstrapResponse?) -> String {
-        PlanZeilenModell.uebungsname(exerciseId: exerciseId, maschine: nil, bootstrap: bootstrap)
+        PlanZeilenModell.uebungstitel(exerciseId: exerciseId, maschine: nil, bootstrap: bootstrap)
     }
 }
 

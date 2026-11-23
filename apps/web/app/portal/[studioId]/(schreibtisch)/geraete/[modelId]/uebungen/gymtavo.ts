@@ -93,13 +93,16 @@ export function anhaengbareUebungen(
 ): { exerciseId: string; name: string; typName: string }[] {
   const gezeigt = new Set(gymtavoZeilen(modell, typen).map((zeile) => zeile.exerciseId));
   const angebot = new Map<string, { exerciseId: string; name: string; typName: string }>();
-  for (const typ of typen) {
+  // Aktive Typen zuerst: eine Uebung haengt oft zusaetzlich an einem
+  // abgeloesten Typ ("Hoher Kabelzug + Seil"), dessen Name niemandem mehr hilft.
+  const aktivZuerst = [...typen].sort((a, b) => Number(a.retired) - Number(b.retired));
+  for (const typ of aktivZuerst) {
     for (const uebung of typ.exercises) {
       if (gezeigt.has(uebung.exerciseId) || angebot.has(uebung.exerciseId)) continue;
       angebot.set(uebung.exerciseId, {
         exerciseId: uebung.exerciseId,
         name: uebung.name,
-        typName: typ.name,
+        typName: uebung.geraetLabel ?? typ.name,
       });
     }
   }

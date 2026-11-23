@@ -1229,6 +1229,8 @@ export type CatalogTypeExercise = {
   volumeKind: VolumeKind;
   targetMin: number;
   targetMax: number;
+  /** Kurzes Etikett des Geraetetyps neben dem Namen (0076); null, solange der Import es nicht gesetzt hat. */
+  geraetLabel: string | null;
   sortOrder: number;
   videoStoragePath: string | null;
   videoDurationS: number | null;
@@ -1346,7 +1348,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     .from("equipment_models")
     .select(
       `id, name, manufacturer, category, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, cardio_werte, photo_path,
-       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max), instruction_assets (storage_path, duration_s)),
+       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max, geraet_label), instruction_assets (storage_path, duration_s)),
        catalog_product_types (catalog_products (id, catalog_key, manufacturer, series, name, model_code, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max))`,
     )
     .eq("studio_id", katalogId)
@@ -1378,6 +1380,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
         volume_kind: VolumeKind;
         target_min: number;
         target_max: number;
+        geraet_label: string | null;
       };
       instruction_assets: Array<{ storage_path: string; duration_s: number }>;
     }>;
@@ -1412,6 +1415,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
           volumeKind: link.exercises.volume_kind,
           targetMin: link.exercises.target_min,
           targetMax: link.exercises.target_max,
+          geraetLabel: link.exercises.geraet_label ?? null,
           sortOrder: link.sort_order,
           videoStoragePath: video?.storage_path ?? null,
           videoDurationS: video?.duration_s ?? null,
