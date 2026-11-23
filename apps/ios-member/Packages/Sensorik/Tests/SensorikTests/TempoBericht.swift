@@ -7,11 +7,22 @@ struct TempoZeile {
     let ordner: String; let art: Befestigungsart
     let verzoegerungMs: Double      // Verschiebung mit der groessten Kreuzkorrelation im aktiven Teil
     let abweichung: Double          // Mittel von |live − bezug| im aktiven Teil, unverschoben
-    let ausreisser: Bool            // laenger als eine Periode ausserhalb −0,25…1,25
-    let sicherAnteil: Double        // Anteil der Messwerte im aktiven Teil mit `sicher`; nur zur Information
+    let abweichungSicher: Double?   // dasselbe nur ueber sichere Messwerte; nil ohne sichere
+    let ausreisser: Bool            // die unbegrenzte Schaetzung laenger als eine Periode ausserhalb −0,25…1,25
+    let sicherAnteil: Double        // Anteil der Messwerte im aktiven Teil mit `sicher`
+    let wiederholungsfehler: Double // |Umkehrpunkte / 2 − repsWahr| ueber die ganze Aufnahme
+    var teil: TempoBericht.Teil { TempoBericht.teil(ordner) }
 }
 
-struct TempoTor: Equatable { let saetze: Int; let verzoegerungMs: Double; let abweichung: Double; let ausreisser: Int }
+/// Mediane einer Art. Die ersten vier Felder sind das Tor der Spec, der Rest dient
+/// `tragfaehig` und der Anzeige.
+struct TempoTor: Equatable {
+    var saetze: Int; var verzoegerungMs: Double; var abweichung: Double; var ausreisser: Int
+    var verzoegerungBetragMs = 0.0
+    var abweichungSicher: Double? = nil
+    var sicherAnteil = 0.0
+    var wiederholungsfehler = 0.0
+}
 
 /// Guetetor des Tempo-Modus (Tempo-Spec 6.4).
 enum TempoBericht {
@@ -21,6 +32,20 @@ enum TempoBericht {
     static let arten: [Befestigungsart] = [.stapel, .kurzhantel, .langhantel]
     static let mindestWiederholungen = 5
     static let mindestMesswerte = 300
+    /// Vorschlag `tragfaehig`: so viel sicher und so nah an der wahren Zahl der Wiederholungen.
+    static let sicherMin = 0.8
+    static let wiederholungsfehlerMax = 1.0
+    /// Ein Pruefteil mit weniger Saetzen traegt keine Aussage und wird im Bericht gewarnt.
+    static let mindestPruefsaetze = 5
+
+    /// Rueckhalt: Konstanten werden nur an der Abstimmung gewaehlt, die Pruefung wird gelesen.
+    enum Teil: String, CaseIterable { case abstimmung = "Abstimmung", pruefung = "Prüfung" }
+    /// Erste Aufnahme der Pruefung (Datum im Ordnernamen JJJJ-MM-TT-…).
+    static let pruefungAb = "2026-11-01"
+
+    static func teil(_ ordner: String) -> Teil {
+        String(ordner.prefix(10)) < pruefungAb ? .abstimmung : .pruefung
+    }
 
     /// Auswahl wie tools/sensorik-sim/tempo_nachrechnung.py: Art Stapel, Kurz- oder
     /// Langhantel, `repsWahr >= 5`, ohne Luecke (weder Zeile noch in der Statistik),
@@ -42,30 +67,40 @@ enum TempoBericht {
             let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
             guard werte.count >= mindestMesswerte else { continue }
             let rate = Double(datei.sensor.rateSollHz)
-            guard let bezug = Lagebezug.berechne(werte, rateHz: rate) else { continue }
-            var schaetzer = Lageschaetzer(rateHz: rate)
-            let live = werte.map { schaetzer.verarbeite($0) }
-            zeilen.append(zeile(ordner: name, art: art, live: live, bezug: bezug, rateHz: rate))
+            if let z = zeile(ordner: name, art: art, werte: werte, rateHz: rate, repsWahr: wahr) { zeilen.append(z) }
         }
         return zeilen
     }
 
-    static func zeile(ordner: String, art: Befestigungsart, live: [Lage], bezug: Lagebezug.Ergebnis,
-                      rateHz: Double) -> TempoZeile {
+    /// Spielt die Messwerte live durch den Schaetzer und misst gegen den Bezug; nil ohne Bezug.
+    static func zeile(ordner: String, art: Befestigungsart, werte: [SensorMesswert], rateHz: Double,
+                      repsWahr: Int) -> TempoZeile? {
+        guard let bezug = Lagebezug.berechne(werte, rateHz: rateHz) else { return nil }
+        var schaetzer = Lageschaetzer(rateHz: rateHz)
+        var live: [Lage] = [], roh: [Double] = []
+        live.reserveCapacity(werte.count); roh.reserveCapacity(werte.count)
+        for m in werte {
+            live.append(schaetzer.verarbeite(m))
+            roh.append(schaetzer.rohlage)
+        }
         let a = bezug.aktiv
         let l = a.map { live[$0].lage }, b = a.map { bezug.lage[$0] }
         let abweichung = zip(l, b).reduce(0) { $0 + abs($1.0 - $1.1) } / Double(a.count)
+        let sichere = a.filter { live[$0].sicher }
+        let abweichungSicher = sichere.isEmpty ? nil
+            : sichere.reduce(0) { $0 + abs(live[$1].lage - bezug.lage[$1]) } / Double(sichere.count)
         var laengster = 0, lauf = 0
-        for x in l {
-            lauf = grenzen.contains(x) ? 0 : lauf + 1
+        for i in a {
+            lauf = grenzen.contains(roh[i]) ? 0 : lauf + 1
             laengster = max(laengster, lauf)
         }
         return TempoZeile(
             ordner: ordner, art: art,
             verzoegerungMs: verzoegerungMs(live: l, bezug: b, rateHz: rateHz, hoechstens: min(1, bezug.periode / 2)),
-            abweichung: abweichung,
+            abweichung: abweichung, abweichungSicher: abweichungSicher,
             ausreisser: Double(laengster) > bezug.periode * rateHz,
-            sicherAnteil: Double(a.filter { live[$0].sicher }.count) / Double(a.count))
+            sicherAnteil: Double(sichere.count) / Double(a.count),
+            wiederholungsfehler: abs(Double(schaetzer.umkehrpunkte.count) / 2 - Double(repsWahr)))
     }
 
     /// Verschiebung (ms) mit der groessten Korrelation von `live` gegen `bezug`,
@@ -106,18 +141,61 @@ enum TempoBericht {
     /// Mediane ueber die Aufnahmen der Art.
     static func tor(_ zeilen: [TempoZeile], art: Befestigungsart) -> TempoTor {
         let z = zeilen.filter { $0.art == art }
+        let sicher = z.compactMap(\.abweichungSicher)
         return TempoTor(saetze: z.count, verzoegerungMs: median(z.map(\.verzoegerungMs)),
-                        abweichung: median(z.map(\.abweichung)), ausreisser: z.filter(\.ausreisser).count)
+                        abweichung: median(z.map(\.abweichung)), ausreisser: z.filter(\.ausreisser).count,
+                        verzoegerungBetragMs: median(z.map { abs($0.verzoegerungMs) }),
+                        abweichungSicher: sicher.isEmpty ? nil : median(sicher),
+                        sicherAnteil: median(z.map(\.sicherAnteil)),
+                        wiederholungsfehler: median(z.map(\.wiederholungsfehler)))
     }
 
+    /// Das Tor der Spec, wörtlich: drei Schwellen; die Verzoegerung im Betrag.
     static func torErreicht(_ t: TempoTor) -> Bool {
-        t.saetze > 0 && t.verzoegerungMs <= verzoegerungMaxMs && t.abweichung <= abweichungMax && t.ausreisser == 0
+        t.saetze > 0 && abs(t.verzoegerungMs) <= verzoegerungMaxMs && t.abweichung <= abweichungMax && t.ausreisser == 0
+    }
+
+    /// Vorschlag, nicht Spec: Tor erreicht, die Lage traegt meist (sicher im Median
+    /// ≥ 0,8) und die Umkehrpunkte treffen die wahre Zahl der Wiederholungen (Median ≤ 1).
+    static func tragfaehig(_ t: TempoTor) -> Bool {
+        torErreicht(t) && t.sicherAnteil >= sicherMin && t.wiederholungsfehler <= wiederholungsfehlerMax
+    }
+
+    private static let posix = Locale(identifier: "en_US_POSIX")
+    static func zahl(_ x: Double, _ stellen: Int) -> String { String(format: "%.\(stellen)f", locale: posix, x) }
+    static func pct(_ x: Double) -> String { String(format: "%.0f %%", locale: posix, x * 100) }
+
+    /// Tabelle je Teil: eine Zeile je Art, darunter Warnungen fuer zu kleine Pruefteile.
+    static func tabellen(_ zeilen: [TempoZeile]) -> String {
+        var text = ""
+        for teil in Teil.allCases {
+            let z = zeilen.filter { $0.teil == teil }
+            text += "\n### \(teil.rawValue) (\(teil == .abstimmung ? "vor" : "ab") \(pruefungAb))\n\n"
+                + "| Art | Sätze | Verzögerung | \\|Verzögerung\\| | Abweichung | Abweichung sicher | außerhalb (roh) "
+                + "| sicher | Wdh. gegen Wahrheit | Tor erreicht | tragfähig (Vorschlag) |\n"
+                + "|---|---|---|---|---|---|---|---|---|---|---|\n"
+            var warnungen: [String] = []
+            for art in arten {
+                let t = tor(z, art: art)
+                if teil == .pruefung, t.saetze < mindestPruefsaetze {
+                    warnungen.append("**Warnung:** \(art.rawValue) hat in der Prüfung nur \(t.saetze) Sätze "
+                        + "(unter \(mindestPruefsaetze)); daraus folgt keine Aussage.")
+                }
+                guard t.saetze > 0 else {
+                    text += "| \(art.rawValue) | 0 | – | – | – | – | – | – | – | – | – |\n"
+                    continue
+                }
+                text += "| \(art.rawValue) | \(t.saetze) | \(zahl(t.verzoegerungMs, 0)) ms | \(zahl(t.verzoegerungBetragMs, 0)) ms "
+                    + "| \(zahl(t.abweichung, 3)) | \(t.abweichungSicher.map { zahl($0, 3) } ?? "–") | \(t.ausreisser) "
+                    + "| \(pct(t.sicherAnteil)) | \(zahl(t.wiederholungsfehler, 1)) | \(torErreicht(t) ? "ja" : "nein") "
+                    + "| \(tragfaehig(t) ? "ja" : "nein") |\n"
+            }
+            if !warnungen.isEmpty { text += "\n" + warnungen.joined(separator: "\n") + "\n" }
+        }
+        return text
     }
 
     static func markdown(_ zeilen: [TempoZeile]) -> String {
-        let posix = Locale(identifier: "en_US_POSIX")
-        func zahl(_ x: Double, _ stellen: Int) -> String { String(format: "%.\(stellen)f", locale: posix, x) }
-        func pct(_ x: Double) -> String { String(format: "%.0f %%", locale: posix, x * 100) }
         // Datum der juengsten Aufnahme aus dem Ordnernamen (JJJJ-MM-TT-…), nicht heute: der Bericht bleibt gleich.
         let stand = zeilen.map { String($0.ordner.prefix(10)) }.max() ?? "–"
         var text = """
@@ -126,31 +204,35 @@ enum TempoBericht {
             Erzeugt von `TempoBerichtTests` (`swift test --package-path apps/ios-member/Packages/Sensorik`). Nicht von Hand bearbeiten.
             Stand: Aufnahmen bis \(stand). Live-Lauf des `Lageschaetzer` ohne gemerkten Umfang gegen die nachträgliche Rechnung \
             aus `tools/sensorik-sim/tempo_nachrechnung.py` (je Halbwelle auf 0…1 normiert), im aktiven Teil des Satzes.
-            Auswahl: Stapel, Kurz- und Langhantel, `repsWahr` ≥ \(mindestWiederholungen), ohne Lücke, ≥ \(mindestMesswerte) Messwerte.
-            Tor je Art (Tempo-Spec 6.4): Verzögerung im Median ≤ \(zahl(verzoegerungMaxMs, 0)) ms, Abweichung im Median ≤ \
-            \(zahl(abweichungMax, 2)) des Hubs, kein Satz länger als eine Wiederholung außerhalb −0,25…1,25. \
-            „sicher“ (Median des Anteils sicherer Messwerte) zählt nicht zum Tor.
 
-            | Art | Sätze | Verzögerung (Median) | Abweichung (Median) | außerhalb | sicher (Median) | Tor erreicht |
-            |---|---|---|---|---|---|---|
+            Es gibt keine gemessene Wahrheit der Lage, nur die Übereinstimmung mit dieser nachträglichen Rechnung. \
+            Die Hilfslage im unsicheren Zustand ist dem Bezug nachgebaut, die Abweichung ist deshalb über sichere \
+            Messwerte („Abweichung sicher“) aussagekräftiger.
+
+            Auswahl: Stapel, Kurz- und Langhantel, `repsWahr` ≥ \(mindestWiederholungen), ohne Lücke, ≥ \(mindestMesswerte) Messwerte.
+            Rückhalt: Abstimmung = Aufnahmen vor \(pruefungAb), Prüfung = ab \(pruefungAb). Konstanten werden nur an der \
+            Abstimmung gewählt; die Prüfung wird gelesen, nicht optimiert.
+            Tor je Art (Tempo-Spec 6.4): Betrag der Verzögerung im Median ≤ \(zahl(verzoegerungMaxMs, 0)) ms, Abweichung im \
+            Median ≤ \(zahl(abweichungMax, 2)) des Hubs, kein Satz, dessen unbegrenzte Schätzung länger als eine Wiederholung \
+            außerhalb −0,25…1,25 liegt („außerhalb (roh)“). „tragfähig“ ist ein Vorschlag, nicht die Spec: Tor erreicht und \
+            sicher im Median ≥ \(pct(sicherMin)) und Wdh. gegen Wahrheit im Median ≤ \(zahl(wiederholungsfehlerMax, 0)).
+            „Wdh. gegen Wahrheit“ (Median von |Umkehrpunkte/2 − `repsWahr`|) ist die einzige Spalte mit echter Wahrheit.
+            Verzögerung: Median der Verschiebung mit der größten Korrelation (positiv = live später); |Verzögerung|: Median der Beträge. \
+            Alle Spalten sind Mediane über die Sätze der Art, „außerhalb (roh)“ ist eine Anzahl.
 
             """
-        for art in arten {
-            let t = tor(zeilen, art: art)
-            guard t.saetze > 0 else { continue }
-            let sicher = median(zeilen.filter { $0.art == art }.map(\.sicherAnteil))
-            text += "| \(art.rawValue) | \(t.saetze) | \(zahl(t.verzoegerungMs, 0)) ms | \(zahl(t.abweichung, 3)) | "
-                + "\(t.ausreisser) | \(pct(sicher)) | \(torErreicht(t) ? "ja" : "nein") |\n"
-        }
+        text += tabellen(zeilen)
         for art in arten {
             let z = zeilen.filter { $0.art == art }
             guard !z.isEmpty else { continue }
             let schlechteste = z.sorted { ($0.abweichung, $1.ordner) > ($1.abweichung, $0.ordner) }.prefix(10)
             text += "\n## \(art.rawValue): die zehn schlechtesten Sätze\n\n"
-                + "| Aufnahme | Verzögerung | Abweichung | außerhalb | sicher |\n|---|---|---|---|---|\n"
+                + "| Aufnahme | Teil | Verzögerung | Abweichung | Abweichung sicher | außerhalb (roh) | sicher | Wdh. gegen Wahrheit |\n"
+                + "|---|---|---|---|---|---|---|---|\n"
             for e in schlechteste {
-                text += "| \(e.ordner) | \(zahl(e.verzoegerungMs, 0)) ms | \(zahl(e.abweichung, 3)) | "
-                    + "\(e.ausreisser ? "ja" : "–") | \(pct(e.sicherAnteil)) |\n"
+                text += "| \(e.ordner) | \(e.teil.rawValue) | \(zahl(e.verzoegerungMs, 0)) ms | \(zahl(e.abweichung, 3)) "
+                    + "| \(e.abweichungSicher.map { zahl($0, 3) } ?? "–") | \(e.ausreisser ? "ja" : "–") "
+                    + "| \(pct(e.sicherAnteil)) | \(zahl(e.wiederholungsfehler, 1)) |\n"
             }
         }
         return text

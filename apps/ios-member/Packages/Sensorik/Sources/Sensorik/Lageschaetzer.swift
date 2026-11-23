@@ -127,6 +127,9 @@ public struct Lageschaetzer: Sendable {
     private var ausschlaege: [Double] = []
     private var korrektur = 0.0
     private var letzteAusgabe: Double
+    /// Unbegrenzte innere Lage des letzten Messwerts (Weg auf den Hub abgebildet plus
+    /// Einblendung), vor Hilfslage und Klemmen. Nur fuer die Messung im Tempobericht.
+    private(set) var rohlage = 0.0
     /// Messwert der ersten bestaetigten Schaetzung des Gleichanteils (oder des
     /// letzten grob berichtigten Fehlers) und wie viele Umkehrpunkte mit einem
     /// Extrem danach erkannt sind. Vorher kann der Gleichanteil
@@ -181,6 +184,7 @@ public struct Lageschaetzer: Sendable {
         // Ab jetzt gilt die Lage ungehalten: von der zuletzt angezeigten aus einblenden.
         if vertraut && !warVertraut { korrektur = letzteAusgabe - lage(beiWeg: weg) }
         var lage = lage(beiWeg: weg) + korrektur
+        rohlage = lage
         if vertraut, !Self.haltbar.contains(lage) {
             // Weit aus dem Umfang: Die Schaetzung hat ihren Halt verloren (ein falscher
             // Gleichanteil, ein verpasster Umkehrpunkt). Zurueck auf unsicher; die Pruefung
