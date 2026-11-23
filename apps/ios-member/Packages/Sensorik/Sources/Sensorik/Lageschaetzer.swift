@@ -231,7 +231,15 @@ public struct Lageschaetzer: Sendable {
     /// Bewegung (Anfangsbeschleunigung und Gleichanteil heben sich auf) wie Ruhe
     /// aus, und die Schwerkraft schluckte die Bewegung.
     private mutating func schwerkraftNachfuehren(_ m: SensorMesswert) {
-        guard var g = schwerkraft else { schwerkraft = m.beschleunigung; return }
+        guard var g = schwerkraft else {
+            // Mit bekannter Richtung zaehlt jeder Fehler im Betrag voll als Gleichanteil,
+            // den hier keiner schaetzt: Faengt die Aufnahme in Bewegung an, laege der Betrag
+            // des ersten Messwerts bis zur ersten Ruhe um bis zu 0,05 g daneben. Bis dahin
+            // gilt 1 g (in Ruhe misst der Sensor 0,995–1,005 g), Richtung vom ersten Messwert.
+            let b = m.beschleunigung, betrag = Self.betrag(b)
+            schwerkraft = quelle == .ruhe || betrag == 0 ? b : Vektor3(x: b.x / betrag, y: b.y / betrag, z: b.z / betrag)
+            return
+        }
         if quelle == .drehrate {
             // Die Schwerkraft liegt fest im Raum: im Sensorrahmen dreht sie sich gegen die Drehrate.
             // In Ruhe verankert die Nachfuehrung unten sie wieder an der Beschleunigung.
@@ -271,6 +279,15 @@ public struct Lageschaetzer: Sendable {
         if case .wartet = halbwelle, ruhigeSchritte > 0 { geschwindigkeit *= 1 - dt / Self.ruheLeckDauer }
         weg += (vorher + geschwindigkeit) / 2 * dt
 
+        if quelle != .ruhe {
+            // Mit bekannter Schwerkraft ist der Gleichanteil klein (am Geraet im Mittel
+            // eines Satzes unter 0,05 m/s²); die Paarung der Beschleunigungsextreme setzt
+            // dagegen an Hanteln Stillstand an Stellen voraus, an denen die Last laeuft,
+            // und schaetzt das Mehrfache. Er gilt deshalb von Anfang an als bekannt (null),
+            // den Rest nimmt der Versatz an den Umkehrpunkten.
+            if gleichanteilSchritt == nil { gleichanteilSchritt = schritt }
+            return
+        }
         let alterGleichanteil = gleichanteil.wert
         guard let still = gleichanteil.verarbeite(vertikal, schritt: schritt, dt: dt) else { return }
         if gleichanteilSchritt == nil, gleichanteil.bestaetigt { gleichanteilSchritt = schritt }
