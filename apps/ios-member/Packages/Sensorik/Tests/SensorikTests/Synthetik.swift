@@ -176,23 +176,34 @@ extension Synthetik {
 
 extension Synthetik {
     /// Kuenstlicher Satz einer drehenden Last mit der wahren Lage je Messwert (0 = Ruhelage, 1 = oben).
-    struct Drehsatz { let werte: [SensorMesswert]; let lage: [Double] }
+    /// `losT`: ein Zeitpunkt 0,5 s vor der ersten Wiederholung, an dem die Last in der Ruhelage des Satzes steht.
+    struct Drehsatz { let werte: [SensorMesswert]; let lage: [Double]; let losT: Double }
 
-    /// Winkel = `startGrad + vorzeichen · hubGrad · lage` auf `achse` (die andere bleibt 0), auf ±180° gefaltet;
-    /// die Lage folgt Kosinus-Flanken wie bei `hub`. Die Drehrate ist die Ableitung auf derselben Achse,
-    /// die Beschleunigung (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
-    /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern
-    /// (7 Hz) auf den Winkel; die Drehrate ist die Ableitung des tatsaechlich ausgegebenen Winkels samt Zittern,
-    /// auf den anderen Achsen liegt ein kleines Zittern von 9 Hz. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
+    /// Vorbewegung vor dem Satz (Aufnehmen der Hantel): aus der Startrichtung um `hinGrad` hin, dann zurueck
+    /// auf `ruheGrad`, je in `dauer` s; davor `ruheDavor` s Ruhe. Die Ruhelage des Satzes liegt danach `ruheGrad`
+    /// neben der Startrichtung, die Wahrheit ist in der Vorbewegung 0.
+    struct Vorbewegung { var hinGrad = 60.0; var ruheGrad = 25.0; var dauer = 1.0; var ruheDavor = 2.0 }
+
+    /// Die Schwerkraftrichtung im Sensorrahmen startet bei `startRoll`/`startPitch`
+    /// (ĝ = (−sin p, sin r · cos p, cos r · cos p)) und dreht mit dem Drehwinkel α um `drehachse`
+    /// (im Sensorrahmen; der Sensor dreht um +α, die Schwerkraft in seinem Rahmen um −α).
+    /// α = Vorbewegung + `hubGrad · lage` + Zittern; ausgegeben werden `roll = atan2(ĝ.y, ĝ.z)` und
+    /// `pitch = asin(−ĝ.x)` in Grad, also mit allen Euler-Spruengen (Roll ±180°, Pitch ±90°).
+    /// Die Lage folgt Kosinus-Flanken wie bei `hub`. Die Drehrate ist die Ableitung der ausgegebenen
+    /// Roll- und Pitch-Winkel (ueber ±180° gefaltet), auf z liegt ein kleines Zittern von 9 Hz;
+    /// die Beschleunigung ist (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
+    /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern (7 Hz)
+    /// auf α. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
     static func drehsatz(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
                          hubGrad: Double = 140, hubAnteil: [Int: Double] = [:],
-                         achse: Winkelachse = .roll, vorzeichen: Int = 1, startGrad: Double = 0,
+                         drehachse: Vektor3 = Vektor3(x: 1, y: 0, z: 0), startRoll: Double = 0, startPitch: Double = 0,
+                         vorbewegung: Vorbewegung? = nil,
                          pauseNach: [Int: Double] = [:], zitternGrad: Double = 0,
                          ruheVorher: Double = 3, ruheNachher: Double = 2,
                          rate: Double = 50, buendel: Int = 2,
                          luecke: (ab: Double, dauer: Double)? = nil) -> Drehsatz {
-        let richtung = Double(vorzeichen)
-        var stuecke = [Wegstueck(dauer: ruheVorher, von: 0, nach: 0)]
+        let vorDauer = vorbewegung.map { $0.ruheDavor + 2 * $0.dauer } ?? 0
+        var stuecke = [Wegstueck(dauer: vorDauer + ruheVorher, von: 0, nach: 0)]
         for n in stride(from: 1, through: wiederholungen, by: 1) {
             let anteil = hubAnteil[n] ?? 1
             stuecke.append(Wegstueck(dauer: kraftweg, von: 0, nach: anteil))
@@ -216,10 +227,33 @@ extension Synthetik {
             }
             return (0, 0)
         }
-        /// Entfalteter Winkel inklusive Zittern.
-        func entfaltet(_ t: Double) -> Double {
+        /// Drehwinkel der Vorbewegung (Kosinus-Flanken), danach `ruheGrad`.
+        func vor(_ t: Double) -> Double {
+            guard let v = vorbewegung else { return 0 }
+            func flanke(_ tau: Double) -> Double { (1 - cos(Double.pi * min(max(tau, 0), 1))) / 2 }
+            if t < v.ruheDavor + v.dauer { return v.hinGrad * flanke((t - v.ruheDavor) / v.dauer) }
+            return v.hinGrad + (v.ruheGrad - v.hinGrad) * flanke((t - v.ruheDavor - v.dauer) / v.dauer)
+        }
+        /// Drehwinkel α inklusive Vorbewegung und Zittern, in Grad.
+        func alpha(_ t: Double) -> Double {
             let z = zustand(t)
-            return startGrad + richtung * hubGrad * z.lage + z.zittern * zitternGrad * sin(2 * .pi * 7 * t)
+            // In der Vorbewegung zittert nichts, damit sie ihre Form behaelt.
+            let zittern = t < vorDauer ? 0 : z.zittern * zitternGrad * sin(2 * .pi * 7 * t)
+            return vor(t) + hubGrad * z.lage + zittern
+        }
+        let r0 = startRoll * .pi / 180, p0 = startPitch * .pi / 180
+        let start = Vektor3(x: -sin(p0), y: sin(r0) * cos(p0), z: cos(r0) * cos(p0))
+        let betrag = (drehachse.x * drehachse.x + drehachse.y * drehachse.y + drehachse.z * drehachse.z).squareRoot()
+        let k = Vektor3(x: drehachse.x / betrag, y: drehachse.y / betrag, z: drehachse.z / betrag)
+        /// Roll und Pitch in Grad zur Zeit t: ĝ = Drehung von `start` um k mit −α (Rodrigues).
+        func eulerwinkel(_ t: Double) -> (roll: Double, pitch: Double) {
+            let a = -alpha(t) * .pi / 180, c = cos(a), s = sin(a), v = start
+            let kxv = Vektor3(x: k.y * v.z - k.z * v.y, y: k.z * v.x - k.x * v.z, z: k.x * v.y - k.y * v.x)
+            let kv = k.x * v.x + k.y * v.y + k.z * v.z
+            let g = Vektor3(x: v.x * c + kxv.x * s + k.x * kv * (1 - c),
+                            y: v.y * c + kxv.y * s + k.y * kv * (1 - c),
+                            z: v.z * c + kxv.z * s + k.z * kv * (1 - c))
+            return (atan2(g.y, g.z) * 180 / .pi, asin(min(max(-g.x, -1), 1)) * 180 / .pi)
         }
         func falte(_ grad: Double) -> Double {
             var x = grad.truncatingRemainder(dividingBy: 360)
@@ -234,18 +268,14 @@ extension Synthetik {
             let t = Double(i) * dt
             let bundleT = Double(i / buendel * buendel) * dt
             if let luecke, bundleT >= luecke.ab, bundleT < luecke.ab + luecke.dauer { continue }
-            let jetzt = zustand(t)
-            let grad = falte(entfaltet(t))
-            let rateGradProS = (entfaltet(t + dt) - entfaltet(t - dt)) / (2 * dt)
-            func nebenzittern(_ k: Double) -> Double { 8 * sin(2 * .pi * 9 * t + k) }
-            let winkel = achse == .roll ? Vektor3(x: grad, y: 0, z: 0) : Vektor3(x: 0, y: grad, z: 0)
-            let drehrate = achse == .roll
-                ? Vektor3(x: rateGradProS, y: nebenzittern(1), z: nebenzittern(2))
-                : Vektor3(x: nebenzittern(1), y: rateGradProS, z: nebenzittern(2))
+            let jetzt = eulerwinkel(t), davor = eulerwinkel(t - dt), danach = eulerwinkel(t + dt)
+            let drehrate = Vektor3(x: falte(danach.roll - davor.roll) / (2 * dt),
+                                   y: falte(danach.pitch - davor.pitch) / (2 * dt),
+                                   z: 8 * sin(2 * .pi * 9 * t + 2))
             werte.append(SensorMesswert(t: bundleT, beschleunigung: Vektor3(x: 0, y: 0, z: 1),
-                                        drehrate: drehrate, winkel: winkel))
-            lage.append(jetzt.lage)
+                                        drehrate: drehrate, winkel: Vektor3(x: jetzt.roll, y: jetzt.pitch, z: 0)))
+            lage.append(zustand(t).lage)
         }
-        return Drehsatz(werte: werte, lage: lage)
+        return Drehsatz(werte: werte, lage: lage, losT: vorDauer + ruheVorher - 0.5)
     }
 }

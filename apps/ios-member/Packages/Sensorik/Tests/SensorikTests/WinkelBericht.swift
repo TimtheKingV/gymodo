@@ -45,10 +45,10 @@ enum WinkelBericht {
     static func zeile(ordner: String, art: Befestigungsart?, pruefung: Bool, repsWahr: Int,
                       eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double, uebung: String = "") -> WinkelZeile {
         var schaetzer = Winkellage(rateHz: rateHz)
-        var lagen: [Lage] = [], winkel: [Vektor3] = [], luecken = 0
+        var lagen: [Lage] = [], winkel: [Double] = [], luecken = 0
         for e in eintraege {
             switch e {
-            case .messwert(let m): lagen.append(schaetzer.verarbeite(m)); winkel.append(m.winkel)
+            case .messwert(let m): lagen.append(schaetzer.verarbeite(m)); winkel.append(schaetzer.drehwinkelGrad)
             case .luecke(let von, let bis): schaetzer.luecke(von: von, bis: bis); luecken += 1
             case .rate, .marke: break
             }
@@ -68,27 +68,16 @@ enum WinkelBericht {
         let hub = schaetzer.gemerkt?.hubGrad ?? 0
         return WinkelZeile(ordner: ordner, art: art, pruefung: pruefung, repsWahr: repsWahr, hubGrad: hub,
                            wdhFehler: abs(Double(punkte.count) / 2 - Double(repsWahr)), sicherAnteil: sicher,
-                           hubStreuung: streuung(punkte, lagen: lagen, winkel: winkel, achse: schaetzer.gemerkt?.achse),
+                           hubStreuung: streuung(punkte, lagen: lagen, winkel: winkel),
                            groessterSprung: sprung, uebung: uebung, luecken: luecken)
     }
 
-    /// Hub je Wiederholung = Winkelweg vom oberen Umkehrpunkt zum folgenden unteren, auf der gewaehlten Achse
-    /// und mit herausgerechneten Spruengen ueber ±180°; Standardabweichung / Mittel. Unter zwei Hueben 0.
-    private static func streuung(_ punkte: [Umkehrpunkt], lagen: [Lage], winkel: [Vektor3], achse: Winkelachse?) -> Double {
-        guard let achse, winkel.count == lagen.count, !winkel.isEmpty else { return 0 }
-        var entfaltet: [Double] = [], letzter = 0.0, vorher = 0.0
-        for (i, w) in winkel.enumerated() {
-            let roh = achse == .roll ? w.x : w.y
-            if i == 0 { letzter = roh } else {
-                var d = (roh - vorher).truncatingRemainder(dividingBy: 360)
-                if d > 180 { d -= 360 } else if d < -180 { d += 360 }
-                letzter += d
-            }
-            vorher = roh
-            entfaltet.append(letzter)
-        }
+    /// Hub je Wiederholung = Drehwinkel φ der `Winkellage` (entfaltet) vom oberen Umkehrpunkt zum folgenden
+    /// unteren; Standardabweichung / Mittel. Unter zwei Hueben 0.
+    private static func streuung(_ punkte: [Umkehrpunkt], lagen: [Lage], winkel: [Double]) -> Double {
+        guard winkel.count == lagen.count, !winkel.isEmpty else { return 0 }
         func winkelBei(_ t: TimeInterval) -> Double? {
-            lagen.firstIndex { $0.t >= t }.map { entfaltet[$0] }
+            lagen.firstIndex { $0.t >= t }.map { winkel[$0] }
         }
         var hube: [Double] = []
         for (i, p) in punkte.enumerated() where p.oben && i + 1 < punkte.count && !punkte[i + 1].oben {

@@ -4,10 +4,15 @@ import Testing
 
 struct WinkellageTests {
     /// Mittlere und groesste Abweichung |Lage − Wahrheit| ab der genannten Wiederholung; schlaegt fehl, wenn die Wiederholung nicht existiert.
-    func fehler(_ satz: Synthetik.Drehsatz, ab wiederholung: Int, gemerkt: GemerkterWinkel? = nil, rate: Double = 50)
-        -> (mittel: Double, max: Double, lagen: [Lage], schaetzer: Winkellage) {
-        var schaetzer = Winkellage(rateHz: rate, gemerkt: gemerkt)
-        let lagen = satz.werte.map { schaetzer.verarbeite($0) }
+    /// Mit `losBei` wartet der Schaetzer auf `los()`, das beim ersten Messwert mit `t >= losBei` kommt.
+    func fehler(_ satz: Synthetik.Drehsatz, ab wiederholung: Int, gemerkt: GemerkterWinkel? = nil, rate: Double = 50,
+                losBei: Double? = nil) -> (mittel: Double, max: Double, lagen: [Lage], schaetzer: Winkellage) {
+        var schaetzer = Winkellage(rateHz: rate, gemerkt: gemerkt, wartetAufLos: losBei != nil)
+        var losGegeben = false
+        let lagen = satz.werte.map { m -> Lage in
+            if let losBei, !losGegeben, m.t >= losBei { schaetzer.los(); losGegeben = true }
+            return schaetzer.verarbeite(m)
+        }
         // Eine Wiederholung beginnt, wo die Wahrheit die Ruhelage verlaesst.
         let beginne = satz.lage.indices.dropFirst().filter { abs(satz.lage[$0 - 1]) < 1e-12 && abs(satz.lage[$0]) >= 1e-12 }
         #expect(beginne.count >= wiederholung, "nur \(beginne.count) Wiederholungsbeginne gefunden")
@@ -17,7 +22,7 @@ struct WinkellageTests {
         return (mittel, abweichungen.max() ?? 0, lagen, schaetzer)
     }
 
-    let bekannt = GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 140)
+    let bekannt = GemerkterWinkel(hubGrad: 140)
 
     @Test func mitGemerktemWertFolgtDieLageAbDerErstenWiederholung() {
         let f = fehler(Synthetik.drehsatz(wiederholungen: 12), ab: 1, gemerkt: bekannt)
@@ -27,7 +32,6 @@ struct WinkellageTests {
     @Test func ohneGemerktenWertStimmtDieLageAbDerDritten() {
         let f = fehler(Synthetik.drehsatz(wiederholungen: 12), ab: 3)
         #expect(f.mittel <= 0.03)
-        #expect(f.schaetzer.gemerkt == GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: f.schaetzer.gemerkt!.hubGrad))
         #expect(abs(f.schaetzer.gemerkt!.hubGrad - 140) <= 3)
     }
     @Test func vorlaeufigerMassstabLaesstDenPunktNichtUeberschiessen() {
@@ -36,14 +40,14 @@ struct WinkellageTests {
         #expect(f.lagen.map(\.lage).max()! >= 0.95)
     }
     @Test func ueberPlusMinus180SpringtDieLageNicht() {
-        let f = fehler(Synthetik.drehsatz(wiederholungen: 8, startGrad: 170), ab: 1, gemerkt: bekannt)
+        // Roll laeuft von 170° ueber ±180° hinaus bis −50°.
+        let f = fehler(Synthetik.drehsatz(wiederholungen: 8, startRoll: 170), ab: 1, gemerkt: bekannt)
         #expect(f.mittel <= 0.02)
         #expect(zip(f.lagen, f.lagen.dropFirst()).allSatisfy { abs($1.lage - $0.lage) <= 0.06 })
     }
-    @Test func negativeDrehrichtungUndPitchWerdenErkannt() {
-        let f = fehler(Synthetik.drehsatz(wiederholungen: 6, hubGrad: 60, achse: .pitch, vorzeichen: -1), ab: 3)
+    @Test func gegenrichtungUndAndereAchse() {
+        let f = fehler(Synthetik.drehsatz(wiederholungen: 6, hubGrad: 60, drehachse: Vektor3(x: 0, y: -1, z: 0)), ab: 3)
         #expect(f.mittel <= 0.03)
-        #expect(f.schaetzer.gemerkt?.achse == .pitch && f.schaetzer.gemerkt?.vorzeichen == -1)
     }
     @Test func umkehrpunkteWechselnObenUndUnten() {
         let f = fehler(Synthetik.drehsatz(wiederholungen: 6), ab: 1)
@@ -71,7 +75,7 @@ struct WinkellageTests {
         #expect(f.mittel <= 0.05)
     }
     @Test func geaenderterHubWirdNachgefuehrtAberHalbeWiederholungenSchrumpfenIhnNicht() {
-        let groesser = fehler(Synthetik.drehsatz(wiederholungen: 12), ab: 3, gemerkt: GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 100))
+        let groesser = fehler(Synthetik.drehsatz(wiederholungen: 12), ab: 3, gemerkt: GemerkterWinkel(hubGrad: 100))
         #expect(groesser.mittel <= 0.03)
         let satz = Synthetik.drehsatz(wiederholungen: 10, hubAnteil: [9: 0.6, 10: 0.6])
         let f = fehler(satz, ab: 3, gemerkt: bekannt)
@@ -102,7 +106,7 @@ struct WinkellageTests {
         let satz = Synthetik.drehsatz(wiederholungen: 6)
         // Ohne gemerkten Wert gilt auf dem ersten Kraftweg (bis 4,5 s) der vorlaeufige Massstab von mindestens
         // 40°; dort ist schon die Steigung (2,9° je Schritt) ueber 0,06 und kein Wechsel. Gemessen wird danach.
-        for (gemerkt, ab) in [(GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 100), 0.0), (nil, 4.5)] {
+        for (gemerkt, ab) in [(GemerkterWinkel(hubGrad: 100), 0.0), (nil, 4.5)] {
             let f = fehler(satz, ab: 1, gemerkt: gemerkt)
             let sprung = zip(f.lagen, f.lagen.dropFirst()).filter { $0.0.t >= ab }.map { abs($1.lage - $0.lage) }.max()!
             #expect(sprung <= 0.06, "groesster Schritt \(sprung)")
@@ -130,14 +134,64 @@ struct WinkellageTests {
         #expect(f.lagen.suffix(100).allSatisfy { abs($0.lage) <= 0.05 })
     }
     @Test func unbrauchbarerGemerkterWertGiltAlsNichtGemerkt() {
-        for ungueltig in [GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 0),
-                          GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: -50),
-                          GemerkterWinkel(achse: .roll, vorzeichen: 0, hubGrad: 140),
-                          GemerkterWinkel(achse: .roll, vorzeichen: 2, hubGrad: 140)] {
+        for ungueltig in [GemerkterWinkel(hubGrad: 0), GemerkterWinkel(hubGrad: -50),
+                          GemerkterWinkel(hubGrad: .nan), GemerkterWinkel(hubGrad: .infinity)] {
             let f = fehler(Synthetik.drehsatz(wiederholungen: 6), ab: 3, gemerkt: ungueltig)
             #expect(f.lagen.allSatisfy { $0.lage.isFinite })
             #expect(f.mittel <= 0.03)
-            #expect(f.schaetzer.gemerkt?.vorzeichen == 1)
+            #expect(f.schaetzer.gemerkt?.hubGrad.isFinite == true)
         }
+    }
+
+    // MARK: Neigung statt Roll/Pitch (Task 2b)
+
+    /// Groesster Schritt der Lage zwischen zwei Messwerten.
+    func groessterSchritt(_ lagen: [Lage]) -> Double {
+        zip(lagen, lagen.dropFirst()).map { abs($1.lage - $0.lage) }.max() ?? 0
+    }
+
+    @Test func ueberDenPolSpringtDieLageNicht() {
+        // Pitch laeuft von 30° durch 90°, Roll springt dort um 180°.
+        let satz = Synthetik.drehsatz(wiederholungen: 8, drehachse: Vektor3(x: 0, y: 1, z: 0), startPitch: 30)
+        let rollSprung = zip(satz.werte, satz.werte.dropFirst()).map { abs($1.winkel.x - $0.winkel.x) }.max()!
+        #expect(rollSprung >= 170, "das Kunstsignal soll den Euler-Sprung enthalten (\(rollSprung))")
+        let f = fehler(satz, ab: 1, gemerkt: bekannt)
+        #expect(f.mittel <= 0.03)
+        #expect(groessterSchritt(f.lagen) <= 0.06, "groesster Schritt \(groessterSchritt(f.lagen))")
+        #expect(f.schaetzer.umkehrpunkte.count == 16)
+    }
+    @Test func hubUeberEinhundertachtzigGrad() {
+        let f = fehler(Synthetik.drehsatz(wiederholungen: 6, hubGrad: 200), ab: 3)
+        #expect(f.mittel <= 0.04)
+        #expect(abs((f.schaetzer.gemerkt?.hubGrad ?? 0) - 200) <= 5)
+    }
+    @Test func drehungUmDieSenkrechteIstNichtGeeignet() {
+        // Die Drehachse ist die Schwerkraftachse: ĝ aendert sich nicht.
+        let f = fehler(Synthetik.drehsatz(wiederholungen: 6, drehachse: Vektor3(x: 0, y: 0, z: 1)), ab: 1)
+        #expect(f.lagen.allSatisfy { !$0.sicher })
+        #expect(f.schaetzer.groessterAusschlagGrad < 5)
+        #expect(f.schaetzer.umkehrpunkte.isEmpty)
+    }
+
+    // MARK: Ausdruecklicher Start (Task 2b)
+
+    /// Aufnehmen: 60° hin, zurueck auf 25° neben der alten Ruhelage, dort die neue Ruhelage; dann 8 Wiederholungen.
+    let mitVorbewegung = Synthetik.drehsatz(wiederholungen: 8, vorbewegung: Synthetik.Vorbewegung())
+
+    @Test func vorDemLosZaehltNichts() {
+        let satz = mitVorbewegung
+        let f = fehler(satz, ab: 3, losBei: satz.losT)
+        #expect(f.schaetzer.umkehrpunkte.count == 16)
+        #expect(f.schaetzer.umkehrpunkte.allSatisfy { $0.t > satz.losT })
+        #expect(f.mittel <= 0.03)
+        #expect(abs((f.schaetzer.gemerkt?.hubGrad ?? 0) - 140) <= 3)
+        let vorher = f.lagen.filter { $0.t < satz.losT }
+        #expect(!vorher.isEmpty && vorher.allSatisfy { $0.lage == 0 && $0.richtung == .unbekannt })
+    }
+    @Test func ohneLosWieBisher() {
+        // Bekannter Unterschied: ohne `los()` gilt das Aufnehmen als erste Bewegung und wird als Wiederholung gezaehlt.
+        let f = fehler(mitVorbewegung, ab: 1)
+        #expect(f.schaetzer.umkehrpunkte.count == 18)
+        #expect(f.schaetzer.umkehrpunkte.prefix(1).allSatisfy { $0.oben && $0.t < mitVorbewegung.losT })
     }
 }

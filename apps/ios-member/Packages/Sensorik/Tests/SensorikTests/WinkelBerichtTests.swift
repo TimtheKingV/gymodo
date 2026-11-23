@@ -28,16 +28,20 @@ struct WinkelBerichtTests {
         #expect(!WinkelBericht.tragfaehig(WinkelTor(saetze: 0, wdhFehler: 0, sicherAnteil: 1, spruenge: 0)))
     }
 
-    @Test func einSprungDerAchseWirdGezaehltNichtVerschluckt() {
-        // Ab der 5. Wiederholung springt der Rollwinkel um 180° (wie nahe Pitch ±90°)
-        var werte = Synthetik.drehsatz(wiederholungen: 8).werte
-        for i in werte.indices where werte[i].t > 3 + 4 * 4 {
+    @Test func eulerSprungIstKeinSprungDerLage() {
+        // Drehung um y von Pitch 30° aus: Pitch laeuft je Wiederholung durch 90°, Roll springt dort um 180°.
+        // Ab der 5. Wiederholung springt Roll zusaetzlich kuenstlich um 180°, wo Pitch ueber 88° liegt.
+        var werte = Synthetik.drehsatz(wiederholungen: 8, drehachse: Vektor3(x: 0, y: 1, z: 0), startPitch: 30).werte
+        for i in werte.indices where werte[i].t > 3 + 4 * 4 && werte[i].winkel.y > 88 {
             let m = werte[i]; var r = m.winkel.x + 180; if r > 180 { r -= 360 }
             werte[i] = SensorMesswert(t: m.t, beschleunigung: m.beschleunigung, drehrate: m.drehrate, winkel: Vektor3(x: r, y: m.winkel.y, z: m.winkel.z))
         }
+        let rollSprung = zip(werte, werte.dropFirst()).map { abs($1.winkel.x - $0.winkel.x) }.max()!
+        #expect(rollSprung >= 170)
         let z = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: werte.map { .messwert($0) }, rateHz: 50)
-        #expect(z.groessterSprung > 0.2)
-        #expect(WinkelBericht.tor([z]).spruenge == 1)
+        #expect(z.groessterSprung <= 0.07, "groesster Sprung \(z.groessterSprung)")
+        #expect(WinkelBericht.tor([z]).spruenge == 0)
+        #expect(z.wdhFehler == 0)
     }
 
     @Test func macAufnahmenVom23NovemberSindDabei() throws {
