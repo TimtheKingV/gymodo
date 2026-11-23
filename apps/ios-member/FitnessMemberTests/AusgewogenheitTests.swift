@@ -94,7 +94,7 @@ struct AusgewogenheitTests {
 
     @Test func muskelnOhneKraftuebungBleibenOhneBewertung() {
         let h = haeufigkeit(gruppen: [6, 6, 6, 6, 6, 6], muskeln: ["pectorals": 6, "quads": 6])
-        #expect(Ausgewogenheit.status(muskel: "tibialis", gruppe: .beine, in: h) == .keineKraftuebung)
+        #expect(Ausgewogenheit.status(muskel: "tibialis", gruppe: .beine, in: h) == .nachholbedarf)
         #expect(Ausgewogenheit.status(muskel: "fibularis", gruppe: .beine, in: h) == .keineKraftuebung)
         #expect(Ausgewogenheit.status(muskel: "serratus_anterior", gruppe: .brust, in: h) == .nachholbedarf)
         #expect(Ausgewogenheit.status(muskel: "unbekannt", gruppe: .brust, in: h) == .keineAuswertung)

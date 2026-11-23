@@ -56,10 +56,10 @@ struct MuskelHinweiseTests {
             == "Rückenstrecker kam in 28 Tagen nicht dran. Eine Übung dafür würde dein Training abrunden.")
     }
 
-    @Test func gruppenhinweisNilWennNurTibialisUndFibularisFehlen() {
+    @Test func gruppenhinweisNilWennNurFibularisFehlt() {
         let h = mit([:]).mitMuskeln([
             "quads": 6, "hamstrings": 6, "glutes": 6, "calves": 6,
-            "adductors": 6, "abductors": 6, "tibialis": 0, "fibularis": 0
+            "adductors": 6, "abductors": 6, "tibialis": 6, "fibularis": 0
         ])
         #expect(MuskelHinweise.gruppenhinweis(gruppe: .beine, in: h, namen: [:]) == nil)
     }

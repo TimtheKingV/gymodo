@@ -14,7 +14,7 @@ enum Ausgewogenheit {
     /// Cardio allein reicht nicht, da Haeufigkeit Cardio-Saetze ausschliesst.
     /// gymtavo-katalog.test.ts gleicht diese Liste mit Katalog und Grafik ab.
     static let ohneKraftuebung: Set<String> = [
-        "tibialis", "fibularis"
+        "fibularis"
     ]
 
     /// Darunter gilt etwas als zu wenig, darueber als viel (Vielfaches des Mittels).
