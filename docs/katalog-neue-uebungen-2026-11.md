@@ -114,7 +114,7 @@ dazu schlage ich dann je Typ vor.
 | Typ | Beispiele |
 |---|---|
 | Multipresse | Kniebeuge, Bankdrücken, Schulterdrücken, Hip Thrust |
-| Kettlebell | Swing, Goblet Squat, Turkish Get-up |
+| Kettlebell | angelegt am 23.11.2026, siehe `docs/katalog-kettlebell-2026-11.md` |
 | Beinheben-Station | Beinheben, Knieheben |
 | T-Bar / Landmine | T-Bar-Rudern, Landmine Press |
 | Schlingentrainer | Rudern, Liegestütz, Pike |

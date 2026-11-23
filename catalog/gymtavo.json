@@ -2453,6 +2453,47 @@
         "bw_wall_sit",
         "bw_side_leg_raise"
       ]
+    },
+    {
+      "key": "kettlebell",
+      "name": "Kettlebell",
+      "label": "Kettlebell",
+      "category": "kraft",
+      "group": "kettlebell",
+      "manufacturer": null,
+      "photo": null,
+      "load_unit": "kg",
+      "load_step": 2,
+      "load_min": 4,
+      "load_max": null,
+      "load_start": 8,
+      "secondary": null,
+      "settings": [],
+      "exercises": [
+        "kb_swing",
+        "kb_swing_single",
+        "kb_deadlift",
+        "kb_single_leg_rdl",
+        "kb_clean",
+        "kb_snatch",
+        "kb_goblet_squat",
+        "kb_front_squat",
+        "kb_reverse_lunge",
+        "kb_thruster",
+        "kb_row_supported",
+        "kb_row_bent",
+        "kb_high_pull",
+        "kb_press_single",
+        "kb_push_press",
+        "kb_floor_press",
+        "kb_halo",
+        "kb_turkish_getup",
+        "kb_windmill",
+        "kb_russian_twist",
+        "kb_farmers_walk",
+        "kb_suitcase_carry",
+        "kb_overhead_carry"
+      ]
     }
   ],
   "exercises": [
@@ -9943,6 +9984,1007 @@
         ],
         "vorschlag": false
       },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_swing",
+      "name": "Swing",
+      "description": "Einstellen:\n- Etwas mehr als schulterbreit stehen, Kettlebell kurz vor den Füßen.\n- Hüfte nach hinten schieben, Griff mit beiden Händen fassen, Rücken lang.\n\nBewegung:\n- Kettlebell zwischen den Beinen nach hinten schwingen.\n- Hüfte kraftvoll strecken und die Kettlebell bis auf Brusthöhe schwingen lassen.\n- Zurückschwingen lassen, die Hüfte erst spät beugen.\n\nAchte auf:\n- Der Schwung kommt aus der Hüfte, die Arme bleiben locker und lang.\n- Rücken bleibt lang, oben sind Bauch und Gesäß fest.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_swing_single",
+      "name": "Swing – einarmig",
+      "description": "Einstellen:\n- Etwas mehr als schulterbreit stehen, Kettlebell kurz vor den Füßen.\n- Hüfte nach hinten schieben, Griff mit einer Hand fassen, Rücken lang.\n\nBewegung:\n- Kettlebell zwischen den Beinen nach hinten schwingen.\n- Hüfte kraftvoll strecken und die Kettlebell bis auf Brusthöhe schwingen lassen.\n- Zurückschwingen lassen, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Schultern bleiben gerade nach vorne ausgerichtet.\n- Der Schwung kommt aus der Hüfte, der Arm bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_deadlift",
+      "name": "Kreuzheben",
+      "description": "Einstellen:\n- Hüftbreit stehen, Kettlebell zwischen den Füßen auf Höhe der Knöchel.\n- Hüfte und Knie beugen, Griff mit beiden Händen fassen, Rücken lang.\n\nBewegung:\n- Über die ganzen Füße aufrichten, bis Hüfte und Knie gestreckt sind.\n- Kettlebell kontrolliert nah am Körper absenken.\n\nAchte auf:\n- Rücken bleibt lang, Brust bleibt aufgerichtet.\n- Hüfte und Schultern heben gleichzeitig.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_single_leg_rdl",
+      "name": "Rumänisches Kreuzheben – einbeinig",
+      "description": "Einstellen:\n- Auf einem Bein stehen, Knie leicht gebeugt.\n- Kettlebell in der Hand der Gegenseite am langen Arm halten.\n\nBewegung:\n- Oberkörper nach vorne neigen, das freie Bein gestreckt nach hinten führen.\n- Kettlebell nah am Standbein absenken, bis die Oberschenkelrückseite spannt.\n- Über die Hüfte aufrichten, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Becken bleibt gerade, beide Hüftknochen zeigen zum Boden.\n- Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_clean",
+      "name": "Clean",
+      "description": "Einstellen:\n- Etwas mehr als schulterbreit stehen, Kettlebell kurz vor den Füßen.\n- Hüfte nach hinten schieben, Griff mit einer Hand fassen, Rücken lang.\n\nBewegung:\n- Kettlebell zwischen den Beinen nach hinten schwingen.\n- Hüfte strecken und die Kettlebell eng am Körper nach oben führen.\n- Die Kettlebell landet weich am Unterarm vor der Schulter.\n\nAchte auf:\n- Die Kettlebell bleibt nah am Körper und dreht sich um die Hand.\n- Handgelenk bleibt gerade, der Ellenbogen liegt am Rumpf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "rotating",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_snatch",
+      "name": "Snatch",
+      "description": "Einstellen:\n- Etwas mehr als schulterbreit stehen, Kettlebell kurz vor den Füßen.\n- Hüfte nach hinten schieben, Griff mit einer Hand fassen, Rücken lang.\n\nBewegung:\n- Kettlebell zwischen den Beinen nach hinten schwingen.\n- Hüfte strecken und die Kettlebell eng am Körper nach oben ziehen.\n- Die Hand unter die Kettlebell schieben und den Arm über Kopf strecken.\n\nAchte auf:\n- Oben steht der gestreckte Arm neben dem Ohr.\n- Die Kettlebell landet weich am Unterarm, das Handgelenk bleibt gerade.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "rotating",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_huefte",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "huefte",
+          "unterer_ruecken",
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_goblet_squat",
+      "name": "Goblet Squat",
+      "description": "Einstellen:\n- Kettlebell mit beiden Händen seitlich am Griff vor der Brust halten.\n- Schulterbreit stehen.\n\nBewegung:\n- Knie und Hüfte beugen, so tief wie Fersen und Rumpf stabil bleiben.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Knie folgen der Fußrichtung.\n- Fersen bleiben am Boden, Rücken bleibt lang.\n- Ellenbogen zeigen nach unten, die Kettlebell bleibt an der Brust.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_front_squat",
+      "name": "Frontkniebeuge",
+      "description": "Einstellen:\n- Zwei Kettlebells vor die Schultern bringen, sie liegen an den Unterarmen.\n- Ellenbogen an den Rumpf nehmen, schulterbreit stehen.\n\nBewegung:\n- Knie und Hüfte beugen, so tief wie Fersen und Rumpf stabil bleiben.\n- Über die ganzen Füße aufrichten.\n\nAchte auf:\n- Oberkörper bleibt aufrecht, Rumpf bleibt fest.\n- Knie folgen der Fußrichtung, Fersen bleiben am Boden.\n- Handgelenke bleiben gerade.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "front_rack",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte",
+          "unterer_ruecken",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_reverse_lunge",
+      "name": "Ausfallschritt – rückwärts",
+      "description": "Einstellen:\n- Kettlebell mit beiden Händen seitlich am Griff vor der Brust halten.\n- Hüftbreit aufrecht stehen.\n\nBewegung:\n- Einen großen Schritt nach hinten setzen und beide Knie beugen.\n- Über das vordere Bein zurück in den Stand drücken.\n- Seite wechseln.\n\nAchte auf:\n- Das vordere Knie folgt der Fußrichtung, die Ferse bleibt am Boden.\n- Oberkörper bleibt aufrecht.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_thruster",
+      "name": "Thruster",
+      "description": "Einstellen:\n- Zwei Kettlebells vor die Schultern bringen, sie liegen an den Unterarmen.\n- Schulterbreit stehen, Ellenbogen am Rumpf.\n\nBewegung:\n- Knie und Hüfte beugen, so tief wie Fersen und Rumpf stabil bleiben.\n- Kraftvoll aufrichten und die Kettlebells im selben Zug über Kopf drücken.\n- Kontrolliert vor die Schultern absenken.\n\nAchte auf:\n- Der Schwung aus den Beinen geht fließend ins Drücken über.\n- Rumpf bleibt fest, kein Hohlkreuz über Kopf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "front_rack",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "beine_knie",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "knie",
+          "huefte",
+          "unterer_ruecken",
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_row_supported",
+      "name": "Rudern – einarmig, abgestützt",
+      "description": "Einstellen:\n- Freie Hand und gleichseitiges Knie auf der Bank abstützen.\n- Anderen Fuß auf den Boden stellen, Kettlebell am langen Arm hängen lassen.\n\nBewegung:\n- Kettlebell seitlich zum unteren Brustkorb ziehen.\n- Kontrolliert absenken, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Brust und Becken zeigen durchgehend zum Boden.\n- Der Rumpf dreht sich nicht mit.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "lats",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "primary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_posterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_row_bent",
+      "name": "Rudern – vorgebeugt",
+      "description": "Einstellen:\n- Hüftbreit stehen, zwei Kettlebells neben den Füßen.\n- Hüfte nach hinten schieben, Oberkörper vorneigen, Griffe fassen, Rücken lang.\n\nBewegung:\n- Beide Kettlebells seitlich zum unteren Brustkorb ziehen.\n- Kontrolliert absenken, bis die Arme lang sind.\n\nAchte auf:\n- Oberkörper bleibt ruhig in der Vorneigung.\n- Rücken bleibt lang, Ellenbogen führen eng am Körper.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "lats",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "primary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_posterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_high_pull",
+      "name": "High Pull",
+      "description": "Einstellen:\n- Etwas weiter als schulterbreit stehen, Kettlebell zwischen den Füßen.\n- Hüfte und Knie beugen, Griff mit beiden Händen fassen, Rücken lang.\n\nBewegung:\n- Kraftvoll aufrichten und die Kettlebell eng am Körper bis auf Brusthöhe ziehen.\n- Kontrolliert absenken und Hüfte und Knie wieder beugen.\n\nAchte auf:\n- Die Ellenbogen führen und bleiben höher als die Hände.\n- Die Kraft kommt zuerst aus den Beinen, dann aus den Armen.\n- Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "pronated",
+      "muscles": [
+        {
+          "muscle": "upper_back",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "biceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_posterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "ziehen",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_press_single",
+      "name": "Schulterdrücken – einarmig",
+      "description": "Einstellen:\n- Stabil aufrecht stehen.\n- Kettlebell vor die Schulter bringen, sie liegt am Unterarm, Ellenbogen am Rumpf.\n\nBewegung:\n- Kettlebell nach oben drücken, bis der Arm gestreckt ist.\n- Kontrolliert vor die Schulter absenken, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Rumpf bleibt fest und neigt sich nicht zur Seite.\n- Handgelenk bleibt gerade.\n- Die Kraft kommt aus der Schulter, nicht aus den Beinen.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_push_press",
+      "name": "Push Press",
+      "description": "Einstellen:\n- Stabil aufrecht stehen.\n- Kettlebell vor die Schulter bringen, sie liegt am Unterarm, Ellenbogen am Rumpf.\n\nBewegung:\n- Knie kurz und leicht beugen.\n- Beine kraftvoll strecken und die Kettlebell im selben Zug über Kopf drücken.\n- Kontrolliert vor die Schulter absenken, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Der Oberkörper bleibt beim Kniebeugen aufrecht.\n- Rumpf bleibt fest, kein Hohlkreuz über Kopf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_floor_press",
+      "name": "Floor Press",
+      "description": "Einstellen:\n- Auf eine Matte legen, Füße aufstellen.\n- Zwei Kettlebells seitlich der Brust halten, die Oberarme liegen am Boden.\n\nBewegung:\n- Kettlebells nach oben über die Brust drücken.\n- Langsam absenken, bis die Oberarme den Boden berühren.\n\nAchte auf:\n- Handgelenke bleiben gerade, die Kettlebells liegen an den Unterarmen.\n- Die Oberarme setzen weich am Boden auf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "pectorals",
+          "role": "primary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "druecken",
+        "typ": "mehrgelenk",
+        "bereiche": [
+          "schulter",
+          "ellenbogen_handgelenk"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_halo",
+      "name": "Halo",
+      "description": "Einstellen:\n- Schulterbreit aufrecht stehen.\n- Kettlebell umgedreht mit beiden Händen seitlich am Griff vor der Brust halten.\n\nBewegung:\n- Kettlebell eng um den Kopf herumführen, bis sie wieder vor der Brust ist.\n- Nach jeder Runde die Richtung wechseln.\n\nAchte auf:\n- Kopf und Rumpf bleiben ruhig, nur die Arme bewegen sich.\n- Rippen bleiben unten, kein Hohlkreuz.\n- Die Kettlebell kreist nah am Kopf.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_posterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "rotator_cuff",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "schulter",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_turkish_getup",
+      "name": "Turkish Get-up",
+      "description": "Einstellen:\n- Auf eine Matte legen, Kettlebell mit gestrecktem Arm über der Schulter halten.\n- Das Bein auf der Seite der Kettlebell aufstellen.\n\nBewegung:\n- Über Ellenbogen und Hand der freien Seite zum Sitzen aufrichten.\n- Hüfte heben, das gestreckte Bein nach hinten ins Knien führen und aufstehen.\n- In umgekehrter Reihenfolge ablegen, danach die Seite wechseln.\n\nAchte auf:\n- Der Blick bleibt bei der Kettlebell, der Arm bleibt gestreckt.\n- Jeder Schritt ist ruhig und kontrolliert.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deep_core",
+          "role": "primary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "rotator_cuff",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken",
+          "knie"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_windmill",
+      "name": "Windmill",
+      "description": "Einstellen:\n- Etwas weiter als schulterbreit stehen, beide Fußspitzen leicht zur Seite drehen.\n- Kettlebell mit gestrecktem Arm über Kopf halten, Blick zur Kettlebell.\n\nBewegung:\n- Hüfte zur Seite der Kettlebell schieben und den Oberkörper zur anderen Seite neigen.\n- Die freie Hand am Bein entlang nach unten führen.\n- Über die Hüfte aufrichten, nach dem Satz die Seite wechseln.\n\nAchte auf:\n- Der obere Arm bleibt senkrecht und gestreckt.\n- Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deltoid_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "rotator_cuff",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "schulter",
+          "unterer_ruecken",
+          "huefte"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_russian_twist",
+      "name": "Russian Twist",
+      "description": "Einstellen:\n- Auf eine Matte setzen, Knie beugen, Fersen aufstellen.\n- Kettlebell mit beiden Händen seitlich am Griff vor der Brust halten, Oberkörper leicht zurücklehnen.\n\nBewegung:\n- Oberkörper mit der Kettlebell ruhig zu einer Seite drehen.\n- Über die Mitte zur anderen Seite drehen.\n\nAchte auf:\n- Die Drehung kommt aus dem Rumpf, nicht nur aus den Armen.\n- Rücken bleibt lang, Brust bleibt aufgerichtet.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        }
+      ],
+      "plan": {
+        "baustein": "rumpf",
+        "typ": "isolation",
+        "bereiche": [
+          "unterer_ruecken"
+        ],
+        "vorschlag": false
+      },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_farmers_walk",
+      "name": "Farmer’s Walk",
+      "description": "Einstellen:\n- Eine freie, ebene Strecke wählen.\n- Zwei gleich schwere Kettlebells aufnehmen, aufrecht stehen, Arme lang.\n\nBewegung:\n- Mit kleinen, ruhigen Schritten vorwärts gehen.\n- Am Ende anhalten und die Kettlebells kontrolliert absetzen.\n\nAchte auf:\n- Oberkörper bleibt aufrecht, ohne zur Seite zu kippen.\n- Die Kettlebells hängen ruhig neben dem Körper.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 30,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "forearms",
+          "role": "primary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_suitcase_carry",
+      "name": "Farmer’s Walk – einseitig",
+      "description": "Einstellen:\n- Eine freie, ebene Strecke wählen.\n- Eine Kettlebell mit einer Hand aufnehmen, aufrecht stehen, Arm lang.\n\nBewegung:\n- Mit kleinen, ruhigen Schritten vorwärts gehen.\n- Am Ende anhalten, absetzen und die Seite wechseln.\n\nAchte auf:\n- Schultern bleiben auf einer Höhe, der Oberkörper neigt sich nicht zur Seite.\n- Die Kettlebell hängt ruhig neben dem Körper.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 30,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "obliques",
+          "role": "primary"
+        },
+        {
+          "muscle": "forearms",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        },
+        {
+          "muscle": "upper_back",
+          "role": "secondary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "kb_overhead_carry",
+      "name": "Overhead Carry",
+      "description": "Einstellen:\n- Eine freie, ebene Strecke wählen.\n- Kettlebell mit einer Hand über Kopf drücken, der Arm ist gestreckt, sie liegt am Unterarm.\n\nBewegung:\n- Mit kleinen, ruhigen Schritten vorwärts gehen.\n- Am Ende anhalten, kontrolliert absenken und die Seite wechseln.\n\nAchte auf:\n- Der Oberarm bleibt neben dem Ohr, das Handgelenk gerade.\n- Rippen bleiben unten, kein Hohlkreuz.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 30,
+      "video": null,
+      "grip": "neutral",
+      "muscles": [
+        {
+          "muscle": "deltoid_anterior",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "secondary"
+        },
+        {
+          "muscle": "rotator_cuff",
+          "role": "secondary"
+        },
+        {
+          "muscle": "serratus_anterior",
+          "role": "secondary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        }
+      ],
       "review": "draft",
       "sources": []
     }
