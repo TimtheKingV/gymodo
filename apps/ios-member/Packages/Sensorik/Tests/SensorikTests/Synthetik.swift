@@ -85,8 +85,9 @@ extension Synthetik {
     /// in g entlang `achse` addiert. `hubAnteil[n]` skaliert den Hub der n-ten
     /// Wiederholung (1-basiert). `lage` ist auf `hubMeter` normiert.
     /// `halt` haelt die Last auf dem Kraftweg der genannten Wiederholung bei
-    /// `beiLage` an, `biasG` ist ein Gleichanteil entlang `achse`, `stoss` eine
-    /// Spitze von 40 ms auf z.
+    /// `beiLage` an, `biasG` ist ein Gleichanteil entlang `achse`, der mit der
+    /// ersten Wiederholung einsetzt (in der Ruhe davor wuerde ihn die
+    /// Schwerkraftschaetzung schlucken), `stoss` eine Spitze von 40 ms auf z.
     static func hub(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
                     hubMeter: Double = 0.4, hubAnteil: [Int: Double] = [:],
                     startetOben: Bool = false, achse: Vektor3 = Vektor3(x: 0, y: 0, z: 1),
@@ -136,7 +137,7 @@ extension Synthetik {
             // die Beschleunigung, abgetastet ergaebe sie sonst eine Scheindrift.
             // So ergibt die Summe der Beschleunigungen genau den wahren Weg.
             let beschleunigungMS2 = (wahreLage(t + dt) - 2 * wahreLage(t) + wahreLage(t - dt)) * hubMeter / (dt * dt)
-            let entlang = beschleunigungMS2 / 9.81 + biasG
+            let entlang = beschleunigungMS2 / 9.81 + (t >= ruheVorher ? biasG : 0)
             var z = 1 + richtung.z * entlang
             if let stoss, t >= stoss.bei, t < stoss.bei + 0.04 { z += stoss.g }
 

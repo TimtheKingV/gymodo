@@ -4,26 +4,40 @@ import Foundation
 /// Rein: keine Uhr, keine Nebenlaeufigkeit, kein Zufall.
 ///
 /// Die Vertikalbeschleunigung (Beschleunigung auf die Schwerkraftrichtung
-/// projiziert minus deren Betrag) wird zu Geschwindigkeit und Weg
-/// aufsummiert. Schrittweite ist die Sollrate, nicht die Zeitstempel-Differenz,
-/// weil gebuendelte Messwerte denselben Zeitstempel tragen (Spec A 4.7).
-/// An jedem Umkehrpunkt werden Nullpunkt und Hub neu gesetzt; der Unterschied
-/// zur alten Schaetzung wird ueber `ueberblendDauer` eingeblendet statt zu springen.
-/// Der Winkel wird nicht genutzt.
+/// projiziert minus deren Betrag, abzueglich des geschaetzten Gleichanteils)
+/// wird zu Geschwindigkeit und Weg aufsummiert. Schrittweite ist die Sollrate,
+/// nicht die Zeitstempel-Differenz, weil gebuendelte Messwerte denselben
+/// Zeitstempel tragen (Spec A 4.7).
+/// An jedem Umkehrpunkt werden Nullpunkt und Hub neu gesetzt (Einrasten). Jeder
+/// Sprung der Schaetzung wird eingeblendet statt angezeigt. Der Winkel wird nicht genutzt.
 public struct Lageschaetzer: Sendable {
+    private struct Extrem: Sendable {
+        var weg: Double
+        var schritt: Int
+        var t: TimeInterval
+    }
+
     private enum Halbwelle: Sendable {
-        case wartet
+        /// Keine Bewegung; ab `ruheSchritte` ist das Ruhe.
+        case wartet(schritte: Int)
         /// `vorzeichen` +1 aufwaerts, −1 abwaerts; `extrem` ist der weiteste Weg in dieser Richtung.
-        case laeuft(vorzeichen: Double, extrem: Double, extremT: TimeInterval, stillSchritte: Int)
+        /// `still` zaehlt Messwerte unter der Schwelle; ein Halt mitten im Weg bleibt `laeuft`.
+        case laeuft(vorzeichen: Double, extrem: Extrem, still: Int)
     }
 
     /// Geschwindigkeit, ab der eine Halbwelle als begonnen gilt und ab der ein
     /// Vorzeichenwechsel zaehlt (Hysterese). Gut unter den Spitzen von rund
-    /// 0,25 m/s beim langsamen Ablassen.
+    /// 0,16 m/s bei 4 s je Weg.
     private static let geschwindigkeitSchwelle = 0.03
-    /// So lange unter der Schwelle beendet eine Bewegung in Ruhe; ein
-    /// durchlaufender Umkehrpunkt bleibt deutlich kuerzer darunter.
+    /// So lange unter der Schwelle nahe der Ruhelage beendet eine Bewegung, die
+    /// auf sie zulief; ein durchlaufender Umkehrpunkt bleibt kuerzer darunter.
+    /// Anderswo ist Stillstand ein Halt: kein Umkehrpunkt, die Lage bleibt stehen.
     private static let stillDauer = 0.3
+    /// Abstand zur Ruhelage (in Lage-Einheiten), in dem Stillstand das Ende der Bewegung ist.
+    private static let ruheNaehe = 0.3
+    /// So lange ohne Bewegung, bis Ruhe gilt: dann Lage = Ruhelage, `sicher = false`.
+    /// Laenger als die Pause an einem langsamen unteren Umkehrpunkt.
+    private static let ruheDauer = 1.0
     /// Abklingzeit der Geschwindigkeit, solange keine Halbwelle laeuft.
     /// In Bewegung wird nicht geleckt: das verzerrte den Weg.
     private static let ruheLeckDauer = 0.3
@@ -33,7 +47,11 @@ public struct Lageschaetzer: Sendable {
     private static let schwerkraftDauer = 2.0
     private static let ruheBeschleunigungG = 0.01
     private static let ruheDrehrate = 5.0
+    /// Mindestdauer des Einblendens; groessere Spruenge dauern laenger.
     private static let ueberblendDauer = 0.15
+    /// Hoechstens so viel Lage je Messwert blendet das Einrasten ein. Zusammen mit
+    /// rund 0,02 je Messwert eigener Bewegung beim Kraftweg bleibt der Punkt unter 0,08.
+    private static let groessterBlendSchritt = 0.04
     /// Hub vor dem ersten Umkehrpunkt ohne gemerkten Umfang (m). Waechst mit dem Weg.
     private static let anfangsHub = 0.3
     /// Kleinere Ausschlaege setzen den Hub nicht neu.
@@ -42,24 +60,33 @@ public struct Lageschaetzer: Sendable {
 
     private let dt: Double
     private let stillSchritte: Int
+    private let ruheSchritte: Int
     private let ruheVorSchwerkraftSchritte: Int
     private let ueberblendSchritte: Int
     private let uebergeben: GemerkterUmfang?
+    private let ruhelage: Double
 
     // Signalaufbereitung
+    private var schritt = 0
     private var schwerkraft: Vektor3?
     private var ruhigeSchritte = 0
+    private var gleichanteil = Gleichanteil()
     private var geschwindigkeit = 0.0
     private var weg = 0.0
+    /// Letzter Messwert, an dem die Geschwindigkeit sicher null war (Ruhe, Luecke).
+    /// Ein neu geschaetzter Gleichanteil wird ab hier nachgetragen.
+    private var ruhendSchritt = 0
+    /// Messwert des letzten Ankers; der Weg davor zaehlt nicht mehr.
+    private var ankerSchritt = 0
 
     // Umkehrpunkte und Einrasten
-    private var halbwelle: Halbwelle = .wartet
+    private var halbwelle: Halbwelle = .wartet(schritte: 0)
     private var ankerWeg = 0.0
     private var ankerLage: Double
     private var hub: Double
     private var hubGemessen: Bool
     private var korrektur = 0.0
-    private var korrekturRest = 0
+    private var korrekturSchritt = 0.0
 
     /// Auch das Ende einer Bewegung in Ruhe zaehlt als Umkehrpunkt. Waagerecht ist `oben` das ferne Ende.
     public private(set) var umkehrpunkte: [Umkehrpunkt] = []
@@ -67,12 +94,14 @@ public struct Lageschaetzer: Sendable {
     public init(rateHz: Double, umfang: GemerkterUmfang? = nil) {
         dt = 1 / rateHz
         stillSchritte = Int((Self.stillDauer * rateHz).rounded())
+        ruheSchritte = Int((Self.ruheDauer * rateHz).rounded())
         ruheVorSchwerkraftSchritte = Int((Self.ruheVorSchwerkraft * rateHz).rounded())
         ueberblendSchritte = max(1, Int((Self.ueberblendDauer * rateHz).rounded()))
         uebergeben = umfang
         hub = umfang?.hub ?? Self.anfangsHub
         hubGemessen = umfang != nil
-        ankerLage = umfang?.startetOben == true ? 1 : 0
+        ruhelage = umfang?.startetOben == true ? 1 : 0
+        ankerLage = ruhelage
     }
 
     /// Nach mindestens zwei Wiederholungen der Stand zum Merken, sonst der uebergebene.
@@ -82,23 +111,26 @@ public struct Lageschaetzer: Sendable {
     }
 
     public mutating func verarbeite(_ m: SensorMesswert) -> Lage {
+        schritt += 1
         schwerkraftNachfuehren(m)
         aufsummieren(m)
         umkehrErkennen(m)
         if !hubGemessen { hub = max(hub, abs(weg - ankerWeg)) }
 
-        var lage = lage(beiWeg: weg)
-        if korrekturRest > 0 {
-            lage += korrektur * Double(korrekturRest) / Double(ueberblendSchritte)
-            korrekturRest -= 1
-        }
-        return Lage(t: m.t, lage: lage, richtung: richtung, sicher: !umkehrpunkte.isEmpty)
+        let inRuhe = imRuhezustand
+        if inRuhe { ruheHalten() }
+        let lage = lage(beiWeg: weg) + korrektur
+        korrektur = korrektur > 0 ? max(0, korrektur - korrekturSchritt) : min(0, korrektur + korrekturSchritt)
+        return Lage(t: m.t, lage: lage, richtung: richtung, sicher: !umkehrpunkte.isEmpty && !inRuhe)
     }
 
     /// Nach einer Luecke traegt die aufsummierte Geschwindigkeit nicht mehr.
     public mutating func luecke(von: TimeInterval, bis: TimeInterval) {
         geschwindigkeit = 0
-        halbwelle = .wartet
+        halbwelle = .wartet(schritte: 0)
+        gleichanteil.zuruecksetzen()
+        ruhendSchritt = schritt
+        ankerSchritt = schritt
     }
 
     // MARK: - Aufbereitung
@@ -124,12 +156,36 @@ public struct Lageschaetzer: Sendable {
         let gBetrag = Self.betrag(g)
         let entlang = (m.beschleunigung.x * g.x + m.beschleunigung.y * g.y + m.beschleunigung.z * g.z) / gBetrag
         let vertikal = (entlang - gBetrag) * Self.erdbeschleunigung
+        let alterGleichanteil = gleichanteil.wert
+        if gleichanteil.verarbeite(vertikal, schritt: schritt, dt: dt) {
+            gleichanteilNachtragen(gleichanteil.wert - alterGleichanteil)
+        }
         let vorher = geschwindigkeit
-        geschwindigkeit += vertikal * dt
+        geschwindigkeit += (vertikal - gleichanteil.wert) * dt
         // Nur ruhige Messwerte lecken: am Beginn einer Bewegung, noch unter der
         // Schwelle, ginge sonst Geschwindigkeit verloren, die den ganzen Satz fehlte.
         if case .wartet = halbwelle, ruhigeSchritte > 0 { geschwindigkeit *= 1 - dt / Self.ruheLeckDauer }
         weg += (vorher + geschwindigkeit) / 2 * dt
+    }
+
+    /// Ein neuer Gleichanteil gilt seit dem letzten Messwert mit sicher ruhender
+    /// Last: Die Geschwindigkeit wird ab dort berichtigt, Weg und Extrem ab dem
+    /// letzten Anker (davor zaehlt der Weg nicht mehr). Nur ab dem letzten
+    /// Umkehrpunkt zu berichtigen liesse einen festen Geschwindigkeitsfehler stehen.
+    private mutating func gleichanteilNachtragen(_ d: Double) {
+        let alt = lage(beiWeg: weg)
+        func seitRuhe(_ s: Int) -> Double { Double(max(s, ruhendSchritt) - ruhendSchritt) * dt }
+        let tau = seitRuhe(schritt), tauAnker = seitRuhe(ankerSchritt)
+        geschwindigkeit -= d * tau
+        weg -= d * (tau * tau - tauAnker * tauAnker) / 2
+        if case .laeuft(let vorzeichen, var extrem, let still) = halbwelle {
+            let tauExtrem = max(seitRuhe(extrem.schritt), tauAnker)
+            extrem.weg -= d * (tauExtrem * tauExtrem - tauAnker * tauAnker) / 2
+            if vorzeichen * (weg - extrem.weg) > 0 { extrem = Extrem(weg: weg, schritt: schritt, t: extrem.t) }
+            halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: still)
+            if !hubGemessen { hub = max(Self.anfangsHub, abs(extrem.weg - ankerWeg)) }
+        }
+        einblenden(von: alt)
     }
 
     // MARK: - Umkehrpunkte
@@ -137,42 +193,76 @@ public struct Lageschaetzer: Sendable {
     private mutating func umkehrErkennen(_ m: SensorMesswert) {
         let schwelle = Self.geschwindigkeitSchwelle
         switch halbwelle {
-        case .wartet:
+        case let .wartet(schritte):
             if abs(geschwindigkeit) > schwelle {
-                halbwelle = .laeuft(vorzeichen: geschwindigkeit > 0 ? 1 : -1, extrem: weg, extremT: m.t, stillSchritte: 0)
+                halbwelle = .laeuft(vorzeichen: geschwindigkeit > 0 ? 1 : -1,
+                                    extrem: Extrem(weg: weg, schritt: schritt, t: m.t), still: 0)
+            } else {
+                halbwelle = .wartet(schritte: schritte + 1)
             }
-        case let .laeuft(vorzeichen, extrem, extremT, still):
-            var extrem = extrem, extremT = extremT
-            if vorzeichen * (weg - extrem) > 0 { extrem = weg; extremT = m.t }
+        case let .laeuft(vorzeichen, extrem, still):
+            var extrem = extrem
+            if vorzeichen * (weg - extrem.weg) > 0 { extrem = Extrem(weg: weg, schritt: schritt, t: m.t) }
             if vorzeichen * geschwindigkeit < -schwelle {
-                einrasten(oben: vorzeichen > 0, extrem: extrem, t: extremT)
-                halbwelle = .laeuft(vorzeichen: -vorzeichen, extrem: weg, extremT: m.t, stillSchritte: 0)
+                einrasten(oben: vorzeichen > 0, extrem: extrem)
+                halbwelle = .laeuft(vorzeichen: -vorzeichen, extrem: Extrem(weg: weg, schritt: schritt, t: m.t), still: 0)
             } else if abs(geschwindigkeit) < schwelle {
-                if still + 1 >= stillSchritte {
-                    einrasten(oben: vorzeichen > 0, extrem: extrem, t: extremT)
-                    halbwelle = .wartet
+                let still = still + 1
+                if still >= stillSchritte, endetInRuhelage(vorzeichen: vorzeichen) {
+                    einrasten(oben: vorzeichen > 0, extrem: extrem)
+                    halbwelle = .wartet(schritte: still)
                 } else {
-                    halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, extremT: extremT, stillSchritte: still + 1)
+                    halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: still)
                 }
             } else {
-                halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, extremT: extremT, stillSchritte: 0)
+                halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: 0)
             }
         }
     }
 
+    /// Stillstand beendet die Bewegung nur, wenn sie auf die Ruhelage zulief und nahe bei ihr steht.
+    private func endetInRuhelage(vorzeichen: Double) -> Bool {
+        let aufRuhelageZu = (ruhelage > 0.5) == (vorzeichen > 0)
+        return aufRuhelageZu && abs(lage(beiWeg: weg) - ruhelage) <= Self.ruheNaehe
+    }
+
     /// Setzt Nullpunkt und Hub am Umkehrpunkt neu und blendet die Korrektur ein.
-    private mutating func einrasten(oben: Bool, extrem: Double, t: TimeInterval) {
+    private mutating func einrasten(oben: Bool, extrem: Extrem) {
         let alt = lage(beiWeg: weg)
-        let ausschlag = abs(extrem - ankerWeg)
+        let ausschlag = abs(extrem.weg - ankerWeg)
         if ausschlag >= Self.kleinsterHub {
             hub = ausschlag
             hubGemessen = true
         }
-        ankerWeg = extrem
+        ankerWeg = extrem.weg
         ankerLage = oben ? 1 : 0
-        korrektur = alt - lage(beiWeg: weg)
-        korrekturRest = ueberblendSchritte
-        umkehrpunkte.append(Umkehrpunkt(t: t, oben: oben))
+        ankerSchritt = extrem.schritt
+        einblenden(von: alt)
+        umkehrpunkte.append(Umkehrpunkt(t: extrem.t, oben: oben))
+    }
+
+    // MARK: - Ruhe und Ausgabe
+
+    private var imRuhezustand: Bool {
+        guard case let .wartet(schritte) = halbwelle else { return false }
+        return schritte >= ruheSchritte
+    }
+
+    /// In Ruhe gilt die Ruhelage; beim Eintritt wird der Unterschied eingeblendet.
+    private mutating func ruheHalten() {
+        let alt = lage(beiWeg: weg)
+        ankerWeg = weg
+        ankerLage = ruhelage
+        if case .wartet(ruheSchritte) = halbwelle { einblenden(von: alt) }
+        ruhendSchritt = schritt
+        ankerSchritt = schritt
+        gleichanteil.zuruecksetzen()
+    }
+
+    /// Haelt die angezeigte Lage stetig, wenn sich die Abbildung von Weg auf Lage aendert.
+    private mutating func einblenden(von alt: Double) {
+        korrektur += alt - lage(beiWeg: weg)
+        korrekturSchritt = min(abs(korrektur) / Double(ueberblendSchritte), Self.groessterBlendSchritt)
     }
 
     private func lage(beiWeg weg: Double) -> Double {
@@ -180,7 +270,78 @@ public struct Lageschaetzer: Sendable {
     }
 
     private var richtung: Wegrichtung {
-        guard case let .laeuft(vorzeichen, _, _, _) = halbwelle else { return .unbekannt }
+        guard case let .laeuft(vorzeichen, _, _) = halbwelle else { return .unbekannt }
         return vorzeichen > 0 ? .hin : .rueck
+    }
+}
+
+/// Schaetzt den Gleichanteil der Vertikalbeschleunigung (Schraeglage, falsch
+/// geschaetzte Schwerkraft) aus der Wiederholung der Bewegung: Die rohe, nie
+/// berichtigte Geschwindigkeit `u` ist die wahre plus Gleichanteil mal Zeit.
+/// Gleichartige Extreme von `u` liegen eine Wiederholung auseinander, die wahre
+/// Geschwindigkeit ist dort gleich, also ist (u₂ − u₁) / (t₂ − t₁) der Gleichanteil.
+/// Das braucht keine erkannten Umkehrpunkte: Bei grossem Gleichanteil wechselt die
+/// berichtigte Geschwindigkeit sonst nie das Vorzeichen. Der Median der letzten
+/// drei Schaetzungen verwirft einzelne Ausreisser, etwa die Paare um einen Halt.
+private struct Gleichanteil: Sendable {
+    private struct Punkt: Sendable { var u: Double; var schritt: Int }
+    private enum Suche: Sendable {
+        case offen(bezug: Double)
+        case maximum(Punkt)
+        case minimum(Punkt)
+    }
+
+    /// Ausschlag von `u` (m/s), ab dem ein Extrem bestaetigt ist.
+    private static let hysterese = 0.05
+
+    private var u = 0.0
+    private var suche = Suche.offen(bezug: 0)
+    private var letztesMaximum: Punkt?
+    private var letztesMinimum: Punkt?
+    private var schaetzungen: [Double] = []
+    private(set) var wert = 0.0
+
+    /// Gibt `true` zurueck, wenn sich `wert` geaendert hat.
+    mutating func verarbeite(_ beschleunigung: Double, schritt: Int, dt: Double) -> Bool {
+        u += beschleunigung * dt
+        let jetzt = Punkt(u: u, schritt: schritt)
+        switch suche {
+        case let .offen(bezug):
+            if u > bezug + Self.hysterese { suche = .maximum(jetzt) }
+            else if u < bezug - Self.hysterese { suche = .minimum(jetzt) }
+            return false
+        case let .maximum(p):
+            if u > p.u { suche = .maximum(jetzt); return false }
+            guard u < p.u - Self.hysterese else { return false }
+            suche = .minimum(jetzt)
+            defer { letztesMaximum = p }
+            return schaetze(von: letztesMaximum, bis: p, dt: dt)
+        case let .minimum(p):
+            if u < p.u { suche = .minimum(jetzt); return false }
+            guard u > p.u + Self.hysterese else { return false }
+            suche = .maximum(jetzt)
+            defer { letztesMinimum = p }
+            return schaetze(von: letztesMinimum, bis: p, dt: dt)
+        }
+    }
+
+    /// In Ruhe und nach Luecken: Extreme davor gehoeren zu keiner Wiederholung mehr.
+    mutating func zuruecksetzen() {
+        u = 0
+        suche = .offen(bezug: 0)
+        letztesMaximum = nil
+        letztesMinimum = nil
+        schaetzungen = []
+    }
+
+    private mutating func schaetze(von a: Punkt?, bis b: Punkt, dt: Double) -> Bool {
+        guard let a, b.schritt > a.schritt else { return false }
+        schaetzungen.append((b.u - a.u) / (Double(b.schritt - a.schritt) * dt))
+        if schaetzungen.count > 3 { schaetzungen.removeFirst() }
+        let sortiert = schaetzungen.sorted()
+        let neu = sortiert.count == 2 ? (sortiert[0] + sortiert[1]) / 2 : sortiert[sortiert.count / 2]
+        guard neu != wert else { return false }
+        wert = neu
+        return true
     }
 }
