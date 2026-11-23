@@ -77,7 +77,7 @@ extension Synthetik {
 
     /// Ein Wegstueck: die Lage laeuft als Kosinus-Flanke von `von` nach `nach`.
     /// Mit `von == nach` steht die Last still.
-    private struct Wegstueck { let dauer: Double; let von: Double; let nach: Double }
+    fileprivate struct Wegstueck { let dauer: Double; let von: Double; let nach: Double }
 
     /// Die Schwerkraft liegt immer auf z (1 g). Die Position folgt Kosinus-Flanken
     /// (`(1 − cos(π·τ/dauer))/2`), die Beschleunigung ist deren zweite Ableitung
@@ -169,5 +169,72 @@ extension Synthetik {
             lage.append(wahreLage(t))
         }
         return Hubsatz(werte: werte, lage: lage)
+    }
+}
+
+// MARK: - Drehsaetze fuer die Winkellage
+
+extension Synthetik {
+    /// Kuenstlicher Satz einer drehenden Last mit der wahren Lage je Messwert (0 = Ruhelage, 1 = oben).
+    struct Drehsatz { let werte: [SensorMesswert]; let lage: [Double] }
+
+    /// Winkel = `startGrad + vorzeichen · hubGrad · lage` auf `achse` (die andere bleibt 0), auf ±180° gefaltet;
+    /// die Lage folgt Kosinus-Flanken wie bei `hub`. Die Drehrate ist die Ableitung auf derselben Achse,
+    /// die Beschleunigung (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
+    /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern
+    /// (7 Hz) auf den Winkel, nicht auf die Drehrate. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
+    static func drehsatz(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
+                         hubGrad: Double = 140, hubAnteil: [Int: Double] = [:],
+                         achse: Winkelachse = .roll, vorzeichen: Int = 1, startGrad: Double = 0,
+                         pauseNach: [Int: Double] = [:], zitternGrad: Double = 0,
+                         ruheVorher: Double = 3, ruheNachher: Double = 2,
+                         rate: Double = 50, buendel: Int = 2,
+                         luecke: (ab: Double, dauer: Double)? = nil) -> Drehsatz {
+        var stuecke = [Wegstueck(dauer: ruheVorher, von: 0, nach: 0)]
+        for n in stride(from: 1, through: wiederholungen, by: 1) {
+            let anteil = hubAnteil[n] ?? 1
+            stuecke.append(Wegstueck(dauer: kraftweg, von: 0, nach: anteil))
+            stuecke.append(Wegstueck(dauer: ablassen, von: anteil, nach: 0))
+            if let pause = pauseNach[n] { stuecke.append(Wegstueck(dauer: pause, von: 0, nach: 0)) }
+        }
+        stuecke.append(Wegstueck(dauer: ruheNachher, von: 0, nach: 0))
+
+        /// Wahre Lage und ob die Last dabei still steht.
+        func zustand(_ t: Double) -> (lage: Double, still: Bool) {
+            var beginn = 0.0
+            for s in stuecke {
+                if t < beginn + s.dauer, s.dauer > 0 {
+                    let w = Double.pi * max(t - beginn, 0) / s.dauer
+                    return (s.von + (s.nach - s.von) * (1 - cos(w)) / 2, s.von == s.nach)
+                }
+                beginn += s.dauer
+            }
+            return (0, true)
+        }
+        func falte(_ grad: Double) -> Double {
+            var x = grad.truncatingRemainder(dividingBy: 360)
+            if x > 180 { x -= 360 } else if x < -180 { x += 360 }
+            return x
+        }
+        let dt = 1 / rate
+        let richtung = Double(vorzeichen)
+        let gesamtDauer = stuecke.reduce(0) { $0 + $1.dauer }
+        var werte: [SensorMesswert] = []
+        var lage: [Double] = []
+        for i in 0..<Int((gesamtDauer * rate).rounded()) {
+            let t = Double(i) * dt
+            let bundleT = Double(i / buendel * buendel) * dt
+            if let luecke, bundleT >= luecke.ab, bundleT < luecke.ab + luecke.dauer { continue }
+            let jetzt = zustand(t)
+            let zittern = jetzt.still ? zitternGrad * sin(2 * .pi * 7 * t) : 0
+            let grad = falte(startGrad + richtung * hubGrad * jetzt.lage + zittern)
+            let rateGradProS = richtung * hubGrad * (zustand(t + dt).lage - zustand(t - dt).lage) / (2 * dt)
+            let winkel = achse == .roll ? Vektor3(x: grad, y: 0, z: 0) : Vektor3(x: 0, y: grad, z: 0)
+            let drehrate = achse == .roll ? Vektor3(x: rateGradProS, y: 0, z: 0) : Vektor3(x: 0, y: rateGradProS, z: 0)
+            werte.append(SensorMesswert(t: bundleT, beschleunigung: Vektor3(x: 0, y: 0, z: 1),
+                                        drehrate: drehrate, winkel: winkel))
+            lage.append(jetzt.lage)
+        }
+        return Drehsatz(werte: werte, lage: lage)
     }
 }

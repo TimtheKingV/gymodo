@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Sensor-Aufnahme mit Metronom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#0A0B0D; --surface:#14161A; --raised:#1D2026; --line:#2A2E36; --text:#F2F4F7; --muted:#9BA3AF;
+          --accent:#D4FF3F; --band:#2E3716; --warn:#FFB020; --danger:#FF5A4E; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.4 -apple-system, system-ui, sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px; display:flex; flex-direction:column; gap:16px; }
+  h1 { margin:0; font-size:24px; font-weight:900; letter-spacing:-0.02em; }
+  .karte { background:var(--surface); border-radius:12px; padding:16px; }
+  .zeile { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+  label { display:flex; flex-direction:column; gap:4px; font-size:11px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  input, select, button { font:inherit; color:var(--text); background:var(--raised); border:1px solid var(--line); border-radius:10px; padding:10px 12px; min-height:44px; }
+  input[type=number] { width: 96px; }
+  button { cursor:pointer; font-weight:600; }
+  button.haupt { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  #status { font-size:15px; color:var(--muted); }
+  #status b { color:var(--text); }
+  #buehne { display:grid; grid-template-columns: 1fr 220px; gap:16px; align-items:stretch; }
+  canvas { width:100%; height:280px; background:var(--bg); border-radius:12px; display:block; }
+  #gross { display:flex; flex-direction:column; justify-content:center; gap:8px; }
+  #phase { font-size:13px; font-weight:800; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  #zahl { font-size:72px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
+  #hinweis { color:var(--muted); font-size:15px; min-height:42px; }
+  kbd { background:var(--raised); border:1px solid var(--line); border-radius:6px; padding:2px 6px; font:inherit; font-size:13px; }
+  #abschluss { display:none; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td, th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  th { color:var(--muted); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .warn { color:var(--warn); } .fehler { color:var(--danger); }
+  @media (max-width: 720px) { #buehne { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sensor-Aufnahme mit Metronom</h1>
+
+  <section class="karte">
+    <div class="zeile">
+      <button id="verbinden" class="haupt">Sensor verbinden</button>
+      <button id="ordner">Ordner wählen</button>
+      <div id="status">Kein Sensor. Kein Ordner gewählt.</div>
+    </div>
+  </section>
+
+  <section class="karte">
+    <div class="zeile">
+      <label>Übung <input id="uebung" list="uebungen" placeholder="z. B. Latzug" size="22"></label>
+      <datalist id="uebungen">
+        <option>Latzug</option><option>Beinpresse</option><option>Kabelrudern</option>
+        <option>Kurzhantel-Bizepscurl</option><option>Schrägbankdrücken Kurzhantel</option><option>Seitheben</option>
+        <option>Bankdrücken</option><option>High-Bar-Kniebeuge</option><option>Langhantelrudern</option>
+      </datalist>
+      <label>Befestigung
+        <select id="art">
+          <option value="stapel">Stapel</option><option value="kurzhantel">Kurzhantel</option>
+          <option value="langhantel">Langhantel</option><option value="hebelarm">Hebelarm</option>
+          <option value="kabelgriff">Kabelgriff</option><option value="koerper">Körper</option>
+        </select></label>
+      <label>Wo am Gerät <input id="befestigung" placeholder="z. B. oben auf dem Stapel" size="22"></label>
+      <label>Gewicht kg <input id="gewicht" type="number" min="0" step="0.5"></label>
+    </div>
+    <div class="zeile" style="margin-top:12px">
+      <label>Tempo
+        <select id="tempo">
+          <option value="1.5/2.5">1,5 s Kraftweg / 2,5 s ablassen</option>
+          <option value="2/2">2 s / 2 s</option><option value="1/1">1 s / 1 s</option>
+          <option value="3/3">3 s / 3 s</option><option value="4/4">4 s / 4 s</option>
+          <option value="frei">ohne Takt</option>
+        </select></label>
+      <label>Start
+        <select id="start"><option value="unten">unten (Last ruht unten)</option><option value="oben">oben (erst ablassen)</option></select></label>
+      <label>Tasten drückt
+        <select id="tasten"><option value="selbst">ich selbst</option><option value="helfer">Helfer</option></select></label>
+      <label>Ton
+        <select id="ton"><option value="an">an</option><option value="aus">aus</option></select></label>
+    </div>
+  </section>
+
+  <section class="karte" id="buehne">
+    <canvas id="bild" width="1200" height="560" role="img" aria-label="Soll-Welle und Messwerte"></canvas>
+    <div id="gross">
+      <div id="phase">Bereit</div>
+      <div id="zahl">0</div>
+      <div id="hinweis"><kbd>Leertaste</kbd> startet · <kbd>↑</kbd> oben · <kbd>↓</kbd> unten · <kbd>Esc</kbd> verwirft</div>
+    </div>
+  </section>
+
+  <section class="karte" id="abschluss">
+    <div class="zeile">
+      <label>Wiederholungen <input id="reps" type="number" min="0" step="1"></label>
+      <label style="flex:1; min-width:260px">Kommentar <input id="notiz" placeholder="Besonderheiten, z. B. aus dem Takt gekommen bei Wdh. 7" style="width:100%"></label>
+      <button id="speichern" class="haupt">Speichern (Enter)</button>
+      <button id="verwerfen">Verwerfen (Esc)</button>
+      <div id="bilanz" style="color:var(--muted)"></div>
+    </div>
+  </section>
+
+  <section class="karte">
+    <table><thead><tr><th>Ordner</th><th>Übung</th><th>Tempo</th><th>Wdh.</th><th>↑ / ↓</th><th>Pakete</th><th>Rate</th><th>Lücken</th></tr></thead>
+      <tbody id="liste"><tr><td colspan="8" style="color:var(--muted)">Noch kein Satz gespeichert.</td></tr></tbody></table>
+  </section>
+</main>
+
+<script>
+'use strict';
+// ---------- Paketformat (wie WitMotionPaket.swift) ----------
+const PAKETLAENGE = 20;
+function neuerParser() {
+  let puffer = []; const p = { verworfeneBytes: 0 };
+  p.lesen = (bytes) => {
+    puffer.push(...bytes); const pakete = []; let i = 0;
+    while (i < puffer.length) {
+      if (puffer[i] !== 0x55) { i++; p.verworfeneBytes++; continue; }
+      if (i + 1 >= puffer.length) break;
+      const typ = puffer[i + 1];
+      if (typ !== 0x61 && typ !== 0x71) { i++; p.verworfeneBytes++; continue; }
+      if (i + PAKETLAENGE > puffer.length) break;
+      const w = []; for (let n = 0; n < 9; n++) { const v = puffer[i + 2 + n * 2] | (puffer[i + 3 + n * 2] << 8); w.push(v > 32767 ? v - 65536 : v); }
+      if (typ === 0x61) {
+        const vek = (ab, bereich) => [w[ab] / 32768 * bereich, w[ab + 1] / 32768 * bereich, w[ab + 2] / 32768 * bereich];
+        pakete.push({ a: vek(0, 16), g: vek(3, 2000), w: vek(6, 180) });
+      }
+      i += PAKETLAENGE;
+    }
+    puffer = puffer.slice(i); return pakete;
+  };
+  return p;
+}
+function selbsttest() {
+  const messwert = [0x55,0x61, 0x00,0x00,0x00,0xF8,0x00,0x08, 0x00,0x40,0x00,0x00,0x00,0x00, 0x00,0xC0,0x00,0x00,0x00,0x00];
+  const gleich = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+  const soll = { a: [0, -1, 1], g: [1000, 0, 0], w: [-90, 0, 0] };
+  const f = [];
+  let p = neuerParser(); if (!gleich(p.lesen(messwert), [soll]) || p.verworfeneBytes) f.push('ein Paket');
+  p = neuerParser(); if (!gleich(p.lesen([...messwert, ...messwert]), [soll, soll])) f.push('zwei Pakete');
+  p = neuerParser(); const teil = p.lesen(messwert.slice(0, 7)); if (teil.length || !gleich(p.lesen(messwert.slice(7)), [soll])) f.push('geteiltes Paket');
+  p = neuerParser(); if (!gleich(p.lesen([0x01, 0x02, ...messwert]), [soll]) || p.verworfeneBytes !== 2) f.push('Muell davor');
+  p = neuerParser(); const r = [...messwert]; r[2] = 0x00; r[3] = 0x80; r[4] = 0xFF; r[5] = 0x7F;
+  const rand = p.lesen(r)[0]; if (rand.a[0] !== -16 || rand.a[1] !== 32767 / 32768 * 16) f.push('Raender');
+  return f;
+}
+
+// ---------- Zustand ----------
+const $ = (id) => document.getElementById(id);
+const RUHE = 5, LUECKE = 0.5;
+const DIENST = '0000ffe5-0000-1000-8000-00805f9a34fb', DATEN = '0000ffe4-0000-1000-8000-00805f9a34fb', BEFEHLE = '0000ffe9-0000-1000-8000-00805f9a34fb';
+const jetzt = () => performance.now() / 1000;
+let sensor = null, ordner = null, parser = neuerParser(), demoTimer = null;
+let bruecke = null;        // Zustand von bruecke.py, wenn die Seite von dort kommt (Safari ohne Web Bluetooth)
+let satz = null;           // laufende Aufnahme
+let phase = 'bereit';      // bereit | vorlauf | laeuft | nachlauf | abschluss
+let nummerHeute = 0, satzIndex = 0; const sessionId = crypto.randomUUID();
+const spur = [];           // letzte Messwerte fuer die Anzeige: {t(abs), az}
+
+function statusZeigen() {
+  if (bruecke) {
+    const farbe = bruecke.verbunden ? '' : ' class="warn"';
+    $('status').innerHTML = `<span${farbe}>${bruecke.meldung}</span>${bruecke.verbunden ? ` · ${paketeProSekunde()} Pakete/s` : ''} Sätze gehen nach <b>${bruecke.ziel}</b>.`;
+    return;
+  }
+  const s = sensor ? `<b>${sensor.name}</b> verbunden · ${paketeProSekunde()} Pakete/s` : 'Kein Sensor.';
+  const o = ordner ? ` Ordner: <b>${ordner.name}</b>.` : (window.showDirectoryPicker ? ' Kein Ordner gewählt (Sätze werden heruntergeladen).' : ' Dieser Browser kann nicht in Ordner schreiben (Download).');
+  $('status').innerHTML = s + o;
+}
+function paketeProSekunde() { const t = jetzt(); return spur.filter((m) => m.t > t - 1).length; }
+
+// ---------- Sensor ----------
+function empfangen(bytes) {
+  const t = jetzt(); const pakete = parser.lesen(bytes);
+  for (const p of pakete) {
+    spur.push({ t, v: Math.hypot(...p.a) - 1 }); if (spur.length > 1500) spur.shift();
+    if (satz) satz.messwert(t, p);
+  }
+}
+async function verbinden() {
+  if (!navigator.bluetooth) { $('status').innerHTML = '<span class="fehler">Dieser Browser kann kein Bluetooth. Bitte Chrome benutzen.</span>'; return; }
+  try {
+    // Alle Geraete zeigen: der Sensor meldet sich je nach Zustand nicht immer mit einem Namen, der mit "WT" beginnt.
+    const geraet = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [DIENST] });
+    geraet.addEventListener('gattserverdisconnected', () => { sensor = null; statusZeigen(); $('hinweis').innerHTML = '<span class="fehler">Sensor getrennt.</span>'; });
+    const server = await geraet.gatt.connect(); const dienst = await server.getPrimaryService(DIENST);
+    const daten = await dienst.getCharacteristic(DATEN); const befehle = await dienst.getCharacteristic(BEFEHLE);
+    await befehle.writeValue(new Uint8Array([0xFF, 0xAA, 0x03, 0x08, 0x00]));   // 50 Hz
+    daten.addEventListener('characteristicvaluechanged', (e) => empfangen(new Uint8Array(e.target.value.buffer)));
+    await daten.startNotifications();
+    parser = neuerParser(); sensor = { name: geraet.name || 'WitMotion' }; statusZeigen();
+  } catch (e) {
+    const abgebrochen = e.name === 'NotFoundError';
+    $('status').innerHTML = abgebrochen
+      ? '<span class="warn">Kein Gerät gewählt. Steht der Sensor nicht in der Liste, ist er meist noch mit dem iPhone verbunden oder ausgeschaltet.</span>'
+      : `<span class="fehler">Verbinden fehlgeschlagen: ${e.message}</span>`;
+  }
+}
+function brueckeStarten(zustand) {   // Seite kommt von bruecke.py: Messwerte ueber /strom, Speichern ueber /speichern
+  bruecke = zustand; $('verbinden').style.display = 'none'; $('ordner').style.display = 'none';
+  const strom = new EventSource('/strom');
+  strom.onmessage = (e) => { const h = e.data, b = new Uint8Array(h.length / 2); for (let i = 0; i < b.length; i++) b[i] = parseInt(h.substr(i * 2, 2), 16); empfangen(b); };
+  strom.addEventListener('status', (e) => {
+    bruecke = JSON.parse(e.data); const vorher = sensor; sensor = bruecke.verbunden ? { name: bruecke.name } : null;
+    if (sensor && !vorher) parser = neuerParser();
+    statusZeigen();
+  });
+  strom.onerror = () => { bruecke = { ...bruecke, verbunden: false, meldung: 'Brücke nicht erreichbar. Läuft bruecke.py noch?' }; sensor = null; statusZeigen(); };
+  statusZeigen();
+}
+function demoStarten() {   // ?demo=1: kuenstliche Pakete, 50 Hz, je zwei gebuendelt
+  sensor = { name: 'Demo' }; let k = 0;
+  const paket = (az) => { const b = new Uint8Array(20); b[0] = 0x55; b[1] = 0x61; const v = Math.round(az / 16 * 32768); b[6] = v & 255; b[7] = (v >> 8) & 255; return b; };
+  demoTimer = setInterval(() => {
+    const zwei = []; for (let n = 0; n < 2; n++) { const t = k++ / 50; zwei.push(...paket(1 + 0.05 * Math.sin(2 * Math.PI * t / 4))); }
+    empfangen(zwei);
+  }, 40);
+  statusZeigen();
+}
+
+// ---------- Ton ----------
+let audio = null;
+function ton(hz, bei) {   // bei: Zeitpunkt auf der performance-Uhr (s)
+  if ($('ton').value !== 'an') return;
+  audio ||= new AudioContext();
+  const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = hz; o.connect(g); g.connect(audio.destination);
+  const start = Math.max(audio.currentTime, audio.currentTime + (bei - jetzt()));
+  g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime(0.4, start + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, start + 0.09);
+  o.start(start); o.stop(start + 0.1);
+}
+
+// ---------- Satz ----------
+function tempoLesen() {
+  const v = $('tempo').value; if (v === 'frei') return { ohneTakt: true, kraftweg: 0, ablassen: 0 };
+  const [k, a] = v.split('/').map(Number); return { ohneTakt: false, kraftweg: k, ablassen: a };
+}
+function neuerSatz() {
+  const beginn = jetzt(), startedAt = new Date(), tempo = tempoLesen(), startetOben = $('start').value === 'oben';
+  const zeilen = [], empfang = []; let letzteT = null, luecken = 0, pakete = 0;
+  const s = { beginn, startedAt, tempo, startetOben, los: null, ende: null, hoch: 0, runter: 0, takt: [], geplantBis: 0 };
+  const z = (x, n) => x.toFixed(n);
+  s.rel = (t) => t - beginn;
+  s.messwert = (t, p) => {
+    if (letzteT !== null && t - letzteT > LUECKE) { zeilen.push({ t, text: `# luecke ${z(s.rel(letzteT), 6)}-${z(s.rel(t), 6)}` }); luecken++; }
+    if (t !== letzteT) empfang.push(t); letzteT = t; pakete++;
+    zeilen.push({ t, text: [z(s.rel(t), 6), ...p.a.map((x) => z(x, 4)), ...p.g.map((x) => z(x, 2)), ...p.w.map((x) => z(x, 2))].join(',') });
+  };
+  s.notiz = (t, text) => zeilen.push({ t, text: `# ${text} ${z(s.rel(t), 6)}` });
+  // Soll-Lage 0…1 zur absoluten Zeit t; null ohne Takt oder vor dem Los.
+  s.soll = (t) => {
+    if (tempo.ohneTakt || s.los === null || t < s.los) return null;
+    const erster = startetOben ? tempo.ablassen : tempo.kraftweg, periode = tempo.kraftweg + tempo.ablassen;
+    const tau = (t - s.los) % periode, flanke = (x, d) => (1 - Math.cos(Math.PI * x / d)) / 2;
+    const y = tau < erster ? flanke(tau, erster) : 1 - flanke(tau - erster, periode - erster);
+    return startetOben ? 1 - y : y;
+  };
+  // Takt-Toene und Soll-Zeiten fuer die naechsten 2 s einplanen.
+  s.taktPlanen = (t) => {
+    if (tempo.ohneTakt || s.los === null || s.ende !== null) return;
+    const erster = startetOben ? tempo.ablassen : tempo.kraftweg, periode = tempo.kraftweg + tempo.ablassen;
+    for (let n = s.geplantBis; ; n++) {
+      const bei = s.los + Math.floor(n / 2) * periode + (n % 2 === 0 ? erster : periode);
+      if (bei > t + 2) break;
+      const oben = (n % 2 === 0) !== startetOben;
+      s.takt.push({ t: bei, oben }); ton(oben ? 1320 : 660, bei); s.geplantBis = n + 1;
+    }
+  };
+  s.fertig = () => {
+    for (const k of s.takt) if (k.t <= (s.ende ?? jetzt())) s.notiz(k.t, `takt ${k.oben ? 'oben' : 'unten'}`);
+    zeilen.sort((a, b) => a.t - b.t);
+    const ab = empfang.slice(1).map((t, i) => (t - empfang[i]) * 1000).sort((a, b) => a - b);
+    const q = (p) => ab.length ? +ab[Math.min(ab.length - 1, Math.floor(p * ab.length))].toFixed(2) : 0;
+    const dauer = empfang.length > 1 ? empfang[empfang.length - 1] - empfang[0] : 0;
+    return {
+      csv: ['t,ax,ay,az,gx,gy,gz,wx,wy,wz', ...zeilen.map((x) => x.text)].join('\n') + '\n',
+      statistik: { abstandMs: { max: q(1), median: q(0.5), p95: q(0.95) }, luecken, pakete, rateIstHz: dauer ? +(pakete / dauer).toFixed(1) : 0, verworfeneBytes: parser.verworfeneBytes },
+    };
+  };
+  return s;
+}
+function phaseSetzen(neu, text) { phase = neu; $('phase').textContent = text; }
+function starten() {
+  if (!sensor) { $('hinweis').innerHTML = '<span class="warn">Erst den Sensor verbinden.</span>'; return; }
+  if (!$('uebung').value.trim()) { $('hinweis').innerHTML = '<span class="warn">Erst die Übung eintragen.</span>'; $('uebung').focus(); return; }
+  if (audio) audio.resume(); else if ($('ton').value === 'an') audio = new AudioContext();
+  satz = neuerSatz(); satz.los = satz.beginn + RUHE; satz.notiz(satz.los, 'los');
+  for (let n = 3; n >= 1; n--) ton(440, satz.los - n);
+  if (satz.tempo.ohneTakt) ton(880, satz.los);
+  phaseSetzen('vorlauf', 'Ruhig halten'); $('abschluss').style.display = 'none'; document.activeElement.blur();
+}
+function beenden() { satz.ende = jetzt(); satz.notiz(satz.ende, 'ende'); phaseSetzen('nachlauf', 'Ruhig halten'); }
+function verwerfen() { satz = null; phaseSetzen('bereit', 'Verworfen'); $('abschluss').style.display = 'none'; $('zahl').textContent = '0'; }
+function abschliessen() {
+  satz.stopp = jetzt(); const s = satz; satz = null;   // ab hier keine Messwerte mehr
+  s.ergebnis = s.fertig(); abgeschlossen = s;
+  // Ohne Tastendruck: die Zahl der vollen Taktperioden als Vorschlag, sonst die Tasten.
+  const ausTakt = s.tempo.ohneTakt ? 0 : Math.floor((s.ende - s.los) / (s.tempo.kraftweg + s.tempo.ablassen));
+  $('reps').value = Math.min(s.hoch, s.runter) || Math.max(s.hoch, s.runter) || ausTakt;
+  $('bilanz').textContent = `${s.hoch} × oben, ${s.runter} × unten gedrückt · ${s.ergebnis.statistik.pakete} Pakete · ${s.ergebnis.statistik.rateIstHz} Hz · ${s.ergebnis.statistik.luecken} Lücken`;
+  $('abschluss').style.display = 'block'; phaseSetzen('abschluss', 'Speichern?'); $('reps').focus(); $('reps').select();
+}
+let abgeschlossen = null;
+function taste(oben) {
+  if (phase !== 'laeuft' || !satz) return;
+  const t = jetzt(); satz.notiz(t, `umkehr ${oben ? 'oben' : 'unten'}`); if (oben) satz.hoch++; else satz.runter++;
+  marken.push({ t, oben });
+}
+const marken = [];
+
+// ---------- Speichern ----------
+const zwei = (n) => String(n).padStart(2, '0');
+function iso(d) {   // ISO 8601 mit Offset, ohne Sekundenbruchteile (wie SensorikJSON)
+  const o = -d.getTimezoneOffset(), v = o >= 0 ? '+' : '-', a = Math.abs(o);
+  return `${d.getFullYear()}-${zwei(d.getMonth() + 1)}-${zwei(d.getDate())}T${zwei(d.getHours())}:${zwei(d.getMinutes())}:${zwei(d.getSeconds())}${v}${zwei(Math.floor(a / 60))}:${zwei(a % 60)}`;
+}
+const kopfName = (d) => `${d.getFullYear()}-${zwei(d.getMonth() + 1)}-${zwei(d.getDate())}-${zwei(d.getHours())}${zwei(d.getMinutes())}`;
+async function freierName(d) {
+  const kopf = kopfName(d);
+  for (let n = 1; ; n++) {
+    const name = `${kopf}-${zwei(n)}`;
+    if (!ordner) { if (n > nummerHeute) { nummerHeute = n; return name; } continue; }
+    try { await ordner.getDirectoryHandle(name); } catch { return name; }
+  }
+}
+async function speichern() {
+  const s = abgeschlossen; if (!s) return;
+  const reps = parseInt($('reps').value, 10); const gewicht = parseFloat($('gewicht').value);
+  let name = bruecke ? null : await freierName(s.startedAt);
+  const json = {
+    abschluss: 'gesichert', befestigung: $('befestigung').value.trim() || null, befestigungsart: $('art').value, befestigungsartQuelle: 'gewaehlt',
+    endedAt: iso(new Date(s.startedAt.getTime() + (s.stopp - s.beginn) * 1000)), format: 'gymodo.sensoraufnahme/1',
+    geraet: { appBuild: 'sensorik-aufnahme/1', model: 'Mac (Chrome, Web Bluetooth)', os: navigator.platform },
+    kontext: { equipmentModelId: null, exerciseId: '', exerciseName: $('uebung').value.trim(), machineId: null, machineName: $('art').selectedOptions[0].text, sessionId, setId: crypto.randomUUID(), setIndex: ++satzIndex },
+    notiz: $('notiz').value.trim() || null,
+    label: { problemFlag: false, reps: Number.isFinite(reps) ? reps : null, weightKg: Number.isFinite(gewicht) ? gewicht : null },
+    sensor: { akkuProzent: null, name: sensor ? sensor.name : 'unbekannt', rateSollHz: 50 },
+    startedAt: iso(s.startedAt), statistik: s.ergebnis.statistik,
+    tempo: { ablassenS: s.tempo.ablassen, kraftwegS: s.tempo.kraftweg, losBei: +(s.los - s.beginn).toFixed(6), ohneTakt: s.tempo.ohneTakt, ruheS: RUHE, startetOben: s.startetOben, tasten: $('tasten').value, tastenOben: s.hoch, tastenUnten: s.runter },
+    zaehler: null,
+  };
+  const text = JSON.stringify(json, null, 2) + '\n';
+  try {
+    if (bruecke) {
+      const antwort = await fetch('/speichern', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kopf: kopfName(s.startedAt), json: text, csv: s.ergebnis.csv }) });
+      const ergebnis = await antwort.json(); if (!antwort.ok) throw new Error(ergebnis.fehler || antwort.status);
+      name = ergebnis.name;
+    } else if (ordner) {
+      const ziel = await ordner.getDirectoryHandle(name, { create: true });
+      for (const [datei, inhalt] of [['aufnahme.json', text], ['messwerte.csv', s.ergebnis.csv]]) {
+        const w = await (await ziel.getFileHandle(datei, { create: true })).createWritable(); await w.write(inhalt); await w.close();
+      }
+    } else {
+      for (const [datei, inhalt] of [[`${name}_aufnahme.json`, text], [`${name}_messwerte.csv`, s.ergebnis.csv]]) {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([inhalt])); a.download = datei; a.click();
+      }
+    }
+  } catch (e) { $('bilanz').innerHTML = `<span class="fehler">Speichern fehlgeschlagen: ${e.message}</span>`; return; }
+  const zeile = document.createElement('tr'); const st = s.ergebnis.statistik;
+  const felder = [name, json.kontext.exerciseName, s.tempo.ohneTakt ? 'ohne Takt' : `${s.tempo.kraftweg}/${s.tempo.ablassen}`, json.label.reps ?? '–', `${s.hoch} / ${s.runter}`, st.pakete, `${st.rateIstHz} Hz`, st.luecken];
+  for (const f of felder) { const td = document.createElement('td'); td.textContent = f; zeile.appendChild(td); }
+  if ($('liste').firstElementChild.children.length === 1) $('liste').innerHTML = '';
+  $('liste').prepend(zeile); abgeschlossen = null; $('notiz').value = ''; window.letzterSatz = { name, json, csv: s.ergebnis.csv };
+  $('abschluss').style.display = 'none'; phaseSetzen('bereit', 'Gespeichert'); $('zahl').textContent = '0';
+}
+
+// ---------- Anzeige ----------
+const bild = $('bild'), g = bild.getContext('2d');
+function zeichnen() {
+  const t = jetzt(), B = bild.width, H = bild.height, proS = 150, jetztX = B * 0.3, oben = 90, unten = H - 90;
+  const y = (lage) => unten - lage * (unten - oben), x = (zeit) => jetztX + (zeit - t) * proS;
+  g.clearRect(0, 0, B, H);
+  g.fillStyle = '#9BA3AF'; g.font = '800 22px -apple-system, sans-serif'; g.fillText('OBEN', 24, oben - 40); g.fillText('UNTEN', 24, unten + 60);
+  if (satz) {
+    if (phase === 'vorlauf' && t >= satz.los) phaseSetzen('laeuft', 'Satz läuft');
+    if (phase === 'nachlauf' && t >= satz.ende + RUHE) abschliessen();
+  }
+  if (satz) {
+    satz.taktPlanen(t);
+    // Soll-Bahn
+    g.strokeStyle = '#2E3716'; g.lineWidth = 70; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath();
+    const ruhe = satz.startetOben ? 1 : 0; let begonnen = false;
+    for (let px = -40; px <= B + 40; px += 6) {
+      const zeit = t + (px - jetztX) / proS; if (zeit < satz.beginn) continue;
+      if (satz.ende !== null && zeit > satz.ende) break;
+      const lage = satz.soll(zeit) ?? (satz.tempo.ohneTakt && zeit >= satz.los ? null : ruhe); if (lage === null) break;
+      if (begonnen) g.lineTo(px, y(lage)); else { g.moveTo(px, y(lage)); begonnen = true; }
+    }
+    g.stroke();
+    g.strokeStyle = '#D4FF3F'; g.lineWidth = 3; g.beginPath(); g.moveTo(x(satz.los), oben - 30); g.lineTo(x(satz.los), unten + 30); g.stroke();
+    for (const m of marken) if (m.t >= satz.beginn) { g.fillStyle = '#F2F4F7'; g.beginPath(); g.arc(x(m.t), m.oben ? oben - 55 : unten + 55, 9, 0, 7); g.fill(); }
+    const lage = satz.soll(t); if (lage !== null && satz.ende === null) { g.fillStyle = '#D4FF3F'; g.beginPath(); g.arc(jetztX, y(lage), 18, 0, 7); g.fill(); }
+    if (phase === 'vorlauf') $('zahl').textContent = Math.ceil(satz.los - t);
+    else if (phase === 'nachlauf') $('zahl').textContent = Math.ceil(satz.ende + RUHE - t);
+    else $('zahl').textContent = Math.min(satz.hoch, satz.runter) || Math.max(satz.hoch, satz.runter);
+  }
+  // Jetzt-Linie und Messwert-Spur (Betrag der Beschleunigung minus 1 g)
+  g.strokeStyle = '#5C636E'; g.lineWidth = 2; g.setLineDash([6, 8]); g.beginPath(); g.moveTo(jetztX, 30); g.lineTo(jetztX, H - 30); g.stroke(); g.setLineDash([]);
+  g.strokeStyle = '#9BA3AF'; g.lineWidth = 2; g.beginPath(); let an = false;
+  for (const m of spur) { const px = x(m.t); if (px < 0) continue; const py = H - 28 - m.v * 120; if (an) g.lineTo(px, py); else { g.moveTo(px, py); an = true; } }
+  g.stroke();
+  requestAnimationFrame(zeichnen);
+}
+
+// ---------- Bedienung ----------
+addEventListener('keydown', (e) => {
+  const imFeld = ['INPUT', 'SELECT'].includes(document.activeElement.tagName);
+  if (phase === 'abschluss') { if (e.key === 'Enter') { e.preventDefault(); speichern(); } else if (e.key === 'Escape') verwerfen(); return; }
+  if (e.key === 'Escape' && satz) { verwerfen(); return; }
+  if (phase === 'bereit' && imFeld) return;
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); if (!e.repeat) taste(true); }
+  else if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); if (!e.repeat) taste(false); }
+  else if (e.key === ' ') { e.preventDefault(); if (e.repeat) return; if (phase === 'bereit') starten(); else if (phase === 'laeuft') beenden(); }
+});
+$('verbinden').onclick = verbinden;
+$('ordner').onclick = async () => { try { ordner = await showDirectoryPicker({ mode: 'readwrite' }); } catch {} statusZeigen(); };
+$('speichern').onclick = speichern; $('verwerfen').onclick = verwerfen;
+if (!window.showDirectoryPicker) $('ordner').disabled = true;
+setInterval(statusZeigen, 1000); statusZeigen(); requestAnimationFrame(zeichnen);
+const frage = new URLSearchParams(location.search);
+if (frage.has('demo')) demoStarten();
+else fetch('/bruecke').then((r) => (r.ok ? r.json() : null)).then((z) => { if (z) brueckeStarten(z); }).catch(() => {});
+if (frage.has('selbsttest')) { const f = selbsttest(); window.selbsttestFehler = f; $('hinweis').innerHTML = f.length ? `<span class="fehler">Selbsttest: ${f.join(', ')} falsch</span>` : 'Selbsttest der Paket-Auswertung bestanden.'; }
+</script>
+</body>
+</html>

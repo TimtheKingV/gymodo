@@ -1,7 +1,7 @@
 # iOS Member-App — Bewegungssensor: Tempo-Modus (Teilprojekt C)
 
 **Stand:** 23. November 2026
-**Status:** Entwurf, gegengelesen, wartet auf Tims Freigabe. Danach Umsetzungsplan.
+**Status:** Am 23. November freigegeben und begonnen. **Der Nachtrag am Ende (23. November abends) ändert Zuschnitt und Lageschätzung und geht den Abschnitten 2–12 vor, wo er ihnen widerspricht.** Der Nachtrag wartet auf Tims Freigabe.
 **Vorbedingung:** Teilprojekt A und B (`2026-09-19-sensor-anbindung-aufzeichnung-design.md`, `2026-10-10-sensor-wiederholungszaehler-design.md`, im Folgenden „Spec A“ und „Spec B“) samt Satztakt und Satzautomatik sind auf `master`.
 **Bildentwürfe:** https://claude.ai/artifact/7fSsT27eVcYq3PBNTbdJLJ (privat, nur für Tim). Maßgeblich sind die Bilder „A · Welle im Vollbild“, „A1 · Start“, „A2 · Ziel in Sicht“ und „D · Satzende“. B und C sind verworfen.
 **Wer was entschieden hat:** „Tim“ heißt im Gespräch entschieden. „Vorschlag“ heißt von Claude festgelegt und von Tim nicht ausdrücklich bestätigt; beim Lesen prüfen.
@@ -229,3 +229,90 @@ E1 kommt zuerst und entscheidet, ob und für welche Befestigungen es weitergeht.
 - Tempo-Modus im Zirkel.
 - Release für Mitglieder.
 - Punktestand, Bestenlisten, Spielmechanik (Teilprojekt D).
+
+---
+
+## Nachtrag vom 23. November 2026 (abends): Winkel als Lage, zuerst nur drehende Übungen
+
+**Wer was entschieden hat:** wie oben. „Tim“ = im Gespräch entschieden, „Vorschlag“ = von Claude festgelegt.
+
+### N1. Was die Umsetzung gezeigt hat
+
+Plan-Tasks 1, 2 und 5 sind umgesetzt (Branch `claude/tempo-modus`), dazu ein Versuch mit der Schwerkraft aus den Sensorwinkeln. Ergebnis:
+
+- **Kein Gütetor erreicht** (`data/sensoraufnahmen/tempobericht.md`). An den Prüf-Aufnahmen ab 1.11.: Stapel 0,10–0,28 Abweichung bei 32–39 % sicher, Kurzhantel 0,18 bei 47–59 %, Langhantel ohne Prüfdaten.
+- **Die Annahme „Winkel wird nicht genutzt“ (6.1) war falsch.** Hanteln drehen sich im Satz um im Median 77°; ohne bekannte Schwerkraftrichtung trägt die Beschleunigung nicht. Die Sensorwinkel passen in Ruhe auf 1,4–1,7° zur gemessenen Schwerkraft (Konvention ĝ = (−sin p, sin r·cos p, cos r·cos p), r = Roll, p = Pitch).
+- **Erste Aufnahmen mit echter Wahrheit** (23.11., 11 Kurzhantel-Sätze, 1 kg, Takt 1,5/2,5 s, aufgenommen am Mac mit `tools/sensorik-aufnahme/`):
+  - 7 drehende Sätze (Curl, Seitheben; Hub des Rollwinkels 92–179°): Der Winkel ist ein klares, gleichmäßiges Signal (Hub-Streuung im Probesatz 7° bei 144°) und läuft dem eigenen Drehratensignal um weniger als einen Messwert (20 ms) nach.
+  - 4 Drücksätze ohne Drehung: Der Schätzer erkennt 0–4 von 8–10 Wiederholungen und meldet nie „sicher“. Bei 1,5/2,5 s liegt die Beschleunigung nur bei etwa 0,3–0,9 m/s²; ein um wenige Grad schiefer Sensor erzeugt einen ebenso großen Fehler.
+  - Tim folgte dem Takt (ohne eigenen Punkt auf dem Bildschirm) mit 0,23–0,43 s Vorlauf.
+
+### N2. Geänderte Entscheidungen
+
+| # (oben) | Neu | Von |
+|---|---|---|
+| 1 | Der Tempo-Modus kommt zuerst nur für Übungen, bei denen sich der Sensor im Satz dreht: Kurzhantel-Übungen mit Drehung, Geräte mit Hebelarm, Kabelgriffe, soweit sie drehen. Stapel, Drücken, Kniebeuge und alles ohne Drehung sind nicht Teil dieses Projekts. | Tim |
+| 2 | Der Punkt zeigt den Winkel des Sensors, auf den eigenen Bewegungsumfang normiert (Weg D, N3). Keine Schätzung aus der Beschleunigung. | Tim |
+| 14 | Kraftweg ist der Weg aus der Ruhelage heraus, Ablassen der Weg zurück. Die Ruhelage ist immer Lage 0; die Welle beginnt immer mit dem Kraftweg. „Start oben“, das Umdrehen der Welle und der Sonderfall „waagerecht“ (6.3) entfallen. | Vorschlag |
+| 15 | Ob eine Übung geeignet ist, entscheidet die Messung, nicht die Befestigungsart (N4). | Vorschlag |
+
+Unverändert gelten: Welle im Vollbild, flacher Ausschlag, Standard-Tempo 1,5/2,5 s und verstellbar, Start mit flacher Linie und Los-Marke, Zielmarke, Umfang merken, Trefferquote am Satzende (nicht gespeichert, in Wellenperioden, ab der dritten), Sichern sofort am Satzende, kein Zirkel, nur Debug-Build, Satzbeginn ab dem zweiten Satz von selbst.
+
+### N3. Weg D: Winkellage (ersetzt Abschnitt 6)
+
+Ein neuer, reiner Baustein `Winkellage` im Package `Sensorik`, mit derselben Ausgabe wie in 6.1 beschrieben (`Lage` mit `lage`, `richtung`, `sicher`; Typen aus `Lage.swift`).
+
+- **Signal:** Roll (`winkel.x`) und Pitch (`winkel.y`), je für sich über ±180° hinweg entfaltet. Yaw wird nicht benutzt.
+- **Achse:** die der beiden mit dem größeren Ausschlag. Sie wird in der ersten Wiederholung gewählt, gilt für den Rest des Satzes und wird mit dem Umfang gemerkt.
+- **Ruhelage:** der Winkel in der Ruhe vor der Los-Marke. Lage 0.
+- **Umfang:** Hub in Grad zwischen Ruhelage und oberem Umkehrpunkt. Gemerkt je Station und Übung (wie 6.2), in den ersten zwei Wiederholungen nachgeführt, danach nur noch langsam; kurze Wiederholungen verkleinern ihn nicht.
+- **Umkehrpunkte:** Richtungswechsel des Winkels mit einer Hysterese von 10 % des Hubs (Vorschlag).
+- **Richtung:** `.hin` (Kraftweg), solange sich die Lage von der Ruhelage entfernt, `.rueck` beim Rückweg.
+- **Sicher:** sobald der Umfang bekannt ist (gemerkt oder nach der ersten vollen Wiederholung) und mindestens 40° beträgt (Vorschlag); nach einer Empfangslücke über 0,5 s sofort wieder, sobald Messwerte kommen. Der Winkel driftet nicht, ein Einrasten oder Einschwingen braucht es nicht.
+- **Bekanntes Risiko:** Nahe Pitch ±90° wird Roll unzuverlässig. Zeigt der Bericht (N5) Sätze, in denen die gewählte Achse springt, ist das festzuhalten; eine Lösung über die aufsummierte Drehrate ist dann ein eigener Schritt.
+
+Die Schätzung aus der Beschleunigung (`Lageschaetzer`, `Gleichanteil`, `Hilfslage`, `Schwerkraftquelle`) bleibt als Versuch auf dem Branch, wird von der App nicht benutzt und in diesem Projekt nicht weiterentwickelt. Ob sie mit in den Merge geht, entscheidet Tim vor dem Merge.
+
+### N4. Eignung (ersetzt die Freigabe nach Befestigungsart in 7.6)
+
+- Der Schalter „Tempo“ ist bei jeder Kraftübung mit Wiederholungen und verbundenem Sensor sichtbar, solange die Übung an dieser Station nicht als ungeeignet gemerkt ist.
+- Beträgt der Hub nach zwei Wellenperioden weniger als 40°, bricht der Tempo-Modus für diesen Satz ab: Die Anzeige wechselt auf die gewohnte Ansicht mit dem Hinweis „Für diese Übung reicht die Drehung des Sensors nicht“, der Satz läuft und zählt normal weiter. Übung und Station werden als ungeeignet gemerkt; der Schalter erscheint dort ausgegraut mit demselben Hinweis und lässt sich durch Antippen wieder freigeben (z. B. nach anderer Befestigung).
+- `Tempofreigabe.arten` entfällt.
+
+### N5. Messung (ersetzt 6.4)
+
+Der Winkel ist eine direkte Messung, kein Schätzwert. Geprüft wird deshalb nicht die Abweichung gegen eine Rechnung, sondern:
+
+- **Wiederholungen gegen die Wahrheit:** Umkehrpunkte der `Winkellage` gegen `repsWahr`, je Aufnahme.
+- **Sicher-Anteil** im aktiven Teil des Satzes.
+- **Stabilität:** Streuung des Hubs von Wiederholung zu Wiederholung; Sprünge der Lage zwischen zwei Messwerten.
+
+Ausgewertet werden alle Aufnahmen mit `repsWahr` ≥ 5, deren Winkelhub im Satz mindestens 40° beträgt, gleich welcher Befestigungsart, getrennt nach „vor 1.11.“ und „ab 1.11.“ (inklusive der Mac-Aufnahmen vom 23.11.). `tempobericht.md` bekommt dafür einen Abschnitt „Winkellage“ vor den bisherigen.
+
+Tragfähig heißt (Vorschlag, mit Tim nachzuschärfen, sobald Zahlen vorliegen): Wiederholungsfehler im Median ≤ 1, Sicher-Anteil im Median ≥ 0,9, kein Satz mit einem Sprung der Lage über 0,2 zwischen zwei Messwerten. Der Bericht nennt außerdem, wie viele Aufnahmen je Befestigungsart die 40° erreichen: das ist der Kreis der Übungen, für den der Modus taugt.
+
+### N6. Was sich im Rest ändert
+
+- **7.3 Start:** Die flache Linie liegt immer auf Lage 0. Der Satz über die abwärts beginnende erste Bewegung entfällt.
+- **7.5 Satzende:** Die zwei Zeilen heißen immer „Kraftweg“ und „Ablassen“.
+- **Bahnbreite:** bleibt ±0,2 als Startwert und wird am Gerät eingestellt. Tims Vorlauf von 0,23–0,43 s ohne eigenen Punkt spricht dafür, dass die Bahn eher breiter werden muss; entschieden wird das erst mit der Anzeige.
+- **3 Nicht-Ziele:** Stapel, Langhantel und alle Übungen ohne Drehung kommen hinzu.
+- **8 Etappen:** E1 = `Winkellage` und der Abschnitt im Bericht; Tim bestätigt die Zahlen. E2 = Soll-Welle und Trefferquote (Plan-Tasks 7 und 8, unverändert). E3 und E4 wie oben, mit der Eignung aus N4. Die Plan-Tasks 3, 4 und 6 entfallen.
+- **10 Fehlerfälle:** „Schätzung länger als eine Wiederholung nicht sicher“ wird zu „Hub unter 40° nach zwei Wellenperioden“ (N4).
+
+### N7. Aufnahme-Werkzeug
+
+`tools/sensorik-aufnahme/` (Seite und `bruecke.py`, Kurzentwurf `2026-11-23-sensor-aufnahme-seite-design.md`) nimmt Sätze am Mac mit Takt auf. Für drehende Übungen ist der Winkel die Wahrheit; Tasten braucht es dort nicht.
+
+### N8. Festlegungen aus der Gegenprüfung (alle Vorschlag)
+
+- **Vorzeichen:** Die Lage wird mit dem Vorzeichen des ersten Wegs aus der Ruhelage normiert: `lage = vorzeichen · (winkel − ruhewinkel) / hub`. Dreht der Sensor in negative Gradrichtung, ist das Vorzeichen −1.
+- **Ruhewinkel:** Median des Winkels über den Teil des Vorlaufs, in dem der Sensor still ist (Drehrate klein). War er nie still, gilt der Winkel zu Beginn des Vorlaufs. Das gilt für jeden Satz neu, auch für den zweiten und folgende.
+- **Achse, solange sie nicht feststeht:** die mit dem bisher größeren Ausschlag seit der Ruhe; sie darf wechseln, bis ein Ausschlag von 20° erreicht ist, danach steht sie für den Satz fest. Mit gemerktem Wert steht sie von Anfang an fest.
+- **Umfang ohne gemerkten Wert:** Der Punkt wird sofort gezeigt. Maßstab ist das Größere aus 40° und dem bisher größten Ausschlag; `sicher` ist dabei falsch. Mit der ersten vollen Wiederholung gilt deren Hub, mit der zweiten der Mittelwert beider. Danach folgt der Umfang nur noch langsam (N3).
+- **Sicher in Ruhe:** Sobald der Umfang bekannt ist und mindestens 40° beträgt, ist `sicher` wahr, auch wenn die Last ruht. Wer im Satz unten pausiert, liegt zu Recht neben der Bahn; diese Zeit zählt in die Trefferquote. Die Aussage in 6.1 („in Ruhe nicht sicher“) galt der Schätzung aus der Beschleunigung und entfällt.
+- **Gemerkter Wert:** ein eigener Typ für den Winkel (Achse, Vorzeichen, Hub in Grad), nicht `GemerkterUmfang`. Schlüssel wie beim `Befestigungsspeicher`: Station und Übung.
+- **Ungeeignet-Marke:** Schlüssel Station und Übung, unabhängig von Gewicht und Befestigung. Gesetzt nur beim Abbruch nach N4. Gibt das Mitglied den Schalter wieder frei und läuft der nächste Satz mit mindestens 40° Hub durch, wird die Marke gelöscht.
+- **Wer abbricht:** die App, nicht `Winkellage`. `Winkellage` meldet den bisher größten Ausschlag; die App prüft ihn zwei Wellenperioden nach der Los-Marke.
+- **Nach einem Abbruch:** keine Tempo-Auswertung am Satzende. Für den Rest des Satzes gelten Zählung und Satzautomatik wie ohne Tempo-Modus.
+- **Sichtbarkeit des Schalters:** N4 geht 7.6 vor. Das Anti-Ziel „lieber nicht freischalten“ erfüllt der Abbruch nach N4.
