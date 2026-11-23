@@ -1,6 +1,7 @@
 # Weitere Übungen mit Körpergewicht – Vorschlagsliste
 
-Stand 23.11.2026. Vorschläge von Claude, Auswahl durch Tim steht aus. Alle Übungen hängen am
+Stand 23.11.2026. Vorschläge von Claude. Tim hat alle 31 gewählt; 30 stehen in
+`catalog/gymtavo.json`, Nr. 28 ist zurückgestellt (siehe unten). Alle Übungen hängen am
 vorhandenen Typ `bodyweight` (Etikett `Körpergewicht`), Schlüssel mit `bw_`. Namen folgen
 `docs/katalog-stilleitfaden.md`.
 
@@ -68,6 +69,16 @@ Aktivierungsübungen für Latissimus und oberen Rücken.
 29. Y-Heben – Bauchlage – gestreckte Arme in Y-Form anheben
 30. Reverse Flys – Bauchlage – Arme seitlich anheben, hintere Schulter
 31. Schulterblatt-Liegestütz – im Stütz nur die Schulterblätter bewegen (Sägemuskel hat bisher keine Hauptübung)
+
+## Zurückgestellt: Nr. 28 Schienbeinheben
+
+Der Schienbeinmuskel (`tibialis`) steht in der iOS-App auf der Liste
+`Ausgewogenheit.ohneKraftuebung` und bleibt deshalb grau, ohne Hinweis. Ein Vertragstest in
+`gymtavo-katalog.test.ts` verlangt, dass er von der Liste verschwindet, sobald eine Kraftübung ihn
+trainiert. Dann bewertet die App ihn bei allen Mitgliedern: Wer kein Schienbeinheben macht, sieht
+„Nachholbedarf“ und den Hinweis „kam in 28 Tagen nicht dran“. Das ist eine eigene Entscheidung
+(Swift-Liste und drei Swift-Tests ändern, App neu bauen) und nicht Teil dieser Katalogerweiterung.
+Aus demselben Grund führen die beiden Wadenheben-Übungen den Wadenbeinmuskel nicht als Nebenmuskel.
 
 ## Reserve
 

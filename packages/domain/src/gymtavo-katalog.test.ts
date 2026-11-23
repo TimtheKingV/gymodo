@@ -161,6 +161,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const sekunden = k.exercises.filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key)).map((u) => u.key);
     expect(sekunden).toEqual([
       "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
+      "bw_plank_knee", "bw_side_plank_knee",
     ]);
     expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
   });
@@ -176,7 +177,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(18);
+    expect(typen[0]!.exercises).toHaveLength(48);
   });
 
   it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {
