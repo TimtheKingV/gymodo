@@ -78,4 +78,14 @@ struct LageschaetzerTests {
         #expect(s.umkehrpunkte.count == 16)
         #expect(s.umkehrpunkte.map(\.oben) == Array(repeating: [true, false], count: 8).flatMap { $0 })
     }
+
+    @Test(arguments: [-0.02, -0.01, -0.005, 0.005, 0.01, 0.02])
+    func driftBeiderVorzeichenBleibtInGrenzen(biasG: Double) {
+        let f = fehler(Synthetik.hub(wiederholungen: 20, biasG: biasG), ab: 3)
+        #expect(f.lagen.filter(\.sicher).allSatisfy { $0.lage >= -0.25 && $0.lage <= 1.25 })
+        #expect(f.lagen.allSatisfy { $0.lage.isFinite && $0.lage >= -0.5 && $0.lage <= 1.5 })
+        #expect(f.mittel <= 0.12)
+        let spruenge = zip(f.lagen, f.lagen.dropFirst()).map { abs($1.lage - $0.lage) }
+        #expect(spruenge.max()! <= 0.08)
+    }
 }
