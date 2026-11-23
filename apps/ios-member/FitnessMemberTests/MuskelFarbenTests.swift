@@ -56,7 +56,7 @@ struct MuskelFarbenTests {
         #expect(farben["abductors"] == DesignSystem.Color.accentPressed)
         #expect(farben["rotator_cuff"] == DesignSystem.Color.accentPressed)
         #expect(farben["serratus_anterior"] == DesignSystem.Color.warn)
-        #expect(farben["tibialis"] == DesignSystem.Color.muskelInaktiv)
+        #expect(farben["tibialis"] == DesignSystem.Color.accentPressed)
         #expect(farben["fibularis"] == DesignSystem.Color.muskelInaktiv)
     }
 
