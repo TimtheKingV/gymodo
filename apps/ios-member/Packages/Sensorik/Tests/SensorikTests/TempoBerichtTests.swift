@@ -95,12 +95,20 @@ struct TempoBerichtTests {
                               wiederholungsfehler: 2))
     }
 
-    /// Schreibt den Bericht und haelt jede freigegebene Art am Tor fest.
+    /// Schreibt den Bericht (alle drei Schwerkraftquellen) und haelt jede
+    /// freigegebene Art am Tor fest; die App laeuft mit der Standardquelle `.ruhe`.
     @Test func berichtSchreibenUndFreigegebeneArtenPruefen() throws {
-        let zeilen = try TempoBericht.zeilen()
+        let aufnahmen = try TempoBericht.aufnahmen()
+        let jeQuelle = Schwerkraftquelle.allCases.map { TempoBericht.zeilen(aufnahmen, quelle: $0) }
+        let zeilen = jeQuelle[0]
         #expect(zeilen.count >= 120)
-        try TempoBericht.markdown(zeilen).write(to: Pfade.aufnahmen.appendingPathComponent("tempobericht.md"),
-                                               atomically: true, encoding: .utf8)
+        let versuch = TempoBericht.Versuch(
+            ruhewinkel: TempoBericht.ruhewinkelfehler(aufnahmen),
+            bezugUnterschied: aufnahmen.compactMap { a in
+                TempoBericht.bezugUnterschied(a).map { (ordner: a.ordner, art: a.art, wert: $0) }
+            })
+        try TempoBericht.markdown(jeQuelle.flatMap { $0 }, versuch: versuch)
+            .write(to: Pfade.aufnahmen.appendingPathComponent("tempobericht.md"), atomically: true, encoding: .utf8)
         for art in Tempofreigabe.arten {
             let t = TempoBericht.tor(zeilen, art: art)
             #expect(TempoBericht.torErreicht(t), "\(art.rawValue) ist freigegeben, haelt das Tor aber nicht: \(t)")

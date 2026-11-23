@@ -13,6 +13,11 @@ import Foundation
 /// das obere 1. Oben ist gegen die Schwerkraft: Am ruhenden Sensor zeigt die
 /// gemessene Beschleunigung nach oben, auf ihre mittlere Richtung projiziert
 /// ist eine aufwaerts beschleunigte Last also positiv.
+///
+/// Winkel-Versuch (Task 5b): Mit `.winkel` und `.drehrate` wird stattdessen je
+/// Messwert auf die Schwerkraftrichtung aus Roll/Pitch bzw. aus der
+/// aufintegrierten Drehrate projiziert, wie im Live-Lauf; der Betrag der
+/// Schwerkraft ist das Mittel der Projektion. `.ruhe` ist die Rechnung des Skripts.
 enum Lagebezug {
     struct Ergebnis {
         /// Je Messwert; ausserhalb von `aktiv` 0 und ohne Bedeutung.
@@ -24,20 +29,33 @@ enum Lagebezug {
     }
 
     /// Nachtraegliche Rechnung wie tools/sensorik-sim/tempo_nachrechnung.py, je Halbwelle auf 0…1 normiert.
-    static func berechne(_ werte: [SensorMesswert], rateHz fs: Double) -> Ergebnis? {
+    static func berechne(_ werte: [SensorMesswert], rateHz fs: Double,
+                         schwerkraft quelle: Schwerkraftquelle = .ruhe) -> Ergebnis? {
         let n = werte.count
         guard n >= 3 else { return nil }
-        var mittel = (x: 0.0, y: 0.0, z: 0.0)
-        for w in werte {
-            mittel.x += w.beschleunigung.x; mittel.y += w.beschleunigung.y; mittel.z += w.beschleunigung.z
-        }
-        mittel = (mittel.x / Double(n), mittel.y / Double(n), mittel.z / Double(n))
-        let betrag = (mittel.x * mittel.x + mittel.y * mittel.y + mittel.z * mittel.z).squareRoot()
-        guard betrag > 0 else { return nil }
-        let av = werte.map { w in
-            let entlang = (w.beschleunigung.x * mittel.x + w.beschleunigung.y * mittel.y
-                + w.beschleunigung.z * mittel.z) / betrag
-            return (entlang - betrag) * 9.81
+        let av: [Double]
+        switch quelle {
+        case .ruhe:
+            var mittel = (x: 0.0, y: 0.0, z: 0.0)
+            for w in werte {
+                mittel.x += w.beschleunigung.x; mittel.y += w.beschleunigung.y; mittel.z += w.beschleunigung.z
+            }
+            mittel = (mittel.x / Double(n), mittel.y / Double(n), mittel.z / Double(n))
+            let betrag = (mittel.x * mittel.x + mittel.y * mittel.y + mittel.z * mittel.z).squareRoot()
+            guard betrag > 0 else { return nil }
+            av = werte.map { w in
+                let entlang = (w.beschleunigung.x * mittel.x + w.beschleunigung.y * mittel.y
+                    + w.beschleunigung.z * mittel.z) / betrag
+                return (entlang - betrag) * 9.81
+            }
+        case .winkel, .drehrate:
+            let richtungen = quelle == .winkel ? werte.map { Schwerkraftquelle.richtung(winkel: $0.winkel) }
+                : drehrateRichtungen(werte, fs: fs)
+            let entlang = zip(werte, richtungen).map { w, r in
+                w.beschleunigung.x * r.x + w.beschleunigung.y * r.y + w.beschleunigung.z * r.z
+            }
+            let betrag = entlang.reduce(0, +) / Double(n)
+            av = entlang.map { ($0 - betrag) * 9.81 }
         }
         guard let periode = periode(av, fs: fs) else { return nil }
         let fenster = periode * fs
@@ -68,6 +86,25 @@ enum Lagebezug {
             for k in a.index...b.index { lage[k] = (p[k] - unten) / (oben - unten) }
         }
         return Ergebnis(lage: lage, aktiv: erstes.index..<(letztes.index + 1), periode: periode)
+    }
+
+    /// Schwerkraftrichtung je Messwert aus der Drehrate: Start an der ersten
+    /// Beschleunigung, je Schritt `1/fs` mit der Drehrate gedreht und nach 0,5 s
+    /// ruhiger Messwerte (Betrag auf 0,01 g wie die Schwerkraft, Drehrate unter
+    /// 5 °/s) mit 2 s Zeitkonstante an die Beschleunigung gezogen, wie im Live-Lauf.
+    private static func drehrateRichtungen(_ werte: [SensorMesswert], fs: Double) -> [Vektor3] {
+        let dt = 1 / fs, k = dt / (2 + dt), ruheVor = Int((0.5 * fs).rounded())
+        func betrag(_ v: Vektor3) -> Double { (v.x * v.x + v.y * v.y + v.z * v.z).squareRoot() }
+        var g = werte[0].beschleunigung
+        var ruhig = 0
+        return werte.map { w in
+            g = Schwerkraftquelle.drehen(g, drehrate: w.drehrate, dt: dt)
+            let a = w.beschleunigung
+            if abs(betrag(a) - betrag(g)) < 0.01, betrag(w.drehrate) < 5 { ruhig += 1 } else { ruhig = 0 }
+            if ruhig >= ruheVor { g = Vektor3(x: g.x + k * (a.x - g.x), y: g.y + k * (a.y - g.y), z: g.z + k * (a.z - g.z)) }
+            let b = betrag(g)
+            return Vektor3(x: g.x / b, y: g.y / b, z: g.z / b)
+        }
     }
 
     // MARK: - Bausteine wie im Skript

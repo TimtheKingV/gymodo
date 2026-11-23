@@ -11,6 +11,7 @@ struct TempoZeile {
     let ausreisser: Bool            // die unbegrenzte Schaetzung laenger als eine Periode ausserhalb −0,25…1,25
     let sicherAnteil: Double        // Anteil der Messwerte im aktiven Teil mit `sicher`
     let wiederholungsfehler: Double // |Umkehrpunkte / 2 − repsWahr| ueber die ganze Aufnahme
+    var quelle: Schwerkraftquelle = .ruhe // Live-Lauf und Bezug mit derselben Schwerkraft
     var teil: TempoBericht.Teil { TempoBericht.teil(ordner) }
 }
 
@@ -47,13 +48,17 @@ enum TempoBericht {
         String(ordner.prefix(10)) < pruefungAb ? .abstimmung : .pruefung
     }
 
+    /// Eine ausgewaehlte Aufnahme, einmal gelesen fuer alle Quellen.
+    struct Aufnahme { let ordner: String; let art: Befestigungsart; let repsWahr: Int
+                      let werte: [SensorMesswert]; let rateHz: Double }
+
     /// Auswahl wie tools/sensorik-sim/tempo_nachrechnung.py: Art Stapel, Kurz- oder
     /// Langhantel, `repsWahr >= 5`, ohne Luecke (weder Zeile noch in der Statistik),
-    /// mindestens 300 Messwerte. Der Schaetzer laeuft ohne gemerkten Umfang.
-    static func zeilen() throws -> [TempoZeile] {
+    /// mindestens 300 Messwerte.
+    static func aufnahmen() throws -> [Aufnahme] {
         let k = try Korrekturen.laden()
         let fm = FileManager.default
-        var zeilen: [TempoZeile] = []
+        var ergebnis: [Aufnahme] = []
         for (name, eintrag) in k.aufnahmen.sorted(by: { $0.key < $1.key }) {
             guard let art = eintrag.befestigungsart, arten.contains(art),
                   let wahr = eintrag.repsWahr, wahr >= mindestWiederholungen else { continue }
@@ -66,17 +71,24 @@ enum TempoBericht {
             guard datei.statistik.luecken == 0, !hatLueckenZeile else { continue }
             let werte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
             guard werte.count >= mindestMesswerte else { continue }
-            let rate = Double(datei.sensor.rateSollHz)
-            if let z = zeile(ordner: name, art: art, werte: werte, rateHz: rate, repsWahr: wahr) { zeilen.append(z) }
+            ergebnis.append(Aufnahme(ordner: name, art: art, repsWahr: wahr, werte: werte,
+                                     rateHz: Double(datei.sensor.rateSollHz)))
         }
-        return zeilen
+        return ergebnis
+    }
+
+    /// Der Schaetzer laeuft ohne gemerkten Umfang; Live-Lauf und Bezug mit `quelle`.
+    static func zeilen(_ aufnahmen: [Aufnahme], quelle: Schwerkraftquelle = .ruhe) -> [TempoZeile] {
+        aufnahmen.compactMap {
+            zeile(ordner: $0.ordner, art: $0.art, werte: $0.werte, rateHz: $0.rateHz, repsWahr: $0.repsWahr, quelle: quelle)
+        }
     }
 
     /// Spielt die Messwerte live durch den Schaetzer und misst gegen den Bezug; nil ohne Bezug.
     static func zeile(ordner: String, art: Befestigungsart, werte: [SensorMesswert], rateHz: Double,
-                      repsWahr: Int) -> TempoZeile? {
-        guard let bezug = Lagebezug.berechne(werte, rateHz: rateHz) else { return nil }
-        var schaetzer = Lageschaetzer(rateHz: rateHz)
+                      repsWahr: Int, quelle: Schwerkraftquelle = .ruhe) -> TempoZeile? {
+        guard let bezug = Lagebezug.berechne(werte, rateHz: rateHz, schwerkraft: quelle) else { return nil }
+        var schaetzer = Lageschaetzer(rateHz: rateHz, schwerkraft: quelle)
         var live: [Lage] = [], roh: [Double] = []
         live.reserveCapacity(werte.count); roh.reserveCapacity(werte.count)
         for m in werte {
@@ -100,7 +112,42 @@ enum TempoBericht {
             abweichung: abweichung, abweichungSicher: abweichungSicher,
             ausreisser: Double(laengster) > bezug.periode * rateHz,
             sicherAnteil: Double(sichere.count) / Double(a.count),
-            wiederholungsfehler: abs(Double(schaetzer.umkehrpunkte.count) / 2 - Double(repsWahr)))
+            wiederholungsfehler: abs(Double(schaetzer.umkehrpunkte.count) / 2 - Double(repsWahr)),
+            quelle: quelle)
+    }
+
+    // MARK: - Winkel-Versuch
+
+    /// B1: Winkel (°) zwischen der Richtung aus Roll/Pitch und der gemessenen
+    /// Beschleunigung, je ruhendem Messwert, nach Art. Ruhend: Betrag auf 0,01 g
+    /// bei 1 g, Drehrate unter 5 °/s, seit mindestens 0,5 s.
+    static func ruhewinkelfehler(_ aufnahmen: [Aufnahme]) -> [Befestigungsart: [Double]] {
+        var fehler: [Befestigungsart: [Double]] = [:]
+        for a in aufnahmen {
+            let ruheVor = Int((0.5 * a.rateHz).rounded())
+            var ruhig = 0
+            for m in a.werte {
+                let b = m.beschleunigung, w = m.drehrate
+                let betrag = (b.x * b.x + b.y * b.y + b.z * b.z).squareRoot()
+                ruhig = abs(betrag - 1) < 0.01 && (w.x * w.x + w.y * w.y + w.z * w.z).squareRoot() < 5 ? ruhig + 1 : 0
+                guard ruhig >= ruheVor else { continue }
+                let r = Schwerkraftquelle.richtung(winkel: m.winkel)
+                let cosinus = (b.x * r.x + b.y * r.y + b.z * r.z) / betrag
+                fehler[a.art, default: []].append(acos(min(max(cosinus, -1), 1)) * 180 / .pi)
+            }
+        }
+        return fehler
+    }
+
+    /// B3: Mittel von |Bezug `.ruhe` − Bezug `.winkel`| ueber den gemeinsamen aktiven
+    /// Teil; `.some(nil)`, wenn beide Bezuege verschiedene Abschnitte als aktiv nehmen,
+    /// nil ohne einen der Bezuege.
+    static func bezugUnterschied(_ a: Aufnahme) -> Double?? {
+        guard let r = Lagebezug.berechne(a.werte, rateHz: a.rateHz, schwerkraft: .ruhe),
+              let w = Lagebezug.berechne(a.werte, rateHz: a.rateHz, schwerkraft: .winkel) else { return nil }
+        let von = max(r.aktiv.lowerBound, w.aktiv.lowerBound), bis = min(r.aktiv.upperBound, w.aktiv.upperBound)
+        guard bis > von else { return .some(nil) }
+        return (von..<bis).reduce(0) { $0 + abs(r.lage[$1] - w.lage[$1]) } / Double(bis - von)
     }
 
     /// Verschiebung (ms) mit der groessten Korrelation von `live` gegen `bezug`,
@@ -195,7 +242,23 @@ enum TempoBericht {
         return text
     }
 
-    static func markdown(_ zeilen: [TempoZeile]) -> String {
+    /// Zusatzangaben des Winkel-Versuchs: Winkelfehler in Ruhe je Art (B1) und
+    /// Unterschied Bezug `.ruhe` gegen `.winkel` je Aufnahme (B3).
+    struct Versuch {
+        var ruhewinkel: [Befestigungsart: [Double]] = [:]
+        var bezugUnterschied: [(ordner: String, art: Befestigungsart, wert: Double?)] = []
+    }
+
+    static func titel(_ q: Schwerkraftquelle) -> String {
+        switch q {
+        case .ruhe: "Schwerkraft aus der Ruhe (`.ruhe`, bisher)"
+        case .winkel: "Schwerkraft aus Roll/Pitch je Messwert (`.winkel`)"
+        case .drehrate: "Schwerkraft mit der Drehrate fortgeschrieben (`.drehrate`)"
+        }
+    }
+
+    /// `zeilen` aller Quellen; je Quelle ein Abschnitt in der Reihenfolge `.ruhe`, `.winkel`, `.drehrate`.
+    static func markdown(_ zeilen: [TempoZeile], versuch: Versuch = Versuch()) -> String {
         // Datum der juengsten Aufnahme aus dem Ordnernamen (JJJJ-MM-TT-…), nicht heute: der Bericht bleibt gleich.
         let stand = zeilen.map { String($0.ordner.prefix(10)) }.max() ?? "–"
         var text = """
@@ -219,14 +282,49 @@ enum TempoBericht {
             „Wdh. gegen Wahrheit“ (Median von |Umkehrpunkte/2 − `repsWahr`|) ist die einzige Spalte mit echter Wahrheit.
             Verzögerung: Median der Verschiebung mit der größten Korrelation (positiv = live später); |Verzögerung|: Median der Beträge. \
             Alle Spalten sind Mediane über die Sätze der Art, „außerhalb (roh)“ ist eine Anzahl.
+            Winkel-Versuch (Task 5b): je Schwerkraftquelle ein Abschnitt; Live-Lauf und Bezug nutzen dieselbe Quelle.
 
             """
-        text += tabellen(zeilen)
+        if !versuch.ruhewinkel.isEmpty {
+            text += "\n## Winkel in Ruhe\n\n"
+                + "Winkel zwischen der Richtung aus Roll/Pitch und der gemessenen Beschleunigung an ruhenden Messwerten "
+                + "(Betrag auf 0,01 g bei 1 g, Drehrate unter 5 °/s, seit 0,5 s). Über etwa 3° trüge `.winkel` nicht.\n\n"
+                + "| Art | ruhende Messwerte | Winkelfehler (Median) |\n|---|---|---|\n"
+            for art in arten {
+                guard let f = versuch.ruhewinkel[art], !f.isEmpty else { continue }
+                text += "| \(art.rawValue) | \(f.count) | \(zahl(median(f), 2))° |\n"
+            }
+        }
+        if !versuch.bezugUnterschied.isEmpty {
+            text += "\n## Bezug `.ruhe` gegen Bezug `.winkel`\n\n"
+                + "Mittel von |Bezug `.ruhe` − Bezug `.winkel`| im gemeinsamen aktiven Teil, Median über die Sätze: "
+                + "so stark verschiebt die Schwerkraft aus der Ruhe den Bezug selbst.\n\n"
+                + "„verschiedener Abschnitt“: Die beiden Bezüge nehmen ganz verschiedene Teile der Aufnahme als aktiv.\n\n"
+                + "| Art | Sätze | Unterschied (Median) | Unterschied (größter) | verschiedener Abschnitt |\n|---|---|---|---|---|\n"
+            for art in arten {
+                let alle = versuch.bezugUnterschied.filter { $0.art == art }
+                let u = alle.compactMap(\.wert)
+                guard !alle.isEmpty else { continue }
+                text += "| \(art.rawValue) | \(u.count) | \(u.isEmpty ? "–" : zahl(median(u), 3)) "
+                    + "| \(u.isEmpty ? "–" : zahl(u.max() ?? 0, 3)) | \(alle.count - u.count) |\n"
+            }
+        }
+        for quelle in Schwerkraftquelle.allCases {
+            let zq = zeilen.filter { $0.quelle == quelle }
+            guard !zq.isEmpty else { continue }
+            text += "\n## \(titel(quelle))\n" + tabellen(zq)
+            text += schlechteste(zq)
+        }
+        return text
+    }
+
+    private static func schlechteste(_ zeilen: [TempoZeile]) -> String {
+        var text = ""
         for art in arten {
             let z = zeilen.filter { $0.art == art }
             guard !z.isEmpty else { continue }
             let schlechteste = z.sorted { ($0.abweichung, $1.ordner) > ($1.abweichung, $0.ordner) }.prefix(10)
-            text += "\n## \(art.rawValue): die zehn schlechtesten Sätze\n\n"
+            text += "\n#### \(art.rawValue): die zehn schlechtesten Sätze\n\n"
                 + "| Aufnahme | Teil | Verzögerung | Abweichung | Abweichung sicher | außerhalb (roh) | sicher | Wdh. gegen Wahrheit |\n"
                 + "|---|---|---|---|---|---|---|---|\n"
             for e in schlechteste {

@@ -9,7 +9,9 @@ import Foundation
 /// nicht die Zeitstempel-Differenz, weil gebuendelte Messwerte denselben
 /// Zeitstempel tragen (Spec A 4.7).
 /// An jedem Umkehrpunkt werden Nullpunkt und Hub neu gesetzt (Einrasten). Jeder
-/// Sprung der Schaetzung wird eingeblendet statt angezeigt. Der Winkel wird nicht genutzt.
+/// Sprung der Schaetzung wird eingeblendet statt angezeigt. Mit der Standardquelle
+/// `.ruhe` wird der Winkel nicht genutzt; `.winkel` und `.drehrate` sind der
+/// Winkel-Versuch (Task 5b).
 public struct Lageschaetzer: Sendable {
     struct Extrem: Sendable {
         var weg: Double
@@ -79,6 +81,7 @@ public struct Lageschaetzer: Sendable {
     private static let erdbeschleunigung = 9.81
 
     let dt: Double
+    private let quelle: Schwerkraftquelle
     private let stillSchritte: Int
     private let ruheSchritte: Int
     private let ruheVorSchwerkraftSchritte: Int
@@ -147,8 +150,9 @@ public struct Lageschaetzer: Sendable {
     /// Auch das Ende einer Bewegung in Ruhe zaehlt als Umkehrpunkt. Waagerecht ist `oben` das ferne Ende.
     public private(set) var umkehrpunkte: [Umkehrpunkt] = []
 
-    public init(rateHz: Double, umfang: GemerkterUmfang? = nil) {
+    public init(rateHz: Double, umfang: GemerkterUmfang? = nil, schwerkraft: Schwerkraftquelle = .ruhe) {
         dt = 1 / rateHz
+        quelle = schwerkraft
         stillSchritte = Int((Self.stillDauer * rateHz).rounded())
         ruheSchritte = Int((Self.ruheDauer * rateHz).rounded())
         ruheVorSchwerkraftSchritte = Int((Self.ruheVorSchwerkraft * rateHz).rounded())
@@ -227,7 +231,13 @@ public struct Lageschaetzer: Sendable {
     /// Bewegung (Anfangsbeschleunigung und Gleichanteil heben sich auf) wie Ruhe
     /// aus, und die Schwerkraft schluckte die Bewegung.
     private mutating func schwerkraftNachfuehren(_ m: SensorMesswert) {
-        guard let g = schwerkraft else { schwerkraft = m.beschleunigung; return }
+        guard var g = schwerkraft else { schwerkraft = m.beschleunigung; return }
+        if quelle == .drehrate {
+            // Die Schwerkraft liegt fest im Raum: im Sensorrahmen dreht sie sich gegen die Drehrate.
+            // In Ruhe verankert die Nachfuehrung unten sie wieder an der Beschleunigung.
+            g = Schwerkraftquelle.drehen(g, drehrate: m.drehrate, dt: dt)
+            schwerkraft = g
+        }
         let gBetrag = Self.betrag(g)
         let anteil = gleichanteil.wert / Self.erdbeschleunigung / gBetrag
         let ziel = Vektor3(x: m.beschleunigung.x - anteil * g.x, y: m.beschleunigung.y - anteil * g.y,
@@ -245,7 +255,14 @@ public struct Lageschaetzer: Sendable {
     private mutating func aufsummieren(_ m: SensorMesswert) {
         guard let g = schwerkraft else { return }
         let gBetrag = Self.betrag(g)
-        let entlang = (m.beschleunigung.x * g.x + m.beschleunigung.y * g.y + m.beschleunigung.z * g.z) / gBetrag
+        // Richtung je Messwert; der Betrag der Schwerkraft kommt immer aus der Ruhe.
+        let entlang: Double
+        if quelle == .winkel {
+            let r = Schwerkraftquelle.richtung(winkel: m.winkel)
+            entlang = m.beschleunigung.x * r.x + m.beschleunigung.y * r.y + m.beschleunigung.z * r.z
+        } else {
+            entlang = (m.beschleunigung.x * g.x + m.beschleunigung.y * g.y + m.beschleunigung.z * g.z) / gBetrag
+        }
         vertikal = (entlang - gBetrag) * Self.erdbeschleunigung
         let vorher = geschwindigkeit
         geschwindigkeit += (vertikal - gleichanteil.wert) * dt
