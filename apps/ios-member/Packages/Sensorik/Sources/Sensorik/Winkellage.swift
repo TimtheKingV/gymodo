@@ -36,7 +36,9 @@ public struct GemerkterWinkel: Codable, Sendable, Equatable {
 public struct Winkellage: Sendable {
     public static let mindesthubGrad = 40.0
     private static let bewegungGrad = 5.0, achseFestGrad = 20.0
-    private static let hysterese = 0.1, stilleSekunden = 0.5, stilleAbweichungGrad = 4.0
+    private static let hysterese = 0.1
+    /// Still: ĝ weicht in den letzten `stilleSekunden` hoechstens `stilleAbweichungGrad` vom Mittel ab.
+    static let stilleSekunden = 0.5, stilleAbweichungGrad = 4.0
     private static let trendSekunden = 0.1, totzone = 0.01
 
     private enum Phase { case ruhe, hin, rueck }

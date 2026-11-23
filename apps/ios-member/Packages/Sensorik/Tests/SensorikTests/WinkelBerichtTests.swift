@@ -79,6 +79,79 @@ struct WinkelBerichtTests {
         #expect(mac.allSatisfy { $0.mitLosMarke && $0.ohneStart.losT == nil })
         // Alle Mac-Aufnahmen tragen `# los 5.000000`; los() kommt vor dem ersten Messwert ab 5 s.
         #expect(mac.allSatisfy { p in p.mitStart.losT.map { $0 >= 5 && $0 < 5.1 } == true })
+        // Der Lauf mit Los-Marke endet an `# ende`; ohne Start laeuft die ganze Aufnahme.
+        #expect(mac.allSatisfy { $0.mitStart.endeT != nil && $0.ohneStart.endeT == nil })
+        // 2137-01: die zusaetzliche Wiederholung nach `# ende` (Ablegen) faellt weg.
+        let a2137 = try #require(mac.first { $0.ohneStart.ordner == "2026-11-23-2137-01" })
+        #expect(a2137.mitStart.erkannt < a2137.ohneStart.erkannt)
+        #expect(mac.allSatisfy { $0.taktGipfel > 0 })
+    }
+
+    // MARK: Nachbesserung 1
+
+    @Test func endeMarkeAusDerCSV() {
+        #expect(WinkelBericht.endeMarke(csv: "t,ax\n# los 5.0\n0.0,1\n# ende 96.702000\n") == 96.702)
+        #expect(WinkelBericht.endeMarke(csv: "t,ax\n0.0,1\n") == nil)
+        #expect(WinkelBericht.taktGipfel(csv: "# takt oben 6.5\n# takt unten 9.0\n# takt oben 10.5\n") == 2)
+    }
+
+    @Test func endeBeiDerZeileHoertDortAuf() {
+        // Nach 5 vollen Wiederholungen (3 s Ruhe + 5 · 4 s) und 0,5 s in die sechste hinein.
+        let eintraege = Synthetik.drehsatz(wiederholungen: 8).werte.map { SensorAufnahmeLeser.Eintrag.messwert($0) }
+        let z = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: eintraege,
+                                    rateHz: 50, losBei: 2.5, endeBei: 23.5)
+        #expect(z.erkannt == 5 && z.wdhFehler == 3)
+        #expect(z.endeT.map { $0 >= 23.5 && $0 < 23.55 } == true)
+    }
+
+    /// Zeile mit vorgegebenen Kennzahlen.
+    func zeile(_ o: String, hub: Double, fehler: Double, sprung: Double = 0.05, sicher: Double = 1) -> WinkelZeile {
+        WinkelZeile(ordner: o, art: .kurzhantel, pruefung: false, repsWahr: 10, hubGrad: hub, wdhFehler: fehler,
+                    sicherAnteil: sicher, hubStreuung: 0, groessterSprung: sprung)
+    }
+
+    @Test func vergleichNurUeberGemeinsamGeeigneteSaetze() {
+        let paare = [
+            WinkelPaar(ohneStart: zeile("a", hub: 100, fehler: 2), mitStart: zeile("a", hub: 100, fehler: 0), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("b", hub: 100, fehler: 4), mitStart: zeile("b", hub: 100, fehler: 0), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("c", hub: 190, fehler: 8, sprung: 5), mitStart: zeile("c", hub: 20, fehler: 8), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("d", hub: 30, fehler: 9), mitStart: zeile("d", hub: 60, fehler: 9, sprung: 0.5), mitLosMarke: false),
+        ]
+        let v = WinkelBericht.vergleich(paare)
+        #expect(v.nurOhne == 1 && v.nurMit == 1 && v.gemeinsam == 2)
+        #expect(v.ohne == WinkelTor(saetze: 2, wdhFehler: 3, sicherAnteil: 1, spruenge: 0))
+        #expect(v.mit == WinkelTor(saetze: 2, wdhFehler: 0, sicherAnteil: 1, spruenge: 0))
+    }
+
+    @Test func geschaetzterStartSchlechterListetFehlerUndSprung() {
+        let paare = [
+            WinkelPaar(ohneStart: zeile("besser", hub: 100, fehler: 2), mitStart: zeile("besser", hub: 100, fehler: 0), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("fehler", hub: 100, fehler: 0), mitStart: zeile("fehler", hub: 100, fehler: 1), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("sprung", hub: 100, fehler: 0, sprung: 0.13), mitStart: zeile("sprung", hub: 100, fehler: 0, sprung: 0.72), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("klein", hub: 100, fehler: 0, sprung: 0.09), mitStart: zeile("klein", hub: 100, fehler: 0, sprung: 0.12), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("raus", hub: 197, fehler: 1.5), mitStart: zeile("raus", hub: 20, fehler: 3), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("nie", hub: 20, fehler: 1), mitStart: zeile("nie", hub: 20, fehler: 5), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("mac", hub: 100, fehler: 0), mitStart: zeile("mac", hub: 100, fehler: 1), mitLosMarke: true),
+        ]
+        #expect(WinkelBericht.schlechter(paare).map(\.ohneStart.ordner) == ["fehler", "sprung", "raus"])
+    }
+
+    @Test func woDerWinkelTraegtOhneNachtraeglichesWissen() {
+        let paare = [
+            WinkelPaar(ohneStart: zeile("a", hub: 30, fehler: 0), mitStart: zeile("a", hub: 60, fehler: 0), mitLosMarke: false),
+            WinkelPaar(ohneStart: zeile("m", hub: 30, fehler: 0), mitStart: zeile("m", hub: 60, fehler: 0), mitLosMarke: true),
+        ]
+        #expect(WinkelBericht.traegtZeilen(paare).map(\.hubGrad) == [30, 60])
+    }
+
+    @Test func unbestimmbarerStartWirdMarkiert() {
+        let p = WinkelBericht.paar(ordner: "leer", art: .kurzhantel, pruefung: false, repsWahr: 10, eintraege: [],
+                                   rateHz: 50, uebung: "", csv: "t,ax\n")
+        #expect(p.startUnbestimmt && p.mitStart.losT == nil)
+        let text = WinkelBericht.markdown([p], ausgelassen: ["2026-01-01-0000-01"])
+        #expect(text.contains("Sätze gelesen: 1, ausgelassen: 1 (2026-01-01-0000-01)"))
+        #expect(text.contains("Kein Start bestimmbar: leer"))
+        #expect(!text.contains("obere Schranke"))
     }
 
     @Test func macAufnahmenVom23NovemberSindDabei() throws {
