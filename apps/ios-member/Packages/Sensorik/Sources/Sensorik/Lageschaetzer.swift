@@ -62,6 +62,10 @@ public struct Lageschaetzer: Sendable {
     private static let groberGeschwindigkeitsfehler = 0.1
     /// Kleinere Ausschlaege setzen den Hub nicht neu.
     private static let kleinsterHub = 0.02
+    /// Zwei gleichartige Umkehrpunkte gehoeren zu aufeinanderfolgenden
+    /// Wiederholungen, wenn sie so weit auseinander liegen (s).
+    private static let kleinsteWiederholung = 0.8
+    private static let groessteWiederholung = 12.0
     private static let erdbeschleunigung = 9.81
 
     private let dt: Double
@@ -104,6 +108,9 @@ public struct Lageschaetzer: Sendable {
     /// Ab dem zweiten Umkehrpunkt danach traegt sie.
     private var gleichanteilSchritt: Int?
     private var umkehrpunkteSeitGleichanteil = 0
+    /// Letztes oberes und unteres Extrem, fuer den Versatz der Geschwindigkeit.
+    private var letztesOben: Extrem?
+    private var letztesUnten: Extrem?
     private var vertraut: Bool { umkehrpunkteSeitGleichanteil >= 2 }
 
     /// Auch das Ende einer Bewegung in Ruhe zaehlt als Umkehrpunkt. Waagerecht ist `oben` das ferne Ende.
@@ -289,6 +296,10 @@ public struct Lageschaetzer: Sendable {
     /// Setzt Nullpunkt und Hub am Umkehrpunkt neu und blendet die Korrektur ein.
     private mutating func einrasten(oben: Bool, extrem: Extrem) {
         let alt = lage(beiWeg: weg)
+        var extrem = extrem
+        let vorher = oben ? letztesOben : letztesUnten
+        if vertraut, let vorher { versatzBerichtigen(von: vorher, bis: &extrem) }
+        if oben { letztesOben = extrem } else { letztesUnten = extrem }
         let ausschlag = abs(extrem.weg - ankerWeg)
         // Nur eine Halbwelle, die ganz nach der ersten Schaetzung des Gleichanteils
         // liegt, misst den Hub. Davor nimmt sie ihn hoechstens bis `anfangsHub`
@@ -309,6 +320,23 @@ public struct Lageschaetzer: Sendable {
         ankerSchritt = extrem.schritt
         einblenden(von: alt)
         umkehrpunkte.append(Umkehrpunkt(t: extrem.t, oben: oben))
+    }
+
+    /// Gleichartige Umkehrpunkte liegen (fast) auf derselben Hoehe: Ueber eine
+    /// Wiederholung ist die mittlere Geschwindigkeit null. Was davon abweicht, ist
+    /// ein fester Versatz der Geschwindigkeit (ein falsch nachgetragener
+    /// Gleichanteil, ein grob gesetzter Stillstand); er wird ab dem Extrem
+    /// abgezogen. Sonst laeuft der Weg je Halbwelle um Versatz mal Dauer weg, und
+    /// ein Versatz ueber der Spitzengeschwindigkeit verschluckt die Umkehrpunkte.
+    private mutating func versatzBerichtigen(von vorher: Extrem, bis extrem: inout Extrem) {
+        let dauer = Double(extrem.schritt - vorher.schritt) * dt
+        guard dauer >= Self.kleinsteWiederholung, dauer <= Self.groessteWiederholung else { return }
+        let versatz = (extrem.weg - vorher.weg) / dauer
+        // Seit dem letzten Anker gehoert der Versatz zum Weg; davor zaehlt der Weg nicht mehr.
+        let seitAnker = Double(extrem.schritt - ankerSchritt) * dt
+        extrem.weg -= versatz * seitAnker
+        weg -= versatz * Double(schritt - ankerSchritt) * dt
+        geschwindigkeit -= versatz
     }
 
     // MARK: - Ruhe und Ausgabe
