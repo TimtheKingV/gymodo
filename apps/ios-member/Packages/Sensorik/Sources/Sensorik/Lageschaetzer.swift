@@ -62,6 +62,10 @@ public struct Lageschaetzer: Sendable {
     private static let groberGeschwindigkeitsfehler = 0.1
     /// Kleinere Ausschlaege setzen den Hub nicht neu.
     private static let kleinsterHub = 0.02
+    /// Ausserhalb davon traegt eine sichere Lage nicht mehr.
+    private static let haltbar = -0.5...1.5
+    /// Anteil des Hubs, ab dem eine Halbwelle mit gemessenem Hub zaehlt.
+    private static let kleinsteHalbwelle = 0.25
     /// Zwei gleichartige Umkehrpunkte gehoeren zu aufeinanderfolgenden
     /// Wiederholungen, wenn sie so weit auseinander liegen (s).
     private static let kleinsteWiederholung = 0.8
@@ -97,6 +101,8 @@ public struct Lageschaetzer: Sendable {
     private var ankerLage: Double
     private var hub: Double
     private var hubGemessen: Bool
+    /// Die letzten gemessenen Ausschlaege (m), juengster zuletzt.
+    private var ausschlaege: [Double] = []
     private var korrektur = 0.0
     private var letzteAusgabe: Double
     /// Messwert der ersten bestaetigten Schaetzung des Gleichanteils (oder des
@@ -148,6 +154,13 @@ public struct Lageschaetzer: Sendable {
         // Ab jetzt gilt die Lage ungehalten: von der zuletzt angezeigten aus einblenden.
         if vertraut && !warVertraut { korrektur = letzteAusgabe - lage(beiWeg: weg) }
         var lage = lage(beiWeg: weg) + korrektur
+        if vertraut, !Self.haltbar.contains(lage) {
+            // Weit aus dem Umfang: Die Schaetzung hat ihren Halt verloren (ein falscher
+            // Gleichanteil, ein verpasster Umkehrpunkt). Zurueck auf unsicher; die Pruefung
+            // auf grobe Fehler an den Extremen greift wieder, bis zwei Umkehrpunkte tragen.
+            gleichanteilSchritt = schritt
+            umkehrpunkteSeitGleichanteil = 0
+        }
         if !vertraut { lage = min(max(lage, 0), 1) }
         let blend = max(Self.blendRateStill * dt, Self.blendAnteil * abs(geschwindigkeit) * dt / hub)
         korrektur = korrektur > 0 ? max(0, korrektur - blend) : min(0, korrektur + blend)
@@ -271,7 +284,7 @@ public struct Lageschaetzer: Sendable {
             var extrem = extrem
             if vorzeichen * (weg - extrem.weg) > 0 { extrem = Extrem(weg: weg, schritt: schritt, t: m.t) }
             if vorzeichen * geschwindigkeit < -schwelle {
-                einrasten(oben: vorzeichen > 0, extrem: extrem)
+                if istUmkehr(oben: vorzeichen > 0, extrem: extrem) { einrasten(oben: vorzeichen > 0, extrem: extrem) }
                 halbwelle = .laeuft(vorzeichen: -vorzeichen, extrem: Extrem(weg: weg, schritt: schritt, t: m.t), still: 0)
             } else if abs(geschwindigkeit) < schwelle {
                 let still = still + 1
@@ -285,6 +298,16 @@ public struct Lageschaetzer: Sendable {
                 halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: 0)
             }
         }
+    }
+
+    /// Mit gemessenem Hub ist eine Halbwelle unter `kleinsteHalbwelle` des Hubs,
+    /// oder eine, die beim Anker wieder auf dessen Seite endet, nur ein Zittern
+    /// der Geschwindigkeit um den Umkehrpunkt (am Geraet haeufig): Sie setzt
+    /// weder Hub noch Anker. Sonst nahm ein einziges Zittern den Hub auf wenige
+    /// Zentimeter, und die Lage schoss weit aus 0…1.
+    private func istUmkehr(oben: Bool, extrem: Extrem) -> Bool {
+        guard hubGemessen else { return true }
+        return (ankerLage > 0.5) != oben && abs(extrem.weg - ankerWeg) >= Self.kleinsteHalbwelle * hub
     }
 
     /// Stillstand beendet die Bewegung nur, wenn sie auf die Ruhelage zulief und nahe bei ihr steht.
@@ -305,7 +328,10 @@ public struct Lageschaetzer: Sendable {
         // liegt, misst den Hub. Davor nimmt sie ihn hoechstens bis `anfangsHub`
         // zurueck: Ein vom Gleichanteil verkuerzter Weg macht den Hub nicht winzig.
         if umkehrpunkteSeitGleichanteil >= 1, ausschlag >= Self.kleinsterHub {
-            hub = ausschlag
+            // Median der letzten drei: Eine einzelne verzerrte Halbwelle setzt den Hub nicht.
+            ausschlaege = Array((ausschlaege + [ausschlag]).suffix(3))
+            let s = ausschlaege.sorted()
+            hub = s.count == 2 ? (s[0] + s[1]) / 2 : s[s.count / 2]
             hubGemessen = true
         } else if !hubGemessen {
             hub = max(Self.anfangsHub, ausschlag)
