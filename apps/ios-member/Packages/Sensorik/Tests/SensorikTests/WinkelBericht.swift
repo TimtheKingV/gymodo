@@ -12,9 +12,19 @@ struct WinkelZeile {
     let groessterSprung: Double    // groesster Schritt der Lage zwischen zwei Messwerten
     var uebung = ""                // kontext.exerciseName
     var luecken = 0                // Zahl der Luecken-Zeilen der Aufnahme
+    var erkannt = 0.0              // Umkehrpunkte / 2
+    var losT: Double?              // Zeit des Messwerts, vor dem `los()` kam; nil ohne Start
 }
 
 struct WinkelTor: Equatable { let saetze: Int; let wdhFehler: Double; let sicherAnteil: Double; let spruenge: Int }
+
+/// Eine Aufnahme in beiden Laeufen: ohne Start und mit Start (Los-Marke oder nachtraeglich bestimmt).
+struct WinkelPaar {
+    let ohneStart: WinkelZeile
+    let mitStart: WinkelZeile
+    /// Die Aufnahme traegt eine Zeile `# los <t>`; `mitStart` laeuft dann ueber diese Marke.
+    let mitLosMarke: Bool
+}
 
 /// Der Winkel ist eine direkte Messung der Lage; deshalb wird er gegen die gezaehlten Wiederholungen geprueft,
 /// nicht gegen eine nachtraegliche Rechnung.
@@ -24,6 +34,8 @@ enum WinkelBericht {
     static let wdhFehlerMax = 1.0
     static let sicherMin = 0.9
     static let mindestWiederholungen = 5
+    /// Rand des Satzbands fuer den nachtraeglichen Start, in Grad.
+    static let satzbandRandGrad = 15.0
 
     static func geeignet(_ z: WinkelZeile) -> Bool { z.hubGrad >= mindesthubGrad }
 
@@ -42,13 +54,18 @@ enum WinkelBericht {
     // MARK: - Eine Aufnahme
 
     /// Spielt die Eintraege live (ohne gemerkten Wert) durch die `Winkellage`; Luecken-Zeilen gehen als `luecke` hinein.
+    /// Mit `losBei` wartet die `Winkellage` auf den Start; `los()` kommt vor dem ersten Messwert mit `t >= losBei`.
     static func zeile(ordner: String, art: Befestigungsart?, pruefung: Bool, repsWahr: Int,
-                      eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double, uebung: String = "") -> WinkelZeile {
-        var schaetzer = Winkellage(rateHz: rateHz)
+                      eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double, uebung: String = "",
+                      losBei: Double? = nil) -> WinkelZeile {
+        var schaetzer = Winkellage(rateHz: rateHz, wartetAufLos: losBei != nil)
         var lagen: [Lage] = [], winkel: [Double] = [], luecken = 0
+        var losT: Double?
         for e in eintraege {
             switch e {
-            case .messwert(let m): lagen.append(schaetzer.verarbeite(m)); winkel.append(schaetzer.drehwinkelGrad)
+            case .messwert(let m):
+                if let losBei, losT == nil, m.t >= losBei { schaetzer.los(); losT = m.t }
+                lagen.append(schaetzer.verarbeite(m)); winkel.append(schaetzer.drehwinkelGrad)
             case .luecke(let von, let bis): schaetzer.luecke(von: von, bis: bis); luecken += 1
             case .rate, .marke: break
             }
@@ -66,10 +83,11 @@ enum WinkelBericht {
         }
 
         let hub = schaetzer.gemerkt?.hubGrad ?? 0
+        let erkannt = Double(punkte.count) / 2
         return WinkelZeile(ordner: ordner, art: art, pruefung: pruefung, repsWahr: repsWahr, hubGrad: hub,
-                           wdhFehler: abs(Double(punkte.count) / 2 - Double(repsWahr)), sicherAnteil: sicher,
+                           wdhFehler: abs(erkannt - Double(repsWahr)), sicherAnteil: sicher,
                            hubStreuung: streuung(punkte, lagen: lagen, winkel: winkel),
-                           groessterSprung: sprung, uebung: uebung, luecken: luecken)
+                           groessterSprung: sprung, uebung: uebung, luecken: luecken, erkannt: erkannt, losT: losT)
     }
 
     /// Hub je Wiederholung = Drehwinkel φ der `Winkellage` (entfaltet) vom oberen Umkehrpunkt zum folgenden
@@ -90,12 +108,63 @@ enum WinkelBericht {
         return varianz.squareRoot() / mittel
     }
 
+    // MARK: - Start
+
+    /// Zeit aus der Zeile `# los <t>` der CSV, falls vorhanden (der `SensorAufnahmeLeser` ueberliest sie).
+    static func losMarke(csv: String) -> Double? {
+        for zeile in csv.split(whereSeparator: \.isNewline) where zeile.hasPrefix("# los ") {
+            return Double(zeile.dropFirst("# los ".count).trimmingCharacters(in: .whitespaces))
+        }
+        return nil
+    }
+
+    /// Nachtraeglicher Start mit Wissen ueber den ganzen Satz. Satzband: normiertes Mittel der Schwerkraftrichtung ĝ
+    /// ueber die mittlere Haelfte der Aufnahme (nach der Zeit), Radius = groesster Abstand dort plus `satzbandRandGrad`.
+    /// Aktiver Teil: der zusammenhaengende Abschnitt im Satzband, der die mittlere Haelfte enthaelt, rueckwaerts von
+    /// ihrem Beginn verfolgt. `los()` kommt am Ende des ersten Stillstands (Kriterium der `Winkellage`: 0,5 s, 4°),
+    /// der in den ersten 2 s dieses Abschnitts beginnt; ohne Stillstand dort (Aufnehmen bis in den Satz) am ersten
+    /// Messwert des Abschnitts, an dem die Drehung unter 20 °/s faellt. Ergebnis: Zeit dieses Messwerts; nil ohne Messwerte.
+    static func startNachtraeglich(_ eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double) -> Double? {
+        let messwerte = eintraege.compactMap { if case .messwert(let m) = $0 { m } else { nil } }
+        guard !messwerte.isEmpty else { return nil }
+        let g = messwerte.map { Winkellage.schwerkraft($0.winkel) }
+        let n = g.count, mitte = (n / 4)..<max(n / 4 + 1, 3 * n / 4)
+        let c = Winkellage.mittel(g[mitte])
+        func abstand(_ v: Vektor3) -> Double { acos(min(max(Winkellage.punkt(v, c), -1), 1)) * 180 / .pi }
+        let radius = mitte.map { abstand(g[$0]) }.max()! + satzbandRandGrad
+        var a = mitte.lowerBound
+        while a > 0, abstand(g[a - 1]) <= radius { a -= 1 }
+
+        let halbe = Int(0.5 * rateHz), grenze = cos(4.0 * .pi / 180)
+        func still(_ i: Int) -> Bool {
+            guard i + 1 >= halbe, halbe > 0 else { return false }
+            let w = g[(i + 1 - halbe)...i], m = Winkellage.mittel(w)
+            return w.allSatisfy { Winkellage.punkt($0, m) >= grenze }
+        }
+        // Die erste halbe Sekunde kann noch nicht still heissen; gesucht wird ab ihrem Ende.
+        let beginn = min(max(a, halbe - 1), n - 1)
+        if let j = (beginn...min(n - 1, beginn + Int(2 * rateHz))).first(where: still) {
+            var i = j
+            while i + 1 < n, still(i + 1) { i += 1 }
+            return messwerte[i].t
+        }
+        // Ohne Stillstand: der erste Messwert, an dem die Drehung unter 20 °/s faellt (Ende des Aufnehmens).
+        let schritt = max(1, Int(0.1 * rateHz))
+        func langsam(_ i: Int) -> Bool {
+            guard i >= schritt else { return false }
+            let grad = acos(min(max(Winkellage.punkt(g[i - schritt], g[i]), -1), 1)) * 180 / .pi
+            return grad * rateHz / Double(schritt) < 20
+        }
+        return messwerte[(beginn..<n).first(where: langsam) ?? beginn].t
+    }
+
     // MARK: - Alle Aufnahmen
 
     /// Alle Aufnahmen mit bekannter Wiederholungszahl >= 5, auch solche unter 40° Hub: (a) Ordner mit Eintrag in
     /// `korrekturen.json` und `repsWahr`, gleich welcher Art; (b) Ordner, deren `aufnahme.json` den Schluessel
     /// `tempo` traegt (Mac-Aufnahmen mit Metronom), dort gilt `label.reps`. Lueckenzeilen gehen an die `Winkellage`.
-    static func zeilen() throws -> [WinkelZeile] {
+    /// Je Aufnahme zwei Laeufe: ohne Start und mit Start (Los-Marke, sonst `startNachtraeglich`).
+    static func paare() throws -> [WinkelPaar] {
         let k = try Korrekturen.laden()
         let fm = FileManager.default
         var wahr: [String: Int] = [:]
@@ -109,18 +178,27 @@ enum WinkelBericht {
                   reps >= mindestWiederholungen else { continue }
             wahr[name] = reps
         }
-        var ergebnis: [WinkelZeile] = []
+        var ergebnis: [WinkelPaar] = []
         for (name, reps) in wahr.sorted(by: { $0.key < $1.key }) {
             let ordner = Pfade.aufnahmen.appendingPathComponent(name)
-            guard fm.fileExists(atPath: ordner.appendingPathComponent("messwerte.csv").path) else { continue }
+            let csvPfad = ordner.appendingPathComponent("messwerte.csv")
+            guard fm.fileExists(atPath: csvPfad.path) else { continue }
             let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
-            ergebnis.append(zeile(ordner: name, art: datei.befestigungsart ?? k.aufnahmen[name]?.befestigungsart,
-                                  pruefung: TempoBericht.teil(name) == .pruefung, repsWahr: reps,
-                                  eintraege: eintraege, rateHz: Double(datei.sensor.rateSollHz),
-                                  uebung: datei.kontext.exerciseName))
+            let rate = Double(datei.sensor.rateSollHz)
+            let marke = losMarke(csv: try String(contentsOf: csvPfad, encoding: .utf8))
+            func lauf(_ losBei: Double?) -> WinkelZeile {
+                zeile(ordner: name, art: datei.befestigungsart ?? k.aufnahmen[name]?.befestigungsart,
+                      pruefung: TempoBericht.teil(name) == .pruefung, repsWahr: reps, eintraege: eintraege,
+                      rateHz: rate, uebung: datei.kontext.exerciseName, losBei: losBei)
+            }
+            ergebnis.append(WinkelPaar(ohneStart: lauf(nil), mitStart: lauf(marke ?? startNachtraeglich(eintraege, rateHz: rate)),
+                                       mitLosMarke: marke != nil))
         }
         return ergebnis
     }
+
+    /// Die Laeufe ohne Start.
+    static func zeilen() throws -> [WinkelZeile] { try paare().map(\.ohneStart) }
 
     // MARK: - Bericht
 
@@ -147,12 +225,31 @@ enum WinkelBericht {
         return text
     }
 
-    static func markdown(_ zeilen: [WinkelZeile]) -> String {
+    /// Kennzahlen eines Laufs als Zellen: geeignet, Hub, Wdh.-Fehler, Sicher, Streuung, Sprung, tragfaehig.
+    private static func zellen(_ z: [WinkelZeile]) -> [String] {
+        let g = z.filter(geeignet), t = tor(z)
+        guard !g.isEmpty else { return ["0", "–", "–", "–", "–", "–", "nein"] }
+        return ["\(g.count)", "\(zahl(TempoBericht.median(g.map(\.hubGrad)), 0)) °", zahl(t.wdhFehler, 1),
+                TempoBericht.pct(t.sicherAnteil), zahl(TempoBericht.median(g.map(\.hubStreuung)), 3), "\(t.spruenge)",
+                tragfaehig(t) ? "ja" : "nein"]
+    }
+
+    private static func tabellenzeile(_ name: String, _ p: [WinkelPaar]) -> String {
+        let ohne = zellen(p.map(\.ohneStart)), mit = zellen(p.map(\.mitStart))
+        return "| \(name) | \(p.count) | " + zip(ohne, mit).map { "\($0) / \($1)" }.joined(separator: " | ") + " |\n"
+    }
+
+    static func markdown(_ paare: [WinkelPaar]) -> String {
         var text = """
             # Winkellage
 
             Der Winkel ist eine direkte Messung der Lage der Last; deshalb wird die `Winkellage` hier gegen die gezählten \
             Wiederholungen geprüft, nicht gegen eine nachträgliche Rechnung.
+
+            Signal: Drehung der Schwerkraftrichtung ĝ = (−sin p, sin r · cos p, cos r · cos p) aus Roll r und Pitch p gegenüber \
+            der Ruherichtung, in der Drehebene der ersten Bewegung gemessen und über ±180° entfaltet. Es hat keine Sprungstelle \
+            bei Pitch ±90°. Grenze: Eine Drehung um die Senkrechte (waagerecht schwenkende Hebelarme) ändert die \
+            Schwerkraftrichtung nicht und ist für den Winkel unsichtbar.
 
             Auswahl: alle Aufnahmen mit bekannter Wiederholungszahl ≥ \(mindestWiederholungen), auch ohne oder mit anderer \
             Befestigungsart: `repsWahr` aus `korrekturen.json`, bei den Mac-Aufnahmen mit Metronom (`tempo` in `aufnahme.json`) \
@@ -163,42 +260,72 @@ enum WinkelBericht {
             über \(zahl(sprungMax, 1)) zwischen zwei Messwerten (Lücken nicht ausgenommen).
             „tragfähig“: Wdh.-Fehler ≤ \(zahl(wdhFehlerMax, 0)), Sicher ≥ \(zahl(sicherMin, 1)) und kein Satz mit Sprung.
 
+            Jede Zelle zeigt zwei Läufe: **ohne Start / mit Start**. „Ohne Start“: die `Winkellage` legt die Ruherichtung \
+            mit der ersten Bewegung fest; das Aufnehmen der Hantel zählt mit. „Mit Start“: `los()` kommt vor dem Satz. \
+            Bei den Mac-Aufnahmen steht der Start als Zeile `# los <t>` in der Aufnahme (Zeile „mit Los-Marke“), das ist \
+            der echte Ablauf. Bei allen anderen Aufnahmen gibt es keine Marke; der Start wird **nachträglich mit Wissen über \
+            den ganzen Satz** gesetzt und ist deshalb eine **obere Schranke, kein Ergebnis**: Satzband = Mittelrichtung \
+            von ĝ über die mittlere Hälfte der Aufnahme, Radius = größter Abstand dort + \(zahl(satzbandRandGrad, 0))°; \
+            aktiver Teil = der zusammenhängende Abschnitt im Satzband um diese Mitte; `los()` am Ende des ersten Stillstands \
+            (0,5 s, 4°), der in den ersten 2 s dieses Abschnitts beginnt, ohne Stillstand dort am ersten Messwert, an dem die \
+            Drehung unter 20 °/s fällt (Ende des Aufnehmens).
+
             """
         for pruefung in [false, true] {
-            let z = zeilen.filter { $0.pruefung == pruefung }
+            let p = paare.filter { $0.ohneStart.pruefung == pruefung }
             text += "\n## \(pruefung ? TempoBericht.Teil.pruefung.rawValue : TempoBericht.Teil.abstimmung.rawValue) "
                 + "(\(pruefung ? "ab" : "vor") \(TempoBericht.pruefungAb))\n\n"
                 + "| Art | Sätze | geeignet | Hub (Median) | Wdh.-Fehler | Sicher | Streuung | Sätze mit Sprung | tragfähig |\n"
                 + "|---|---|---|---|---|---|---|---|---|\n"
             for art in artenGeordnet {
-                let a = z.filter { $0.art == art }
-                guard !a.isEmpty else { continue }
-                let g = a.filter(geeignet), t = tor(a)
-                guard !g.isEmpty else { text += "| \(artName(art)) | \(a.count) | 0 | – | – | – | – | – | nein |\n"; continue }
-                text += "| \(artName(art)) | \(a.count) | \(g.count) | \(zahl(TempoBericht.median(g.map(\.hubGrad)), 0)) ° "
-                    + "| \(zahl(t.wdhFehler, 1)) | \(TempoBericht.pct(t.sicherAnteil)) "
-                    + "| \(zahl(TempoBericht.median(g.map(\.hubStreuung)), 3)) | \(t.spruenge) | \(tragfaehig(t) ? "ja" : "nein") |\n"
+                let a = p.filter { $0.ohneStart.art == art && !$0.mitLosMarke }
+                if !a.isEmpty { text += tabellenzeile(artName(art), a) }
+                let mac = p.filter { $0.ohneStart.art == art && $0.mitLosMarke }
+                if !mac.isEmpty { text += tabellenzeile("\(artName(art)) mit Los-Marke", mac) }
             }
         }
-        let geeignete = zeilen.filter(geeignet)
-        let mitSprung = geeignete.filter { $0.groessterSprung > sprungMax }
+        let mac = paare.filter(\.mitLosMarke)
+        if !mac.isEmpty {
+            text += "\n## Aufnahmen mit Los-Marke\n\n"
+                + "Je Zelle ohne Start / mit Los-Marke.\n\n"
+                + "| Aufnahme | Übung | Wiederholungen | Hub | erkannt | Sicher | größter Sprung |\n|---|---|---|---|---|---|---|\n"
+            for p in mac {
+                let o = p.ohneStart, m = p.mitStart
+                func hub(_ z: WinkelZeile) -> String { z.hubGrad > 0 ? "\(zahl(z.hubGrad, 0)) °" : "–" }
+                text += "| \(o.ordner) | \(o.uebung) | \(o.repsWahr) | \(hub(o)) / \(hub(m)) "
+                    + "| \(zahl(o.erkannt, 1)) / \(zahl(m.erkannt, 1)) "
+                    + "| \(TempoBericht.pct(o.sicherAnteil)) / \(TempoBericht.pct(m.sicherAnteil)) "
+                    + "| \(zahl(o.groessterSprung, 2)) / \(zahl(m.groessterSprung, 2)) |\n"
+            }
+        }
+        let mitSprung = paare.filter { p in
+            [p.ohneStart, p.mitStart].contains { geeignet($0) && $0.groessterSprung > sprungMax }
+        }
         text += "\n## Geeignete Sätze mit Sprung\n\n"
         if mitSprung.isEmpty { text += "Keine.\n" } else {
-            text += "| Aufnahme | Teil | Art | Übung | Hub | größter Sprung | Lücken |\n|---|---|---|---|---|---|---|\n"
-            for z in mitSprung {
-                text += "| \(z.ordner) | \(z.pruefung ? "Prüfung" : "Abstimmung") | \(artName(z.art)) | \(z.uebung) "
-                    + "| \(zahl(z.hubGrad, 0)) ° | \(zahl(z.groessterSprung, 2)) | \(z.luecken) |\n"
+            text += "Je Zelle ohne Start / mit Start; „–“: in diesem Lauf nicht geeignet.\n\n"
+                + "| Aufnahme | Teil | Art | Übung | Hub | größter Sprung | Lücken |\n|---|---|---|---|---|---|---|\n"
+            for p in mitSprung {
+                let o = p.ohneStart, m = p.mitStart
+                func hub(_ z: WinkelZeile) -> String { geeignet(z) ? "\(zahl(z.hubGrad, 0)) °" : "–" }
+                func sprung(_ z: WinkelZeile) -> String { geeignet(z) ? zahl(z.groessterSprung, 2) : "–" }
+                text += "| \(o.ordner) | \(o.pruefung ? "Prüfung" : "Abstimmung") | \(artName(o.art)) | \(o.uebung) "
+                    + "| \(hub(o)) / \(hub(m)) | \(sprung(o)) / \(sprung(m)) | \(o.luecken) |\n"
             }
         }
-        text += "\n## Die zehn geeigneten Sätze mit dem größten Wiederholungsfehler\n\n"
+        text += "\n## Die zehn geeigneten Sätze mit dem größten Wiederholungsfehler (mit Start)\n\n"
+            + "Je Zelle ohne Start / mit Start.\n\n"
             + "| Aufnahme | Teil | Art | Übung | Wiederholungen | Hub | Wdh.-Fehler | Sicher |\n|---|---|---|---|---|---|---|---|\n"
-        for z in geeignete.sorted(by: { ($0.wdhFehler, $1.ordner) > ($1.wdhFehler, $0.ordner) }).prefix(10) {
-            text += "| \(z.ordner) | \(z.pruefung ? "Prüfung" : "Abstimmung") | \(artName(z.art)) | \(z.uebung) "
-                + "| \(z.repsWahr) | \(zahl(z.hubGrad, 0)) ° | \(zahl(z.wdhFehler, 1)) | \(TempoBericht.pct(z.sicherAnteil)) |\n"
+        let geeignetMit = paare.filter { geeignet($0.mitStart) }
+        for p in geeignetMit.sorted(by: { ($0.mitStart.wdhFehler, $1.mitStart.ordner) > ($1.mitStart.wdhFehler, $0.mitStart.ordner) }).prefix(10) {
+            let o = p.ohneStart, m = p.mitStart
+            text += "| \(m.ordner) | \(m.pruefung ? "Prüfung" : "Abstimmung") | \(artName(m.art)) | \(m.uebung) "
+                + "| \(m.repsWahr) | \(zahl(o.hubGrad, 0)) ° / \(zahl(m.hubGrad, 0)) ° | \(zahl(o.wdhFehler, 1)) / \(zahl(m.wdhFehler, 1)) "
+                + "| \(TempoBericht.pct(o.sicherAnteil)) / \(TempoBericht.pct(m.sicherAnteil)) |\n"
         }
         text += "\n## Wo der Winkel trägt\n\n"
-            + "Je Befestigungsart und Übung (`kontext.exerciseName`): Aufnahmen und wie viele davon einen Hub von mindestens "
-            + "\(zahl(mindesthubGrad, 0))° erreichen.\n\n" + woDerWinkelTraegt(zeilen)
+            + "Je Befestigungsart und Übung (`kontext.exerciseName`): Aufnahmen und wie viele davon mit Start einen Hub von "
+            + "mindestens \(zahl(mindesthubGrad, 0))° erreichen.\n\n" + woDerWinkelTraegt(paare.map(\.mitStart))
         return text + "\n"
     }
 }

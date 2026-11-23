@@ -44,6 +44,43 @@ struct WinkelBerichtTests {
         #expect(z.wdhFehler == 0)
     }
 
+    @Test func losBeiDerZeileStartetErstDort() {
+        let satz = Synthetik.drehsatz(wiederholungen: 8, vorbewegung: Synthetik.Vorbewegung())
+        let eintraege = satz.werte.map { SensorAufnahmeLeser.Eintrag.messwert($0) }
+        let mit = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: eintraege,
+                                      rateHz: 50, losBei: satz.losT)
+        #expect(mit.wdhFehler == 0 && abs(mit.hubGrad - 140) <= 3)
+        #expect(mit.losT.map { $0 >= satz.losT && $0 < satz.losT + 0.05 } == true)
+        let ohne = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: eintraege, rateHz: 50)
+        #expect(ohne.losT == nil && ohne.wdhFehler == 1)
+    }
+
+    @Test func startNachtraeglichNachDemAufnehmen() {
+        // Aufnehmen um 100° hin, neue Ruhelage 70° neben der alten (wie an den Aufnahmen 60–110°):
+        // los() faellt an das Ende der neuen Ruhelage (der letzte stille Messwert liegt kurz nach dem Beginn
+        // der ersten Wiederholung bei 7 s, der Ausschlag dort ist unter 4°).
+        let satz = Synthetik.drehsatz(wiederholungen: 8, vorbewegung: Synthetik.Vorbewegung(hinGrad: 100, ruheGrad: 70))
+        let eintraege = satz.werte.map { SensorAufnahmeLeser.Eintrag.messwert($0) }
+        let nach = WinkelBericht.startNachtraeglich(eintraege, rateHz: 50)
+        #expect(nach.map { $0 > 4.5 && $0 < satz.losT + 0.8 } == true, "\(String(describing: nach))")
+        let z = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: eintraege,
+                                    rateHz: 50, losBei: nach)
+        #expect(z.wdhFehler == 0 && abs(z.hubGrad - 140) <= 3)
+    }
+
+    @Test func losMarkeAusDerCSV() {
+        #expect(WinkelBericht.losMarke(csv: "t,ax\n0.0,1\n# los 5.000000\n# takt oben 6.5\n") == 5.0)
+        #expect(WinkelBericht.losMarke(csv: "t,ax\n0.0,1\n# marke satzbeginn 3.2\n") == nil)
+    }
+
+    @Test func macAufnahmeMitLosMarkeLaeuftUeberLos() throws {
+        let mac = try WinkelBericht.paare().filter { $0.ohneStart.ordner.hasPrefix("2026-11-23-21") }
+        #expect(mac.count == 11)
+        #expect(mac.allSatisfy { $0.mitLosMarke && $0.ohneStart.losT == nil })
+        // Alle Mac-Aufnahmen tragen `# los 5.000000`; los() kommt vor dem ersten Messwert ab 5 s.
+        #expect(mac.allSatisfy { p in p.mitStart.losT.map { $0 >= 5 && $0 < 5.1 } == true })
+    }
+
     @Test func macAufnahmenVom23NovemberSindDabei() throws {
         let zeilen = try WinkelBericht.zeilen()
         let mac = zeilen.filter { $0.ordner.hasPrefix("2026-11-23-21") }
