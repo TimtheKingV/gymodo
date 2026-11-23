@@ -70,6 +70,9 @@ public struct Lageschaetzer: Sendable {
     /// So weit (Anteil) duerfen die beiden juengsten Halbwellen auseinander liegen,
     /// damit die eigene Lage vor dem Vertrauen gezeigt wird.
     private static let stimmigAnteil = 0.1
+    /// So weit (Anteil) duerfen die beiden juengsten Halbwellen auseinander liegen,
+    /// damit mit bekannter Schwerkraft die Zaehlung bis zum Vertrauen beginnt.
+    private static let zaehlbeginnAnteil = 0.3
     /// Ausserhalb davon traegt eine sichere Lage nicht mehr.
     private static let haltbar = -0.5...1.5
     /// Anteil des Hubs, ab dem eine Halbwelle mit gemessenem Hub zaehlt.
@@ -122,9 +125,10 @@ public struct Lageschaetzer: Sendable {
     /// Vor dem Vertrauen traegt die eigene Lage nur, wenn die beiden juengsten
     /// Halbwellen gleich weit reichen (am kuenstlichen Satz meist ab der ersten
     /// Wiederholung); am Geraet laeuft sie bis dahin meist weg, dann zeigt die `Hilfslage`.
-    private var stimmig: Bool {
+    private var stimmig: Bool { halbwellenGleich(Self.stimmigAnteil) }
+    private func halbwellenGleich(_ anteil: Double) -> Bool {
         guard juengsteHalbwellen.count == 2, let groesser = juengsteHalbwellen.max(), groesser > 0 else { return false }
-        return abs(juengsteHalbwellen[0] - juengsteHalbwellen[1]) <= Self.stimmigAnteil * groesser
+        return abs(juengsteHalbwellen[0] - juengsteHalbwellen[1]) <= anteil * groesser
     }
     /// Die letzten gemessenen Ausschlaege (m), juengster zuletzt.
     private var ausschlaege: [Double] = []
@@ -193,7 +197,8 @@ public struct Lageschaetzer: Sendable {
             // Weit aus dem Umfang: Die Schaetzung hat ihren Halt verloren (ein falscher
             // Gleichanteil, ein verpasster Umkehrpunkt). Zurueck auf unsicher; die Pruefung
             // auf grobe Fehler an den Extremen greift wieder, bis zwei Umkehrpunkte tragen.
-            gleichanteilSchritt = schritt
+            // Mit bekannter Schwerkraft beginnt die Zaehlung erst wieder an stimmigen Halbwellen.
+            gleichanteilSchritt = quelle == .ruhe ? schritt : nil
             umkehrpunkteSeitGleichanteil = 0
         }
         let zeigtHilfe = !vertraut && !stimmig
@@ -283,9 +288,9 @@ public struct Lageschaetzer: Sendable {
             // Mit bekannter Schwerkraft ist der Gleichanteil klein (am Geraet im Mittel
             // eines Satzes unter 0,05 m/s²); die Paarung der Beschleunigungsextreme setzt
             // dagegen an Hanteln Stillstand an Stellen voraus, an denen die Last laeuft,
-            // und schaetzt das Mehrfache. Er gilt deshalb von Anfang an als bekannt (null),
-            // den Rest nimmt der Versatz an den Umkehrpunkten.
-            if gleichanteilSchritt == nil { gleichanteilSchritt = schritt }
+            // und schaetzt das Mehrfache. Er gilt deshalb als bekannt (null), den Rest
+            // nimmt der Versatz an den Umkehrpunkten. Wo die Zaehlung bis zum Vertrauen
+            // beginnt, setzt `einrasten`: an zwei stimmigen Halbwellen.
             return
         }
         let alterGleichanteil = gleichanteil.wert
@@ -352,6 +357,13 @@ public struct Lageschaetzer: Sendable {
         if oben { letztesOben = extrem } else { letztesUnten = extrem }
         let ausschlag = abs(extrem.weg - ankerWeg)
         juengsteHalbwellen = Array((juengsteHalbwellen + [ausschlag]).suffix(2))
+        // Mit bekannter Schwerkraft fehlt die Pruefung, die bei `.ruhe` die Bestaetigung
+        // des Gleichanteils leistet: Zwei beliebige Umkehrpunkte (Aufnehmen, Zittern)
+        // gaeben sonst Vertrauen und einen winzigen Hub. Gezaehlt wird deshalb erst ab
+        // einem Umkehrpunkt, an dem die beiden juengsten Halbwellen gleich weit reichen.
+        if quelle != .ruhe, gleichanteilSchritt == nil, halbwellenGleich(Self.zaehlbeginnAnteil) {
+            gleichanteilSchritt = extrem.schritt - 1
+        }
         // Nur eine Halbwelle, die ganz nach der ersten Schaetzung des Gleichanteils
         // liegt, misst den Hub. Davor nimmt sie ihn hoechstens bis `anfangsHub`
         // zurueck: Ein vom Gleichanteil verkuerzter Weg macht den Hub nicht winzig.
