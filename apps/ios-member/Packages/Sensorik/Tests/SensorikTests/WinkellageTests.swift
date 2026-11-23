@@ -95,4 +95,49 @@ struct WinkellageTests {
     @Test func ohneZweiWiederholungenBleibtDerUebergebeneWert() {
         #expect(fehler(Synthetik.drehsatz(wiederholungen: 1), ab: 1, gemerkt: bekannt).schaetzer.gemerkt == bekannt)
     }
+
+    // MARK: Nachbesserung 1
+
+    @Test func massstabWechseltOhneSprung() {
+        let satz = Synthetik.drehsatz(wiederholungen: 6)
+        // Ohne gemerkten Wert gilt auf dem ersten Kraftweg (bis 4,5 s) der vorlaeufige Massstab von mindestens
+        // 40°; dort ist schon die Steigung (2,9° je Schritt) ueber 0,06 und kein Wechsel. Gemessen wird danach.
+        for (gemerkt, ab) in [(GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 100), 0.0), (nil, 4.5)] {
+            let f = fehler(satz, ab: 1, gemerkt: gemerkt)
+            let sprung = zip(f.lagen, f.lagen.dropFirst()).filter { $0.0.t >= ab }.map { abs($1.lage - $0.lage) }.max()!
+            #expect(sprung <= 0.06, "groesster Schritt \(sprung)")
+        }
+    }
+    @Test func richtungFolgtDerBewegung() {
+        let satz = Synthetik.drehsatz(wiederholungen: 12)
+        let f = fehler(satz, ab: 1, gemerkt: bekannt)
+        var gezaehlt = 0, richtig = 0
+        for i in 1..<(satz.lage.count - 1) where satz.lage[i] >= 0.2 && satz.lage[i] <= 0.8 {
+            gezaehlt += 1
+            let steigt = satz.lage[i + 1] > satz.lage[i - 1]
+            if f.lagen[i].richtung == (steigt ? .hin : .rueck) { richtig += 1 }
+        }
+        #expect(Double(richtig) >= 0.98 * Double(gezaehlt), "\(richtig) von \(gezaehlt)")
+        #expect(f.lagen.prefix(100).allSatisfy { $0.richtung == .unbekannt })
+    }
+
+    // MARK: Nachbesserung 2
+
+    @Test func zitternAuchAnDerDrehrate() {
+        let f = fehler(Synthetik.drehsatz(wiederholungen: 8, zitternGrad: 1.5), ab: 3)
+        #expect(f.schaetzer.umkehrpunkte.count == 16)
+        #expect(f.mittel <= 0.04)
+        #expect(f.lagen.suffix(100).allSatisfy { abs($0.lage) <= 0.05 })
+    }
+    @Test func unbrauchbarerGemerkterWertGiltAlsNichtGemerkt() {
+        for ungueltig in [GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: 0),
+                          GemerkterWinkel(achse: .roll, vorzeichen: 1, hubGrad: -50),
+                          GemerkterWinkel(achse: .roll, vorzeichen: 0, hubGrad: 140),
+                          GemerkterWinkel(achse: .roll, vorzeichen: 2, hubGrad: 140)] {
+            let f = fehler(Synthetik.drehsatz(wiederholungen: 6), ab: 3, gemerkt: ungueltig)
+            #expect(f.lagen.allSatisfy { $0.lage.isFinite })
+            #expect(f.mittel <= 0.03)
+            #expect(f.schaetzer.gemerkt?.vorzeichen == 1)
+        }
+    }
 }

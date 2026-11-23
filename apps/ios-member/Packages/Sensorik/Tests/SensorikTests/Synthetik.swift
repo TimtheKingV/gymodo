@@ -182,7 +182,8 @@ extension Synthetik {
     /// die Lage folgt Kosinus-Flanken wie bei `hub`. Die Drehrate ist die Ableitung auf derselben Achse,
     /// die Beschleunigung (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
     /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern
-    /// (7 Hz) auf den Winkel, nicht auf die Drehrate. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
+    /// (7 Hz) auf den Winkel; die Drehrate ist die Ableitung des tatsaechlich ausgegebenen Winkels samt Zittern,
+    /// auf den anderen Achsen liegt ein kleines Zittern von 9 Hz. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
     static func drehsatz(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
                          hubGrad: Double = 140, hubAnteil: [Int: Double] = [:],
                          achse: Winkelachse = .roll, vorzeichen: Int = 1, startGrad: Double = 0,
@@ -190,6 +191,7 @@ extension Synthetik {
                          ruheVorher: Double = 3, ruheNachher: Double = 2,
                          rate: Double = 50, buendel: Int = 2,
                          luecke: (ab: Double, dauer: Double)? = nil) -> Drehsatz {
+        let richtung = Double(vorzeichen)
         var stuecke = [Wegstueck(dauer: ruheVorher, von: 0, nach: 0)]
         for n in stride(from: 1, through: wiederholungen, by: 1) {
             let anteil = hubAnteil[n] ?? 1
@@ -199,17 +201,25 @@ extension Synthetik {
         }
         stuecke.append(Wegstueck(dauer: ruheNachher, von: 0, nach: 0))
 
-        /// Wahre Lage und ob die Last dabei still steht.
-        func zustand(_ t: Double) -> (lage: Double, still: Bool) {
+        /// Wahre Lage und Zittergewicht: 0 in der Bewegung, in Ruhe und Pausen blendet es
+        /// ueber 0,25 s ein und aus, damit das Zittern nirgends springt.
+        func zustand(_ t: Double) -> (lage: Double, zittern: Double) {
             var beginn = 0.0
             for s in stuecke {
                 if t < beginn + s.dauer, s.dauer > 0 {
                     let w = Double.pi * max(t - beginn, 0) / s.dauer
-                    return (s.von + (s.nach - s.von) * (1 - cos(w)) / 2, s.von == s.nach)
+                    let lage = s.von + (s.nach - s.von) * (1 - cos(w)) / 2
+                    let gewicht = s.von == s.nach ? min(1, (t - beginn) / 0.25, (beginn + s.dauer - t) / 0.25) : 0
+                    return (lage, max(gewicht, 0))
                 }
                 beginn += s.dauer
             }
-            return (0, true)
+            return (0, 0)
+        }
+        /// Entfalteter Winkel inklusive Zittern.
+        func entfaltet(_ t: Double) -> Double {
+            let z = zustand(t)
+            return startGrad + richtung * hubGrad * z.lage + z.zittern * zitternGrad * sin(2 * .pi * 7 * t)
         }
         func falte(_ grad: Double) -> Double {
             var x = grad.truncatingRemainder(dividingBy: 360)
@@ -217,7 +227,6 @@ extension Synthetik {
             return x
         }
         let dt = 1 / rate
-        let richtung = Double(vorzeichen)
         let gesamtDauer = stuecke.reduce(0) { $0 + $1.dauer }
         var werte: [SensorMesswert] = []
         var lage: [Double] = []
@@ -226,11 +235,13 @@ extension Synthetik {
             let bundleT = Double(i / buendel * buendel) * dt
             if let luecke, bundleT >= luecke.ab, bundleT < luecke.ab + luecke.dauer { continue }
             let jetzt = zustand(t)
-            let zittern = jetzt.still ? zitternGrad * sin(2 * .pi * 7 * t) : 0
-            let grad = falte(startGrad + richtung * hubGrad * jetzt.lage + zittern)
-            let rateGradProS = richtung * hubGrad * (zustand(t + dt).lage - zustand(t - dt).lage) / (2 * dt)
+            let grad = falte(entfaltet(t))
+            let rateGradProS = (entfaltet(t + dt) - entfaltet(t - dt)) / (2 * dt)
+            func nebenzittern(_ k: Double) -> Double { 8 * sin(2 * .pi * 9 * t + k) }
             let winkel = achse == .roll ? Vektor3(x: grad, y: 0, z: 0) : Vektor3(x: 0, y: grad, z: 0)
-            let drehrate = achse == .roll ? Vektor3(x: rateGradProS, y: 0, z: 0) : Vektor3(x: 0, y: rateGradProS, z: 0)
+            let drehrate = achse == .roll
+                ? Vektor3(x: rateGradProS, y: nebenzittern(1), z: nebenzittern(2))
+                : Vektor3(x: nebenzittern(1), y: rateGradProS, z: nebenzittern(2))
             werte.append(SensorMesswert(t: bundleT, beschleunigung: Vektor3(x: 0, y: 0, z: 1),
                                         drehrate: drehrate, winkel: winkel))
             lage.append(jetzt.lage)

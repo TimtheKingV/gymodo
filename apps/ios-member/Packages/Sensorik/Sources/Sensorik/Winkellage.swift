@@ -18,18 +18,23 @@ public struct GemerkterWinkel: Codable, Sendable, Equatable {
 /// `lage = vorzeichen · (winkel − ruhewinkel) / hub`.
 ///
 /// Zustaende:
-/// - Vor der ersten Bewegung (Ausschlag unter 5°): Der Ruhewinkel folgt dem Median der letzten Sekunde
-///   stiller Messwerte, die Richtung ist `.unbekannt`.
+/// Die Drehrate wird nicht benutzt; "still" heisst: der Winkel auf der gewaehlten Achse (vor der Wahl auf
+/// beiden) schwankt in den letzten 0,5 s um weniger als 8° (Zittern der Hand zaehlt nicht als Bewegung).
+/// - Vor der ersten Bewegung (Ausschlag unter 5°): Der Ruhewinkel folgt dem Median der letzten Sekunde,
+///   solange still, sonst bleibt er; ohne je still zu sein der erste Messwert. Die Richtung ist `.unbekannt`.
 /// - Erste Wiederholung: Ruhewinkel steht fest. Ohne gemerkten Wert waehlt der groessere Ausschlag die
 ///   Achse (fest ab 20°); der Massstab ist vorlaeufig das Groessere aus 40° und dem bisherigen Gipfel,
 ///   nach dem ersten oberen Umkehrpunkt dessen Hoehe. `sicher` wird erst mit dem ersten unteren Umkehrpunkt.
 /// - Hub bekannt: Nach dem zweiten Gipfel gilt der Mittelwert der ersten beiden, danach folgt der Hub
-///   je Wiederholung um hoechstens 10 %, aber nur bei mindestens 80 % des Hubs.
+///   je Wiederholung um hoechstens 10 %, aber nur bei mindestens 80 % des Hubs. Jeder neue Massstab
+///   gilt erst, wenn der untere Umkehrpunkt der Wiederholung erkannt ist (die Lage ist dann nahe 0).
 /// Umkehrpunkte entstehen ueber eine Hysterese von 10 % des Hubs, unten auch durch Stillstand.
+/// Die Richtung folgt dem Trend der Lage ueber 0,1 s mit einer Totzone von 1 % des Hubs.
 public struct Winkellage: Sendable {
     public static let mindesthubGrad = 40.0
-    private static let bewegungGrad = 5.0, achseFestGrad = 20.0, stilleGradProS = 5.0
-    private static let hysterese = 0.1, stilleSekunden = 0.5
+    private static let bewegungGrad = 5.0, achseFestGrad = 20.0
+    private static let hysterese = 0.1, stilleSekunden = 0.5, stilleSpanneGrad = 8.0
+    private static let trendSekunden = 0.1, totzone = 0.01
 
     private enum Phase { case ruhe, hin, rueck }
 
@@ -42,15 +47,19 @@ public struct Winkellage: Sendable {
     private var roh: (roll: Double, pitch: Double)?
     private var winkel = (roll: 0.0, pitch: 0.0)
     private var ruhe = (roll: 0.0, pitch: 0.0)
-    private var stille: [(roll: Double, pitch: Double)] = []
+    private var fenster: [(roll: Double, pitch: Double)] = []
     private var erster: (roll: Double, pitch: Double)?
-    private var stilleAnzahl = 0
+    private var ruheGefunden = false
+    private var verlauf: [Double] = []
+    private var trend = Wegrichtung.unbekannt
 
     private var phase = Phase.ruhe
     private var ausschlag = (roll: 0.0, pitch: 0.0)
     private var hoechste = 0.0
     private var gipfel = 0.0, gipfelT = 0.0, tal = 0.0, talT = 0.0
     private var massstab: Double
+    private var neuerMassstab: Double?
+    private var massstabGesetzt = false
     private var gipfelhoehen: [Double] = []
     private var ersterBoden = false
     private var luecke = false
@@ -59,10 +68,12 @@ public struct Winkellage: Sendable {
 
     public init(rateHz: Double, gemerkt: GemerkterWinkel? = nil) {
         self.rateHz = rateHz
-        uebergeben = gemerkt
-        achse = gemerkt?.achse
-        vorzeichen = (gemerkt?.vorzeichen ?? 1) < 0 ? -1 : 1
-        massstab = gemerkt?.hubGrad ?? Self.mindesthubGrad
+        // Ein unbrauchbarer Wert (Hub nicht positiv, Vorzeichen nicht ±1) gilt als nicht gemerkt.
+        let brauchbar = gemerkt.flatMap { $0.hubGrad > 0 && $0.hubGrad.isFinite && abs($0.vorzeichen) == 1 ? $0 : nil }
+        uebergeben = brauchbar
+        achse = brauchbar?.achse
+        vorzeichen = brauchbar?.vorzeichen ?? 1
+        massstab = brauchbar?.hubGrad ?? Self.mindesthubGrad
     }
 
     /// Groesster Ausschlag aus der Ruhelage bisher, in Grad.
@@ -76,25 +87,24 @@ public struct Winkellage: Sendable {
 
     public var gemerkt: GemerkterWinkel? {
         guard gipfelhoehen.count >= 2, let achse else { return uebergeben }
-        return GemerkterWinkel(achse: achse, vorzeichen: vorzeichen, hubGrad: massstab)
+        return GemerkterWinkel(achse: achse, vorzeichen: vorzeichen, hubGrad: neuerMassstab ?? massstab)
     }
 
     /// Der Hub, mit dem die Lage gerade gerechnet wird.
-    private var hub: Double { uebergeben == nil && gipfelhoehen.isEmpty ? max(Self.mindesthubGrad, hoechste) : massstab }
+    private var hub: Double { uebergeben == nil && !massstabGesetzt ? max(Self.mindesthubGrad, hoechste) : massstab }
 
-    private var hubBekannt: Bool { uebergeben != nil || (ersterBoden && !gipfelhoehen.isEmpty) }
+    private var hubBekannt: Bool { uebergeben != nil || (ersterBoden && massstabGesetzt) }
 
     public mutating func luecke(von: TimeInterval, bis: TimeInterval) {
-        stilleAnzahl = 0
         // Fehlt der Umkehrpunkt womoeglich in der Luecke, taugt dessen Zeit und Hoehe nicht.
         if (phase == .hin && gipfel > 0.5 * hub) || (phase == .rueck && tal < 0.5 * hub) { luecke = true }
     }
 
     public mutating func verarbeite(_ m: SensorMesswert) -> Lage {
         entfalte(m.winkel)
-        let still = max(abs(m.drehrate.x), abs(m.drehrate.y), abs(m.drehrate.z)) < Self.stilleGradProS
-        stilleAnzahl = still ? stilleAnzahl + 1 : 0
-        if phase == .ruhe { ruheNachfuehren(still: still) }
+        fenster.append(winkel)
+        if fenster.count > Int(rateHz) { fenster.removeFirst() }
+        if phase == .ruhe { ruheNachfuehren() }
 
         let roll = winkel.roll - ruhe.roll, pitch = winkel.pitch - ruhe.pitch
         if phase == .ruhe {
@@ -113,8 +123,14 @@ public struct Winkellage: Sendable {
         }
         let s = signal(roll, pitch)
         if phase != .ruhe { hoechste = max(hoechste, s); folge(s, t: m.t) }
-        let richtung: Wegrichtung = phase == .ruhe ? .unbekannt : (phase == .hin ? .hin : .rueck)
-        return Lage(t: m.t, lage: s / hub, richtung: richtung, sicher: hubBekannt && hub >= Self.mindesthubGrad)
+        let trendLaenge = max(1, Int(Self.trendSekunden * rateHz))
+        verlauf.append(s)
+        if verlauf.count > trendLaenge + 1 { verlauf.removeFirst() }
+        if phase != .ruhe, verlauf.count > trendLaenge {
+            let aenderung = s - verlauf[0]
+            if abs(aenderung) >= Self.totzone * hub { trend = aenderung > 0 ? .hin : .rueck }
+        }
+        return Lage(t: m.t, lage: s / hub, richtung: phase == .ruhe ? .unbekannt : trend, sicher: hubBekannt && hub >= Self.mindesthubGrad)
     }
 
     // MARK: Winkel
@@ -131,16 +147,30 @@ public struct Winkellage: Sendable {
         return x
     }
 
-    /// Ruhewinkel: Median der letzten Sekunde stiller Messwerte, sonst der erste Messwert.
-    private mutating func ruheNachfuehren(still: Bool) {
-        if still {
-            stille.append(winkel)
-            if stille.count > Int(rateHz) { stille.removeFirst() }
+    /// Ob der Winkel in den letzten `n` Messwerten auf der massgeblichen Achse still war.
+    private func still(_ n: Int) -> Bool {
+        guard fenster.count >= n, n > 0 else { return false }
+        func spanne(_ f: ((roll: Double, pitch: Double)) -> Double) -> Double {
+            let w = fenster.suffix(n).map(f)
+            return w.max()! - w.min()!
         }
+        let rollStill = achse == .pitch || spanne { $0.roll } < Self.stilleSpanneGrad
+        let pitchStill = achse == .roll || spanne { $0.pitch } < Self.stilleSpanneGrad
+        return rollStill && pitchStill
+    }
+
+    /// Ruhewinkel: Median der letzten Sekunde, solange still; sonst bleibt er, ohne je still der erste Messwert.
+    private mutating func ruheNachfuehren() {
         if erster == nil { erster = winkel }
-        guard !stille.isEmpty else { ruhe = erster ?? winkel; return }
-        func median(_ x: [Double]) -> Double { x.sorted()[x.count / 2] }
-        ruhe = (median(stille.map(\.roll)), median(stille.map(\.pitch)))
+        let halbe = Int(Self.stilleSekunden * rateHz)
+        if still(halbe) {
+            let basis = still(Int(rateHz)) ? fenster : Array(fenster.suffix(halbe))
+            func median(_ x: [Double]) -> Double { x.sorted()[x.count / 2] }
+            ruhe = (median(basis.map(\.roll)), median(basis.map(\.pitch)))
+            ruheGefunden = true
+        } else if !ruheGefunden {
+            ruhe = erster ?? winkel
+        }
     }
 
     private func wert(_ roll: Double, _ pitch: Double) -> Double { achse == .pitch ? pitch : roll }
@@ -165,7 +195,7 @@ public struct Winkellage: Sendable {
             }
         case .rueck:
             if s < tal { tal = s; talT = t }
-            let steht = Double(stilleAnzahl) >= Self.stilleSekunden * rateHz && s <= 0.35 * hub
+            let steht = still(Int(Self.stilleSekunden * rateHz)) && s <= 0.35 * hub
             if s > tal + schwelle || steht {
                 unten(t: talT)
                 phase = .hin; gipfel = s; gipfelT = t
@@ -179,11 +209,11 @@ public struct Winkellage: Sendable {
         umkehrpunkte.append(Umkehrpunkt(t: t, oben: true))
         gipfelhoehen.append(hoehe)
         switch gipfelhoehen.count {
-        case 1: if uebergeben == nil { massstab = hoehe }
-        case 2: massstab = (gipfelhoehen[0] + gipfelhoehen[1]) / 2
+        case 1: if uebergeben == nil { neuerMassstab = hoehe }
+        case 2: neuerMassstab = (gipfelhoehen[0] + gipfelhoehen[1]) / 2
         default:
             if hoehe >= 0.8 * massstab {
-                massstab += min(max(hoehe - massstab, -0.1 * massstab), 0.1 * massstab)
+                neuerMassstab = massstab + min(max(hoehe - massstab, -0.1 * massstab), 0.1 * massstab)
             }
         }
     }
@@ -191,6 +221,7 @@ public struct Winkellage: Sendable {
     private mutating func unten(t: TimeInterval) {
         defer { luecke = false }
         ersterBoden = true
+        if let neu = neuerMassstab { massstab = neu; massstabGesetzt = true; neuerMassstab = nil }
         guard !luecke else { return }
         umkehrpunkte.append(Umkehrpunkt(t: t, oben: false))
     }
