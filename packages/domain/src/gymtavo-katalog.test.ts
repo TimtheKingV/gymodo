@@ -56,7 +56,7 @@ describe("catalog/gymtavo.json", () => {
   // docs/katalog-stilleitfaden.md, Abschnitt Name.
   it("haelt das Namensschema ein: kein Geraet im Namen, nur \" – \" als Trenner", () => {
     const k = katalog();
-    const geraet = /Kurzhantel|Langhantel|\bSZ\b|Kabel|am Gerät|[Mm]aschine/;
+    const geraet = /Kurzhantel|Langhantel|Kettlebell|\bSZ\b|Kabel|am Gerät|[Mm]aschine/;
     expect(k.exercises.filter((u) => geraet.test(u.name)).map((u) => u.name)).toEqual([]);
     const trenner = k.exercises.filter((u) => / · | - |—/.test(u.name) || u.name.split(" – ").length > 2);
     expect(trenner.map((u) => u.name)).toEqual([]);
@@ -162,6 +162,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     expect(sekunden).toEqual([
       "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
       "bw_plank_knee", "bw_side_plank_knee",
+      "kb_farmers_walk", "kb_suitcase_carry", "kb_overhead_carry",
     ]);
     expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
   });
@@ -178,6 +179,22 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
     expect(typen[0]!.exercises).toHaveLength(49);
+  });
+
+  // Kettlebells gibt es nur in festen Stufen: 2-kg-Raster ab 4 kg trifft den klassischen
+  // 4-kg-Satz und die Zwischengroessen (docs/katalog-kettlebell-2026-11.md).
+  it("fuehrt Kettlebell-Uebungen unter dem Typ Kettlebell in der Gruppe Kettlebell", () => {
+    const typen = katalog().equipment.filter((g) => g.group === "kettlebell");
+    expect(typen.map((g) => [g.key, g.label, g.category, g.load_unit])).toEqual([
+      ["kettlebell", "Kettlebell", "kraft", "kg"],
+    ]);
+    const typ = typen[0]!;
+    expect([typ.load_step, typ.load_min, typ.load_max, typ.load_start]).toEqual([2, 4, null, 8]);
+    expect(typ.exercises.every((u) => u.startsWith("kb_"))).toBe(true);
+    expect(typ.exercises).toHaveLength(23);
+    // Umgekehrt: keine kb_-Uebung haengt an einem anderen Typ.
+    const kb = katalog().exercises.filter((u) => u.key.startsWith("kb_")).map((u) => u.key);
+    expect(new Set(kb)).toEqual(new Set(typ.exercises));
   });
 
   it("schlaegt keine Langhantel- und SZ-Uebung vor", () => {

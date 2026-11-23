@@ -11,7 +11,7 @@ Das Etikett kommt vom Gerätetyp (`equipment[].label`), nicht aus dem Namen.
 ## Name
 
 - Aufbau: `Übung` oder `Übung – Variante`. Einziges Trennzeichen ist „ – “ (Halbgeviertstrich mit Leerzeichen).
-- Kein Gerät im Namen: nicht „Kurzhantel“, „Langhantel“, „SZ“, „Kabel“, „am Gerät“, „Maschine“.
+- Kein Gerät im Namen: nicht „Kurzhantel“, „Langhantel“, „Kettlebell“, „SZ“, „Kabel“, „am Gerät“, „Maschine“.
   Ausnahme: Die Übung heißt im Studio wie das Gerät (Beinpresse, Brustpresse, Beinstrecker, Butterfly).
 - Variante ist Griff, Körperlage, Winkel, Zubehör am Kabel (Seil, Stange) oder einarmig/einbeinig.
   Die Standardausführung bekommt keine Variante. Zwei Varianten mit Komma: `Rudern – einarmig, abgestützt`.
@@ -67,4 +67,6 @@ abgelösten `equipment[].exercises`. `video` darf `null` sein. `review` wird ers
   Generator setzt sie aber nicht von selbst in einen Plan.
 - Halteübungen zählen Sekunden (`volume_kind: "seconds"`) und haben keinen `plan`-Block.
 - Übungen ohne Gerät hängen am Typ `bodyweight` (Etikett `Körpergewicht`), der Schlüssel beginnt mit `bw_`.
+- Kettlebell-Übungen hängen am Typ `kettlebell` (Etikett `Kettlebell`), der Schlüssel beginnt mit `kb_`.
+  Die Last ist das Gewicht einer Kettlebell (2-kg-Raster ab 4 kg).
 - `sources` bleibt leer, solange keine Quelle geprüft wurde.
