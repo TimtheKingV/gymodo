@@ -88,6 +88,8 @@ extension Synthetik {
     /// `beiLage` an, `biasG` ist ein Gleichanteil entlang `achse`, der mit der
     /// ersten Wiederholung einsetzt (in der Ruhe davor wuerde ihn die
     /// Schwerkraftschaetzung schlucken), `stoss` eine Spitze von 40 ms auf z.
+    /// `pausenUnten[n]` laesst die Last nach der n-ten Wiederholung so viele
+    /// Sekunden in der Ruhelage stehen.
     static func hub(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
                     hubMeter: Double = 0.4, hubAnteil: [Int: Double] = [:],
                     startetOben: Bool = false, achse: Vektor3 = Vektor3(x: 0, y: 0, z: 1),
@@ -95,7 +97,8 @@ extension Synthetik {
                     biasG: Double = 0, stoss: (bei: Double, g: Double)? = nil,
                     ruheVorher: Double = 3, ruheNachher: Double = 2,
                     rate: Double = 50, buendel: Int = 2,
-                    luecke: (ab: Double, dauer: Double)? = nil) -> Hubsatz {
+                    luecke: (ab: Double, dauer: Double)? = nil,
+                    pausenUnten: [Int: Double] = [:]) -> Hubsatz {
         let ruhelage: Double = startetOben ? 1 : 0
         var stuecke = [Wegstueck(dauer: ruheVorher, von: ruhelage, nach: ruhelage)]
         for n in stride(from: 1, through: wiederholungen, by: 1) {
@@ -111,6 +114,7 @@ extension Synthetik {
             }
             let abwaerts = Wegstueck(dauer: ablassen, von: oben, nach: unten)
             stuecke += startetOben ? [abwaerts] + aufwaerts : aufwaerts + [abwaerts]
+            if let pause = pausenUnten[n] { stuecke.append(Wegstueck(dauer: pause, von: ruhelage, nach: ruhelage)) }
         }
         stuecke.append(Wegstueck(dauer: ruheNachher, von: ruhelage, nach: ruhelage))
 
