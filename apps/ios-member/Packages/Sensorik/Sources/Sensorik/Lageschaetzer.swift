@@ -11,13 +11,13 @@ import Foundation
 /// An jedem Umkehrpunkt werden Nullpunkt und Hub neu gesetzt (Einrasten). Jeder
 /// Sprung der Schaetzung wird eingeblendet statt angezeigt. Der Winkel wird nicht genutzt.
 public struct Lageschaetzer: Sendable {
-    private struct Extrem: Sendable {
+    struct Extrem: Sendable {
         var weg: Double
         var schritt: Int
         var t: TimeInterval
     }
 
-    private enum Halbwelle: Sendable {
+    enum Halbwelle: Sendable {
         /// Keine Bewegung; ab `ruheSchritte` ist das Ruhe.
         case wartet(schritte: Int)
         /// `vorzeichen` +1 aufwaerts, −1 abwaerts; `extrem` ist der weiteste Weg in dieser Richtung.
@@ -51,28 +51,34 @@ public struct Lageschaetzer: Sendable {
     /// Anteil des Wegs, den die Last gerade selbst zuruecklegt. So kehrt der Punkt
     /// nie um und wird hoechstens um diesen Anteil schneller, bei jedem Tempo.
     private static let blendAnteil = 0.5
-    /// Im Stillstand (Lage je Sekunde): ein Rest von 0,1 ist nach 0,2 s weg.
-    private static let blendRateStill = 0.5
+    /// Mindestens so schnell (Lage je Sekunde), auch im Stillstand: ein Rest von
+    /// 0,1 ist nach 0,1 s weg. Am Geraet ist die Anzeige vor dem Einblenden
+    /// (vor dem Vertrauen, vor dem Wechsel zur `Hilfslage`) meist die falsche;
+    /// mit 0,5 je Sekunde trug sie den Fehler ueber eine halbe Wiederholung mit.
+    private static let blendRateStill = 1.0
     /// Hub vor dem ersten Umkehrpunkt ohne gemerkten Umfang (m). Waechst mit dem Weg.
     private static let anfangsHub = 0.3
     /// Ab diesem Geschwindigkeitsfehler (m/s) an einem gepaarten Extrem gilt die
     /// Schaetzung als grob falsch und wird dort null gesetzt. Am Extrem steht die
     /// Last nur bis auf etwa Beschleunigung mal Schritt still (bis 0,04 m/s bei 1 s
     /// je Weg); kleinere Fehler zu "berichtigen" setzte genau diesen Fehler ein.
-    private static let groberGeschwindigkeitsfehler = 0.1
+    static let groberGeschwindigkeitsfehler = 0.1
     /// Kleinere Ausschlaege setzen den Hub nicht neu.
     private static let kleinsterHub = 0.02
+    /// So weit (Anteil) duerfen die beiden juengsten Halbwellen auseinander liegen,
+    /// damit die eigene Lage vor dem Vertrauen gezeigt wird.
+    private static let stimmigAnteil = 0.1
     /// Ausserhalb davon traegt eine sichere Lage nicht mehr.
     private static let haltbar = -0.5...1.5
     /// Anteil des Hubs, ab dem eine Halbwelle mit gemessenem Hub zaehlt.
     private static let kleinsteHalbwelle = 0.25
     /// Zwei gleichartige Umkehrpunkte gehoeren zu aufeinanderfolgenden
     /// Wiederholungen, wenn sie so weit auseinander liegen (s).
-    private static let kleinsteWiederholung = 0.8
-    private static let groessteWiederholung = 12.0
+    static let kleinsteWiederholung = 0.8
+    static let groessteWiederholung = 12.0
     private static let erdbeschleunigung = 9.81
 
-    private let dt: Double
+    let dt: Double
     private let stillSchritte: Int
     private let ruheSchritte: Int
     private let ruheVorSchwerkraftSchritte: Int
@@ -80,27 +86,43 @@ public struct Lageschaetzer: Sendable {
     private let ruhelage: Double
 
     // Signalaufbereitung
-    private var schritt = 0
+    var schritt = 0
     private var schwerkraft: Vektor3?
     private var ruhigeSchritte = 0
-    private var gleichanteil = Gleichanteil()
-    private var geschwindigkeit = 0.0
-    private var weg = 0.0
+    /// Vertikalbeschleunigung des letzten Messwerts (m/s², Gleichanteil nicht abgezogen).
+    private var vertikal = 0.0
+    /// Lage, solange die eigene nicht traegt.
+    private var hilfslage: Hilfslage
+    private var letzteHilfe = 0.0
+    private var zeigteHilfe = false
+    private var hilfsUebergang = 0.0
+    var gleichanteil = Gleichanteil()
+    var geschwindigkeit = 0.0
+    var weg = 0.0
     /// Letzter Messwert, an dem die Geschwindigkeit sicher null war (ruhiger
     /// Messwert in Ruhe, Luecke, Umkehrpunkt bei bekanntem Gleichanteil, gepaartes
     /// Extrem bei grobem Fehler). Ein neu geschaetzter Gleichanteil
     /// wird ab hier nachgetragen; ein kleiner Fehler der Schaetzung wirkt so nur bis
     /// zum letzten verlaesslichen Umkehrpunkt zurueck, nicht ueber den ganzen Satz.
-    private var ruhendSchritt = 0
+    var ruhendSchritt = 0
     /// Messwert des letzten Ankers; der Weg davor zaehlt nicht mehr.
-    private var ankerSchritt = 0
+    var ankerSchritt = 0
 
     // Umkehrpunkte und Einrasten
-    private var halbwelle: Halbwelle = .wartet(schritte: 0)
+    var halbwelle: Halbwelle = .wartet(schritte: 0)
     private var ankerWeg = 0.0
     private var ankerLage: Double
     private var hub: Double
     private var hubGemessen: Bool
+    /// Ausschlag der beiden juengsten Halbwellen (m), auch ungemessener.
+    private var juengsteHalbwellen: [Double] = []
+    /// Vor dem Vertrauen traegt die eigene Lage nur, wenn die beiden juengsten
+    /// Halbwellen gleich weit reichen (am kuenstlichen Satz meist ab der ersten
+    /// Wiederholung); am Geraet laeuft sie bis dahin meist weg, dann zeigt die `Hilfslage`.
+    private var stimmig: Bool {
+        guard juengsteHalbwellen.count == 2, let groesser = juengsteHalbwellen.max(), groesser > 0 else { return false }
+        return abs(juengsteHalbwellen[0] - juengsteHalbwellen[1]) <= Self.stimmigAnteil * groesser
+    }
     /// Die letzten gemessenen Ausschlaege (m), juengster zuletzt.
     private var ausschlaege: [Double] = []
     private var korrektur = 0.0
@@ -112,8 +134,8 @@ public struct Lageschaetzer: Sendable {
     /// Schaetzung liegt auf dem berichtigten, nicht auf dem wahren Weg: Solche
     /// Halbwellen setzen den Hub nicht, die Lage bleibt in 0…1 und ist nicht sicher.
     /// Ab dem zweiten Umkehrpunkt danach traegt sie.
-    private var gleichanteilSchritt: Int?
-    private var umkehrpunkteSeitGleichanteil = 0
+    var gleichanteilSchritt: Int?
+    var umkehrpunkteSeitGleichanteil = 0
     /// Letztes oberes und unteres Extrem, fuer den Versatz der Geschwindigkeit.
     private var letztesOben: Extrem?
     private var letztesUnten: Extrem?
@@ -133,6 +155,7 @@ public struct Lageschaetzer: Sendable {
         ruhelage = umfang?.startetOben == true ? 1 : 0
         ankerLage = ruhelage
         letzteAusgabe = ruhelage
+        hilfslage = Hilfslage(dt: dt, ruhelage: ruhelage)
     }
 
     /// Nach mindestens zwei Wiederholungen der Stand zum Merken, sonst der uebergebene.
@@ -151,6 +174,10 @@ public struct Lageschaetzer: Sendable {
 
         let inRuhe = imRuhezustand
         if inRuhe { ruheHalten() }
+        let hilfeVorher = letzteHilfe
+        let hilfe = hilfslage.verarbeite(vertikal)
+        if inRuhe { hilfslage.ruhe(ruhelage: ruhelage) }
+        letzteHilfe = hilfe
         // Ab jetzt gilt die Lage ungehalten: von der zuletzt angezeigten aus einblenden.
         if vertraut && !warVertraut { korrektur = letzteAusgabe - lage(beiWeg: weg) }
         var lage = lage(beiWeg: weg) + korrektur
@@ -161,7 +188,17 @@ public struct Lageschaetzer: Sendable {
             gleichanteilSchritt = schritt
             umkehrpunkteSeitGleichanteil = 0
         }
-        if !vertraut { lage = min(max(lage, 0), 1) }
+        let zeigtHilfe = !vertraut && !stimmig
+        if zeigtHilfe {
+            // Wechsel zur Hilfe: von der zuletzt angezeigten Lage aus einblenden.
+            if !zeigteHilfe { hilfsUebergang = letzteAusgabe - hilfe }
+            lage = hilfe + hilfsUebergang
+            let stufe = max(Self.blendRateStill * dt, Self.blendAnteil * abs(hilfe - hilfeVorher))
+            hilfsUebergang = hilfsUebergang > 0 ? max(0, hilfsUebergang - stufe) : min(0, hilfsUebergang + stufe)
+        } else if !vertraut {
+            lage = min(max(lage, 0), 1)
+        }
+        zeigteHilfe = zeigtHilfe
         let blend = max(Self.blendRateStill * dt, Self.blendAnteil * abs(geschwindigkeit) * dt / hub)
         korrektur = korrektur > 0 ? max(0, korrektur - blend) : min(0, korrektur + blend)
         letzteAusgabe = lage
@@ -205,7 +242,7 @@ public struct Lageschaetzer: Sendable {
         guard let g = schwerkraft else { return }
         let gBetrag = Self.betrag(g)
         let entlang = (m.beschleunigung.x * g.x + m.beschleunigung.y * g.y + m.beschleunigung.z * g.z) / gBetrag
-        let vertikal = (entlang - gBetrag) * Self.erdbeschleunigung
+        vertikal = (entlang - gBetrag) * Self.erdbeschleunigung
         let vorher = geschwindigkeit
         geschwindigkeit += (vertikal - gleichanteil.wert) * dt
         // Nur ruhige Messwerte lecken: am Beginn einer Bewegung, noch unter der
@@ -218,54 +255,6 @@ public struct Lageschaetzer: Sendable {
         if gleichanteilSchritt == nil, gleichanteil.bestaetigt { gleichanteilSchritt = schritt }
         if gleichanteil.wert != alterGleichanteil { gleichanteilNachtragen(gleichanteil.wert - alterGleichanteil) }
         if !vertraut { stillsetzen(still) }
-    }
-
-    /// Solange die Lage nicht traegt, ist ein gepaartes Extrem der Beschleunigung
-    /// ein Messwert mit stehender Last: Liegt die Geschwindigkeit dort grob daneben,
-    /// wird sie null gesetzt.
-    /// Aufsummiert steht ein Messwert fuer die Mitte des folgenden Schritts; am
-    /// stillen Zeitpunkt selbst ist das die halbe Beschleunigung mal Schritt, nicht null.
-    /// Das faengt eine Bewegung auf, die wie Ruhe begann (langsam, die
-    /// Schraeglage hebt die Anfangsbeschleunigung auf) und deren Geschwindigkeit
-    /// deshalb weggeleckt wurde. Spaeter nicht mehr: Am Extrem steht die Last nur
-    /// ungefaehr still, das gaebe jede Wiederholung einen kleinen Fehler.
-    private mutating func stillsetzen(_ punkt: Gleichanteil.Stillpunkt) {
-        let seither = Double(schritt - punkt.schritt) * dt
-        let amPunkt = geschwindigkeit - (gleichanteil.u - punkt.u) + gleichanteil.wert * seither
-        let fehler = amPunkt - (punkt.beschleunigung - gleichanteil.wert) * dt / 2
-        guard abs(fehler) > Self.groberGeschwindigkeitsfehler else { return }
-        let alt = lage(beiWeg: weg)
-        geschwindigkeit -= fehler
-        weg -= fehler * Double(schritt - ankerSchritt) * dt
-        if case .laeuft(let vorzeichen, var extrem, let still) = halbwelle {
-            extrem.weg -= fehler * Double(max(0, extrem.schritt - ankerSchritt)) * dt
-            if vorzeichen * (weg - extrem.weg) > 0 { extrem = Extrem(weg: weg, schritt: schritt, t: extrem.t) }
-            halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: still)
-        }
-        ruhendSchritt = punkt.schritt
-        // Der Fehler verfaelschte auch die Extreme bis hier: neu zaehlen.
-        gleichanteilSchritt = schritt
-        umkehrpunkteSeitGleichanteil = 0
-        einblenden(von: alt)
-    }
-
-    /// Ein neuer Gleichanteil gilt seit dem letzten Messwert mit sicher ruhender
-    /// Last: Die Geschwindigkeit wird ab dort berichtigt, Weg und Extrem ab dem
-    /// letzten Anker (davor zaehlt der Weg nicht mehr). Nur ab dem letzten
-    /// Umkehrpunkt zu berichtigen liesse einen festen Geschwindigkeitsfehler stehen.
-    private mutating func gleichanteilNachtragen(_ d: Double) {
-        let alt = lage(beiWeg: weg)
-        func seitRuhe(_ s: Int) -> Double { Double(max(s, ruhendSchritt) - ruhendSchritt) * dt }
-        let tau = seitRuhe(schritt), tauAnker = seitRuhe(ankerSchritt)
-        geschwindigkeit -= d * tau
-        weg -= d * (tau * tau - tauAnker * tauAnker) / 2
-        if case .laeuft(let vorzeichen, var extrem, let still) = halbwelle {
-            let tauExtrem = max(seitRuhe(extrem.schritt), tauAnker)
-            extrem.weg -= d * (tauExtrem * tauExtrem - tauAnker * tauAnker) / 2
-            if vorzeichen * (weg - extrem.weg) > 0 { extrem = Extrem(weg: weg, schritt: schritt, t: extrem.t) }
-            halbwelle = .laeuft(vorzeichen: vorzeichen, extrem: extrem, still: still)
-        }
-        einblenden(von: alt)
     }
 
     // MARK: - Umkehrpunkte
@@ -324,6 +313,7 @@ public struct Lageschaetzer: Sendable {
         if vertraut, let vorher { versatzBerichtigen(von: vorher, bis: &extrem) }
         if oben { letztesOben = extrem } else { letztesUnten = extrem }
         let ausschlag = abs(extrem.weg - ankerWeg)
+        juengsteHalbwellen = Array((juengsteHalbwellen + [ausschlag]).suffix(2))
         // Nur eine Halbwelle, die ganz nach der ersten Schaetzung des Gleichanteils
         // liegt, misst den Hub. Davor nimmt sie ihn hoechstens bis `anfangsHub`
         // zurueck: Ein vom Gleichanteil verkuerzter Weg macht den Hub nicht winzig.
@@ -346,23 +336,6 @@ public struct Lageschaetzer: Sendable {
         ankerSchritt = extrem.schritt
         einblenden(von: alt)
         umkehrpunkte.append(Umkehrpunkt(t: extrem.t, oben: oben))
-    }
-
-    /// Gleichartige Umkehrpunkte liegen (fast) auf derselben Hoehe: Ueber eine
-    /// Wiederholung ist die mittlere Geschwindigkeit null. Was davon abweicht, ist
-    /// ein fester Versatz der Geschwindigkeit (ein falsch nachgetragener
-    /// Gleichanteil, ein grob gesetzter Stillstand); er wird ab dem Extrem
-    /// abgezogen. Sonst laeuft der Weg je Halbwelle um Versatz mal Dauer weg, und
-    /// ein Versatz ueber der Spitzengeschwindigkeit verschluckt die Umkehrpunkte.
-    private mutating func versatzBerichtigen(von vorher: Extrem, bis extrem: inout Extrem) {
-        let dauer = Double(extrem.schritt - vorher.schritt) * dt
-        guard dauer >= Self.kleinsteWiederholung, dauer <= Self.groessteWiederholung else { return }
-        let versatz = (extrem.weg - vorher.weg) / dauer
-        // Seit dem letzten Anker gehoert der Versatz zum Weg; davor zaehlt der Weg nicht mehr.
-        let seitAnker = Double(extrem.schritt - ankerSchritt) * dt
-        extrem.weg -= versatz * seitAnker
-        weg -= versatz * Double(schritt - ankerSchritt) * dt
-        geschwindigkeit -= versatz
     }
 
     // MARK: - Ruhe und Ausgabe
@@ -388,13 +361,13 @@ public struct Lageschaetzer: Sendable {
     }
 
     /// Haelt die angezeigte Lage stetig, wenn sich die Abbildung von Weg auf Lage aendert.
-    private mutating func einblenden(von alt: Double) {
+    mutating func einblenden(von alt: Double) {
         korrektur += alt - lage(beiWeg: weg)
         // Solange in 0…1 gehalten wird, von der angezeigten Lage aus einblenden.
         if !vertraut { korrektur = letzteAusgabe - lage(beiWeg: weg) }
     }
 
-    private func lage(beiWeg weg: Double) -> Double {
+    func lage(beiWeg weg: Double) -> Double {
         ankerLage + (weg - ankerWeg) / hub
     }
 
