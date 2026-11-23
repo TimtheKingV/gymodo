@@ -1,3 +1,128 @@
+# Winkellage
+
+Der Winkel ist eine direkte Messung der Lage der Last; deshalb wird die `Winkellage` hier gegen die gezählten Wiederholungen geprüft, nicht gegen eine nachträgliche Rechnung.
+
+Auswahl: alle Aufnahmen mit bekannter Wiederholungszahl ≥ 5, auch ohne oder mit anderer Befestigungsart: `repsWahr` aus `korrekturen.json`, bei den Mac-Aufnahmen mit Metronom (`tempo` in `aufnahme.json`) die von Hand gezählten Perioden aus `label.reps`. Live-Lauf ohne gemerkten Hub; Lücken gehen an die `Winkellage`.
+„geeignet“: gemerkter Hub am Satzende ≥ 40°. Alle Kennzahlen sind Mediane über die geeigneten Sätze; Wdh.-Fehler = Median von |Umkehrpunkte/2 − Wiederholungen|; Sicher = Anteil sicherer Messwerte zwischen dem dritten und letzten Umkehrpunkt; Streuung = Standardabweichung/Mittel des Hubs je Wiederholung; „Sprung“ = ein Schritt der Lage über 0.2 zwischen zwei Messwerten (Lücken nicht ausgenommen).
+„tragfähig“: Wdh.-Fehler ≤ 1, Sicher ≥ 0.9 und kein Satz mit Sprung.
+
+## Abstimmung (vor 2026-11-01)
+
+| Art | Sätze | geeignet | Hub (Median) | Wdh.-Fehler | Sicher | Streuung | Sätze mit Sprung | tragfähig |
+|---|---|---|---|---|---|---|---|---|
+| stapel | 50 | 0 | – | – | – | – | – | nein |
+| langhantel | 17 | 8 | 74 ° | 5.5 | 90 % | 0.557 | 5 | nein |
+| kurzhantel | 63 | 46 | 99 ° | 2.0 | 100 % | 0.276 | 24 | nein |
+| koerper | 1 | 1 | 75 ° | 7.0 | 100 % | 0.753 | 1 | nein |
+
+## Prüfung (ab 2026-11-01)
+
+| Art | Sätze | geeignet | Hub (Median) | Wdh.-Fehler | Sicher | Streuung | Sätze mit Sprung | tragfähig |
+|---|---|---|---|---|---|---|---|---|
+| stapel | 8 | 0 | – | – | – | – | – | nein |
+| kurzhantel | 32 | 24 | 158 ° | 1.0 | 100 % | 0.230 | 8 | nein |
+
+## Geeignete Sätze mit Sprung
+
+| Aufnahme | Teil | Art | Übung | Hub | größter Sprung | Lücken |
+|---|---|---|---|---|---|---|
+| 2026-10-08-0836-01 | Abstimmung | langhantel | Kabelzug hoch | 83 ° | 0.62 | 0 |
+| 2026-10-08-0846-02 | Abstimmung | kurzhantel | Rudern sitzend | 91 ° | 1.11 | 0 |
+| 2026-10-08-0852-01 | Abstimmung | koerper | Brust | 75 ° | 0.21 | 0 |
+| 2026-10-14-1818-01 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 165 ° | 0.21 | 0 |
+| 2026-10-14-1823-01 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 86 ° | 0.35 | 0 |
+| 2026-10-16-0936-02 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 60 ° | 0.35 | 0 |
+| 2026-10-16-0937-01 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 61 ° | 0.34 | 0 |
+| 2026-10-16-0938-02 | Abstimmung | kurzhantel | Kurzhantel-Seitheben | 100 ° | 0.21 | 0 |
+| 2026-10-16-0940-02 | Abstimmung | kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 43 ° | 1.32 | 0 |
+| 2026-10-16-0941-01 | Abstimmung | kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 46 ° | 0.50 | 0 |
+| 2026-10-16-0942-02 | Abstimmung | kurzhantel | Kurzhantel-Hammercurl | 91 ° | 0.44 | 0 |
+| 2026-10-16-0942-03 | Abstimmung | kurzhantel | Kurzhantel-Hammercurl | 71 ° | 0.38 | 0 |
+| 2026-10-16-1146-03 | Abstimmung | kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 55 ° | 0.57 | 0 |
+| 2026-10-16-1147-01 | Abstimmung | kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 58 ° | 0.36 | 0 |
+| 2026-10-16-1325-03 | Abstimmung | kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 80 ° | 0.26 | 0 |
+| 2026-10-16-1327-02 | Abstimmung | kurzhantel | Kurzhantel-Schulterdrücken – stehend | 69 ° | 0.81 | 0 |
+| 2026-10-16-1327-03 | Abstimmung | kurzhantel | Kurzhantel-Schulterdrücken – stehend | 167 ° | 3.37 | 0 |
+| 2026-10-16-1327-04 | Abstimmung | kurzhantel | Kurzhantel-Schulterdrücken – stehend | 97 ° | 0.93 | 0 |
+| 2026-10-18-1605-01 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 144 ° | 0.49 | 0 |
+| 2026-10-18-1608-01 | Abstimmung | kurzhantel | Kurzhantel-Schrägbankdrücken | 179 ° | 1.25 | 0 |
+| 2026-10-18-1609-03 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 141 ° | 1.00 | 0 |
+| 2026-10-18-1613-01 | Abstimmung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 194 ° | 1.56 | 0 |
+| 2026-10-18-1614-02 | Abstimmung | kurzhantel | Kurzhantel-Schrägbankdrücken | 173 ° | 0.53 | 0 |
+| 2026-10-18-1658-03 | Abstimmung | langhantel | High-Bar-Kniebeuge | 219 ° | 0.81 | 0 |
+| 2026-10-26-1741-01 | Abstimmung | kurzhantel | Kurzhantel-Bankdrücken | 136 ° | 2.51 | 1 |
+| 2026-10-26-1743-02 | Abstimmung | kurzhantel | Kurzhantel-Schulterdrücken – sitzend | 92 ° | 0.23 | 0 |
+| 2026-10-26-1745-02 | Abstimmung | kurzhantel | Kurzhantelrudern – einarmig, abgestützt | 101 ° | 4.34 | 0 |
+| 2026-10-26-1818-02 | Abstimmung | langhantel | High-Bar-Kniebeuge | 48 ° | 0.45 | 0 |
+| 2026-10-26-1820-02 | Abstimmung | langhantel | Rumänisches Kreuzheben – Langhantel | 45 ° | 0.22 | 0 |
+| 2026-10-26-1821-02 | Abstimmung | langhantel | High-Bar-Kniebeuge | 65 ° | 0.37 | 0 |
+| 2026-11-03-1803-01 | Prüfung | kurzhantel | Kurzhantel-Schulterdrücken – sitzend | 169 ° | 0.97 | 0 |
+| 2026-11-03-1804-01 | Prüfung | kurzhantel | Kurzhantel-Seitheben | 71 ° | 1.03 | 0 |
+| 2026-11-03-1804-03 | Prüfung | kurzhantel | Kurzhantel-Schrägbankdrücken | 152 ° | 0.25 | 0 |
+| 2026-11-10-1822-01 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 799 ° | 4.56 | 0 |
+| 2026-11-10-1822-03 | Prüfung | kurzhantel | Kurzhantel-Schulterdrücken – sitzend | 76 ° | 0.57 | 0 |
+| 2026-11-10-1824-01 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 310 ° | 0.50 | 0 |
+| 2026-11-10-1826-02 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 110 ° | 0.36 | 0 |
+| 2026-11-23-2137-01 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl | 173 ° | 0.47 | 0 |
+
+## Die zehn geeigneten Sätze mit dem größten Wiederholungsfehler
+
+| Aufnahme | Teil | Art | Übung | Wiederholungen | Hub | Wdh.-Fehler | Sicher |
+|---|---|---|---|---|---|---|---|
+| 2026-10-18-1658-03 | Abstimmung | langhantel | High-Bar-Kniebeuge | 30 | 219 ° | 28.5 | 100 % |
+| 2026-10-26-1741-01 | Abstimmung | kurzhantel | Kurzhantel-Bankdrücken | 20 | 136 ° | 28.5 | 70 % |
+| 2026-10-26-1821-02 | Abstimmung | langhantel | High-Bar-Kniebeuge | 10 | 65 ° | 22.0 | 24 % |
+| 2026-11-10-1826-02 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 10 | 110 ° | 18.0 | 87 % |
+| 2026-11-03-1807-01 | Prüfung | kurzhantel | Kurzhantel-Seitheben | 19 | 196 ° | 16.0 | 100 % |
+| 2026-11-10-1822-01 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 10 | 799 ° | 15.5 | 98 % |
+| 2026-10-26-1816-01 | Abstimmung | langhantel | High-Bar-Kniebeuge | 20 | 101 ° | 13.0 | 100 % |
+| 2026-11-10-1824-01 | Prüfung | kurzhantel | Kurzhantel-Bizepscurl – stehend | 9 | 310 ° | 11.0 | 100 % |
+| 2026-10-18-1614-02 | Abstimmung | kurzhantel | Kurzhantel-Schrägbankdrücken | 9 | 173 ° | 10.0 | 100 % |
+| 2026-10-14-1822-02 | Abstimmung | kurzhantel | Kurzhantel-Seitheben | 10 | 74 ° | 8.0 | 100 % |
+
+## Wo der Winkel trägt
+
+Je Befestigungsart und Übung (`kontext.exerciseName`): Aufnahmen und wie viele davon einen Hub von mindestens 40° erreichen.
+
+| Art | Übung | Aufnahmen | davon ab 40° |
+|---|---|---|---|
+| stapel | Latzug · Obergriff | 9 | 0 |
+| stapel | Bauchbeugen am Gerät | 8 | 0 |
+| stapel | Abduktorenmaschine | 7 | 0 |
+| stapel | Schulterpresse | 6 | 0 |
+| stapel | Adduktorenmaschine | 5 | 0 |
+| stapel | Brustpresse – Obergriff | 3 | 0 |
+| stapel | Butterfly – Handgriffe | 3 | 0 |
+| stapel | Hip Thrust am Gerät | 3 | 0 |
+| stapel | Latziehen an der Hebelmaschine | 3 | 0 |
+| stapel | Trizepsstrecken am Gerät | 3 | 0 |
+| stapel | Beinpresse – 45 Grad | 2 | 0 |
+| stapel | Kabelrudern – enger Neutralgriff | 2 | 0 |
+| stapel | Rudern am Gerät – enger Neutralgriff | 2 | 0 |
+| stapel | Wadenheben – stehend | 2 | 0 |
+| langhantel | High-Bar-Kniebeuge | 7 | 5 |
+| langhantel | Langhantelrudern – Obergriff | 4 | 1 |
+| langhantel | Langhantel-Bankdrücken | 3 | 0 |
+| langhantel | Beinpresse | 1 | 0 |
+| langhantel | Kabelzug hoch | 1 | 1 |
+| langhantel | Rumänisches Kreuzheben – Langhantel | 1 | 1 |
+| kurzhantel | Kurzhantel-Bizepscurl – stehend | 24 | 18 |
+| kurzhantel | Kurzhantel-Schulterdrücken – sitzend | 12 | 8 |
+| kurzhantel | Trizepsstrecken über Kopf – eine Kurzhantel | 11 | 10 |
+| kurzhantel | Kurzhantel-Seitheben | 10 | 7 |
+| kurzhantel | Kurzhantel-Schrägbankdrücken | 7 | 5 |
+| kurzhantel | Kurzhantel-Bankdrücken | 5 | 4 |
+| kurzhantel | Kurzhantel-Bizepscurl | 5 | 5 |
+| kurzhantel | Kurzhantelrudern – einarmig, abgestützt | 5 | 1 |
+| kurzhantel | Kurzhantel-Hammercurl | 3 | 3 |
+| kurzhantel | Kurzhantel-Schulterdrücken – stehend | 3 | 3 |
+| kurzhantel | Kurzhantel-Seitheben – sitzend | 3 | 3 |
+| kurzhantel | Bankdrücken | 2 | 0 |
+| kurzhantel | Schrägbankdrücken Kurzhantel | 2 | 0 |
+| kurzhantel | Seitheben | 2 | 2 |
+| kurzhantel | Rudern sitzend | 1 | 1 |
+| koerper | Brust | 1 | 1 |
+
 # Tempobericht Lageschätzung
 
 Erzeugt von `TempoBerichtTests` (`swift test --package-path apps/ios-member/Packages/Sensorik`). Nicht von Hand bearbeiten.

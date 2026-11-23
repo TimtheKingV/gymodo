@@ -258,10 +258,10 @@ enum TempoBericht {
     }
 
     /// `zeilen` aller Quellen; je Quelle ein Abschnitt in der Reihenfolge `.ruhe`, `.winkel`, `.drehrate`.
-    static func markdown(_ zeilen: [TempoZeile], versuch: Versuch = Versuch()) -> String {
+    static func markdown(_ zeilen: [TempoZeile], versuch: Versuch = Versuch()) throws -> String {
         // Datum der juengsten Aufnahme aus dem Ordnernamen (JJJJ-MM-TT-…), nicht heute: der Bericht bleibt gleich.
         let stand = zeilen.map { String($0.ordner.prefix(10)) }.max() ?? "–"
-        var text = """
+        var text = try WinkelBericht.markdown(WinkelBericht.zeilen()) + """
             # Tempobericht Lageschätzung
 
             Erzeugt von `TempoBerichtTests` (`swift test --package-path apps/ios-member/Packages/Sensorik`). Nicht von Hand bearbeiten.
