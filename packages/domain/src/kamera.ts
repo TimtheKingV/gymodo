@@ -112,18 +112,21 @@ export type KameraZeile = {
   tempo_beginnt_mit: string | null;
 };
 
-export function kameraAusZeile(z: KameraZeile): { kamera: UebungKamera | null; tempo: UebungTempo | null } {
+/** Die sieben Spalten sind in Zeilen aelterer Herkunft (und alten Testdaten) nicht da; fehlend heisst null. */
+export type KameraZeileOptional = Partial<KameraZeile>;
+
+export function kameraAusZeile(z: KameraZeileOptional): { kamera: UebungKamera | null; tempo: UebungTempo | null } {
   const kamera: UebungKamera | null =
-    z.kamera_profil === null
+    z.kamera_profil == null
       ? null
       : {
           profil: z.kamera_profil as KameraProfil,
-          signal: z.kamera_signal as KameraSignal | null,
-          seite: z.kamera_seite as KameraSeite | null,
+          signal: (z.kamera_signal ?? null) as KameraSignal | null,
+          seite: (z.kamera_seite ?? null) as KameraSeite | null,
           beginntMit: (z.tempo_beginnt_mit ?? "heben") as TempoBeginn,
         };
   const tempo: UebungTempo | null =
-    z.tempo_senken_s === null || z.tempo_halten_s === null || z.tempo_heben_s === null
+    z.tempo_senken_s == null || z.tempo_halten_s == null || z.tempo_heben_s == null
       ? null
       : { senkenS: Number(z.tempo_senken_s), haltenS: Number(z.tempo_halten_s), hebenS: Number(z.tempo_heben_s) };
   return { kamera, tempo };

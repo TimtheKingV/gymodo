@@ -9,7 +9,7 @@ const basis: CatalogType = {
   photoPath: "gymtavo/catalog/photos/chest_press-abcd1234.png",
   products: [],
   exercises: [{ exerciseId: "u1", name: "Brustpresse neutral", description: "lang", volumeKind: "reps",
-    targetMin: 8, targetMax: 12, geraetLabel: null, sortOrder: 1, videoStoragePath: null, videoDurationS: null }],
+    targetMin: 8, targetMax: 12, geraetLabel: null, kamera: null, tempo: null, sortOrder: 1, videoStoragePath: null, videoDurationS: null }],
 };
 const laufband: CatalogType = {
   ...basis, id: "t2", name: "Laufband", category: "cardio", loadUnit: "kmh", loadStep: 0.1,

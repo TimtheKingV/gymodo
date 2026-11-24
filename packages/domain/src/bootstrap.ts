@@ -18,6 +18,7 @@ import type { Messpunkt } from "./measurements.js";
 import type { Profil } from "./profil.js";
 import { zuProfil } from "./profil.js";
 import { stationsSchluessel } from "./station.js";
+import { kameraAusZeile, type KameraZeileOptional, type UebungKamera, type UebungTempo } from "./kamera.js";
 import { aktiverKatalogPlan } from "./trainingsplan.js";
 import { ladePlaeneFuerApp, type PlanFuerApp } from "./trainingsplan-bootstrap.js";
 import { DomainError } from "./errors.js";
@@ -210,9 +211,13 @@ type Uebung = {
   muscles: UebungsMuskel[];
   /** Kurzes Etikett des Geraetetyps neben dem Namen ("Kurzhantel"); null bei eigenen Studio-Uebungen. */
   geraetLabel: string | null;
+  /** Kameraprofil der Uebung (Migration 0077); null, solange der Katalog keins vergibt. */
+  kamera: UebungKamera | null;
+  /** Tempo je Wiederholung; null ohne Kameraprofil oder ohne Tempo. */
+  tempo: UebungTempo | null;
 };
 
-type UebungZeile = {
+type UebungZeile = KameraZeileOptional & {
   id: string;
   name: string;
   description: string | null;
@@ -233,6 +238,7 @@ export function uebungAusZeile(z: UebungZeile): Uebung {
     targetMax: z.target_max,
     muscles: muskelnAusSpalte(z.muscles),
     geraetLabel: z.geraet_label ?? null,
+    ...kameraAusZeile(z),
   };
 }
 
@@ -480,7 +486,7 @@ export async function getBootstrap(
   const { data: linkRows } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label, kamera_profil, kamera_signal, kamera_seite, tempo_senken_s, tempo_halten_s, tempo_heben_s, tempo_beginnt_mit)",
     )
     .order("sort_order", { ascending: true });
 
