@@ -336,7 +336,7 @@ Ersetzt, wo sie abweicht, die mit „(überholt, siehe N9)“ gekennzeichneten A
 - Zeit: `Lage.t` ist Sensorzeit. `losZeit` ist die Sensorzeit des Messwerts, bei dem `los()` wirksam wurde (ohne `wartetAufLos` die der ersten Bewegung); `sekundenSeitLos(t)` liefert die Zeit, die `Sollwelle` und `Tempoauswertung.erfasse(_:bei:)` erwarten.
 - Eine Rate, die nicht endlich oder nicht positiv ist, gilt als 50 Hz.
 
-**Grenzen.** Eine Drehung um die Senkrechte ändert ĝ nicht und ist unsichtbar (waagerecht schwenkende Hebelarme, Drücken ohne Drehung des Sensors). Das frühere Risiko „Pitch ±90°“ ist behoben: ĝ ist dort stetig, der Bericht prüft das an einem Kunstsignal mit Euler-Sprung.
+**Grenzen.** Eine Drehung um die Senkrechte ändert ĝ nicht und ist unsichtbar (waagerecht schwenkende Hebelarme, Drücken ohne Drehung des Sensors). Das frühere Risiko „Pitch ±90°“ ist behoben: ĝ ist dort stetig, ein Test prüft das an einem Kunstsignal mit Euler-Sprung (`WinkellageTests`).
 
 **Messung (`data/sensoraufnahmen/tempobericht.md`, erzeugt von `WinkelBerichtTests`).**
 - Auswahl: alle Aufnahmen mit bekannter Wiederholungszahl ≥ 5 (171 Sätze), gleich welcher Art: `repsWahr` aus `korrekturen.json`; die Mac-Aufnahmen mit `tempo` in `aufnahme.json` (ausgewählt über `label.reps` ≥ 5). „geeignet“ = gemerkter Hub am Satzende ≥ 40°.
@@ -361,6 +361,9 @@ Ersetzt, wo sie abweicht, die mit „(überholt, siehe N9)“ gekennzeichneten A
 **Soll-Welle und Auswertung.** Die Plan-Tasks 7 und 8 sind ohne `startetOben` und ohne `gleichmaessig` umgesetzt (`Tempovorgabe`, `Sollwelle`, `Tempoauswertung`). Die Bahnbreite ist je Welle einstellbar (`Sollwelle(vorgabe:halbeBahnbreite:)`, Standard ±0,2); `Tempoergebnis` hat einen öffentlichen Initialisierer.
 
 **Offen für den App-Plan.**
-- Startauslöser ab dem zweiten Satz: Der Befund trägt nur mit ausdrücklichem Start (`los()`); ohne ihn zählt das Aufnehmen der Hantel mit.
-- Glättung der Anzeige: Die Messwerte kommen paarweise mit gleichem `t`; dazu die Sprünge am Los und nach dem Halten nahe der Drehachse.
+- Startauslöser ab dem zweiten Satz: Ohne ausdrücklichen Start (`los()`) zählt das Aufnehmen der Hantel mit. Mit `los()` und `ende()` treffen die Mac-Sätze die Soll-Zahl im Median genau und die Ruhelage auf im Median 1,3°; wegen des Sprungs am Los (nächster Punkt) gilt die Zeile im Bericht dennoch als nicht tragfähig.
+- Lage vor dem Los: `Winkellage` gibt bis `los()` den Platzhalter 0 aus. Bewegt sich das Mitglied schon vorher, springt die Lage am Los auf den richtigen Wert (0,28–0,40 in drei Mac-Sätzen). Das ist eine Frage der Ausgabe von `Winkellage`, nicht der Anzeige: Vor dem Los sollte sie die Lage gegenüber der mitgeführten Ruherichtung liefern (`sicher = false`), dann ist der Übergang stetig.
+- Nahe der Drehachse: Die Lage wird dort gehalten und springt beim Wiedereinsetzen (vier Prüf-Sätze). Entweder über 0,1–0,2 s zurückführen oder den Kegel von 20° verkleinern.
+- Satzende: `ende()` verwirft einen offenen oberen Umkehrpunkt auch dann, wenn das Ablassen schon unten angekommen, der untere Umkehrpunkt aber noch nicht erkannt ist; ein Ende direkt nach der letzten Wiederholung zählt dann eine zu wenig. Bei Lage ≤ 0,35 sollte die Wiederholung abgeschlossen statt verworfen werden.
+- Glättung der Anzeige: Die Messwerte kommen paarweise mit gleichem `t`.
 - Bestätigung an echter Last (mehr als 1 kg, mehrere Personen) und an Geräten mit Hebelarm.
