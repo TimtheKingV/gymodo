@@ -219,7 +219,7 @@ Sitzende und liegende Beingeräte passen in keins der sechs Profile. Diese 15 Ü
 | Hüftstrecken | Gluteusmaschine | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte im Sitzen |
 | Wadenheben – stehend | Wadenmaschine | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte im Sitzen |
 | Wadenheben – sitzend | Wadenmaschine | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu viel |
-| Rückenstrecken | Rückenstrecker | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Ellbogen, das passt nicht zur Beinübung |
+| Rückenstrecken | Rückenstrecker | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Ellbogen, das passt nicht zur Bewegung |
 | Rumpfrotation | Rotationsmaschine | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Pallof Press | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu viel |
 | Hip Thrust | Hip-Thrust-Maschine | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte im Sitzen |
@@ -239,21 +239,21 @@ Sitzende und liegende Beingeräte passen in keins der sechs Profile. Diese 15 Ü
 | Holzhacken – von unten | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Schulterheben | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Step-up | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu viel |
-| Wadenheben – sitzend | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Ellbogen, das passt nicht zur Beinübung |
+| Wadenheben – sitzend | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Ellbogen, das passt nicht zur Bewegung |
 | Seitneigen | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
-| Kniebeuge | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch führte Ellbogen, das passt nicht zur Beinübung |
+| Kniebeuge | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch führte Ellbogen, das passt nicht zur Bewegung |
 | Glute Bridge | Langhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Russian Twist | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Seitneigen | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Ausfallschritt – seitlich | Kurzhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch: zählt zu viel |
-| Bulgarian Split Squat | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch führte Schulter, das passt nicht zur Beinübung |
+| Bulgarian Split Squat | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch führte Schulter, das passt nicht zur Bewegung |
 | Wadenheben – stehend | Langhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Bankdrücken – Untergriff | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch: nicht erkannt |
-| Reverse Flys – Schrägbank | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Knie, das passt nicht zur Oberkörperübung |
+| Reverse Flys – Schrägbank | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Knie, das passt nicht zur Bewegung |
 | Handgelenkcurl | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Dead Bug | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu viel |
 | Glute Bridge | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
-| Hüftabduktion – Seitlage | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Schulter, das passt nicht zur Beinübung |
+| Hüftabduktion – Seitlage | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Versuch führte Schulter, das passt nicht zur Bewegung |
 | Plank – Schultertippen | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Kein Video, keine Kamera |
 | Seitstütz – Hüftheben | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Kein Video, keine Kamera |
 | Russian Twist | Körpergewicht | – | Heben | 1,5 s heben · 2,5 s senken | Kein Video, keine Kamera |

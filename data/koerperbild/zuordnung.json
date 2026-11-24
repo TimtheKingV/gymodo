@@ -431,7 +431,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Ellbogen, das passt nicht zur Beinübung"
+    "grund": "Versuch führte Ellbogen, das passt nicht zur Bewegung"
   },
   "torso_rotation_machine": {
     "kamera": {
@@ -1789,7 +1789,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Ellbogen, das passt nicht zur Beinübung"
+    "grund": "Versuch führte Ellbogen, das passt nicht zur Bewegung"
   },
   "db_side_bend": {
     "kamera": {
@@ -1859,7 +1859,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Ellbogen, das passt nicht zur Beinübung"
+    "grund": "Versuch führte Ellbogen, das passt nicht zur Bewegung"
   },
   "bb_front_squat": {
     "kamera": {
@@ -2293,7 +2293,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Schulter, das passt nicht zur Beinübung"
+    "grund": "Versuch führte Schulter, das passt nicht zur Bewegung"
   },
   "db_calf_raise_single": {
     "kamera": {
@@ -2419,7 +2419,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Knie, das passt nicht zur Oberkörperübung"
+    "grund": "Versuch führte Knie, das passt nicht zur Bewegung"
   },
   "db_external_rotation_side": {
     "kamera": {
@@ -2657,7 +2657,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Versuch führte Schulter, das passt nicht zur Beinübung"
+    "grund": "Versuch führte Schulter, das passt nicht zur Bewegung"
   },
   "bw_plank_shoulder_tap": {
     "kamera": {

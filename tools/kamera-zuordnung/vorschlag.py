@@ -119,9 +119,9 @@ def profil_und_grund(key, name, gruppe, signal):
 
     # Signal passt nicht zur Bewegung: lieber ohne Kamera als eine falsche Zaehlung.
     if BEIN_MUSTER.search(text) and not bein_signal:
-        return "ohne_kamera", None, "Versuch führte " + SIGNAL_WORT[signal] + ", das passt nicht zur Beinübung"
+        return "ohne_kamera", None, "Versuch führte " + SIGNAL_WORT[signal] + ", das passt nicht zur Bewegung"
     if bein_signal and not (BEIN_MUSTER.search(text) or RUMPF_BEIN_OK.search(text) or gruppe == "geraete"):
-        return "ohne_kamera", None, "Versuch führte " + SIGNAL_WORT[signal] + ", das passt nicht zur Oberkörperübung"
+        return "ohne_kamera", None, "Versuch führte " + SIGNAL_WORT[signal] + ", das passt nicht zur Bewegung"
 
     liegend = LIEGEND_MUSTER if gruppe in LIEGEND_GRUPPEN else LIEGEND_MUSTER_STRENG
     if gruppe != "geraete" and liegend.search(text):
