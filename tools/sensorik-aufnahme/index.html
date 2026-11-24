@@ -172,7 +172,8 @@ function paketeProSekunde() { const t = jetzt(); return spur.filter((m) => m.t >
 
 // ---------- Sensor ----------
 function empfangen(bytes) {
-  const t = jetzt(); const pakete = parser.lesen(bytes);
+  const t = jetzt(), vorher = parser.verworfeneBytes; const pakete = parser.lesen(bytes);
+  if (satz) satz.verworfen += parser.verworfeneBytes - vorher;   // je Aufnahme, nicht seit Verbindungsbeginn
   for (const p of pakete) {
     spur.push({ t, v: Math.hypot(...p.a) - 1 }); if (spur.length > 1500) spur.shift();
     if (satz) satz.messwert(t, p);
@@ -207,6 +208,12 @@ function brueckeStarten(zustand) {   // Seite kommt von bruecke.py: Messwerte ue
     statusZeigen();
   });
   strom.onerror = () => { bruecke = { ...bruecke, verbunden: false, meldung: 'Brücke nicht erreichbar. Läuft bruecke.py noch?' }; sensor = null; statusZeigen(); };
+  // Die Brücke trennt einen Hörer, der nicht hinterherkommt (volle Warteschlange): nicht still neu verbinden.
+  strom.addEventListener('abgehaengt', () => {
+    strom.close(); sensor = null;
+    bruecke = { ...bruecke, verbunden: false, meldung: 'Brücke hat die Verbindung getrennt (die Seite kam nicht hinterher). Seite neu laden.' };
+    statusZeigen(); $('hinweis').innerHTML = '<span class="fehler">Brücke hat die Verbindung getrennt.</span>';
+  });
   statusZeigen();
 }
 function demoStarten() {   // ?demo=1: kuenstliche Pakete, 50 Hz, je zwei gebuendelt
@@ -238,7 +245,7 @@ function tempoLesen() {
 function neuerSatz() {
   const beginn = jetzt(), startedAt = new Date(), tempo = tempoLesen(), startetOben = $('start').value === 'oben';
   const zeilen = [], empfang = []; let letzteT = null, luecken = 0, pakete = 0;
-  const s = { beginn, startedAt, tempo, startetOben, los: null, ende: null, hoch: 0, runter: 0, takt: [], geplantBis: 0 };
+  const s = { beginn, startedAt, tempo, startetOben, los: null, ende: null, hoch: 0, runter: 0, takt: [], geplantBis: 0, verworfen: 0 };
   const z = (x, n) => x.toFixed(n);
   s.rel = (t) => t - beginn;
   s.messwert = (t, p) => {
@@ -274,7 +281,7 @@ function neuerSatz() {
     const dauer = empfang.length > 1 ? empfang[empfang.length - 1] - empfang[0] : 0;
     return {
       csv: ['t,ax,ay,az,gx,gy,gz,wx,wy,wz', ...zeilen.map((x) => x.text)].join('\n') + '\n',
-      statistik: { abstandMs: { max: q(1), median: q(0.5), p95: q(0.95) }, luecken, pakete, rateIstHz: dauer ? +(pakete / dauer).toFixed(1) : 0, verworfeneBytes: parser.verworfeneBytes },
+      statistik: { abstandMs: { max: q(1), median: q(0.5), p95: q(0.95) }, luecken, pakete, rateIstHz: dauer ? +(pakete / dauer).toFixed(1) : 0, verworfeneBytes: s.verworfen },
     };
   };
   return s;
@@ -294,9 +301,13 @@ function verwerfen() { satz = null; phaseSetzen('bereit', 'Verworfen'); $('absch
 function abschliessen() {
   satz.stopp = jetzt(); const s = satz; satz = null;   // ab hier keine Messwerte mehr
   s.ergebnis = s.fertig(); abgeschlossen = s;
-  // Ohne Tastendruck: die Zahl der vollen Taktperioden als Vorschlag, sonst die Tasten.
-  const ausTakt = s.tempo.ohneTakt ? 0 : Math.floor((s.ende - s.los) / (s.tempo.kraftweg + s.tempo.ablassen));
-  $('reps').value = Math.min(s.hoch, s.runter) || Math.max(s.hoch, s.runter) || ausTakt;
+  // Vorschlag: die Tasten; ohne Tastendruck die Zahl der Taktgipfel bis zum Ende (so oft sollte gehoben werden).
+  const ausTasten = Math.min(s.hoch, s.runter) || Math.max(s.hoch, s.runter);
+  const taktGipfel = s.takt.filter((k) => k.oben && k.t <= s.ende).length;
+  if (ausTasten) { s.repsVorschlag = String(ausTasten); s.repsQuelle = 'tasten'; }
+  else if (!s.tempo.ohneTakt) { s.repsVorschlag = String(taktGipfel); s.repsQuelle = 'takt'; }
+  else { s.repsVorschlag = ''; s.repsQuelle = 'hand'; }
+  $('reps').value = s.repsVorschlag;
   $('bilanz').textContent = `${s.hoch} × oben, ${s.runter} × unten gedrückt · ${s.ergebnis.statistik.pakete} Pakete · ${s.ergebnis.statistik.rateIstHz} Hz · ${s.ergebnis.statistik.luecken} Lücken`;
   $('abschluss').style.display = 'block'; phaseSetzen('abschluss', 'Speichern?'); $('reps').focus(); $('reps').select();
 }
@@ -326,17 +337,18 @@ async function freierName(d) {
 async function speichern() {
   const s = abgeschlossen; if (!s) return;
   const reps = parseInt($('reps').value, 10); const gewicht = parseFloat($('gewicht').value);
+  const repsQuelle = $('reps').value.trim() === s.repsVorschlag ? s.repsQuelle : 'hand';   // vor dem Speichern geaendert
   let name = bruecke ? null : await freierName(s.startedAt);
   const json = {
     abschluss: 'gesichert', befestigung: $('befestigung').value.trim() || null, befestigungsart: $('art').value, befestigungsartQuelle: 'gewaehlt',
     endedAt: iso(new Date(s.startedAt.getTime() + (s.stopp - s.beginn) * 1000)), format: 'gymodo.sensoraufnahme/1',
-    geraet: { appBuild: 'sensorik-aufnahme/1', model: 'Mac (Chrome, Web Bluetooth)', os: navigator.platform },
+    geraet: { appBuild: 'sensorik-aufnahme/1', model: bruecke ? 'Mac (Brücke)' : 'Mac (Web Bluetooth)', os: navigator.platform },
     kontext: { equipmentModelId: null, exerciseId: '', exerciseName: $('uebung').value.trim(), machineId: null, machineName: $('art').selectedOptions[0].text, sessionId, setId: crypto.randomUUID(), setIndex: ++satzIndex },
     notiz: $('notiz').value.trim() || null,
     label: { problemFlag: false, reps: Number.isFinite(reps) ? reps : null, weightKg: Number.isFinite(gewicht) ? gewicht : null },
     sensor: { akkuProzent: null, name: sensor ? sensor.name : 'unbekannt', rateSollHz: 50 },
     startedAt: iso(s.startedAt), statistik: s.ergebnis.statistik,
-    tempo: { ablassenS: s.tempo.ablassen, kraftwegS: s.tempo.kraftweg, losBei: +(s.los - s.beginn).toFixed(6), ohneTakt: s.tempo.ohneTakt, ruheS: RUHE, startetOben: s.startetOben, tasten: $('tasten').value, tastenOben: s.hoch, tastenUnten: s.runter },
+    tempo: { ablassenS: s.tempo.ablassen, kraftwegS: s.tempo.kraftweg, losBei: +(s.los - s.beginn).toFixed(6), ohneTakt: s.tempo.ohneTakt, repsQuelle, ruheS: RUHE, startetOben: s.startetOben, tasten: $('tasten').value, tastenOben: s.hoch, tastenUnten: s.runter },
     zaehler: null,
   };
   const text = JSON.stringify(json, null, 2) + '\n';

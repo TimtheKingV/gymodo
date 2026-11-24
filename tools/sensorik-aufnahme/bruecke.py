@@ -10,6 +10,12 @@ Start (im Terminal, das die Bluetooth-Freigabe hat):
 Dann http://127.0.0.1:8765/ in Safari oeffnen.
 
 Optionen: --ziel <Ordner> (Standard: data/sensoraufnahmen im selben Checkout), --port 8765.
+
+Schutz: Der Server hoert nur auf 127.0.0.1. /strom und /speichern antworten nur
+Anfragen, deren Host 127.0.0.1:<port> oder localhost:<port> ist und deren Origin
+(falls gesetzt) dazu passt; sonst 403. Das haelt fremde Webseiten im selben
+Browser ab (DNS-Rebinding, Cross-Site-POST). /speichern verlangt
+Content-Type application/json und hoechstens 20 MB.
 """
 import argparse
 import asyncio
@@ -26,21 +32,33 @@ DIENST = "0000ffe5-0000-1000-8000-00805f9a34fb"
 DATEN = "0000ffe4-0000-1000-8000-00805f9a34fb"
 BEFEHLE = "0000ffe9-0000-1000-8000-00805f9a34fb"
 RATE_50_HZ = bytes([0xFF, 0xAA, 0x03, 0x08, 0x00])
-ORDNERNAME = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{4}$")
+ORDNERNAME = re.compile(r"\d{4}-\d{2}-\d{2}-\d{4}")
+HOECHSTENS_BYTES = 20 * 1024 * 1024
 
 HIER = Path(__file__).resolve().parent
 zustand = {"verbunden": False, "name": None, "meldung": "Suche den Sensor …", "ziel": ""}
-hoerer: set[queue.Queue] = set()
 sperre = threading.Lock()
+
+
+class Hoerer:
+    """Ein offener /strom: Warteschlange und die Marke, dass die Bruecke ihn abgehaengt hat."""
+
+    def __init__(self) -> None:
+        self.q: queue.Queue = queue.Queue(maxsize=5000)
+        self.abgehaengt = threading.Event()
+
+
+hoerer: set[Hoerer] = set()
 
 
 def senden(zeile: str) -> None:
     with sperre:
-        for q in list(hoerer):
+        for h in list(hoerer):
             try:
-                q.put_nowait(zeile)
-            except queue.Full:  # Seite haengt: lieber diesen Hoerer verlieren als Speicher fuellen
-                hoerer.discard(q)
+                h.q.put_nowait(zeile)
+            except queue.Full:  # Seite haengt: lieber diesen Hoerer abhaengen als Speicher fuellen
+                hoerer.discard(h)
+                h.abgehaengt.set()
 
 
 def status(**neu) -> None:
@@ -92,8 +110,19 @@ class Anfrage(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(inhalt)
 
+    def von_hier(self) -> bool:
+        """Host ist 127.0.0.1:<port> oder localhost:<port>, Origin (falls gesetzt) passt dazu."""
+        port = self.server.server_address[1]
+        erlaubt = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        if self.headers.get("Host", "") not in erlaubt:
+            return False
+        herkunft = self.headers.get("Origin")
+        return herkunft is None or herkunft in {f"http://{h}" for h in erlaubt}
+
     def do_GET(self):
         pfad = self.path.split("?")[0]
+        if pfad == "/strom" and not self.von_hier():
+            return self.antwort(403, "text/plain", b"verboten")
         if pfad in ("/", "/index.html"):
             self.antwort(200, "text/html; charset=utf-8", (HIER / "index.html").read_bytes())
         elif pfad == "/bruecke":
@@ -103,15 +132,20 @@ class Anfrage(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
-            q: queue.Queue = queue.Queue(maxsize=5000)
+            h = Hoerer()
             with sperre:
-                hoerer.add(q)
+                hoerer.add(h)
             try:
                 self.wfile.write(f"event: status\ndata: {json.dumps(zustand)}\n\n".encode())
                 self.wfile.flush()
                 while True:
+                    if h.abgehaengt.is_set():  # der Seite sagen, warum der Strom endet, dann schliessen
+                        self.wfile.write(b"event: abgehaengt\ndata: {}\n\n")
+                        self.wfile.flush()
+                        self.close_connection = True
+                        break
                     try:
-                        zeile = q.get(timeout=5)
+                        zeile = h.q.get(timeout=5)
                     except queue.Empty:
                         zeile = ": lebt\n\n"
                     self.wfile.write(zeile.encode())
@@ -120,17 +154,28 @@ class Anfrage(BaseHTTPRequestHandler):
                 pass
             finally:
                 with sperre:
-                    hoerer.discard(q)
+                    hoerer.discard(h)
         else:
             self.antwort(404, "text/plain", b"nicht gefunden")
 
     def do_POST(self):
         if self.path != "/speichern":
             return self.antwort(404, "text/plain", b"nicht gefunden")
+        if not self.von_hier():
+            return self.antwort(403, "text/plain", b"verboten")
+        typ = self.headers.get("Content-Type", "").split(";")[0].strip().lower()
+        if typ != "application/json":
+            return self.antwort(415, "application/json", json.dumps({"fehler": "Content-Type muss application/json sein"}).encode())
         try:
-            satz = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            laenge = int(self.headers.get("Content-Length", ""))
+        except ValueError:
+            return self.antwort(411, "application/json", json.dumps({"fehler": "Content-Length fehlt"}).encode())
+        if laenge < 0 or laenge > HOECHSTENS_BYTES:
+            return self.antwort(413, "application/json", json.dumps({"fehler": "hoechstens 20 MB"}).encode())
+        try:
+            satz = json.loads(self.rfile.read(laenge))
             kopf = satz["kopf"]
-            if not ORDNERNAME.match(kopf):
+            if not isinstance(kopf, str) or not ORDNERNAME.fullmatch(kopf):
                 raise ValueError(f"unerwarteter Ordnername {kopf!r}")
             ordner = freier_ordner(self.ziel, kopf)
             ordner.mkdir(parents=True)
