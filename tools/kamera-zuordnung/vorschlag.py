@@ -49,6 +49,15 @@ RUMPF_BEIN_OK = re.compile(
 # Geraete der Beine/Huefte: passen in kein Profil, auch wenn der Versuch ein anderes Signal fuehrte.
 BEIN_GERAET = re.compile(r"^(leg_|hip_|calf_|hack_|belt_|glute)")
 
+# Fachliche Ausschluesse: das Signal misst die Bewegung nicht (jeweils -> ohne_kamera).
+SHRUG_MUSTER = re.compile(r"shrug|schulterheben")
+HANDGELENK_MUSTER = re.compile(r"wrist|handgelenk")
+WADEN_MUSTER = re.compile(r"calf|wadenheben")
+SCHULTERROT_MUSTER = re.compile(r"external_rotation|internal_rotation|außenrotation|innenrotation")
+RUMPFBEUGE_MUSTER = re.compile(r"crunch")  # nur Kabelzug und Geraete; Boden-Crunch bleibt liegend
+KEIN_SIGNAL_MUSTER = re.compile(r"bird_dog")
+ARM_ISOLATION_MUSTER = re.compile(r"curl|triceps|trizeps|pushdown|kickback")
+
 # Regel 6
 SENKEN_MUSTER = re.compile(
     r"squat|lunge|kniebeuge|ausfallschritt|pushup|liegestütz|(^|_)dip(_|$)|\bdips\b|"
@@ -66,7 +75,7 @@ PROFIL_TITEL = {
     "zug_haengend": "Zug, hängend",
     "ohne_kamera": "Ohne Kamera",
 }
-GRUND_BEINGERAET = "kein Profil für Beingeräte im Sitzen"
+GRUND_BEINGERAET = "kein Profil für Beingeräte"
 
 
 def lade_versuch():
@@ -105,17 +114,32 @@ def profil_und_grund(key, name, gruppe, signal):
     text = f"{key} {name.lower()}"
     bein_signal = signal in ("knie", "huefte")
 
+    if SHRUG_MUSTER.search(text):
+        return "ohne_kamera", None, "Schulterheben: der Ellbogen bleibt gestreckt, die Bewegung kommt aus dem Schultergürtel"
+    if HANDGELENK_MUSTER.search(text):
+        return "ohne_kamera", None, "Handgelenkübung: die Bewegung findet nur im Handgelenk statt"
+    if WADEN_MUSTER.search(text):
+        return "ohne_kamera", None, "Wadenheben: das Knie beugt nicht, die Bewegung liegt im Sprunggelenk"
+    if SCHULTERROT_MUSTER.search(text):
+        return "ohne_kamera", None, "Schulterrotation: der Ellbogenwinkel ändert sich nicht"
+    if (RUMPFBEUGE_MUSTER.search(text) and gruppe in ("kabelzug", "geraete")) or KEIN_SIGNAL_MUSTER.search(text):
+        return "ohne_kamera", None, "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
+    if ARM_ISOLATION_MUSTER.search(text) and signal != "ellbogen":
+        return "ohne_kamera", None, "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte " + SIGNAL_WORT[signal]
+
     # Geraete fuer Beine/Huefte: nie ein Profil (Regel 5, gilt auch bei fremdem Signal).
     if gruppe == "geraete" and (bein_signal or BEIN_GERAET.search(key)) and not HAENGEND_MUSTER.search(text):
         return "ohne_kamera", None, GRUND_BEINGERAET
 
-    if RUMPF_MUSTER.search(text) and not re.search(r"external_rotation|internal_rotation|außenrotation|innenrotation", text):
+    if RUMPF_MUSTER.search(text):
         return "ohne_kamera", None, "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
     if HAENGEND_MUSTER.search(text):
-        return "zug_haengend", signal, "Zug oder Hängen: Kamera sieht Arme und Schulter von vorn"
+        if bein_signal:
+            return "zug_haengend", signal, "Beinheben im Hängen: gezählt wird über " + SIGNAL_WORT[signal] + ", im Versuch richtig gezählt"
+        return "zug_haengend", signal, "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal " + SIGNAL_WORT[signal] + ")"
 
     if gruppe == "eigengewicht" and signal == "ellbogen" and STUETZ_MUSTER.search(text):
-        return "stuetz_boden", signal, "Stütz am Boden: Ellbogen beugt und streckt"
+        return "stuetz_boden", signal, "Liegestütz oder Dip: der Ellbogen beugt und streckt, im Versuch richtig gezählt"
 
     # Signal passt nicht zur Bewegung: lieber ohne Kamera als eine falsche Zaehlung.
     if BEIN_MUSTER.search(text) and not bein_signal:
@@ -125,11 +149,11 @@ def profil_und_grund(key, name, gruppe, signal):
 
     liegend = LIEGEND_MUSTER if gruppe in LIEGEND_GRUPPEN else LIEGEND_MUSTER_STRENG
     if gruppe != "geraete" and liegend.search(text):
-        return "liegend", signal, "Übung im Liegen oder auf der Bank, Signal " + SIGNAL_WORT[signal]
+        return "liegend", signal, "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal " + SIGNAL_WORT[signal] + ")"
 
     if bein_signal:
-        return "ganzkoerper_stehend", signal, "Stehende Übung, Signal " + SIGNAL_WORT[signal]
-    return "oberkoerper", signal, "Oberkörperübung, Signal " + SIGNAL_WORT[signal]
+        return "ganzkoerper_stehend", signal, "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal " + SIGNAL_WORT[signal] + ")"
+    return "oberkoerper", signal, "Oberkörperübung, im Versuch richtig gezählt (Signal " + SIGNAL_WORT[signal] + ")"
 
 
 def vorschlag(u, gruppe, zeile):
@@ -194,6 +218,14 @@ def schreibe_liste(katalog, ergebnis, geraete):
     z.append("")
     z.append("**Nichts davon steht im Katalog**, bevor Tim die Liste gesehen und das jeweilige Profil den Gütetest bestanden hat. Freigeschaltet ist vorerst nur „Ohne Kamera“.")
     z.append("")
+    z.append("Urteile aus dem Versuch (jedes Video wurde von der Kamera-Erkennung durchgezählt):")
+    z.append("")
+    z.append("- „zählt richtig“: die Kamera zählte so viele Wiederholungen, wie im Video gemacht wurden.")
+    z.append("- „zählt zu viel“: die Kamera zählte mehr Wiederholungen, als gemacht wurden.")
+    z.append("- „zählt zu wenig“: die Kamera zählte weniger Wiederholungen, als gemacht wurden.")
+    z.append("- „nicht erkannt“: die Kamera fand die Person im Video nicht.")
+    z.append("- Nur Übungen mit „zählt richtig“ bekommen ein Profil; alle anderen bleiben vorerst ohne Kamera.")
+    z.append("")
     z.append(f"## Zählung je Profil ({len(ergebnis)} Übungen mit Wiederholungen)")
     z.append("")
     z.append("| Profil | Übungen |")
@@ -201,9 +233,9 @@ def schreibe_liste(katalog, ergebnis, geraete):
     for p in PROFIL_REIHE:
         z.append(f"| {PROFIL_TITEL[p]} | {len(je_profil[p])} |")
     z.append("")
-    z.append("## Offener Punkt: Beingeräte im Sitzen")
+    z.append("## Offener Punkt: Beingeräte")
     z.append("")
-    z.append(f"Sitzende und liegende Beingeräte passen in keins der sechs Profile. Diese {len(beingeraete)} Übungen stehen deshalb vorerst bei „Ohne Kamera“. Tim entscheidet, ob dafür ein siebtes Profil entstehen soll.")
+    z.append(f"Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile. Diese {len(beingeraete)} Übungen stehen deshalb vorerst bei „Ohne Kamera“. Tim entscheidet, ob dafür ein siebtes Profil entstehen soll.")
     z.append("")
     for k in beingeraete:
         z.append(f"- {namen[k]} ({geraete[k][1]})")

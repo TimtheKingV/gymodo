@@ -25,4 +25,11 @@ describe("Kamera-Zuordnung", () => {
   it("was der Versuch nicht richtig zaehlte, startet ohne Kamera", () => {
     expect(zuordnung["leg_press_45"].kamera.profil).toBe("ohne_kamera");
   });
+  it("Regel-Spotcheck: Beginn und Ausschluesse", () => {
+    expect(zuordnung["db_squat_sides"].kamera.beginnt_mit).toBe("senken");
+    expect(zuordnung["db_curl_standing"].kamera.beginnt_mit).toBe("heben");
+    for (const key of ["bb_shrug", "cable_shrug", "db_wrist_extension", "db_calf_raise_single"]) {
+      expect(zuordnung[key].kamera.profil, key).toBe("ohne_kamera");
+    }
+  });
 });

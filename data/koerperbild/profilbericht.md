@@ -6,9 +6,9 @@ Jedes Video wird sechsmal hintereinander abgespielt (1 s Ruhe mit dem ersten Bil
 
 | Profil | Videos | richtig gezaehlt | Anteil | Median Pflichtgelenke | Stufe 1 bestanden |
 |---|---|---|---|---|---|
-| ganzkoerper_stehend | 22 | 20 | 90.9 % | 100.0 % | ja |
-| liegend | 22 | 22 | 100.0 % | 94.7 % | nein |
-| oberkoerper | 85 | 84 | 98.8 % | 100.0 % | ja |
+| ganzkoerper_stehend | 19 | 17 | 89.5 % | 100.0 % | nein |
+| liegend | 19 | 19 | 100.0 % | 95.4 % | ja |
+| oberkoerper | 78 | 78 | 100.0 % | 100.0 % | ja |
 | stuetz_boden | 3 | 3 | 100.0 % | 100.0 % | ja |
 | zug_haengend | 10 | 10 | 100.0 % | 98.8 % | ja |
 
@@ -23,11 +23,9 @@ Jedes Video wird sechsmal hintereinander abgespielt (1 s Ruhe mit dem ersten Bil
 
 keine
 
-## oberkoerper: nicht richtig gezaehlt (1)
+## oberkoerper: nicht richtig gezaehlt (0)
 
-| Video | Signal | gezaehlt / erwartet | Pflichtgelenke | fuehrende Seite | Hub |
-|---|---|---|---|---|---|
-| cable_shrug | ellbogen | 17 / 5 oder 6 | 100.0 % | rechts | 27.6 Grad |
+keine
 
 ## stuetz_boden: nicht richtig gezaehlt (0)
 
