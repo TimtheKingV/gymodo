@@ -163,6 +163,14 @@ struct WinkelBerichtTests {
         #expect(zeilen.count >= 150)
     }
 
+    /// Schreibt `data/sensoraufnahmen/tempobericht.md`: nur der Winkellage-Teil, genau eine H1.
+    @Test func berichtSchreiben() throws {
+        let text = try WinkelBericht.markdown(WinkelBericht.paare())
+        #expect(text.split(separator: "\n").filter { $0.hasPrefix("# ") } == ["# Winkellage"])
+        #expect(text.contains("## Winkel in Ruhe"))
+        try text.write(to: Pfade.aufnahmen.appendingPathComponent("tempobericht.md"), atomically: true, encoding: .utf8)
+    }
+
     @Test func woDerWinkelTraegtZaehltJeArtUndUebungUndSortiert() {
         func z(_ o: String, _ art: Befestigungsart?, _ uebung: String, _ hub: Double) -> WinkelZeile {
             WinkelZeile(ordner: o, art: art, pruefung: true, repsWahr: 10, hubGrad: hub, wdhFehler: 0,

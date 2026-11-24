@@ -69,112 +69,13 @@ enum Synthetik {
     }
 }
 
-// MARK: - Hubsaetze fuer den Lageschaetzer
+// MARK: - Drehsaetze fuer die Winkellage
 
 extension Synthetik {
-    /// Kuenstlicher Satz mit der wahren Lage je Messwert (0 = Ruhelage unten, 1 = oben).
-    struct Hubsatz { let werte: [SensorMesswert]; let lage: [Double] }
-
     /// Ein Wegstueck: die Lage laeuft als Kosinus-Flanke von `von` nach `nach`.
     /// Mit `von == nach` steht die Last still.
     fileprivate struct Wegstueck { let dauer: Double; let von: Double; let nach: Double }
 
-    /// Die Schwerkraft liegt immer auf z (1 g). Die Position folgt Kosinus-Flanken
-    /// (`(1 − cos(π·τ/dauer))/2`), die Beschleunigung ist deren zweite Ableitung
-    /// (als zweite Differenz abgetastet),
-    /// in g entlang `achse` addiert. `hubAnteil[n]` skaliert den Hub der n-ten
-    /// Wiederholung (1-basiert). `lage` ist auf `hubMeter` normiert.
-    /// `halt` haelt die Last auf dem Kraftweg der genannten Wiederholung bei
-    /// `beiLage` an, `biasG` ist ein Gleichanteil entlang `achse`, der mit der
-    /// ersten Wiederholung einsetzt (in der Ruhe davor wuerde ihn die
-    /// Schwerkraftschaetzung schlucken), `stoss` eine Spitze von 40 ms auf z.
-    /// `pausenUnten[n]` laesst die Last nach der n-ten Wiederholung so viele
-    /// Sekunden in der Ruhelage stehen.
-    /// `drehungGrad` kippt die Last mit der Lage um die x-Achse (Kippwinkel
-    /// `drehungGrad · lage`, also je Wiederholung hin und zurueck), wie eine Hantel,
-    /// die sich im Satz dreht; der Sensor sitzt im Drehpunkt. Beschleunigung,
-    /// Drehrate (um x) und Winkel (Roll) werden dazu stimmig erzeugt: Im
-    /// Sensorrahmen zeigt die Schwerkraft dann nach (0, sin θ, cos θ).
-    static func hub(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
-                    hubMeter: Double = 0.4, hubAnteil: [Int: Double] = [:],
-                    startetOben: Bool = false, achse: Vektor3 = Vektor3(x: 0, y: 0, z: 1),
-                    halt: (wiederholung: Int, beiLage: Double, dauer: Double)? = nil,
-                    biasG: Double = 0, stoss: (bei: Double, g: Double)? = nil,
-                    ruheVorher: Double = 3, ruheNachher: Double = 2,
-                    rate: Double = 50, buendel: Int = 2,
-                    luecke: (ab: Double, dauer: Double)? = nil,
-                    pausenUnten: [Int: Double] = [:], drehungGrad: Double = 0) -> Hubsatz {
-        let ruhelage: Double = startetOben ? 1 : 0
-        var stuecke = [Wegstueck(dauer: ruheVorher, von: ruhelage, nach: ruhelage)]
-        for n in stride(from: 1, through: wiederholungen, by: 1) {
-            let anteil = hubAnteil[n] ?? 1
-            let unten = startetOben ? 1 - anteil : 0
-            let oben = unten + anteil
-            var aufwaerts = [Wegstueck(dauer: kraftweg, von: unten, nach: oben)]
-            if let halt, halt.wiederholung == n, halt.beiLage > unten, halt.beiLage < oben {
-                let vorher = (halt.beiLage - unten) / anteil
-                aufwaerts = [Wegstueck(dauer: kraftweg * vorher, von: unten, nach: halt.beiLage),
-                             Wegstueck(dauer: halt.dauer, von: halt.beiLage, nach: halt.beiLage),
-                             Wegstueck(dauer: kraftweg * (1 - vorher), von: halt.beiLage, nach: oben)]
-            }
-            let abwaerts = Wegstueck(dauer: ablassen, von: oben, nach: unten)
-            stuecke += startetOben ? [abwaerts] + aufwaerts : aufwaerts + [abwaerts]
-            if let pause = pausenUnten[n] { stuecke.append(Wegstueck(dauer: pause, von: ruhelage, nach: ruhelage)) }
-        }
-        stuecke.append(Wegstueck(dauer: ruheNachher, von: ruhelage, nach: ruhelage))
-
-        let betrag = (achse.x * achse.x + achse.y * achse.y + achse.z * achse.z).squareRoot()
-        let richtung = Vektor3(x: achse.x / betrag, y: achse.y / betrag, z: achse.z / betrag)
-        let dt = 1 / rate
-        let gesamtDauer = stuecke.reduce(0) { $0 + $1.dauer }
-        func wahreLage(_ t: Double) -> Double {
-            var beginn = 0.0
-            for s in stuecke {
-                if t < beginn + s.dauer, s.dauer > 0 {
-                    let w = Double.pi * max(t - beginn, 0) / s.dauer
-                    return s.von + (s.nach - s.von) * (1 - cos(w)) / 2
-                }
-                beginn += s.dauer
-            }
-            return ruhelage
-        }
-        var werte: [SensorMesswert] = []
-        var lage: [Double] = []
-        for i in 0..<Int((gesamtDauer * rate).rounded()) {
-            let t = Double(i) * dt
-            // Zweite Ableitung als zweite Differenz: an den Flankenwechseln springt
-            // die Beschleunigung, abgetastet ergaebe sie sonst eine Scheindrift.
-            // So ergibt die Summe der Beschleunigungen genau den wahren Weg.
-            let beschleunigungMS2 = (wahreLage(t + dt) - 2 * wahreLage(t) + wahreLage(t - dt)) * hubMeter / (dt * dt)
-            let entlang = beschleunigungMS2 / 9.81 + (t >= ruheVorher ? biasG : 0)
-            var z = 1 + richtung.z * entlang
-            if let stoss, t >= stoss.bei, t < stoss.bei + 0.04 { z += stoss.g }
-
-            let bundleT = Double(i / buendel * buendel) * dt
-            if let luecke, bundleT >= luecke.ab, bundleT < luecke.ab + luecke.dauer { continue }
-            var beschleunigung = Vektor3(x: richtung.x * entlang, y: richtung.y * entlang, z: z)
-            var drehrate = Vektor3(x: 0, y: 0, z: 0), winkel = Vektor3(x: 0, y: 0, z: 0)
-            if drehungGrad != 0 {
-                // Kippwinkel θ = drehungGrad · lage; Vektoren des ungekippten Rahmens
-                // erscheinen im gekippten als (x, y cos θ + z sin θ, −y sin θ + z cos θ).
-                let theta = drehungGrad * wahreLage(t) * .pi / 180
-                let c = cos(theta), s = sin(theta)
-                beschleunigung = Vektor3(x: beschleunigung.x, y: beschleunigung.y * c + beschleunigung.z * s,
-                                         z: -beschleunigung.y * s + beschleunigung.z * c)
-                // Drehrate um x = dθ/dt (zentrale Differenz), Roll = θ.
-                drehrate = Vektor3(x: drehungGrad * (wahreLage(t + dt) - wahreLage(t - dt)) / (2 * dt), y: 0, z: 0)
-                winkel = Vektor3(x: theta * 180 / .pi, y: 0, z: 0)
-            }
-            werte.append(SensorMesswert(t: bundleT, beschleunigung: beschleunigung, drehrate: drehrate, winkel: winkel))
-            lage.append(wahreLage(t))
-        }
-        return Hubsatz(werte: werte, lage: lage)
-    }
-}
-
-// MARK: - Drehsaetze fuer die Winkellage
-
-extension Synthetik {
     /// Kuenstlicher Satz einer drehenden Last mit der wahren Lage je Messwert (0 = Ruhelage, 1 = oben).
     /// `losT`: ein Zeitpunkt 0,5 s vor der ersten Wiederholung, an dem die Last in der Ruhelage des Satzes steht.
     struct Drehsatz { let werte: [SensorMesswert]; let lage: [Double]; let losT: Double }
@@ -189,7 +90,7 @@ extension Synthetik {
     /// (im Sensorrahmen; der Sensor dreht um +α, die Schwerkraft in seinem Rahmen um −α).
     /// α = Vorbewegung + `hubGrad · lage` + Zittern; ausgegeben werden `roll = atan2(ĝ.y, ĝ.z)` und
     /// `pitch = asin(−ĝ.x)` in Grad, also mit allen Euler-Spruengen (Roll ±180°, Pitch ±90°).
-    /// Die Lage folgt Kosinus-Flanken wie bei `hub`. Die Drehrate ist die Ableitung der ausgegebenen
+    /// Die Lage folgt Kosinus-Flanken (`Wegstueck`). Die Drehrate ist die Ableitung der ausgegebenen
     /// Roll- und Pitch-Winkel (ueber ±180° gefaltet), auf z liegt ein kleines Zittern von 9 Hz;
     /// die Beschleunigung ist (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
     /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern (7 Hz)
