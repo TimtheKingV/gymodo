@@ -162,4 +162,22 @@ final class KoerperlageTests: XCTestCase {
         XCTAssertEqual(k.wiederholungen.count, 3)
         ueberlappungsfrei(k.wiederholungen)
     }
+
+    func testUngueltigerGemerkterHubWirdWieNilBehandelt() {
+        let werte = satz(wdh: 4, hin: 2, rueck: 2, von: 170, bis: 50)
+        let ohneHub = lagenImLauf(werte, gemerkterHub: nil)
+        for ungueltig in [0.0, -5.0, 19.9, .nan, .infinity] {
+            let (k, lagen) = lagenUndStand(werte, gemerkterHub: ungueltig)
+            XCTAssertTrue(lagen.allSatisfy { $0.lage.isFinite }, "\(ungueltig)")
+            XCTAssertFalse(k.hubWarGemerkt, "\(ungueltig)")
+            XCTAssertEqual(lagen.map(\.sicher), ohneHub.map(\.sicher), "\(ungueltig)")
+            XCTAssertEqual(lagen.map(\.lage), ohneHub.map(\.lage), "\(ungueltig)")
+            XCTAssertEqual(k.wiederholungen.count, 4, "\(ungueltig)")
+        }
+    }
+    func testHubWarGemerkt() {
+        XCTAssertTrue(Koerperlage(vorgabe: curl, gemerkterHub: 120).hubWarGemerkt)
+        XCTAssertTrue(Koerperlage(vorgabe: curl, gemerkterHub: 20).hubWarGemerkt)
+        XCTAssertFalse(Koerperlage(vorgabe: curl, gemerkterHub: nil).hubWarGemerkt)
+    }
 }

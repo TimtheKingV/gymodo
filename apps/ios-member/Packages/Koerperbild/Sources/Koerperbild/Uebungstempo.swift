@@ -50,6 +50,7 @@ public struct Uebungstempo: Sendable, Equatable {
 
     /// Deutsche Schreibweise: ganze Zahlen ohne Komma, sonst Dezimalkomma.
     private static func zahl(_ wert: Double) -> String {
-        wert == wert.rounded() ? String(Int(wert)) : String(wert).replacingOccurrences(of: ".", with: ",")
+        if let ganz = Int(exactly: wert) { return String(ganz) }
+        return String(wert).replacingOccurrences(of: ".", with: ",")
     }
 }

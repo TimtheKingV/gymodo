@@ -76,6 +76,8 @@ public struct Koerperlage: Sendable {
     private let signal: Gelenkwinkel
     private let wahl: Seitenwahl
     private let gemerkterHub: Double?
+    /// Wurde ein gueltiger gemerkter Hub uebergeben? Fuer `Satzrueckblick.init(welle:hubWarGemerkt:)`.
+    public let hubWarGemerkt: Bool
     private var seiten = [Seitenstand(), Seitenstand()]   // 0 = links, 1 = rechts
     private var gelost = false
     private var losAusstehend = false
@@ -90,8 +92,11 @@ public struct Koerperlage: Sendable {
         precondition(vorgabe.signal != nil, "Koerperlage braucht eine Vorgabe mit Signal")
         self.signal = vorgabe.signal!
         self.wahl = vorgabe.seite
-        self.gemerkterHub = gemerkterHub
-        self.gemessenerMassstab = gemerkterHub
+        // Ein nicht endlicher oder zu kleiner Hub (unter `hubZuKleinUnter`) gilt als nicht gemerkt.
+        let gueltig = gemerkterHub.flatMap { $0.isFinite && $0 >= Self.hubZuKleinUnter ? $0 : nil }
+        self.gemerkterHub = gueltig
+        self.hubWarGemerkt = gueltig != nil
+        self.gemessenerMassstab = gueltig
         switch vorgabe.seite {
         case .links: fuehrendeSeite = .links
         case .rechts: fuehrendeSeite = .rechts

@@ -22,4 +22,9 @@ final class UebungstempoTests: XCTestCase {
         XCTAssertEqual(t.vorgabe, Tempovorgabe(kraftweg: 2.5, ablassen: 1.5, halten: 0))
         XCTAssertEqual(t.inWorten, "2,5 s senken · 1,5 s heben")
     }
+
+    func testInWortenStuerztBeiUnsinnigenWertenNichtAb() {
+        let t = Uebungstempo(senken: 1e30, halten: 0, heben: .infinity, beginntMit: .senken)
+        XCTAssertFalse(t.inWorten.isEmpty)
+    }
 }
