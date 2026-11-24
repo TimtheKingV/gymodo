@@ -157,4 +157,31 @@ import Foundation
         #expect(w.zielzeit(wiederholungen: 0) == 0)
         #expect(w.zielzeit(wiederholungen: -3) == 0)
     }
+
+    // MARK: Bahnbreite je Welle (Fix-Welle B.8)
+
+    @Test func bahnbreiteIstJeWelleEinstellbar() {
+        let breit = Sollwelle(vorgabe: .standard, halbeBahnbreite: 0.3), normal = Sollwelle(vorgabe: .standard)
+        #expect(breit.halbeBahnbreite == 0.3)
+        #expect(normal.halbeBahnbreite == Sollwelle.standardHalbeBahnbreite && Sollwelle.standardHalbeBahnbreite == 0.2)
+        #expect(breit.inDerBahn(0.8, bei: 0.75) && !breit.inDerBahn(0.81, bei: 0.75))
+        #expect(!normal.inDerBahn(0.8, bei: 0.75))
+        for ungueltig in [0, -0.1, Double.nan, .infinity] {
+            #expect(Sollwelle(vorgabe: .standard, halbeBahnbreite: ungueltig).halbeBahnbreite == 0.2)
+        }
+    }
+
+    @Test func dieAuswertungNimmtDieBahnbreiteDerWelle() {
+        // Die Person laeuft 0,25 ueber der Welle: in der Bahn von 0,3, ausserhalb der von 0,2.
+        func quote(_ welle: Sollwelle) -> Double? {
+            var a = Tempoauswertung(welle: welle)
+            for k in 0..<(24 * 50) {
+                let t = Double(k) / 50
+                a.erfasse(Lage(t: t, lage: welle.lage(bei: t) + 0.25, richtung: .unbekannt, sicher: true), bei: t)
+            }
+            return a.ergebnis()?.quote
+        }
+        #expect(quote(Sollwelle(vorgabe: .standard, halbeBahnbreite: 0.3)) == 1)
+        #expect(quote(Sollwelle(vorgabe: .standard)) == 0)
+    }
 }

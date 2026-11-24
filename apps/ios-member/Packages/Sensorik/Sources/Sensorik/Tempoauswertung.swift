@@ -14,6 +14,10 @@ public struct Tempoergebnis: Sendable, Equatable {
     public let perioden: [Double?]
     public let kraftweg: Wegurteil
     public let ablassen: Wegurteil
+
+    public init(quote: Double, perioden: [Double?], kraftweg: Wegurteil, ablassen: Wegurteil) {
+        self.quote = quote; self.perioden = perioden; self.kraftweg = kraftweg; self.ablassen = ablassen
+    }
 }
 
 /// Wertet einen Satz gegen die Soll-Welle aus (Tempo-Spec 7.5). Haelt nur Zaehler je Periode, keine Messwerte.
@@ -41,7 +45,9 @@ public struct Tempoauswertung: Sendable {
         self.welle = welle
     }
 
-    /// t in Sekunden seit der Los-Marke. Jeder Messwert zaehlt gleich (Sollrate), nicht nach Zeitstempel-Differenz.
+    /// `bei` ist die Zeit in Sekunden seit der Los-Marke, **nicht** `lage.t` (das ist die Sensorzeit des Messwerts);
+    /// aus der `Winkellage` kommt sie ueber `Winkellage.sekundenSeitLos(lage.t)`. Zeiten ueber eine Stunde werden
+    /// uebergangen. Jeder Messwert zaehlt gleich (Sollrate), nicht nach Zeitstempel-Differenz.
     public mutating func erfasse(_ lage: Lage, bei t: TimeInterval) {
         guard t.isFinite, t <= Self.laengsteZeit, lage.lage.isFinite,
               let periode = welle.periode(bei: t), let weg = welle.weg(bei: t) else { return }

@@ -194,4 +194,160 @@ struct WinkellageTests {
         #expect(f.schaetzer.umkehrpunkte.count == 18)
         #expect(f.schaetzer.umkehrpunkte.prefix(1).allSatisfy { $0.oben && $0.t < mitVorbewegung.losT })
     }
+
+    // MARK: Fix-Welle nach dem Schlussreview
+
+    /// B.1: Die Last wandert in den letzten 0,5 s vor `los()` schon um 10° (die erste Hebung beginnt vor dem Los).
+    /// `los()` nimmt dann das zuletzt stille Mittel statt des bewegten Messwerts.
+    @Test func losNimmtDieLetzteStilleRuheWennSchonBewegt() {
+        let satz = Synthetik.drehsatz(wiederholungen: 8)
+        // Erste Hebung ab 3 s: 140° · (1 − cos(π τ / 1,5)) / 2 erreicht 10° bei τ ≈ 0,26 s; der erste Messwert
+        // ab 3,26 s traegt (gebuendelt) t = 3,28 s, dort sind es 11,7°.
+        let losBei = 3.26
+        let i = satz.werte.firstIndex { $0.t >= losBei }!
+        #expect(abs(satz.lage[i] * 140 - 10) <= 2, "Kunstsignal: \(satz.lage[i] * 140)° beim Los")
+        let f = fehler(satz, ab: 3, losBei: losBei)
+        #expect(f.mittel <= 0.03, "mittlerer Fehler ab Wdh. 3: \(f.mittel)")
+        // In Ruhe: die 2 s nach dem Satz (Wahrheit 0), ohne die erste Viertelsekunde.
+        let ende = satz.werte.last!.t
+        let ruhe = zip(f.lagen, satz.lage).filter { $0.0.t > ende - 1.75 }.map { abs($0.0.lage - $0.1) }
+        #expect(!ruhe.isEmpty && ruhe.max()! <= 0.03, "Lagefehler in Ruhe: \(ruhe.max() ?? -1)")
+    }
+
+    /// Spielt `werte` durch; vor dem ersten Messwert mit `t >= endeBei` kommt `ende()`.
+    func lauf(_ werte: [SensorMesswert], endeBei: Double? = nil, gemerkt: GemerkterWinkel? = nil) -> (lagen: [Lage], schaetzer: Winkellage) {
+        var s = Winkellage(rateHz: 50, gemerkt: gemerkt)
+        var beendet = false
+        let lagen = werte.map { m -> Lage in
+            if let endeBei, !beendet, m.t >= endeBei { s.ende(); beendet = true }
+            return s.verarbeite(m)
+        }
+        return (lagen, s)
+    }
+
+    /// Ablegen nach dem Satz: in 0,75 s Roll auf 120° und Pitch auf 40°, in 0,75 s zurueck, danach 1 s Ruhe; 50 Hz ab `ab`.
+    func ablegen(ab: Double) -> [SensorMesswert] {
+        (1...125).map { k in
+            let t = ab + Double(k) / 50, w = (1 - cos(2 * Double.pi * min(1, Double(k) / 75))) / 2
+            return SensorMesswert(t: t, beschleunigung: Vektor3(x: 0, y: 0, z: 1), drehrate: Vektor3(x: 0, y: 0, z: 0),
+                                  winkel: Vektor3(x: 120 * w, y: 40 * w, z: 0))
+        }
+    }
+
+    /// B.2: Nach `ende()` zaehlt das Ablegen nicht mehr; die Lage steht und ist unsicher.
+    @Test func nachDemEndeZaehltDasAblegenNicht() {
+        let satz = Synthetik.drehsatz(wiederholungen: 6)
+        let endeBei = satz.werte.last!.t + 0.01
+        let mitAblegen = satz.werte + ablegen(ab: satz.werte.last!.t)
+        let ohne = lauf(satz.werte), mit = lauf(mitAblegen, endeBei: endeBei)
+        #expect(mit.schaetzer.umkehrpunkte == ohne.schaetzer.umkehrpunkte)
+        #expect(mit.schaetzer.gemerkt == ohne.schaetzer.gemerkt)
+        #expect(mit.schaetzer.groessterAusschlagGrad == ohne.schaetzer.groessterAusschlagGrad)
+        let letzte = ohne.lagen.last!
+        let danach = mit.lagen.filter { $0.t >= endeBei }
+        #expect(danach.count == 125)
+        #expect(danach.allSatisfy { !$0.sicher && $0.lage == letzte.lage && $0.richtung == letzte.richtung })
+        // Ohne `ende()` haette das Ablegen eine weitere Wiederholung ergeben.
+        #expect(lauf(mitAblegen).schaetzer.umkehrpunkte.count > ohne.schaetzer.umkehrpunkte.count)
+    }
+
+    /// B.2: Eine angefangene Wiederholung (oberer Umkehrpunkt ohne unteren) zaehlt nicht und geht nicht in den Hub ein.
+    @Test func eineAngefangeneWiederholungZaehltNichtBeimEnde() {
+        // Die sechste Wiederholung hebt nur 85 % (ueber 80 %, sie fuehrte den Hub um 10 % nach): ihr oberer
+        // Umkehrpunkt kommt bei rund 25 s, der untere erst nach 27 s.
+        let satz = Synthetik.drehsatz(wiederholungen: 6, hubAnteil: [6: 0.85])
+        let nachFuenf = lauf(satz.werte, endeBei: 23.5), mitten = lauf(satz.werte, endeBei: 25.5)
+        #expect(nachFuenf.schaetzer.umkehrpunkte.count == 10)
+        #expect(mitten.schaetzer.umkehrpunkte == nachFuenf.schaetzer.umkehrpunkte)
+        #expect(mitten.schaetzer.gemerkt == nachFuenf.schaetzer.gemerkt)
+        // Ohne `ende()` stuende der sechste obere Umkehrpunkt schon in der Liste und im Hub.
+        let bis = lauf(Array(satz.werte.prefix { $0.t < 25.5 }))
+        #expect(bis.schaetzer.umkehrpunkte.count == 11)
+        #expect(bis.schaetzer.gemerkt != nachFuenf.schaetzer.gemerkt)
+    }
+
+    /// B.3: Winkellage → Tempoauswertung ueber `sekundenSeitLos`; die Sensorzeit beginnt bei 5000 s.
+    @Test func zeitSeitLosVerkettetMitDerAuswertung() {
+        let satz = Synthetik.drehsatz(wiederholungen: 10)
+        let versatz = 5000.0
+        let werte = satz.werte.map { SensorMesswert(t: $0.t + versatz, beschleunigung: $0.beschleunigung, drehrate: $0.drehrate, winkel: $0.winkel) }
+        // Die erste Hebung beginnt bei 3 s; die Person laeuft genau auf der Welle 1,5 s / 2,5 s ab dort.
+        var s = Winkellage(rateHz: 50, wartetAufLos: true)
+        var auswertung = Tempoauswertung(welle: Sollwelle(vorgabe: .standard))
+        var losGegeben = false
+        for m in werte {
+            if !losGegeben, m.t >= versatz + 3 { s.los(); losGegeben = true }
+            let lage = s.verarbeite(m)
+            if let t = s.sekundenSeitLos(m.t) { auswertung.erfasse(lage, bei: t) }
+        }
+        #expect(s.losZeit.map { abs($0 - (versatz + 3)) < 0.03 } == true, "\(String(describing: s.losZeit))")
+        #expect(s.sekundenSeitLos(versatz + 13) .map { abs($0 - 10) < 0.03 } == true)
+        let e = auswertung.ergebnis()
+        #expect((e?.quote ?? 0) >= 0.95, "Quote \(String(describing: e?.quote))")
+    }
+
+    /// B.3: Ohne `wartetAufLos` gilt die erste Bewegung als Los; vorher gibt es keine Zeit seit Los.
+    @Test func ohneLosIstDieErsteBewegungDieLosZeit() {
+        let satz = Synthetik.drehsatz(wiederholungen: 3)
+        var s = Winkellage(rateHz: 50)
+        var vorher: [TimeInterval?] = []
+        for m in satz.werte {
+            _ = s.verarbeite(m)
+            if m.t < 3 { vorher.append(s.sekundenSeitLos(m.t)) }
+        }
+        #expect(vorher.allSatisfy { $0 == nil })
+        // Ueber 5° (Bewegungsschwelle) bei rund 3,27 s.
+        #expect(s.losZeit.map { $0 > 3.1 && $0 < 3.5 } == true, "\(String(describing: s.losZeit))")
+        #expect(s.sekundenSeitLos(.nan) == nil)
+    }
+
+    /// B.4: Ohne bekannten Hub ist die Hysterese mindestens 10°: ein Absacken um 6° bei 25° in der ersten Hebung
+    /// ist kein Umkehrpunkt.
+    @Test func absackenInDerErstenHebungIstKeinUmkehrpunkt() {
+        let satz = Synthetik.drehsatz(wiederholungen: 6, absackenErste: (beiGrad: 25, umGrad: 6))
+        let f = fehler(satz, ab: 3)
+        #expect(f.schaetzer.umkehrpunkte.map(\.oben) == Array(repeating: [true, false], count: 6).flatMap { $0 })
+        // Der erste obere Umkehrpunkt ist der echte Gipfel der ersten Wiederholung, nicht das Absacken.
+        #expect(f.schaetzer.umkehrpunkte.first.map { $0.t > 4 } == true, "\(String(describing: f.schaetzer.umkehrpunkte.first))")
+        #expect(abs((f.schaetzer.gemerkt?.hubGrad ?? 0) - 140) <= 3, "\(String(describing: f.schaetzer.gemerkt))")
+    }
+
+    /// B.5: Kippt ĝ nach dem Satz aus der Drehebene bis 100° zur Drehachse hin (und zurueck), ist die Lage dort,
+    /// wo ĝ weniger als 20° von der Achse liegt, unsicher und φ gehalten; ĝ = (sin β, 0, cos β), Achse x.
+    @Test func naheDerDrehachseUnsicherUndGehalten() {
+        let satz = Synthetik.drehsatz(wiederholungen: 4)
+        let ab = satz.werte.last!.t
+        // β laeuft in 4 s von 0 auf 100° und zurueck: Roll 0, Pitch = −β bis 90°, darueber Roll 180°.
+        var kippen: [(m: SensorMesswert, beta: Double)] = []
+        for k in 1...200 {
+            let beta = 100 * (1 - cos(2 * Double.pi * Double(k) / 200)) / 2, b = beta * .pi / 180
+            let g = Vektor3(x: sin(b), y: 0, z: cos(b))
+            let roll = atan2(g.y, g.z) * 180 / .pi, pitch = asin(-g.x) * 180 / .pi
+            kippen.append((SensorMesswert(t: ab + Double(k) / 50, beschleunigung: Vektor3(x: 0, y: 0, z: 1),
+                                          drehrate: Vektor3(x: 0, y: 0, z: 0), winkel: Vektor3(x: roll, y: pitch, z: 0)), beta))
+        }
+        var s = Winkellage(rateHz: 50, gemerkt: bekannt)
+        for m in satz.werte { _ = s.verarbeite(m) }
+        let vorher = s.drehwinkelGrad
+        var nahe: [(Lage, Double)] = [], fern: [Lage] = []
+        for (m, beta) in kippen {
+            let l = s.verarbeite(m)
+            if sin(beta * .pi / 180) > cos(20 * Double.pi / 180) + 0.01 { nahe.append((l, s.drehwinkelGrad)) }
+            else if sin(beta * .pi / 180) < cos(20 * Double.pi / 180) - 0.01 { fern.append(l) }
+        }
+        #expect(!nahe.isEmpty && nahe.allSatisfy { !$0.0.sicher })
+        #expect(nahe.allSatisfy { $0.1 == vorher && $0.0.lage.isFinite && abs($0.0.lage) <= 0.05 },
+                "\(nahe.map(\.1).min() ?? 0)…\(nahe.map(\.1).max() ?? 0)")
+        #expect(fern.allSatisfy { $0.sicher && abs($0.lage) <= 0.05 })
+    }
+
+    /// B.6: Eine unbrauchbare Rate faellt auf 50 Hz zurueck, ohne Absturz.
+    @Test(arguments: [Double.nan, .infinity, -.infinity, 0, -50])
+    func unbrauchbareRateFaelltAufFuenfzigZurueck(rate: Double) {
+        let satz = Synthetik.drehsatz(wiederholungen: 6)
+        var mit = Winkellage(rateHz: rate), soll = Winkellage(rateHz: 50)
+        let a = satz.werte.map { mit.verarbeite($0) }, b = satz.werte.map { soll.verarbeite($0) }
+        #expect(a == b)
+        #expect(mit.umkehrpunkte == soll.umkehrpunkte && mit.gemerkt == soll.gemerkt)
+    }
 }

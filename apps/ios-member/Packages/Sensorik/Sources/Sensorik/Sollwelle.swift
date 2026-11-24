@@ -15,12 +15,16 @@ public struct Taktmarke: Sendable, Equatable {
 /// Soll-Lage der Last als reine Funktion der Zeit seit der Los-Marke (Tempo-Spec 6.3).
 /// Je Wiederholung ein Kraftweg (0 → 1) und ein Ablassen (1 → 0), jeweils eine Cosinus-Flanke ohne Haltezeit.
 public struct Sollwelle: Sendable, Equatable {
-    public static let halbeBahnbreite = 0.2
+    public static let standardHalbeBahnbreite = 0.2
 
     public let vorgabe: Tempovorgabe
+    /// Halbe Breite der Bahn um die Soll-Lage, in Einheiten der Lage.
+    public let halbeBahnbreite: Double
 
-    public init(vorgabe: Tempovorgabe) {
+    /// Eine Bahnbreite, die nicht endlich oder nicht positiv ist, faellt auf `standardHalbeBahnbreite` zurueck.
+    public init(vorgabe: Tempovorgabe, halbeBahnbreite: Double = Sollwelle.standardHalbeBahnbreite) {
         self.vorgabe = vorgabe
+        self.halbeBahnbreite = halbeBahnbreite.isFinite && halbeBahnbreite > 0 ? halbeBahnbreite : Self.standardHalbeBahnbreite
     }
 
     /// t in Sekunden seit der Los-Marke; davor die Ruhelage.
@@ -72,7 +76,7 @@ public struct Sollwelle: Sendable, Equatable {
 
     /// Liegt `lage` zum Zeitpunkt `t` innerhalb der Bahn um die Soll-Lage?
     public func inDerBahn(_ lage: Double, bei t: TimeInterval) -> Bool {
-        abs(lage - self.lage(bei: t)) <= Self.halbeBahnbreite + 1e-9
+        abs(lage - self.lage(bei: t)) <= halbeBahnbreite + 1e-9
     }
 
     /// Cosinus-Flanke von 0 nach 1 fuer `anteil` in 0…1.

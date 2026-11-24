@@ -119,13 +119,22 @@ import Foundation
 
     // MARK: Urteile
 
+    /// Anteil der Messwerte eines Wegs in Periode `p`, die ausserhalb der Bahn liegen; die Urteile unten sollen
+    /// nicht knapp an der Haelfte haengen.
+    func ausserhalb(_ f: (TimeInterval) -> Double, periode p: Int, weg: Weg) -> Double {
+        let zeiten = (0..<200).map { Double(p) * 4 + Double($0) / 50 }.filter { welle.weg(bei: $0) == weg }
+        return Double(zeiten.filter { !welle.inDerBahn(f($0), bei: $0) }.count) / Double(zeiten.count)
+    }
+
     @Test func zuSchnellerKraftwegWirdGezaehlt() {
-        // ab Periode 6 ist die Last schon nach 0,75 s oben und wartet
-        let e = lauf({ t in
+        // ab Periode 6 ist die Last schon nach 0,1 s oben und wartet (68 % des Kraftwegs ausserhalb und voraus)
+        let f: (TimeInterval) -> Double = { t in
             let p = Int(t / 4), tau = t - Double(p) * 4
             guard p >= 6, tau < 1.5 else { return welle.lage(bei: t) }
-            return tau < 0.75 ? (1 - cos(.pi * tau / 0.75)) / 2 : 1
-        }, dauer: 48).ergebnis()!
+            return tau < 0.1 ? (1 - cos(.pi * tau / 0.1)) / 2 : 1
+        }
+        for p in 6...11 { #expect(ausserhalb(f, periode: p, weg: .kraftweg) >= 0.65) }
+        let e = lauf(f, dauer: 48).ergebnis()!
         #expect(e.kraftweg == .zuSchnell(6, von: 10))
         #expect(e.ablassen == .imTempo)
     }
@@ -142,25 +151,29 @@ import Foundation
     }
 
     @Test func gleichvieleSchnelleUndLangsamePeriodenGebenZuSchnell() {
-        // Kraftweg: Perioden 4 und 5 zu schnell, Perioden 6 und 7 zu langsam
-        let e = lauf({ t in
+        // Kraftweg: Perioden 4 und 5 zu schnell (nach 0,1 s oben), Perioden 6 und 7 zu langsam (ueber 6 s statt 1,5 s);
+        // je 68 % bzw. 69 % des Kraftwegs ausserhalb
+        let f: (TimeInterval) -> Double = { t in
             let p = Int(t / 4), tau = t - Double(p) * 4
             guard (4...7).contains(p), tau < 1.5 else { return welle.lage(bei: t) }
-            if p < 6 { return tau < 0.75 ? (1 - cos(.pi * tau / 0.75)) / 2 : 1 }
-            return (1 - cos(.pi * tau / 3)) / 2
-        }, dauer: 48).ergebnis()!
+            if p < 6 { return tau < 0.1 ? (1 - cos(.pi * tau / 0.1)) / 2 : 1 }
+            return (1 - cos(.pi * tau / 6)) / 2
+        }
+        for p in 4...7 { #expect(ausserhalb(f, periode: p, weg: .kraftweg) >= 0.65) }
+        let e = lauf(f, dauer: 48).ergebnis()!
         #expect(e.kraftweg == .zuSchnell(2, von: 10))
     }
 
     @Test func eineUnsichereWellenperiodeSenktDieGesamtzahlFuerBeideWege() {
-        // ab Periode 6 beide Wege zu schnell; Periode 8 (t 32 bis 36) ohne sichere Messwerte
+        // ab Periode 6 beide Wege zu schnell (Kraftweg nach 0,1 s oben); Periode 8 (t 32 bis 36) ohne sichere Messwerte
         let schnell: (TimeInterval) -> Double = { t in
             let p = Int(t / 4), tau = t - Double(p) * 4
             guard p >= 6 else { return welle.lage(bei: t) }
-            if tau < 0.75 { return (1 - cos(.pi * tau / 0.75)) / 2 }
+            if tau < 0.1 { return (1 - cos(.pi * tau / 0.1)) / 2 }
             if tau < 1.5 { return 1 }
             return tau < 2.5 ? (1 + cos(.pi * (tau - 1.5))) / 2 : 0
         }
+        for p in 6...11 { #expect(ausserhalb(schnell, periode: p, weg: .kraftweg) >= 0.65) }
         let mit = lauf(schnell, dauer: 48).ergebnis()!
         let ohne = lauf(schnell, dauer: 48, sicher: { !($0 >= 32 && $0 < 36) }).ergebnis()!
         #expect(mit.kraftweg == .zuSchnell(6, von: 10) && mit.ablassen == .zuSchnell(6, von: 10))

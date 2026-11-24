@@ -94,7 +94,8 @@ extension Synthetik {
     /// Roll- und Pitch-Winkel (ueber ±180° gefaltet), auf z liegt ein kleines Zittern von 9 Hz;
     /// die Beschleunigung ist (0, 0, 1). `pauseNach[n]` haelt nach der n-ten Wiederholung unten an,
     /// `hubAnteil[n]` skaliert deren Hub. `zitternGrad` legt in Ruhe und Pausen ein Sinus-Zittern (7 Hz)
-    /// auf α. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung.
+    /// auf α. Mit `ruheVorher: 0` beginnt der Satz mitten in der Bewegung. `absackenErste` laesst die Last auf dem
+    /// Kraftweg der ersten Wiederholung bei `beiGrad` in 0,4 s um `umGrad` zuruecksacken, danach weiter nach oben.
     static func drehsatz(wiederholungen: Int, kraftweg: Double = 1.5, ablassen: Double = 2.5,
                          hubGrad: Double = 140, hubAnteil: [Int: Double] = [:],
                          drehachse: Vektor3 = Vektor3(x: 1, y: 0, z: 0), startRoll: Double = 0, startPitch: Double = 0,
@@ -102,12 +103,22 @@ extension Synthetik {
                          pauseNach: [Int: Double] = [:], zitternGrad: Double = 0,
                          ruheVorher: Double = 3, ruheNachher: Double = 2,
                          rate: Double = 50, buendel: Int = 2,
-                         luecke: (ab: Double, dauer: Double)? = nil) -> Drehsatz {
+                         luecke: (ab: Double, dauer: Double)? = nil,
+                         absackenErste: (beiGrad: Double, umGrad: Double)? = nil) -> Drehsatz {
         let vorDauer = vorbewegung.map { $0.ruheDavor + 2 * $0.dauer } ?? 0
         var stuecke = [Wegstueck(dauer: vorDauer + ruheVorher, von: 0, nach: 0)]
         for n in stride(from: 1, through: wiederholungen, by: 1) {
             let anteil = hubAnteil[n] ?? 1
-            stuecke.append(Wegstueck(dauer: kraftweg, von: 0, nach: anteil))
+            if n == 1, let a = absackenErste {
+                // Dauern auf das Abtastraster gerundet, damit jede Wiederholung wieder auf einem Messwert beginnt.
+                let bei = a.beiGrad / hubGrad, tief = (a.beiGrad - a.umGrad) / hubGrad
+                func raster(_ d: Double) -> Double { (d * rate).rounded() / rate }
+                stuecke.append(Wegstueck(dauer: raster(kraftweg * bei / anteil), von: 0, nach: bei))
+                stuecke.append(Wegstueck(dauer: raster(0.4), von: bei, nach: tief))
+                stuecke.append(Wegstueck(dauer: raster(kraftweg * (anteil - tief) / anteil), von: tief, nach: anteil))
+            } else {
+                stuecke.append(Wegstueck(dauer: kraftweg, von: 0, nach: anteil))
+            }
             stuecke.append(Wegstueck(dauer: ablassen, von: anteil, nach: 0))
             if let pause = pauseNach[n] { stuecke.append(Wegstueck(dauer: pause, von: 0, nach: 0)) }
         }

@@ -5,13 +5,16 @@ public struct Tempovorgabe: Codable, Sendable, Equatable {
     public let kraftweg: Double
     public let ablassen: Double
 
-    public static let standard = Tempovorgabe(kraftweg: 1.5, ablassen: 2.5)
+    /// Die Standardwerte stehen nur hier: 1,5 s Kraftweg, 2,5 s Ablassen.
+    private static let standardKraftweg = 1.5, standardAblassen = 2.5
+
+    public static let standard = Tempovorgabe(kraftweg: standardKraftweg, ablassen: standardAblassen)
 
     /// Rundet auf 0,5 s und begrenzt auf 1…4 s.
-    /// Nicht endliche Werte fallen je Weg auf den Standard zurueck (1,5 s bzw. 2,5 s).
+    /// Nicht endliche Werte fallen je Weg auf den Wert von `standard` zurueck.
     public init(kraftweg: Double, ablassen: Double) {
-        self.kraftweg = Self.geglaettet(kraftweg, standard: 1.5)
-        self.ablassen = Self.geglaettet(ablassen, standard: 2.5)
+        self.kraftweg = Self.geglaettet(kraftweg, standard: Self.standardKraftweg)
+        self.ablassen = Self.geglaettet(ablassen, standard: Self.standardAblassen)
     }
 
     private enum CodingKeys: String, CodingKey { case kraftweg, ablassen }
