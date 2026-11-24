@@ -13,6 +13,7 @@ public struct Erkennungspruefung: Sendable {
     private var letzteZeit: TimeInterval?
     private var imRahmenSeit: TimeInterval?
     private var nichtAlleSicherSeit: TimeInterval?
+    private var festgehalten: Koerperseite?
 
     public init(vorgabe: Kameravorgabe) {
         self.vorgabe = vorgabe
@@ -40,11 +41,24 @@ public struct Erkennungspruefung: Sendable {
         nichtAlleSicherSeit = nil
     }
 
+    /// Haelt die Seite fest, die die Zaehlung fuehrt: Bei `Seitenwahl.beide` gilt dann genau sie als `fuehrendeSeite`,
+    /// und `imRahmen`, `bestanden`, `verloren`, `fehlendeGruppen` beziehen sich auf sie; `nil` hebt das auf.
+    /// Der Aufrufer (spaeter der Kamera-Ablauf) ruft sie mit `Koerperlage.fuehrendeSeite` auf, sobald diese feststeht.
+    /// Bei einer Vorgabe mit fester Seite hat der Aufruf keine Wirkung. Bei einer Aenderung beginnen die Zeitmessungen neu;
+    /// `zuruecksetzen()` hebt die festgehaltene Seite nicht auf (sie gilt fuer den Satz).
+    public mutating func seiteFesthalten(_ seite: Koerperseite?) {
+        guard vorgabe.seite == .beide, seite != festgehalten else { return }
+        festgehalten = seite
+        imRahmenSeit = nil
+        nichtAlleSicherSeit = nil
+    }
+
     public var fuehrendeSeite: Koerperseite {
         switch vorgabe.seite {
         case .links: return .links
         case .rechts: return .rechts
         case .beide:
+            if let festgehalten { return festgehalten }
             let links = sichereAnzahl(.links)
             let rechts = sichereAnzahl(.rechts)
             return rechts > links ? .rechts : .links

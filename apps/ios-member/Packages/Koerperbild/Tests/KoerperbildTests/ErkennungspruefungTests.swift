@@ -76,4 +76,45 @@ final class ErkennungspruefungTests: XCTestCase {
         XCTAssertFalse(p.bestanden)
         p.eingabe(t: 5, skelett: voll); XCTAssertFalse(p.bestanden)
     }
+
+    // MARK: Festgehaltene Seite
+
+    func testFestgehalteneSeiteWirdGeprueft() {
+        var p = Erkennungspruefung(vorgabe: curl)
+        let s = ohne([.handR])   // links voll sicher, rechts fehlt die Hand
+        p.eingabe(t: 0, skelett: s); p.eingabe(t: 2, skelett: s)
+        XCTAssertFalse(p.verloren)
+        p.seiteFesthalten(.rechts)
+        p.eingabe(t: 3, skelett: s); p.eingabe(t: 4.1, skelett: s)
+        XCTAssertEqual(p.fuehrendeSeite, .rechts)
+        XCTAssertTrue(p.verloren)
+        XCTAssertEqual(p.fehlendeGruppen, [.arme])
+    }
+    func testFesthaltenBeginntDieZeitNeu() {
+        var p = Erkennungspruefung(vorgabe: curl)
+        p.eingabe(t: 0, skelett: voll); p.eingabe(t: 2, skelett: voll)
+        XCTAssertTrue(p.bestanden)
+        p.seiteFesthalten(.rechts)
+        XCTAssertFalse(p.bestanden); XCTAssertFalse(p.verloren)
+        let s = ohne([.handR])
+        p.eingabe(t: 3, skelett: s); p.eingabe(t: 5, skelett: s)
+        p.seiteFesthalten(nil)
+        XCTAssertFalse(p.verloren); XCTAssertFalse(p.bestanden)
+    }
+    func testVorgegebeneSeiteGewinntGegenFesthalten() {
+        let v = Kameravorgabe(profil: .oberkoerper, signal: .ellbogen, seite: .links)!
+        var p = Erkennungspruefung(vorgabe: v)
+        p.seiteFesthalten(.rechts)
+        p.eingabe(t: 0, skelett: voll)
+        XCTAssertEqual(p.fuehrendeSeite, .links)
+    }
+    func testZuruecksetzenBehaeltDieFestgehalteneSeite() {
+        var p = Erkennungspruefung(vorgabe: curl)
+        p.seiteFesthalten(.rechts)
+        p.zuruecksetzen()
+        XCTAssertEqual(p.fuehrendeSeite, .rechts)
+        p.seiteFesthalten(nil)
+        p.eingabe(t: 0, skelett: voll)
+        XCTAssertEqual(p.fuehrendeSeite, .links)
+    }
 }
