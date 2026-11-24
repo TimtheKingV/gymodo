@@ -82,4 +82,103 @@ import Foundation
         #expect(e.perioden[2]! < 0.6 && e.perioden[3]! < 0.6)
         #expect(e.quote < 0.95)
     }
+
+    // MARK: Eingabeschutz
+
+    @Test func nichtEndlicheOderAbwegigeEingabenWerdenIgnoriert() {
+        let basis = lauf({ welle.lage(bei: $0) }, dauer: 24)
+        var a = basis
+        let t = 12.0, ok = welle.lage(bei: t)
+        for schlecht in [Double.nan, .infinity, -.infinity] {
+            a.erfasse(Lage(t: t, lage: schlecht, richtung: .unbekannt, sicher: true), bei: t)
+            a.erfasse(Lage(t: t, lage: ok, richtung: .unbekannt, sicher: true), bei: schlecht)
+        }
+        a.erfasse(Lage(t: 1e6, lage: 0.5, richtung: .unbekannt, sicher: true), bei: 1e6)
+        a.erfasse(Lage(t: 3601, lage: 0.5, richtung: .unbekannt, sicher: true), bei: 3601)
+        #expect(a.laufendeQuote == basis.laufendeQuote)
+        #expect(a.ergebnis() == basis.ergebnis())
+        #expect(a.ergebnis()?.perioden.count == 4)
+    }
+
+    // MARK: Ende des Satzes
+
+    @Test func endetDerSatzMitUnsicherenPeriodenFolgenNilEintraege() {
+        let e = lauf({ welle.lage(bei: $0) }, dauer: 48, sicher: { $0 < 40 }).ergebnis()!
+        #expect(e.perioden.count == 10)
+        #expect(e.perioden[8] == nil && e.perioden[9] == nil)
+        #expect(e.perioden[7] == 1)
+        #expect(e.quote == 1)
+    }
+
+    @Test func quoteIstAnteilUeberMesswerteNichtMittelDerPerioden() {
+        // Periode 2 ganz in der Bahn (200 Werte), Periode 3 nur eine Sekunde weit und daneben (50 Werte)
+        let e = lauf({ $0 >= 12 ? 5 : welle.lage(bei: $0) }, dauer: 13).ergebnis()!
+        #expect(e.perioden == [1, 0])
+        #expect(abs(e.quote - 0.8) < 1e-12)                // Mittel der Perioden waere 0,5
+    }
+
+    // MARK: Urteile
+
+    @Test func zuSchnellerKraftwegWirdGezaehlt() {
+        // ab Periode 6 ist die Last schon nach 0,75 s oben und wartet
+        let e = lauf({ t in
+            let p = Int(t / 4), tau = t - Double(p) * 4
+            guard p >= 6, tau < 1.5 else { return welle.lage(bei: t) }
+            return tau < 0.75 ? (1 - cos(.pi * tau / 0.75)) / 2 : 1
+        }, dauer: 48).ergebnis()!
+        #expect(e.kraftweg == .zuSchnell(6, von: 10))
+        #expect(e.ablassen == .imTempo)
+    }
+
+    @Test func zuLangsamesAblassenWirdGezaehlt() {
+        // ab Periode 4 sinkt die Last ueber 4 s statt 2,5 s
+        let e = lauf({ t in
+            let p = Int(t / 4), tau = t - Double(p) * 4
+            guard p >= 4, tau > 1.5 else { return welle.lage(bei: t) }
+            return 1 - (1 - cos(.pi * (tau - 1.5) / 4)) / 2
+        }, dauer: 48).ergebnis()!
+        #expect(e.kraftweg == .imTempo)
+        #expect(e.ablassen == .zuLangsam(8, von: 10))
+    }
+
+    @Test func gleichvieleSchnelleUndLangsamePeriodenGebenZuSchnell() {
+        // Kraftweg: Perioden 4 und 5 zu schnell, Perioden 6 und 7 zu langsam
+        let e = lauf({ t in
+            let p = Int(t / 4), tau = t - Double(p) * 4
+            guard (4...7).contains(p), tau < 1.5 else { return welle.lage(bei: t) }
+            if p < 6 { return tau < 0.75 ? (1 - cos(.pi * tau / 0.75)) / 2 : 1 }
+            return (1 - cos(.pi * tau / 3)) / 2
+        }, dauer: 48).ergebnis()!
+        #expect(e.kraftweg == .zuSchnell(2, von: 10))
+    }
+
+    @Test func eineUnsichereWellenperiodeSenktDieGesamtzahlFuerBeideWege() {
+        // ab Periode 6 beide Wege zu schnell; Periode 8 (t 32 bis 36) ohne sichere Messwerte
+        let schnell: (TimeInterval) -> Double = { t in
+            let p = Int(t / 4), tau = t - Double(p) * 4
+            guard p >= 6 else { return welle.lage(bei: t) }
+            if tau < 0.75 { return (1 - cos(.pi * tau / 0.75)) / 2 }
+            if tau < 1.5 { return 1 }
+            return tau < 2.5 ? (1 + cos(.pi * (tau - 1.5))) / 2 : 0
+        }
+        let mit = lauf(schnell, dauer: 48).ergebnis()!
+        let ohne = lauf(schnell, dauer: 48, sicher: { !($0 >= 32 && $0 < 36) }).ergebnis()!
+        #expect(mit.kraftweg == .zuSchnell(6, von: 10) && mit.ablassen == .zuSchnell(6, von: 10))
+        #expect(ohne.kraftweg == .zuSchnell(5, von: 9) && ohne.ablassen == .zuSchnell(5, von: 9))
+    }
+
+    @Test func dieReihenfolgeDerMesswerteSpieltKeineRolle() {
+        func lage(_ t: TimeInterval) -> Double {
+            let p = Int(t / 4), tau = t - Double(p) * 4
+            guard p >= 6, tau > 1.5 else { return welle.lage(bei: t) }
+            return tau < 2.5 ? (1 + cos(.pi * (tau - 1.5))) / 2 : 0
+        }
+        let zeiten = (0..<2400).map { Double($0) / 50 }
+        var vor = Tempoauswertung(welle: welle), rueck = Tempoauswertung(welle: welle)
+        for t in zeiten { vor.erfasse(Lage(t: t, lage: lage(t), richtung: .unbekannt, sicher: true), bei: t) }
+        for t in zeiten.reversed() { rueck.erfasse(Lage(t: t, lage: lage(t), richtung: .unbekannt, sicher: true), bei: t) }
+        #expect(vor.ergebnis() != nil)
+        #expect(vor.ergebnis() == rueck.ergebnis())
+        #expect(vor.laufendeQuote == rueck.laufendeQuote)
+    }
 }

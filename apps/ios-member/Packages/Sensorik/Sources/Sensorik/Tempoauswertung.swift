@@ -20,6 +20,8 @@ public struct Tempoergebnis: Sendable, Equatable {
 /// Gewertet wird ab Periode 2 (0-basiert) bis zum letzten Messwert, auch ueber die Zielzeit hinaus, nur mit `sicher`.
 public struct Tempoauswertung: Sendable {
     private static let ersteGewertetePeriode = 2
+    /// Kein Satz dauert eine Stunde; schuetzt den Speicher vor einer abwegigen Zeit.
+    private static let laengsteZeit: TimeInterval = 3600
 
     /// Zaehler einer Periode; je Wegart `[kraftweg, ablassen]`.
     private struct Zaehler: Sendable {
@@ -41,7 +43,8 @@ public struct Tempoauswertung: Sendable {
 
     /// t in Sekunden seit der Los-Marke. Jeder Messwert zaehlt gleich (Sollrate), nicht nach Zeitstempel-Differenz.
     public mutating func erfasse(_ lage: Lage, bei t: TimeInterval) {
-        guard let periode = welle.periode(bei: t), let weg = welle.weg(bei: t) else { return }
+        guard t.isFinite, t <= Self.laengsteZeit, lage.lage.isFinite,
+              let periode = welle.periode(bei: t), let weg = welle.weg(bei: t) else { return }
         letztePeriode = max(letztePeriode, periode)
         guard lage.sicher, periode >= Self.ersteGewertetePeriode else { return }
 
@@ -69,6 +72,8 @@ public struct Tempoauswertung: Sendable {
     }
 
     /// nil bei weniger als drei begonnenen Perioden oder ohne gewertete Messwerte ("Zu kurz fuer eine Auswertung").
+    /// `perioden` reicht von Periode 2 bis zur letzten Periode, die irgendeinen Messwert bekam (sicher oder nicht);
+    /// Perioden ohne sichere Messwerte stehen als nil darin, auch am Ende.
     public func ergebnis() -> Tempoergebnis? {
         guard letztePeriode >= Self.ersteGewertetePeriode, let quote = laufendeQuote else { return nil }
         let anzahl = letztePeriode - Self.ersteGewertetePeriode + 1
