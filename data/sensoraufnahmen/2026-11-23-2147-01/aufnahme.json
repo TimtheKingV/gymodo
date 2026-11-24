@@ -1,0 +1,58 @@
+{
+  "abschluss": "gesichert",
+  "befestigung": "Scheibe",
+  "befestigungsart": "kurzhantel",
+  "befestigungsartQuelle": "gewaehlt",
+  "endedAt": "2026-11-23T21:48:02+01:00",
+  "format": "gymodo.sensoraufnahme/1",
+  "geraet": {
+    "appBuild": "sensorik-aufnahme/1",
+    "model": "Mac (Chrome, Web Bluetooth)",
+    "os": "MacIntel"
+  },
+  "kontext": {
+    "equipmentModelId": null,
+    "exerciseId": "",
+    "exerciseName": "Kurzhantel-Bizepscurl",
+    "machineId": null,
+    "machineName": "Kurzhantel",
+    "sessionId": "97572218-2085-4324-add6-c3342c2507f6",
+    "setId": "42a03890-01e9-4926-8862-4cd6595e282d",
+    "setIndex": 3
+  },
+  "notiz": null,
+  "label": {
+    "problemFlag": false,
+    "reps": 6,
+    "weightKg": 1
+  },
+  "sensor": {
+    "akkuProzent": null,
+    "name": "WT901BLE67",
+    "rateSollHz": 50
+  },
+  "startedAt": "2026-11-23T21:47:25+01:00",
+  "statistik": {
+    "abstandMs": {
+      "max": 76,
+      "median": 45,
+      "p95": 47
+    },
+    "luecken": 0,
+    "pakete": 1884,
+    "rateIstHz": 49.7,
+    "verworfeneBytes": 0
+  },
+  "tempo": {
+    "ablassenS": 2.5,
+    "kraftwegS": 1.5,
+    "losBei": 5,
+    "ohneTakt": false,
+    "ruheS": 5,
+    "startetOben": false,
+    "tasten": "selbst",
+    "tastenOben": 0,
+    "tastenUnten": 0
+  },
+  "zaehler": null
+}
