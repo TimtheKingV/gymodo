@@ -14,8 +14,9 @@ struct WinkelZeile {
     var luecken = 0                // Zahl der Luecken-Zeilen der Aufnahme
     var erkannt = 0.0              // Umkehrpunkte / 2
     var losT: Double?              // Zeit des Messwerts, vor dem `los()` kam; nil ohne Start
-    var endeT: Double?             // Zeit des ersten nicht mehr eingespeisten Messwerts; nil = ganze Aufnahme
+    var endeT: Double?             // Zeit des Messwerts, vor dem `ende()` kam; nil ohne Ende
     var ausschlagGrad = 0.0        // groesster Ausschlag aus der Ruhelage
+    var ruhefehlerLosGrad: Double? // mit `losBei`: Winkel zwischen der Ruherichtung von `los()` und dem Mittel von ĝ ueber 2–4 s
 }
 
 struct WinkelTor: Equatable { let saetze: Int; let wdhFehler: Double; let sicherAnteil: Double; let spruenge: Int }
@@ -28,8 +29,11 @@ struct WinkelPaar {
     let mitLosMarke: Bool
     /// Ohne Los-Marke liess sich kein Start schaetzen; `mitStart` ist dann der Lauf ohne Start.
     var startUnbestimmt = false
-    /// Zahl der Zeilen `# takt oben` (Metronom), 0 ohne Metronom.
+    /// Zahl der Zeilen `# takt oben` bis `# ende` (Metronom), 0 ohne Metronom.
     var taktGipfel = 0
+    /// `label.reps` aus `aufnahme.json`; bei den Mac-Aufnahmen von der Seite aus der Satzdauer vorbelegt, nicht gezaehlt.
+    var labelReps: Int?
+    var gewichtKg: Double?
 }
 
 /// Vergleich beider Laeufe: Saetze, die nur in einem Lauf geeignet sind, und die Kennzahlen ueber die
@@ -49,6 +53,8 @@ enum WinkelBericht {
     static let mindestWiederholungen = 5
     /// Rand des Satzbands fuer den geschaetzten Start, in Grad.
     static let satzbandRandGrad = 15.0
+    /// Bezug des Ruhefehlers beim Los: Mittel von ĝ ueber diese Sekunden der Aufnahme (die Mac-Seite laesst 5 s ruhen).
+    static let ruhefehlerVon = 2.0, ruhefehlerBis = 4.0
 
     /// Rueckhalt: Konstanten werden nur an der Abstimmung gewaehlt, die Pruefung wird gelesen.
     enum Teil: String, CaseIterable { case abstimmung = "Abstimmung", pruefung = "Prüfung" }
@@ -66,7 +72,10 @@ enum WinkelBericht {
     }
 
     private static let posix = Locale(identifier: "en_US_POSIX")
-    static func zahl(_ x: Double, _ stellen: Int) -> String { String(format: "%.\(stellen)f", locale: posix, x) }
+    /// Mit Dezimalkomma wie im ganzen Bericht.
+    static func zahl(_ x: Double, _ stellen: Int) -> String {
+        String(format: "%.\(stellen)f", locale: posix, x).replacingOccurrences(of: ".", with: ",")
+    }
     static func pct(_ x: Double) -> String { String(format: "%.0f %%", locale: posix, x * 100) }
 
     static func geeignet(_ z: WinkelZeile) -> Bool { z.hubGrad >= mindesthubGrad }
@@ -110,18 +119,21 @@ enum WinkelBericht {
 
     /// Spielt die Eintraege live (ohne gemerkten Wert) durch die `Winkellage`; Luecken-Zeilen gehen als `luecke` hinein.
     /// Mit `losBei` wartet die `Winkellage` auf den Start; `los()` kommt vor dem ersten Messwert mit `t >= losBei`.
-    /// Mit `endeBei` endet der Lauf vor dem ersten Messwert mit `t >= endeBei` (Satzende in der App).
+    /// Mit `endeBei` kommt `ende()` vor dem ersten Messwert mit `t >= endeBei` (Satzende in der App); der Rest der
+    /// Aufnahme (Ablegen, Nachlauf) wird weiter eingespeist und darf nichts mehr zaehlen.
     static func zeile(ordner: String, art: Befestigungsart?, pruefung: Bool, repsWahr: Int,
                       eintraege: [SensorAufnahmeLeser.Eintrag], rateHz: Double, uebung: String = "",
                       losBei: Double? = nil, endeBei: Double? = nil) -> WinkelZeile {
         var schaetzer = Winkellage(rateHz: rateHz, wartetAufLos: losBei != nil)
         var lagen: [Lage] = [], winkel: [Double] = [], luecken = 0
         var losT: Double?, endeT: Double?
-        lauf: for e in eintraege {
+        var ruheLos: Vektor3?, ruheSpanne: [Vektor3] = []
+        for e in eintraege {
             switch e {
             case .messwert(let m):
-                if let endeBei, m.t >= endeBei { endeT = m.t; break lauf }
-                if let losBei, losT == nil, m.t >= losBei { schaetzer.los(); losT = m.t }
+                if let endeBei, endeT == nil, m.t >= endeBei { schaetzer.ende(); endeT = m.t }
+                if let losBei, losT == nil, m.t >= losBei { schaetzer.los(); losT = m.t; ruheLos = schaetzer.ruhe }
+                if m.t >= ruhefehlerVon && m.t < ruhefehlerBis { ruheSpanne.append(Winkellage.schwerkraft(m.winkel)) }
                 lagen.append(schaetzer.verarbeite(m)); winkel.append(schaetzer.drehwinkelGrad)
             case .luecke(let von, let bis): schaetzer.luecke(von: von, bis: bis); luecken += 1
             case .rate, .marke: break
@@ -141,11 +153,15 @@ enum WinkelBericht {
 
         let hub = schaetzer.gemerkt?.hubGrad ?? 0
         let erkannt = Double(punkte.count) / 2
+        let ruhefehler = ruheLos.flatMap { r -> Double? in
+            guard !ruheSpanne.isEmpty else { return nil }
+            return acos(min(max(Winkellage.punkt(r, Winkellage.mittel(ruheSpanne)), -1), 1)) * 180 / .pi
+        }
         return WinkelZeile(ordner: ordner, art: art, pruefung: pruefung, repsWahr: repsWahr, hubGrad: hub,
                            wdhFehler: abs(erkannt - Double(repsWahr)), sicherAnteil: sicher,
                            hubStreuung: streuung(punkte, lagen: lagen, winkel: winkel),
                            groessterSprung: sprung, uebung: uebung, luecken: luecken, erkannt: erkannt, losT: losT,
-                           endeT: endeT, ausschlagGrad: schaetzer.groessterAusschlagGrad)
+                           endeT: endeT, ausschlagGrad: schaetzer.groessterAusschlagGrad, ruhefehlerLosGrad: ruhefehler)
     }
 
     /// Hub je Wiederholung = Drehwinkel φ der `Winkellage` (entfaltet) vom oberen Umkehrpunkt zum folgenden
@@ -201,9 +217,14 @@ enum WinkelBericht {
     /// Zeit aus der Zeile `# ende <t>`: die Taste, mit der das Mitglied den Satz beendet hat.
     static func endeMarke(csv: String) -> Double? { marke("# ende ", csv: csv) }
 
-    /// Zahl der Zeilen `# takt oben` (Gipfel des Metronoms).
+    /// Zahl der Zeilen `# takt oben <t>` (Gipfel des Metronoms) bis zur Zeile `# ende`: so oft sollte gehoben werden.
+    /// Ohne `# ende` zaehlen alle.
     static func taktGipfel(csv: String) -> Int {
-        csv.split(whereSeparator: \.isNewline).filter { $0.hasPrefix("# takt oben ") }.count
+        let ende = endeMarke(csv: csv) ?? .infinity, praefix = "# takt oben "
+        return csv.split(whereSeparator: \.isNewline).filter { zeile in
+            guard zeile.hasPrefix(praefix), let t = Double(zeile.dropFirst(praefix.count).trimmingCharacters(in: .whitespaces)) else { return false }
+            return t <= ende
+        }.count
     }
 
     /// Geschaetzter Start mit Wissen ueber die ganze Aufnahme. Satzband: normiertes Mittel der Schwerkraftrichtung ĝ
@@ -250,12 +271,12 @@ enum WinkelBericht {
 
     /// Alle Aufnahmen mit bekannter Wiederholungszahl >= 5, auch solche unter 40° Hub: (a) Ordner mit Eintrag in
     /// `korrekturen.json` und `repsWahr`, gleich welcher Art; (b) Ordner, deren `aufnahme.json` den Schluessel
-    /// `tempo` traegt (Mac-Aufnahmen mit Metronom), dort gilt `label.reps`. `ausgelassen`: ausgewaehlt, aber ohne
-    /// `messwerte.csv`.
-    static func auswahl() throws -> (wahr: [(name: String, reps: Int)], ausgelassen: [String]) {
+    /// `tempo` traegt (Mac-Aufnahmen mit Metronom), ausgewaehlt ueber `label.reps` >= 5 (`mac`; das Soll setzt dort
+    /// `paare()` aus dem Takt). `ausgelassen`: ausgewaehlt, aber ohne `messwerte.csv`.
+    static func auswahl() throws -> (wahr: [(name: String, reps: Int, mac: Bool)], ausgelassen: [String]) {
         let k = try Korrekturen.laden()
         let fm = FileManager.default
-        var wahr: [String: Int] = [:]
+        var wahr: [String: Int] = [:], mac: Set<String> = []
         for (name, eintrag) in k.aufnahmen { if let r = eintrag.repsWahr, r >= mindestWiederholungen { wahr[name] = r } }
         let namen = try fm.contentsOfDirectory(atPath: Pfade.aufnahmen.path)
         for name in namen where wahr[name] == nil && k.aufnahmen[name] == nil {
@@ -264,26 +285,35 @@ enum WinkelBericht {
                   let obj = try JSONSerialization.jsonObject(with: daten) as? [String: Any], obj["tempo"] != nil,
                   let label = obj["label"] as? [String: Any], let reps = label["reps"] as? Int,
                   reps >= mindestWiederholungen else { continue }
-            wahr[name] = reps
+            wahr[name] = reps; mac.insert(name)
         }
-        var gelesen: [(name: String, reps: Int)] = [], ausgelassen: [String] = []
+        var gelesen: [(name: String, reps: Int, mac: Bool)] = [], ausgelassen: [String] = []
         for (name, reps) in wahr.sorted(by: { $0.key < $1.key }) {
             let csv = Pfade.aufnahmen.appendingPathComponent(name).appendingPathComponent("messwerte.csv")
-            if fm.fileExists(atPath: csv.path) { gelesen.append((name, reps)) } else { ausgelassen.append(name) }
+            if fm.fileExists(atPath: csv.path) { gelesen.append((name, reps, mac.contains(name))) } else { ausgelassen.append(name) }
         }
         return (gelesen, ausgelassen)
     }
 
-    /// Je ausgewaehlter Aufnahme beide Laeufe (`paar`); Lueckenzeilen gehen an die `Winkellage`.
-    static func paare() throws -> [WinkelPaar] {
+    /// Je ausgewaehlter Aufnahme beide Laeufe (`paar`), einmal je Testlauf gerechnet und danach zwischengespeichert.
+    static func paare() throws -> [WinkelPaar] { try zwischenspeicher.get() }
+
+    private static let zwischenspeicher = Result { try paareRechnen() }
+
+    /// Lueckenzeilen gehen an die `Winkellage`. Soll der Mac-Aufnahmen: die Taktgipfel bis `# ende` (die Person folgte
+    /// einem Metronom ohne unabhaengige Zaehlung, `label.reps` ist aus der Satzdauer vorbelegt); ohne Takt `label.reps`.
+    private static func paareRechnen() throws -> [WinkelPaar] {
         let k = try Korrekturen.laden()
-        return try auswahl().wahr.map { name, reps in
+        return try auswahl().wahr.map { name, reps, mac in
             let ordner = Pfade.aufnahmen.appendingPathComponent(name)
             let (datei, eintraege) = try SensorAufnahmeLeser.lesen(ordner: ordner)
             let csv = try String(contentsOf: ordner.appendingPathComponent("messwerte.csv"), encoding: .utf8)
-            return paar(ordner: name, art: datei.befestigungsart ?? k.aufnahmen[name]?.befestigungsart,
-                        pruefung: teil(name) == .pruefung, repsWahr: reps, eintraege: eintraege,
-                        rateHz: Double(datei.sensor.rateSollHz), uebung: datei.kontext.exerciseName, csv: csv)
+            let takt = taktGipfel(csv: csv)
+            var p = paar(ordner: name, art: datei.befestigungsart ?? k.aufnahmen[name]?.befestigungsart,
+                         pruefung: teil(name) == .pruefung, repsWahr: mac && takt > 0 ? takt : reps, eintraege: eintraege,
+                         rateHz: Double(datei.sensor.rateSollHz), uebung: datei.kontext.exerciseName, csv: csv)
+            p.labelReps = datei.label.reps; p.gewichtKg = datei.label.weightKg
+            return p
         }
     }
 
@@ -316,7 +346,12 @@ enum WinkelBericht {
     /// `ruhewinkelfehler` ueber die Auswahl der Tabelle: Eintrag in `korrekturen.json` mit Art Stapel, Kurz- oder
     /// Langhantel und `repsWahr` >= 5, mit `messwerte.csv`, ohne Luecke (weder Zeile noch Statistik), mindestens
     /// 300 Messwerte. Dieselbe Auswahl wie im frueheren Tempobericht, damit die Zahlen vergleichbar bleiben.
-    static func ruhewinkel() throws -> [Befestigungsart: [Double]] {
+    /// Einmal je Testlauf gerechnet.
+    static func ruhewinkel() throws -> [Befestigungsart: [Double]] { try ruheZwischenspeicher.get() }
+
+    private static let ruheZwischenspeicher = Result { try ruhewinkelRechnen() }
+
+    private static func ruhewinkelRechnen() throws -> [Befestigungsart: [Double]] {
         let k = try Korrekturen.laden()
         let fm = FileManager.default
         var ergebnis: [Befestigungsart: [Double]] = [:]
@@ -424,6 +459,8 @@ enum WinkelBericht {
 
             Erzeugt von `WinkelBerichtTests` (`swift test --package-path apps/ios-member/Packages/Sensorik`). Nicht von Hand bearbeiten.
 
+            \(wasGemessen(paare))
+
             Der Winkel ist eine direkte Messung der Lage der Last; deshalb wird die `Winkellage` hier gegen die gezählten \
             Wiederholungen geprüft, nicht gegen eine nachträgliche Rechnung.
 
@@ -433,8 +470,10 @@ enum WinkelBericht {
             Schwerkraftrichtung nicht und ist für den Winkel unsichtbar.
 
             Auswahl: alle Aufnahmen mit bekannter Wiederholungszahl ≥ \(mindestWiederholungen), auch ohne oder mit anderer \
-            Befestigungsart: `repsWahr` aus `korrekturen.json`, bei den Mac-Aufnahmen mit Metronom (`tempo` in `aufnahme.json`) \
-            die von Hand gezählten Perioden aus `label.reps`. Live-Lauf ohne gemerkten Hub; Lücken gehen an die `Winkellage`.
+            Befestigungsart: `repsWahr` aus `korrekturen.json`; bei den Mac-Aufnahmen mit Metronom (`tempo` in `aufnahme.json`, \
+            ausgewählt über `label.reps` ≥ \(mindestWiederholungen)) gilt als Soll die Zahl der Taktgipfel, der Zeilen \
+            `# takt oben` bis `# ende` (so oft sollte gehoben werden). \(uhrSatz) \
+            Live-Lauf ohne gemerkten Hub; Lücken gehen an die `Winkellage`.
             Sätze gelesen: \(paare.count), ausgelassen: \(ausgelassen.count)\
             \(ausgelassen.isEmpty ? "" : " (\(ausgelassen.joined(separator: ", ")))") (ohne `messwerte.csv`).
             „geeignet“: gemerkter Hub am Satzende ≥ \(zahl(mindesthubGrad, 0))°. Wdh.-Fehler = Median von \
@@ -453,7 +492,7 @@ enum WinkelBericht {
             20 °/s fällt). **Diese Schätzung kann falsch sein; ein Fehler in dieser Spalte kann von der Schätzung kommen und \
             nicht von der `Winkellage`.** Die Sätze, bei denen der geschätzte Start schlechter ist als ohne Start, stehen \
             unten einzeln. Ausnahme: In den Zeilen „mit Los-Marke“ (Mac-Aufnahmen) ist die zweite Zahl der echte Ablauf, \
-            `los()` an `# los`, Ende an `# ende`.
+            `los()` an `# los`, `ende()` an `# ende`.
             Kein Start bestimmbar: \(unbestimmt.isEmpty ? "keine" : unbestimmt.joined(separator: ", ")).
 
             Die Kennzahlen jedes Laufs sind Mediane über die Sätze, die **in diesem Lauf** geeignet sind; die Mengen \
@@ -523,6 +562,27 @@ enum WinkelBericht {
         return text
     }
 
+    /// Wortlaut zur Soll-Zahl der Mac-Aufnahmen, im Kopf und im Mac-Abschnitt.
+    static let uhrSatz = "Die Person folgte einem Metronom ohne unabhängige Zählung; die Soll-Zahl kommt von der Uhr."
+
+    /// Absatz „Was diese Messung zeigt und was nicht“ direkt nach dem Kopf.
+    static func wasGemessen(_ paare: [WinkelPaar]) -> String {
+        let mac = paare.filter(\.mitLosMarke), g = mac.filter { geeignet($0.mitStart) }
+        let tage = Set(g.map { String($0.ohneStart.ordner.prefix(10)) }).sorted()
+        let gewichte = Set(g.compactMap(\.gewichtKg)).sorted().map { $0 == $0.rounded() ? zahl($0, 0) : zahl($0, 1) }
+        let uebungen = Set(g.map(\.ohneStart.uebung)).sorted()
+        let abende = tage.count == 1 ? "an einem Abend (\(tage[0]))" : "an \(tage.count) Abenden (\(tage.joined(separator: ", ")))"
+        return "**Was diese Messung zeigt und was nicht.** Gemessen werden die Zahl der Umkehrpunkte gegen die Soll-Zahl "
+            + "der Wiederholungen und Sprünge der Lage zwischen zwei Messwerten. Nicht gemessen sind die Genauigkeit der Lage "
+            + "zwischen den Umkehrpunkten, die Verzögerung der Anzeige und der Lauf mit gemerktem Hub (jeder Satz läuft ohne "
+            + "`gemerkt`). Die Zeile „mit Los-Marke“, der einzige echte Ablauf mit `los()` und `ende()`, beruht auf "
+            + "\(g.count) geeigneten Sätzen einer Person \(abende) mit \(gewichte.isEmpty ? "unbekanntem Gewicht" : gewichte.joined(separator: " / ") + " kg"), "
+            + "\(uebungen.count == 1 ? "einer Übung" : "\(uebungen.count) Übungen") (\(uebungen.joined(separator: ", "))). "
+            + "„Sicher“ beginnt erst nach dem ersten unteren Umkehrpunkt und wird ab dem dritten Umkehrpunkt gezählt; es sagt "
+            + "deshalb wenig. „geeignet“ wählt nach dem Ergebnis der `Winkellage` selbst aus (gemerkter Hub ≥ "
+            + "\(zahl(mindesthubGrad, 0))°): Ein Satz, in dem sie keinen Hub findet, fällt aus den Medianen heraus."
+    }
+
     /// Abschnitt der Aufnahmen mit Los-Marke: Lauf ohne Start ueber die ganze Aufnahme gegen den echten Ablauf.
     private static func macAbschnitt(_ mac: [WinkelPaar]) -> String {
         guard !mac.isEmpty else { return "" }
@@ -531,29 +591,31 @@ enum WinkelBericht {
         let zuViel = g.filter { $0.erkannt > Double($0.repsWahr) }, zuWenig = g.filter { $0.erkannt < Double($0.repsWahr) }
         let nicht = laeufe.filter { !geeignet($0) }
         let ausschlag = nicht.map(\.ausschlagGrad)
+        let ruhefehler = g.compactMap(\.ruhefehlerLosGrad)
         var text = "\n## Aufnahmen mit Los-Marke\n\n"
-            + "Echter Ablauf: `los()` am ersten Messwert ab `# los`; eingespeist werden die Messwerte nur bis vor den ersten mit "
-            + "t ≥ `# ende` (die Taste, mit der das Mitglied den Satz beendet; in der App hält dort die `Winkellage` an). "
-            + "Ohne Start läuft die ganze Aufnahme, auch das Ablegen nach dem Satz und die 5 s danach zählen als Satzzeit. "
-            + "Wiederholungen = `label.reps`, die von Hand gezählten vollen Metronom-Perioden; Taktgipfel = Zahl der Zeilen "
-            + "`# takt oben`.\n\n"
-            + "Mit Los-Marke bis Ende, über die \(g.count) geeigneten: Wdh.-Fehler im Median \(zahl(median(g.map(\.wdhFehler)), 1)) "
-            + "(Schwelle ≤ \(zahl(wdhFehlerMax, 0))); zu viel erkannt: \(liste(zuViel)), davon höchstens so viele wie Taktgipfel: "
-            + "\(liste(zuViel.filter { z in Double(mac.first { $0.mitStart.ordner == z.ordner }?.taktGipfel ?? 0) >= z.erkannt })) "
-            + "(das Mitglied hat zum letzten Taktgipfel noch gehoben, `label.reps` zählt diese letzte, nicht volle Periode nicht); "
-            + "zu wenig: \(liste(zuWenig)); halbe Werte: \(liste(g.filter { $0.erkannt != $0.erkannt.rounded() })) "
-            + "(der Satz endete an `# ende` vor dem letzten unteren Umkehrpunkt). "
+            + "Echter Ablauf: `los()` am ersten Messwert ab `# los`, `ende()` am ersten Messwert ab `# ende` (die Taste, mit der "
+            + "das Mitglied den Satz beendet); der Rest der Aufnahme, das Ablegen und die 5 s danach, wird weiter eingespeist "
+            + "und zählt nicht mehr. Ohne Start läuft die ganze Aufnahme ohne `los()` und `ende()`, das Ablegen zählt dort als "
+            + "Satzzeit. Soll = Taktgipfel, die Zahl der Zeilen `# takt oben` bis `# ende`: so oft sollte gehoben werden. "
+            + uhrSatz + " `label.reps` steht daneben: Die Aufnahme-Seite hat es ohne Tastendruck aus der Satzdauer vorbelegt "
+            + "(`floor((ende − los) / periode)`), gezählt ist es nicht. "
+            + "Ruhefehler beim Los: Winkel zwischen der Ruherichtung, die `los()` wählt, und dem Mittel von ĝ über die "
+            + "Sekunden \(zahl(ruhefehlerVon, 0))–\(zahl(ruhefehlerBis, 0)) der Aufnahme (die Last ruht dort).\n\n"
+            + "Von Los bis Ende, über die \(g.count) geeigneten: Wdh.-Fehler im Median \(zahl(median(g.map(\.wdhFehler)), 1)) "
+            + "(Schwelle ≤ \(zahl(wdhFehlerMax, 0))); zu viel erkannt: \(liste(zuViel)); zu wenig: \(liste(zuWenig)); "
+            + "halbe Werte: \(liste(g.filter { $0.erkannt != $0.erkannt.rounded() })); Ruhefehler beim Los im Median "
+            + "\(ruhefehler.isEmpty ? "–" : zahl(median(ruhefehler), 1) + "°"), größter \(ruhefehler.max().map { zahl($0, 1) + "°" } ?? "–"). "
             + "Nicht geeignet und in keinem Median: \(nicht.map { "\(String($0.ordner.suffix(7))) (\($0.uebung))" }.joined(separator: ", ")); "
         text += ausschlag.isEmpty ? "–.\n\n"
             : "der Sensor dreht sich dort nur um \(zahl(ausschlag.min()!, 0))–\(zahl(ausschlag.max()!, 0))° (größter Ausschlag), "
               + "unter dem Mindesthub von \(zahl(mindesthubGrad, 0))°.\n\n"
-        text += "| Aufnahme | Übung | Wiederholungen | Taktgipfel | erkannt ganze Aufnahme (ohne Start) | erkannt los bis ende "
-            + "| Hub | Sicher | größter Schritt |\n|---|---|---|---|---|---|---|---|---|\n"
+        text += "| Aufnahme | Übung | Taktgipfel (Soll) | `label.reps` | erkannt ganze Aufnahme (ohne Start) | erkannt los bis ende "
+            + "| Hub | Sicher | größter Schritt | Ruhefehler beim Los |\n|---|---|---|---|---|---|---|---|---|---|\n"
         for p in mac {
             let o = p.ohneStart, m = p.mitStart
-            text += "| \(o.ordner) | \(o.uebung) | \(o.repsWahr) | \(p.taktGipfel) | \(zahl(o.erkannt, 1)) | \(zahl(m.erkannt, 1)) "
-                + "| \(m.hubGrad > 0 ? "\(zahl(m.hubGrad, 0)) °" : "–") | \(pct(m.sicherAnteil)) "
-                + "| \(zahl(m.groessterSprung, 2)) |\n"
+            text += "| \(o.ordner) | \(o.uebung) | \(o.repsWahr) | \(p.labelReps.map(String.init) ?? "–") | \(zahl(o.erkannt, 1)) "
+                + "| \(zahl(m.erkannt, 1)) | \(m.hubGrad > 0 ? "\(zahl(m.hubGrad, 0)) °" : "–") | \(pct(m.sicherAnteil)) "
+                + "| \(zahl(m.groessterSprung, 2)) | \(m.ruhefehlerLosGrad.map { zahl($0, 1) + "°" } ?? "–") |\n"
         }
         return text
     }

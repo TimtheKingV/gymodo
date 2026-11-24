@@ -93,6 +93,30 @@ struct WinkelBerichtTests {
         #expect(WinkelBericht.endeMarke(csv: "t,ax\n# los 5.0\n0.0,1\n# ende 96.702000\n") == 96.702)
         #expect(WinkelBericht.endeMarke(csv: "t,ax\n0.0,1\n") == nil)
         #expect(WinkelBericht.taktGipfel(csv: "# takt oben 6.5\n# takt unten 9.0\n# takt oben 10.5\n") == 2)
+        // Taktgipfel zaehlen nur bis `# ende`.
+        #expect(WinkelBericht.taktGipfel(csv: "# takt oben 6.5\n# takt unten 9.0\n# ende 9.5\n# takt oben 10.5\n") == 1)
+    }
+
+    @Test func sollDerMacAufnahmenKommtVomTakt() throws {
+        let mac = try WinkelBericht.paare().filter(\.mitLosMarke)
+        #expect(mac.count == 11)
+        #expect(mac.allSatisfy { $0.ohneStart.repsWahr == $0.taktGipfel && $0.mitStart.repsWahr == $0.taktGipfel })
+        #expect(mac.allSatisfy { $0.labelReps != nil })
+        // Der Ruhefehler beim Los steht fuer jeden Lauf mit Los-Marke, ohne Start fehlt er.
+        #expect(mac.allSatisfy { $0.mitStart.ruhefehlerLosGrad != nil && $0.ohneStart.ruhefehlerLosGrad == nil })
+        let a2137 = try #require(mac.first { $0.ohneStart.ordner == "2026-11-23-2137-01" })
+        #expect(a2137.taktGipfel == 23)
+    }
+
+    @Test func endeBeiDerZeileSpeistWeiterOhneZuZaehlen() {
+        // `ende()` bei 23,5 s, danach laufen drei Wiederholungen weiter ein und zaehlen nicht.
+        let eintraege = Synthetik.drehsatz(wiederholungen: 8).werte.map { SensorAufnahmeLeser.Eintrag.messwert($0) }
+        let mit = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8, eintraege: eintraege,
+                                      rateHz: 50, losBei: 2.5, endeBei: 23.5)
+        let bis = WinkelBericht.zeile(ordner: "x", art: .kurzhantel, pruefung: true, repsWahr: 8,
+                                      eintraege: Array(eintraege.prefix { if case .messwert(let m) = $0 { m.t < 23.5 } else { true } }),
+                                      rateHz: 50, losBei: 2.5)
+        #expect(mit.erkannt == bis.erkannt && mit.hubGrad == bis.hubGrad && mit.groessterSprung == bis.groessterSprung)
     }
 
     @Test func endeBeiDerZeileHoertDortAuf() {

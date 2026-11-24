@@ -70,7 +70,8 @@ public struct Winkellage: Sendable {
     private var letzteT: TimeInterval?
     /// Waehrend des Wartens: das zuletzt stille Mittel von ĝ und die Zeit seines letzten Messwerts.
     private var stilleRuhe: (richtung: Vektor3, t: TimeInterval)?
-    private var ruhe: Vektor3?
+    /// Ruherichtung ĝ₀ (intern lesbar fuer den Bericht).
+    private(set) var ruhe: Vektor3?
     private var ruheFest = false
     private var drehachse: Vektor3?
     /// ĝ liegt weniger als 20° von der Drehachse: φ ist dort nicht bestimmt und wird gehalten.
