@@ -12,7 +12,8 @@
     "smoke:web": "node scripts/smoke-web.mjs",
     "smoke:migrations": "node scripts/smoke-migrations.mjs",
     "tags": "tsx scripts/tags.ts",
-    "catalog:import": "tsx scripts/catalog-import.ts"
+    "catalog:import": "tsx scripts/catalog-import.ts",
+    "catalog:videos": "tsx scripts/katalog-videos-einspielen.ts"
   },
   "dependencies": {
     "@fitretro/domain": "workspace:*"

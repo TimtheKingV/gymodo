@@ -16,9 +16,12 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
     /// Ohne Video gar keine Kachel statt des Platzhalters -- fuer den Kopf
     /// der Satzseite, wo ein leerer Kasten nur dem Namen Breite naehme.
     var nurMitVideo = false
-    /// Gesetzt fuellt die Kachel die Breite in dieser Hoehe -- das grosse
-    /// Video der Einweisung (Testnotiz 11.10., #7). Sonst quadratisch.
-    var hoehe: CGFloat?
+    /// Das grosse Video der Einweisung (Testnotiz 11.10., #7): die Kachel
+    /// fuellt die Breite und ist quadratisch, das Video steht ganz darin.
+    /// Zugeschnitten wuerden die quadratischen Loops in einer flachen Kachel
+    /// Kopf und Beine verlieren; ein breites oder hohes Studiovideo bekommt
+    /// stattdessen Rand.
+    var gross = false
     /// Die Video-URL aus dem Geraetekontext, falls der Vorrat die Uebung
     /// (noch) nicht kennt.
     var ersatz: URL?
@@ -56,12 +59,13 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
     // und das Video gleich mit.
     private var kachel: some View {
         Color.clear
-            .frame(width: hoehe == nil ? kante : nil, height: hoehe ?? kante)
-            .frame(maxWidth: hoehe == nil ? nil : .infinity)
+            .frame(width: gross ? nil : kante, height: gross ? nil : kante)
+            .frame(maxWidth: gross ? .infinity : nil)
+            .aspectRatio(gross ? 1 : nil, contentMode: .fit)
             .background { platzhalter }
             .overlay {
                 if let asset {
-                    Schleifenvideo(asset: asset)
+                    Schleifenvideo(asset: asset, ganz: gross)
                         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                 }
             }
@@ -80,6 +84,7 @@ struct UebungsVideoKachel<Platzhalter: View>: View {
 /// Sitzung 11.10.).
 struct Schleifenvideo: UIViewRepresentable {
     let asset: AVAsset
+    var ganz = false
     @Environment(\.accessibilityReduceMotion) private var ruhig
 
     func makeUIView(context: Context) -> SchleifenAnsicht {
@@ -88,7 +93,7 @@ struct Schleifenvideo: UIViewRepresentable {
 
     func updateUIView(_ ansicht: SchleifenAnsicht, context: Context) {
         // Bewegung reduzieren: das erste Bild bleibt stehen.
-        ansicht.zeige(asset, abspielen: !ruhig)
+        ansicht.zeige(asset, abspielen: !ruhig, ganz: ganz)
     }
 
     static func dismantleUIView(_ ansicht: SchleifenAnsicht, coordinator: ()) {
@@ -123,7 +128,7 @@ final class SchleifenAnsicht: UIView {
     private var asset: AVAsset?
     private var abspielen = false
 
-    func zeige(_ neu: AVAsset, abspielen: Bool) {
+    func zeige(_ neu: AVAsset, abspielen: Bool, ganz: Bool = false) {
         if asset !== neu {
             let spieler = AVQueuePlayer()
             spieler.isMuted = true
@@ -133,8 +138,8 @@ final class SchleifenAnsicht: UIView {
             self.spieler = spieler
             asset = neu
             spielerEbene.player = spieler
-            spielerEbene.videoGravity = .resizeAspectFill
         }
+        spielerEbene.videoGravity = ganz ? .resizeAspect : .resizeAspectFill
         self.abspielen = abspielen
         aktualisieren()
     }

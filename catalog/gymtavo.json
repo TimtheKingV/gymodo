@@ -2537,7 +2537,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/chest_press_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -2575,7 +2575,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/chest_press_pronated.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -2613,7 +2613,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/incline_chest_press.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -2651,7 +2651,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/pec_deck_handles.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -2686,7 +2686,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/shoulder_press_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -2725,7 +2725,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/lateral_raise_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -2759,7 +2759,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/reverse_fly_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -2794,7 +2794,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/row_machine_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -2837,7 +2837,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/row_machine_pronated.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -2879,7 +2879,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/high_row_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -2921,7 +2921,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/lat_machine_pronated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -2959,7 +2959,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/pullover_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -2993,7 +2993,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/assisted_pullup.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -3032,7 +3032,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/assisted_dip.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3072,7 +3072,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/preacher_curl_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -3108,7 +3108,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/triceps_extension_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -3138,7 +3138,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/seated_dip_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3177,7 +3177,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_press_horizontal.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "none",
       "muscles": [
@@ -3211,7 +3211,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_press_45.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "none",
       "muscles": [
@@ -3246,7 +3246,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/hack_squat_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3284,7 +3284,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_extension_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "none",
       "muscles": [
@@ -3315,7 +3315,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_curl_seated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "none",
       "muscles": [
@@ -3350,7 +3350,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_curl_prone.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3384,7 +3384,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_curl_standing.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3418,7 +3418,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/hip_abduction_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "none",
       "muscles": [
@@ -3449,7 +3449,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/hip_adduction_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "none",
       "muscles": [
@@ -3480,7 +3480,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/hip_extension_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -3515,7 +3515,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/calf_raise_standing_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "none",
       "muscles": [
@@ -3544,7 +3544,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/calf_raise_seated_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "none",
       "muscles": [
@@ -3574,7 +3574,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ab_crunch_machine.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -3610,7 +3610,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/back_extension_machine.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -3646,7 +3646,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/torso_rotation_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3680,7 +3680,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/lat_pulldown_pronated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -3718,7 +3718,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/lat_pulldown_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -3756,7 +3756,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/lat_pulldown_supinated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -3794,7 +3794,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_row_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3836,7 +3836,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_row_wide.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -3878,7 +3878,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_row_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3920,7 +3920,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_face_pull.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -3959,7 +3959,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_straight_arm_pulldown.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -3993,7 +3993,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/triceps_pushdown_rope.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4023,7 +4023,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/triceps_pushdown_bar.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -4053,7 +4053,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_triceps_overhead.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4084,7 +4084,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_curl_bar.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -4118,7 +4118,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_hammer_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4152,7 +4152,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_lateral_raise.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4186,7 +4186,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_fly_mid.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4220,7 +4220,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_hip_extension.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "none",
       "muscles": [
@@ -4255,7 +4255,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_pallof_press.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -4287,7 +4287,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_crunch_kneeling.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4321,7 +4321,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/hip_thrust_machine.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4356,7 +4356,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/belt_squat_machine.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4394,7 +4394,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_press_horizontal_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4432,7 +4432,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_extension_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4462,7 +4462,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/leg_curl_seated_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4496,7 +4496,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/chest_press_single.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4576,7 +4576,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/calf_press_45.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4604,7 +4604,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_chest_press_standing.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4642,7 +4642,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_chest_press_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4680,7 +4680,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_lat_single_kneeling.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4718,7 +4718,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_reverse_fly_standing.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4752,7 +4752,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_front_raise_bar.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -4786,7 +4786,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_pull_through.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -4822,7 +4822,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_hip_abduction.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "none",
       "muscles": [
@@ -4852,7 +4852,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_hip_adduction.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "none",
       "muscles": [
@@ -4882,7 +4882,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_shoulder_external_rotation.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -4917,7 +4917,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_shoulder_internal_rotation.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -4956,7 +4956,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_high_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -4991,7 +4991,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_triceps_overhead_single.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5022,7 +5022,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_bench_press.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -5060,7 +5060,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_incline_press.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -5098,7 +5098,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_flat_fly.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5132,7 +5132,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_row_supported.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5174,7 +5174,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_row_chest_supported.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5216,7 +5216,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_shoulder_press_seated.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -5259,7 +5259,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_lateral_raise.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5293,7 +5293,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_front_raise.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -5327,7 +5327,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_reverse_fly.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -5362,7 +5362,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_curl_standing.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -5396,7 +5396,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_hammer_curl.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -5430,7 +5430,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_incline_curl.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "supinated",
       "muscles": [
@@ -5465,7 +5465,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_triceps_overhead.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -5496,7 +5496,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_triceps_lying.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5526,7 +5526,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_kickback_supported.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5556,7 +5556,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_goblet_squat.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5596,7 +5596,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_romanian_deadlift.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -5632,7 +5632,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_reverse_lunge.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5672,7 +5672,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_bulgarian_split_squat.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5712,7 +5712,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_calf_raise.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -5740,7 +5740,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_decline_fly.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5774,7 +5774,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_low_fly.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -5808,7 +5808,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_incline_fly.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -5842,7 +5842,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_bench_press.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -5880,7 +5880,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_incline_press.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -5918,7 +5918,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_incline_row.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -5960,7 +5960,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_high_row_kneeling.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -6002,7 +6002,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_row_standing_v.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6045,7 +6045,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_row_rope.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6087,7 +6087,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_preacher_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -6121,7 +6121,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_concentration_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -6155,7 +6155,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_reverse_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -6189,7 +6189,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_pushdown_supinated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -6219,7 +6219,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_pushdown_vbar.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "semi_pronated",
       "muscles": [
@@ -6249,7 +6249,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_kickback.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -6279,7 +6279,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_shoulder_press.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "pronated",
       "muscles": [
@@ -6317,7 +6317,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_shrug.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -6351,7 +6351,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_rotation.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6389,7 +6389,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_chop_high_low.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -6428,7 +6428,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/cable_lift_low_high.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6467,7 +6467,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_arnold_press.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "rotating",
       "muscles": [
@@ -6505,7 +6505,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_bench_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -6543,7 +6543,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_incline_fly.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6577,7 +6577,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_pullover.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6615,7 +6615,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_shrug.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -6650,7 +6650,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_row_bent.mp4",
-        "duration_s": 6
+        "duration_s": 3
       },
       "grip": "neutral",
       "muscles": [
@@ -6693,7 +6693,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_press_standing.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -6738,7 +6738,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_lateral_seated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -6772,7 +6772,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_concentration.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "supinated",
       "muscles": [
@@ -6806,7 +6806,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_preacher.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -6840,7 +6840,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_spider.mp4",
-        "duration_s": 6
+        "duration_s": 2
       },
       "grip": "supinated",
       "muscles": [
@@ -6874,7 +6874,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_cross_hammer.mp4",
-        "duration_s": 6
+        "duration_s": 8
       },
       "grip": "neutral",
       "muscles": [
@@ -6908,7 +6908,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_zottman.mp4",
-        "duration_s": 6
+        "duration_s": 8
       },
       "grip": "rotating",
       "muscles": [
@@ -6942,7 +6942,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_reverse_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -6976,7 +6976,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_forward_lunge.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -7016,7 +7016,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_step_up.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -7056,7 +7056,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_squat_sides.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -7096,7 +7096,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_calf_seated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -7163,7 +7163,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/db_side_bend.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "neutral",
       "muscles": [
@@ -7197,7 +7197,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_bench.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7237,7 +7237,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_incline.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -7277,7 +7277,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_close_bench.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7317,7 +7317,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_high_squat.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7363,7 +7363,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_front_squat.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "front_rack",
       "muscles": [
@@ -7409,7 +7409,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_deadlift.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -7458,7 +7458,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_rdl.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -7502,7 +7502,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_sumo.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7555,7 +7555,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_row_over.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7599,7 +7599,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_row_under.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -7644,7 +7644,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_seated_press.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "pronated",
       "muscles": [
@@ -7689,7 +7689,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -7724,7 +7724,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_shrug.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7760,7 +7760,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_glute_bridge.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7800,7 +7800,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/bb_reverse_lunge.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "pronated",
       "muscles": [
@@ -7842,7 +7842,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ez_curl.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "semi_supinated",
       "muscles": [
@@ -7877,7 +7877,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ez_reverse.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "semi_pronated",
       "muscles": [
@@ -7912,7 +7912,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ez_preacher.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "semi_supinated",
       "muscles": [
@@ -7947,7 +7947,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ez_lying_triceps.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "semi_pronated",
       "muscles": [
@@ -7979,7 +7979,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/ez_overhead.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "semi_pronated",
       "muscles": [
@@ -8512,7 +8512,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/assisted_pullup_neutral.mp4",
-        "duration_s": 6
+        "duration_s": 5
       },
       "grip": "neutral",
       "muscles": [
@@ -8551,7 +8551,7 @@
       "target_max": 12,
       "video": {
         "file": "media/videos/assisted_pullup_supinated.mp4",
-        "duration_s": 6
+        "duration_s": 4
       },
       "grip": "supinated",
       "muscles": [
@@ -8589,7 +8589,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/hanging_leg_raise.mp4",
+        "duration_s": 3
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -8624,7 +8627,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/hanging_knee_raise.mp4",
+        "duration_s": 3
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -8659,7 +8665,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_russian_twist.mp4",
+        "duration_s": 7
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8693,7 +8702,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/cable_side_bend.mp4",
+        "duration_s": 3
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8723,7 +8735,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/cable_crunch_standing.mp4",
+        "duration_s": 3
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8753,7 +8768,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_hip_thrust.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -8788,7 +8806,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_good_morning.mp4",
+        "duration_s": 5
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -8823,7 +8844,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_single_leg_rdl.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8858,7 +8882,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_deadlift.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8902,7 +8929,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_walking_lunge.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8937,7 +8967,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_lateral_lunge.mp4",
+        "duration_s": 7
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -8976,7 +9009,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_sumo_squat.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -9011,7 +9047,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_bulgarian_split_squat.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9046,7 +9085,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_calf_raise_single.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -9070,7 +9112,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_calf_raise.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9094,7 +9139,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_standing_press.mp4",
+        "duration_s": 5
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9133,7 +9181,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_decline_bench.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9168,7 +9219,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_decline_press.mp4",
+        "duration_s": 5
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9202,7 +9256,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bb_reverse_grip_bench.mp4",
+        "duration_s": 4
+      },
       "grip": "supinated",
       "muscles": [
         {
@@ -9237,7 +9294,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/ez_upright_row.mp4",
+        "duration_s": 5
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9272,7 +9332,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/cable_upright_row.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9307,7 +9370,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_reverse_fly_incline.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -9337,7 +9403,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_external_rotation_side.mp4",
+        "duration_s": 4
+      },
       "grip": "neutral",
       "muscles": [
         {
@@ -9367,7 +9436,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_wrist_curl.mp4",
+        "duration_s": 5
+      },
       "grip": "supinated",
       "muscles": [
         {
@@ -9393,7 +9465,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/db_wrist_extension.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9419,7 +9494,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/cable_curl_single.mp4",
+        "duration_s": 4
+      },
       "grip": "supinated",
       "muscles": [
         {
@@ -9505,7 +9583,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_crunch.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9535,7 +9616,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_leg_raise_lying.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9566,7 +9650,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_dead_bug.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9600,7 +9687,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_bird_dog.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9634,7 +9724,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_back_extension_floor.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9720,7 +9813,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_pushup.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9759,7 +9855,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_pushup_incline.mp4",
+        "duration_s": 5
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9798,7 +9897,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_pushup_knee.mp4",
+        "duration_s": 4
+      },
       "grip": "pronated",
       "muscles": [
         {
@@ -9837,7 +9939,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_squat.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9872,7 +9977,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_reverse_lunge.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9907,7 +10015,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_glute_bridge.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9942,7 +10053,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_glute_bridge_single.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9999,7 +10113,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_side_leg_raise.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {

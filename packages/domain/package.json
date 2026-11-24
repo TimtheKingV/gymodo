@@ -35,6 +35,7 @@
     "./belastung": "./src/belastung.ts",
     "./sticker": "./src/sticker.ts",
     "./katalog-import": "./src/katalog-import.ts",
+    "./katalog-videos-tausch": "./src/katalog-videos-tausch.ts",
     "./katalog-testdaten": "./src/katalog-testdaten.ts"
   }
 }

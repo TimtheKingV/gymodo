@@ -139,7 +139,7 @@ struct EinweisungSchritt: View {
             // 11.10., #7). Ohne URL findet die Kachel die zuletzt abgelegte
             // Datei; der Hinweis liegt darunter und bleibt nur sichtbar,
             // wenn keine da ist.
-            UebungsVideoKachel(exerciseId: modell.uebungId, hoehe: 200, ersatz: video) {
+            UebungsVideoKachel(exerciseId: modell.uebungId, gross: true, ersatz: video) {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                     .fill(DesignSystem.Color.surfaceRaised)
                     .overlay {
