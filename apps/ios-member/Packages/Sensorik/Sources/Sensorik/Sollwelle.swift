@@ -25,7 +25,7 @@ public struct Sollwelle: Sendable, Equatable {
 
     /// t in Sekunden seit der Los-Marke; davor die Ruhelage.
     public func lage(bei t: TimeInterval) -> Double {
-        guard t > 0 else { return 0 }
+        guard t.isFinite, t > 0 else { return 0 }
         let tau = t.truncatingRemainder(dividingBy: vorgabe.periode)
         if tau < vorgabe.kraftweg {
             return Self.flanke(tau / vorgabe.kraftweg)
@@ -35,32 +35,33 @@ public struct Sollwelle: Sendable, Equatable {
 
     /// 0-basiert, nil vor der Los-Marke.
     public func periode(bei t: TimeInterval) -> Int? {
-        guard t >= 0 else { return nil }
-        return Int((t / vorgabe.periode).rounded(.down))
+        guard t.isFinite, t >= 0, let k = Int(exactly: (t / vorgabe.periode).rounded(.down)) else { return nil }
+        return k
     }
 
     public func weg(bei t: TimeInterval) -> Weg? {
-        guard t >= 0 else { return nil }
+        guard t.isFinite, t >= 0 else { return nil }
         return t.truncatingRemainder(dividingBy: vorgabe.periode) < vorgabe.kraftweg ? .kraftweg : .ablassen
     }
 
     public func zielzeit(wiederholungen: Int) -> TimeInterval {
-        Double(wiederholungen) * vorgabe.periode
+        Double(max(0, wiederholungen)) * vorgabe.periode
     }
 
     /// Umkehrpunkte und Mitte jedes Wegs im Zeitfenster `von ..< bis`.
+    /// Nicht endliche Grenzen und Fenster ueber 600 s (Schutz vor riesigen Listen) liefern eine leere Liste.
     public func taktmarken(von: TimeInterval, bis: TimeInterval) -> [Taktmarke] {
-        guard bis > max(von, 0) else { return [] }
+        guard von.isFinite, bis.isFinite, bis > max(von, 0), bis - von <= 600 else { return [] }
         let p = vorgabe.periode
-        let erste = Int((max(von, 0) / p).rounded(.down))
-        let letzte = Int((bis / p).rounded(.up))
+        guard let erste = Int(exactly: (max(von, 0) / p).rounded(.down)),
+              let letzte = Int(exactly: (bis / p).rounded(.up)) else { return [] }
+        let punkte: [(Double, Double)] = [
+            (0, 0), (vorgabe.kraftweg / 2, 0.5),
+            (vorgabe.kraftweg, 1), (vorgabe.kraftweg + vorgabe.ablassen / 2, 0.5),
+        ]
         var marken: [Taktmarke] = []
         for k in erste...letzte {
             let start = Double(k) * p
-            let punkte: [(Double, Double)] = [
-                (0, 0), (vorgabe.kraftweg / 2, 0.5),
-                (vorgabe.kraftweg, 1), (vorgabe.kraftweg + vorgabe.ablassen / 2, 0.5),
-            ]
             for (dt, lage) in punkte {
                 let t = start + dt
                 if t >= von && t < bis && t >= 0 { marken.append(Taktmarke(t: t, lage: lage)) }

@@ -39,4 +39,122 @@ import Foundation
         #expect(w.inDerBahn(0.7, bei: 0.75))
         #expect(!w.inDerBahn(0.71, bei: 0.75))
     }
+
+    // MARK: Fix-Runde 1
+
+    @Test func vorgabeRundetAuchDasAblassen() {
+        #expect(Tempovorgabe(kraftweg: 1, ablassen: 1.7).ablassen == 1.5)
+        #expect(Tempovorgabe(kraftweg: 1, ablassen: 1.3).ablassen == 1.5)
+        #expect(Tempovorgabe(kraftweg: 1, ablassen: 0.2).ablassen == 1)
+        #expect(Tempovorgabe(kraftweg: 1, ablassen: 9).ablassen == 4)
+    }
+
+    @Test func nichtEndlicheVorgabeFaelltAufDenStandardDesWegs() {
+        let v = Tempovorgabe(kraftweg: .nan, ablassen: .infinity)
+        #expect(v.kraftweg == 1.5)
+        #expect(v.ablassen == 2.5)
+        #expect(Tempovorgabe(kraftweg: -.infinity, ablassen: .nan) == .standard)
+    }
+
+    @Test func dekodierenRundetUndBegrenzt() throws {
+        func dekodiere(_ json: String) throws -> Tempovorgabe {
+            try JSONDecoder().decode(Tempovorgabe.self, from: Data(json.utf8))
+        }
+        #expect(try dekodiere(#"{"kraftweg":0,"ablassen":0}"#) == Tempovorgabe(kraftweg: 1, ablassen: 1))
+        #expect(try dekodiere(#"{"kraftweg":-3,"ablassen":1e9}"#) == Tempovorgabe(kraftweg: 1, ablassen: 4))
+        let abgerundet = try dekodiere(#"{"kraftweg":1.3,"ablassen":2.74}"#)
+        #expect(abgerundet.kraftweg == 1.5)
+        #expect(abgerundet.ablassen == 2.5)
+        #expect(Sollwelle(vorgabe: try dekodiere(#"{"kraftweg":0,"ablassen":0}"#)).periode(bei: 3) == 1)
+    }
+
+    @Test func kodierenBleibtBeiZweiSchluesseln() throws {
+        let daten = try JSONEncoder().encode(Tempovorgabe(kraftweg: 2, ablassen: 3))
+        let woerterbuch = try JSONDecoder().decode([String: Double].self, from: daten)
+        #expect(woerterbuch == ["kraftweg": 2, "ablassen": 3])
+        #expect(try JSONDecoder().decode(Tempovorgabe.self, from: daten) == Tempovorgabe(kraftweg: 2, ablassen: 3))
+    }
+
+    @Test func ablassFlankeFolgtDemCosinus() {
+        let w = Sollwelle(vorgabe: .standard)
+        // t = 2.125: Viertel des Ablassens, 1 - (1 - cos(pi/4))/2 = 0.8535533906
+        #expect(abs(w.lage(bei: 2.125) - 0.8535533906) < 1e-9)
+        // t = 3.375: Dreiviertel, 1 - (1 - cos(3pi/4))/2 = 0.1464466094
+        #expect(abs(w.lage(bei: 3.375) - 0.1464466094) < 1e-9)
+        // zweite Periode wiederholt die erste
+        #expect(abs(w.lage(bei: 4.75) - 0.5) < 1e-9)
+    }
+
+    @Test func wegVorLosAnDerGrenzeUndImPeriodenwechsel() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.weg(bei: -0.1) == nil)
+        #expect(w.weg(bei: 0) == .kraftweg)
+        #expect(w.weg(bei: 1.5) == .ablassen)
+        #expect(w.weg(bei: 3.999) == .ablassen)
+        #expect(w.weg(bei: 4.0) == .kraftweg)
+        #expect(w.weg(bei: 5.4) == .kraftweg)
+        #expect(w.weg(bei: 5.6) == .ablassen)
+    }
+
+    @Test func taktmarkenInSpaeteremFenster() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.taktmarken(von: 4, bis: 8).map(\.t) == [4, 4.75, 5.5, 6.75])
+        #expect(w.taktmarken(von: 1, bis: 3).map(\.t) == [1.5, 2.75])
+        #expect(w.taktmarken(von: 0.75, bis: 1.5).map(\.t) == [0.75])
+    }
+
+    @Test func taktmarkenUeberMehrerePerioden() {
+        let w = Sollwelle(vorgabe: .standard)
+        let marken = w.taktmarken(von: 0, bis: 8)
+        #expect(marken.map(\.t) == [0, 0.75, 1.5, 2.75, 4, 4.75, 5.5, 6.75])
+        #expect(marken.map(\.lage) == [0, 0.5, 1, 0.5, 0, 0.5, 1, 0.5])
+    }
+
+    @Test func taktmarkenAbVorDemStartBeginnenBeiNull() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.taktmarken(von: -2, bis: 4).map(\.t) == [0, 0.75, 1.5, 2.75])
+        #expect(w.taktmarken(von: -5, bis: -1).isEmpty)
+        #expect(w.taktmarken(von: 3, bis: 3).isEmpty)
+    }
+
+    @Test func taktmarkenFensterBegrenzt() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.taktmarken(von: 0, bis: 600).count == 600)
+        #expect(w.taktmarken(von: 0, bis: 601).isEmpty)
+        #expect(w.taktmarken(von: 1e300, bis: 1e300 + 1).isEmpty)
+    }
+
+    @Test func bahnAufDemAblassenUndAmRand() {
+        let w = Sollwelle(vorgabe: .standard)
+        // t = 2.75: Soll 0.5
+        #expect(w.inDerBahn(0.3, bei: 2.75))
+        #expect(w.inDerBahn(0.7, bei: 2.75))
+        #expect(!w.inDerBahn(0.29, bei: 2.75))
+        #expect(!w.inDerBahn(0.71, bei: 2.75))
+        // t = 2.125: Soll 0.8535533906, obere Kante 1.0535533906
+        #expect(w.inDerBahn(1.05, bei: 2.125))
+        #expect(!w.inDerBahn(1.06, bei: 2.125))
+        // vor Los: Soll 0
+        #expect(w.inDerBahn(0.2, bei: -1))
+        #expect(!w.inDerBahn(0.25, bei: -1))
+    }
+
+    @Test func nichtEndlicheZeitenStuerzenNichtAb() {
+        let w = Sollwelle(vorgabe: .standard)
+        for t in [Double.nan, .infinity, -.infinity] {
+            #expect(w.lage(bei: t) == 0)
+            #expect(w.periode(bei: t) == nil)
+            #expect(w.weg(bei: t) == nil)
+        }
+        #expect(w.periode(bei: 1e300) == nil)
+        #expect(w.taktmarken(von: .nan, bis: 4).isEmpty)
+        #expect(w.taktmarken(von: 0, bis: .infinity).isEmpty)
+        #expect(w.taktmarken(von: -.infinity, bis: 4).isEmpty)
+    }
+
+    @Test func zielzeitOhneWiederholungenIstNull() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.zielzeit(wiederholungen: 0) == 0)
+        #expect(w.zielzeit(wiederholungen: -3) == 0)
+    }
 }
