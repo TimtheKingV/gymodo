@@ -5,6 +5,7 @@
 // Je Video entsteht <Name>.skelett.json (eine `Skelettfolge`) und eine Zeile
 // `<key> <Bilder> <Anteil erkannt %>`.
 
+#if canImport(AVFoundation) && canImport(Vision)
 import AVFoundation
 import CoreVideo
 import Foundation
@@ -86,3 +87,9 @@ for datei in dateien {
     }
 }
 exit(fehler == 0 ? 0 : 1)
+#else
+import Foundation
+
+print("skelette-rechnen laeuft nur unter macOS")
+exit(2)
+#endif

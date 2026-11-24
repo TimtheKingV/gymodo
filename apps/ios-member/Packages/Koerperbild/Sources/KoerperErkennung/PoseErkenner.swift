@@ -1,3 +1,4 @@
+#if canImport(Vision)
 import CoreML
 import CoreVideo
 import Koerperbild
@@ -89,3 +90,4 @@ public final class PoseErkenner {
         (.fussL, .leftAnkle), (.fussR, .rightAnkle),
     ]
 }
+#endif
