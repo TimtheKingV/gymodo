@@ -194,4 +194,16 @@ import Foundation
         #expect(vor.ergebnis() == rueck.ergebnis())
         #expect(vor.laufendeQuote == rueck.laufendeQuote)
     }
+
+    @Test func werDerWelleMitHaltezeitFolgtHatHundertProzent() {
+        let mitHalten = Sollwelle(vorgabe: Tempovorgabe(kraftweg: 2, ablassen: 3, halten: 1))
+        var a = Tempoauswertung(welle: mitHalten)
+        for k in 0..<(72 * 50) {
+            let t = Double(k) / 50
+            a.erfasse(Lage(t: t, lage: mitHalten.lage(bei: t), richtung: .unbekannt, sicher: true), bei: t)
+        }
+        let e = a.ergebnis()!
+        #expect(e.quote == 1)
+        #expect(e.kraftweg == .imTempo && e.ablassen == .imTempo)
+    }
 }

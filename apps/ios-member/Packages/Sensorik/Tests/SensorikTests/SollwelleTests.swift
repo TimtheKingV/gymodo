@@ -184,4 +184,40 @@ import Foundation
         #expect(quote(Sollwelle(vorgabe: .standard, halbeBahnbreite: 0.3)) == 1)
         #expect(quote(Sollwelle(vorgabe: .standard)) == 0)
     }
+
+    // MARK: Haltephase
+
+    private var mitHalten: Tempovorgabe { Tempovorgabe(kraftweg: 2, ablassen: 3, halten: 1) }
+
+    @Test func haltephaseIstFlachOben() {
+        let w = Sollwelle(vorgabe: mitHalten)
+        #expect(abs(w.lage(bei: 2.0) - 1) < 1e-9)
+        #expect(abs(w.lage(bei: 2.5) - 1) < 1e-9)
+        #expect(abs(w.lage(bei: 3.0) - 1) < 1e-9)
+        #expect(abs(w.lage(bei: 4.5) - 0.5) < 1e-9)   // Mitte des Ablassens
+        #expect(abs(w.lage(bei: 6.0)) < 1e-9)
+    }
+
+    @Test func wegKenntHalten() {
+        let w = Sollwelle(vorgabe: mitHalten)
+        #expect(w.weg(bei: 1.0) == .kraftweg)
+        #expect(w.weg(bei: 2.5) == .halten)
+        #expect(w.weg(bei: 3.5) == .ablassen)
+        #expect(w.weg(bei: 8.5) == .halten)           // zweite Periode
+    }
+
+    @Test func ohneHaltenKeinHaltenWeg() {
+        let w = Sollwelle(vorgabe: .standard)
+        #expect(w.weg(bei: 1.5) == .ablassen)
+    }
+
+    @Test func taktmarkenMitHalten() {
+        let marken = Sollwelle(vorgabe: mitHalten).taktmarken(von: 0, bis: 6)
+        #expect(marken.map(\.t) == [0, 1, 2, 3, 4.5])
+        #expect(marken.map(\.lage) == [0, 0.5, 1, 1, 0.5])
+    }
+
+    @Test func zielzeitNutztPeriodeMitHalten() {
+        #expect(Sollwelle(vorgabe: mitHalten).zielzeit(wiederholungen: 8) == 48)
+    }
 }

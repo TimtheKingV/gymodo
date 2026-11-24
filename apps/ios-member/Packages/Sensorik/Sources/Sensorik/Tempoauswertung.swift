@@ -58,14 +58,14 @@ public struct Tempoauswertung: Sendable {
         if zaehler.count <= index {
             zaehler.append(contentsOf: Array(repeating: Zaehler(), count: index + 1 - zaehler.count))
         }
-        let w = weg == .kraftweg ? 0 : 1
+        let w = weg == .ablassen ? 1 : 0          // Halten zaehlt zum Kraftweg
         zaehler[index].gesamt[w] += 1
         if welle.inDerBahn(lage.lage, bei: t) {
             zaehler[index].inBahn[w] += 1
         } else {
             let soll = welle.lage(bei: t)
-            // Voraus: auf dem Kraftweg hoeher als die Welle, beim Ablassen tiefer.
-            let voraus = weg == .kraftweg ? lage.lage > soll : lage.lage < soll
+            // Voraus: auf dem Kraftweg (und beim Halten) hoeher als die Welle, beim Ablassen tiefer.
+            let voraus = weg == .ablassen ? lage.lage < soll : lage.lage > soll
             if voraus { zaehler[index].voraus[w] += 1 } else { zaehler[index].zurueck[w] += 1 }
         }
     }
