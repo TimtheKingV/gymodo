@@ -697,6 +697,34 @@ it("was der Versuch nicht richtig zaehlte, startet ohne Kamera", () => {
 
 ---
 
+## Stand nach der Umsetzung (24. November 2026)
+
+Alle 13 Tasks sind auf `claude/kamera-kern-katalog` umgesetzt, einzeln geprüft und nach einer Schlussprüfung nachgebessert.
+
+**Geprüft:** `swift test` Koerperbild 69 Tests, Sensorik 235 Tests, Domain 774 Tests, Typprüfung im ganzen Repo, App-Tests 2079 im Simulator.
+**Nicht geprüft, erst in der CI:** die Integrationstests gegen Postgres (`migration-kamera-tempo`, Kamera-Fälle in `katalog-import` und `domain-bootstrap-katalog`) und der Linux-Build von `Packages/Koerperbild`. Lokal lief kein Supabase.
+
+**Reihenfolge beim Ausrollen:** Migration 0077 muss auf Prod liegen, bevor die API mit diesem Stand deployt wird. Die Selects in `bootstrap.ts`, `machine-context.ts`, `catalog.ts` und `katalog-import.ts` nennen die neuen Spalten; fehlen sie, liefert die API still keine Übungen.
+
+**Abweichungen vom Plan, in der Umsetzung entschieden:**
+- Zählregel in Task 5 (siehe dort): gezählt wird bei Rückkehr auf Lage ≤ 0,15, ersatzweise beim Wiederanstieg.
+- Der Typ heißt `Koerperwiederholung` (nicht `Wiederholung`), weil `Sensorik` schon einen Typ dieses Namens hat.
+- `Lage.richtung` bleibt `.rueck` bis zum Tal.
+- Wegurteile im Rückblick rechnen die Haltezeit als Spielraum nach oben ein: im Tempo von 0,75·Weg bis 1,25·(Weg + Halten).
+- `Erkennungspruefung.seiteFesthalten(_:)` richtet die Prüfung auf die Seite aus, die gezählt wird.
+- `Koerperlage` behandelt einen gemerkten Hub unter 20° oder nicht endlich wie keinen und meldet `hubWarGemerkt`.
+- Die Zuordnungsregeln wurden fachlich geschärft: Schulterheben, Handgelenk, Wadenheben, Schulterrotation, Crunch an Kabel und Gerät, Bird Dog, Arm-Isolation mit fremdem Signal und gehende Übungen starten ohne Kamera.
+
+**Vermerke für den Plan E3 + E4:**
+- Der Kamera-Ablauf ruft `Erkennungspruefung.seiteFesthalten(koerperlage.fuehrendeSeite)`, sobald die Seite feststeht.
+- `Koerperlage.init` verlangt eine Vorgabe mit Signal (`precondition`); bei `ohne_kamera` nicht aufrufen.
+- Kameravorgabe und Tempo kommen aus `station.exercises` (Bootstrap); `TagContextResponse.Exercise` trägt sie nicht.
+- `Satzrueckblick` bekommt `hubWarGemerkt` aus `Koerperlage`; die Listen sprechen von Hin- und Rückweg, die Anzeige übersetzt mit `Uebungstempo.phase(_:)`.
+- Die letzte Wiederholung eines Satzes zählt nicht, wenn die Rückkehr unvollständig bleibt und keine Bewegung mehr folgt. Im Studio messen.
+- Bei `Seitenwahl.beide` kann ein unruhig erkannter ruhender Arm die Seitenwahl verfälschen. Im Studio messen.
+
+**Zurückgestellte Kleinigkeiten** (von der Schlussprüfung als unkritisch eingestuft): Rundlauf-Test für die Kodierung mit Haltezeit; Tests für Rundung und Fehlerpfad der `Skelettfolge`; rückwärts laufende Zeit in der Erkennungsprüfung; wiederholter Block in `Koerperlage`; Wertelisten- und Grenztests der Migration; Raster-Toleranz 1e-6 in `kamera.ts`; nicht exportierte Hilfstypen in `index.ts`; Mocks prüfen den Select-String nicht; CI-Job heißt weiter `sensorik`; LIESMICH nennt die Videos „KI-erzeugt“ ohne Beleg im Repo; `profilbericht.md` wird in der CI nicht gegen den eingecheckten Stand geprüft.
+
 ## Nach diesem Plan
 
 - Tim liest `docs/kamera-zuordnung-2026-11.md` und `data/koerperbild/profilbericht.md` und entscheidet über die Beingeräte im Sitzen (Regel 5 in Task 12): eigenes siebtes Profil oder vorerst ohne Kamera.
