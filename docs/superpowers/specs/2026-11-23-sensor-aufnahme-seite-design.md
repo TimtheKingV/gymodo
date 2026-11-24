@@ -26,6 +26,14 @@ Der vorhandene Leser überliest unbekannte `#`-Zeilen und unbekannte JSON-Schlü
 - `messwerte.csv`: `# los <t>`, `# takt oben|unten <t>` (Soll), `# umkehr oben|unten <t>` (Tastendruck), `# ende <t>`. Bewusst nicht `# marke`, weil der Leser dort nur `satzbeginn`/`satzende` kennt.
 - `aufnahme.json`: Block `tempo` mit `kraftwegS`, `ablassenS`, `startetOben`, `ohneTakt`, `tasten` (`selbst`/`helfer`), `ruheS`, `losBei`.
 - `label.reps` = Zahl der vollständigen Wiederholungen aus den Tastendrücken, vor dem Speichern korrigierbar. `befestigungsartQuelle` = `gewaehlt`.
+- **Wiederholungs-Vorschlag (Stand 24.11.):** mit Tastendrücken deren Zahl; ohne Tastendruck die Zahl der Taktgipfel bis zum Ende (`# takt oben` bis `# ende`: so oft sollte gehoben werden), nicht mehr `floor((ende − los) / periode)`; ohne Takt leer. `tempo.repsQuelle` hält fest, woher `label.reps` kommt: `tasten`, `takt` oder `hand` (der Wert wurde vor dem Speichern geändert). Ohne Tasten ist `label.reps` damit eine Soll-Zahl von der Uhr, keine Zählung; die Aufnahmen vom 23.11. tragen noch die alte Vorbelegung und kein `repsQuelle`.
+- `geraet.model`: „Mac (Brücke)“ über `bruecke.py`, sonst „Mac (Web Bluetooth)“. `statistik.verworfeneBytes` zählt je Aufnahme, nicht seit Verbindungsbeginn.
+
+## Brücke für Safari
+
+Safari kann kein Web Bluetooth. `tools/sensorik-aufnahme/bruecke.py` (`uv run --with bleak python tools/sensorik-aufnahme/bruecke.py`) verbindet sich selbst mit dem Sensor, liefert die Seite unter `http://127.0.0.1:8765/` aus, reicht jede Notification als Server-Sent Events über `/strom` weiter und speichert Sätze über `POST /speichern` in `data/sensoraufnahmen`. Die Seite erkennt die Brücke an `/bruecke` und blendet dann „Sensor verbinden“ und „Ordner wählen“ aus.
+
+Schutz der Brücke: Der Server hört nur auf 127.0.0.1. `/strom` und `/speichern` antworten nur, wenn `Host` `127.0.0.1:<port>` oder `localhost:<port>` ist und ein gesetzter `Origin` dazu passt (sonst 403; gegen fremde Seiten im selben Browser und DNS-Rebinding). `/speichern` verlangt `Content-Type: application/json`, höchstens 20 MB und einen Ordnernamen `JJJJ-MM-TT-HHMM` (ganz, per `fullmatch`). Kommt eine Seite nicht hinterher (Warteschlange voll), schickt die Brücke ihr `event: abgehaengt` und schließt die Verbindung; die Seite zeigt „Brücke hat die Verbindung getrennt“ und verbindet nicht still neu.
 
 ## Wege
 

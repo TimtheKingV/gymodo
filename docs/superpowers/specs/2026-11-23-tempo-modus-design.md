@@ -262,16 +262,16 @@ Unverändert gelten: Welle im Vollbild, flacher Ausschlag, Standard-Tempo 1,5/2,
 
 Ein neuer, reiner Baustein `Winkellage` im Package `Sensorik`, mit derselben Ausgabe wie in 6.1 beschrieben (`Lage` mit `lage`, `richtung`, `sicher`; Typen aus `Lage.swift`).
 
-- **Signal:** Roll (`winkel.x`) und Pitch (`winkel.y`), je für sich über ±180° hinweg entfaltet. Yaw wird nicht benutzt.
-- **Achse:** die der beiden mit dem größeren Ausschlag. Sie wird in der ersten Wiederholung gewählt, gilt für den Rest des Satzes und wird mit dem Umfang gemerkt.
-- **Ruhelage:** der Winkel in der Ruhe vor der Los-Marke. Lage 0.
+- **Signal:** Roll (`winkel.x`) und Pitch (`winkel.y`), je für sich über ±180° hinweg entfaltet. Yaw wird nicht benutzt. (überholt, siehe N9)
+- **Achse:** die der beiden mit dem größeren Ausschlag. Sie wird in der ersten Wiederholung gewählt, gilt für den Rest des Satzes und wird mit dem Umfang gemerkt. (überholt, siehe N9)
+- **Ruhelage:** der Winkel in der Ruhe vor der Los-Marke. Lage 0. (überholt, siehe N9)
 - **Umfang:** Hub in Grad zwischen Ruhelage und oberem Umkehrpunkt. Gemerkt je Station und Übung (wie 6.2), in den ersten zwei Wiederholungen nachgeführt, danach nur noch langsam; kurze Wiederholungen verkleinern ihn nicht.
-- **Umkehrpunkte:** Richtungswechsel des Winkels mit einer Hysterese von 10 % des Hubs (Vorschlag).
+- **Umkehrpunkte:** Richtungswechsel des Winkels mit einer Hysterese von 10 % des Hubs (Vorschlag). (überholt, siehe N9)
 - **Richtung:** `.hin` (Kraftweg), solange sich die Lage von der Ruhelage entfernt, `.rueck` beim Rückweg.
-- **Sicher:** sobald der Umfang bekannt ist (gemerkt oder nach der ersten vollen Wiederholung) und mindestens 40° beträgt (Vorschlag); nach einer Empfangslücke über 0,5 s sofort wieder, sobald Messwerte kommen. Der Winkel driftet nicht, ein Einrasten oder Einschwingen braucht es nicht.
-- **Bekanntes Risiko:** Nahe Pitch ±90° wird Roll unzuverlässig. Zeigt der Bericht (N5) Sätze, in denen die gewählte Achse springt, ist das festzuhalten; eine Lösung über die aufsummierte Drehrate ist dann ein eigener Schritt.
+- **Sicher:** sobald der Umfang bekannt ist (gemerkt oder nach der ersten vollen Wiederholung) und mindestens 40° beträgt (Vorschlag) (überholt, siehe N9); nach einer Empfangslücke über 0,5 s sofort wieder, sobald Messwerte kommen. Der Winkel driftet nicht, ein Einrasten oder Einschwingen braucht es nicht.
+- **Bekanntes Risiko:** Nahe Pitch ±90° wird Roll unzuverlässig. Zeigt der Bericht (N5) Sätze, in denen die gewählte Achse springt, ist das festzuhalten; eine Lösung über die aufsummierte Drehrate ist dann ein eigener Schritt. (überholt, siehe N9)
 
-Die Schätzung aus der Beschleunigung (`Lageschaetzer`, `Gleichanteil`, `Hilfslage`, `Schwerkraftquelle`) bleibt als Versuch auf dem Branch, wird von der App nicht benutzt und in diesem Projekt nicht weiterentwickelt. Ob sie mit in den Merge geht, entscheidet Tim vor dem Merge.
+Die Schätzung aus der Beschleunigung (`Lageschaetzer`, `Gleichanteil`, `Hilfslage`, `Schwerkraftquelle`) bleibt als Versuch auf dem Branch, wird von der App nicht benutzt und in diesem Projekt nicht weiterentwickelt. Ob sie mit in den Merge geht, entscheidet Tim vor dem Merge. (überholt, siehe N9)
 
 ### N4. Eignung (ersetzt die Freigabe nach Befestigungsart in 7.6)
 
@@ -283,11 +283,11 @@ Die Schätzung aus der Beschleunigung (`Lageschaetzer`, `Gleichanteil`, `Hilfsla
 
 Der Winkel ist eine direkte Messung, kein Schätzwert. Geprüft wird deshalb nicht die Abweichung gegen eine Rechnung, sondern:
 
-- **Wiederholungen gegen die Wahrheit:** Umkehrpunkte der `Winkellage` gegen `repsWahr`, je Aufnahme.
-- **Sicher-Anteil** im aktiven Teil des Satzes.
+- **Wiederholungen gegen die Wahrheit:** Umkehrpunkte der `Winkellage` gegen `repsWahr`, je Aufnahme. (überholt, siehe N9)
+- **Sicher-Anteil** im aktiven Teil des Satzes. (überholt, siehe N9)
 - **Stabilität:** Streuung des Hubs von Wiederholung zu Wiederholung; Sprünge der Lage zwischen zwei Messwerten.
 
-Ausgewertet werden alle Aufnahmen mit `repsWahr` ≥ 5, deren Winkelhub im Satz mindestens 40° beträgt, gleich welcher Befestigungsart, getrennt nach „vor 1.11.“ und „ab 1.11.“ (inklusive der Mac-Aufnahmen vom 23.11.). `tempobericht.md` bekommt dafür einen Abschnitt „Winkellage“ vor den bisherigen.
+Ausgewertet werden alle Aufnahmen mit `repsWahr` ≥ 5, deren Winkelhub im Satz mindestens 40° beträgt, gleich welcher Befestigungsart, getrennt nach „vor 1.11.“ und „ab 1.11.“ (inklusive der Mac-Aufnahmen vom 23.11.). `tempobericht.md` bekommt dafür einen Abschnitt „Winkellage“ vor den bisherigen. (überholt, siehe N9)
 
 Tragfähig heißt (Vorschlag, mit Tim nachzuschärfen, sobald Zahlen vorliegen): Wiederholungsfehler im Median ≤ 1, Sicher-Anteil im Median ≥ 0,9, kein Satz mit einem Sprung der Lage über 0,2 zwischen zwei Messwerten. Der Bericht nennt außerdem, wie viele Aufnahmen je Befestigungsart die 40° erreichen: das ist der Kreis der Übungen, für den der Modus taugt.
 
@@ -297,7 +297,7 @@ Tragfähig heißt (Vorschlag, mit Tim nachzuschärfen, sobald Zahlen vorliegen):
 - **7.5 Satzende:** Die zwei Zeilen heißen immer „Kraftweg“ und „Ablassen“.
 - **Bahnbreite:** bleibt ±0,2 als Startwert und wird am Gerät eingestellt. Tims Vorlauf von 0,23–0,43 s ohne eigenen Punkt spricht dafür, dass die Bahn eher breiter werden muss; entschieden wird das erst mit der Anzeige.
 - **3 Nicht-Ziele:** Stapel, Langhantel und alle Übungen ohne Drehung kommen hinzu.
-- **8 Etappen:** E1 = `Winkellage` und der Abschnitt im Bericht; Tim bestätigt die Zahlen. E2 = Soll-Welle und Trefferquote (Plan-Tasks 7 und 8, unverändert). E3 und E4 wie oben, mit der Eignung aus N4. Die Plan-Tasks 3, 4 und 6 entfallen.
+- **8 Etappen:** E1 = `Winkellage` und der Abschnitt im Bericht; Tim bestätigt die Zahlen. E2 = Soll-Welle und Trefferquote (Plan-Tasks 7 und 8, unverändert) (überholt, siehe N9). E3 und E4 wie oben, mit der Eignung aus N4. Die Plan-Tasks 3, 4 und 6 entfallen.
 - **10 Fehlerfälle:** „Schätzung länger als eine Wiederholung nicht sicher“ wird zu „Hub unter 40° nach zwei Wellenperioden“ (N4).
 
 ### N7. Aufnahme-Werkzeug
@@ -306,13 +306,61 @@ Tragfähig heißt (Vorschlag, mit Tim nachzuschärfen, sobald Zahlen vorliegen):
 
 ### N8. Festlegungen aus der Gegenprüfung (alle Vorschlag)
 
-- **Vorzeichen:** Die Lage wird mit dem Vorzeichen des ersten Wegs aus der Ruhelage normiert: `lage = vorzeichen · (winkel − ruhewinkel) / hub`. Dreht der Sensor in negative Gradrichtung, ist das Vorzeichen −1.
-- **Ruhewinkel:** Median des Winkels über den Teil des Vorlaufs, in dem der Sensor still ist (Drehrate klein). War er nie still, gilt der Winkel zu Beginn des Vorlaufs. Das gilt für jeden Satz neu, auch für den zweiten und folgende.
-- **Achse, solange sie nicht feststeht:** die mit dem bisher größeren Ausschlag seit der Ruhe; sie darf wechseln, bis ein Ausschlag von 20° erreicht ist, danach steht sie für den Satz fest. Mit gemerktem Wert steht sie von Anfang an fest.
-- **Umfang ohne gemerkten Wert:** Der Punkt wird sofort gezeigt. Maßstab ist das Größere aus 40° und dem bisher größten Ausschlag; `sicher` ist dabei falsch. Mit der ersten vollen Wiederholung gilt deren Hub, mit der zweiten der Mittelwert beider. Danach folgt der Umfang nur noch langsam (N3).
+- **Vorzeichen:** Die Lage wird mit dem Vorzeichen des ersten Wegs aus der Ruhelage normiert: `lage = vorzeichen · (winkel − ruhewinkel) / hub`. Dreht der Sensor in negative Gradrichtung, ist das Vorzeichen −1. (überholt, siehe N9)
+- **Ruhewinkel:** Median des Winkels über den Teil des Vorlaufs, in dem der Sensor still ist (Drehrate klein). War er nie still, gilt der Winkel zu Beginn des Vorlaufs. (überholt, siehe N9) Das gilt für jeden Satz neu, auch für den zweiten und folgende.
+- **Achse, solange sie nicht feststeht:** die mit dem bisher größeren Ausschlag seit der Ruhe; sie darf wechseln, bis ein Ausschlag von 20° erreicht ist, danach steht sie für den Satz fest. Mit gemerktem Wert steht sie von Anfang an fest. (überholt, siehe N9)
+- **Umfang ohne gemerkten Wert:** Der Punkt wird sofort gezeigt. Maßstab ist das Größere aus 40° und dem bisher größten Ausschlag; `sicher` ist dabei falsch. Mit der ersten vollen Wiederholung gilt deren Hub, mit der zweiten der Mittelwert beider. (überholt, siehe N9) Danach folgt der Umfang nur noch langsam (N3).
 - **Sicher in Ruhe:** Sobald der Umfang bekannt ist und mindestens 40° beträgt, ist `sicher` wahr, auch wenn die Last ruht. Wer im Satz unten pausiert, liegt zu Recht neben der Bahn; diese Zeit zählt in die Trefferquote. Die Aussage in 6.1 („in Ruhe nicht sicher“) galt der Schätzung aus der Beschleunigung und entfällt.
-- **Gemerkter Wert:** ein eigener Typ für den Winkel (Achse, Vorzeichen, Hub in Grad), nicht `GemerkterUmfang`. Schlüssel wie beim `Befestigungsspeicher`: Station und Übung.
+- **Gemerkter Wert:** ein eigener Typ für den Winkel (Achse, Vorzeichen, Hub in Grad), nicht `GemerkterUmfang`. (überholt, siehe N9) Schlüssel wie beim `Befestigungsspeicher`: Station und Übung.
 - **Ungeeignet-Marke:** Schlüssel Station und Übung, unabhängig von Gewicht und Befestigung. Gesetzt nur beim Abbruch nach N4. Gibt das Mitglied den Schalter wieder frei und läuft der nächste Satz mit mindestens 40° Hub durch, wird die Marke gelöscht.
 - **Wer abbricht:** die App, nicht `Winkellage`. `Winkellage` meldet den bisher größten Ausschlag; die App prüft ihn zwei Wellenperioden nach der Los-Marke.
 - **Nach einem Abbruch:** keine Tempo-Auswertung am Satzende. Für den Rest des Satzes gelten Zählung und Satzautomatik wie ohne Tempo-Modus.
 - **Sichtbarkeit des Schalters:** N4 geht 7.6 vor. Das Anti-Ziel „lieber nicht freischalten“ erfüllt der Abbruch nach N4.
+
+### N9. Stand nach der Umsetzung (24. November 2026)
+
+Ersetzt, wo sie abweicht, die mit „(überholt, siehe N9)“ gekennzeichneten Aussagen in N3–N8. Gebaut auf `claude/tempo-modus`, alles im Package `Sensorik`.
+
+**Signal.** Je Messwert die Schwerkraftrichtung ĝ = (−sin p, sin r·cos p, cos r·cos p) aus Roll r und Pitch p. Gemessen wird ihre Drehung φ gegenüber der Ruherichtung ĝ₀ in der Ebene der ersten Bewegung: Die Drehachse n = normiert(ĝ₀ × ĝ) steht fest, sobald die Drehung 20° erreicht, danach φ = atan2((ĝ₀ × ĝ)·n, ĝ₀·ĝ), über ±180° hinweg entfaltet. Es gibt keine Wahl zwischen Roll- und Pitch-Achse und kein Vorzeichen; φ ist in Richtung der ersten Bewegung positiv. Gemerkt wird nur der Hub in Grad (`GemerkterWinkel(hubGrad:)`). `lage = φ / hub`.
+
+**Ruhe, Umkehrpunkte, Sicher.**
+- Still heißt: ĝ weicht über 0,5 s höchstens 4° von seinem Mittel ab; die Drehrate wird nicht benutzt. Das stille Mittel ist das der letzten Sekunde, wenn sie still ist, sonst das der letzten halben.
+- Umkehrpunkte über eine Hysterese von 10 % des Hubs, solange der Hub nicht bekannt ist mindestens 10°; ein unterer Umkehrpunkt entsteht auch durch Stillstand bei Lage < 0,35.
+- Richtung aus dem Trend der Lage über 0,1 s (Totzone 1 % des Hubs).
+- Maßstab: in der ersten Wiederholung vorläufig das Größere aus 40° und dem bisherigen Gipfel; nach dem ersten Gipfel dessen Höhe, nach dem zweiten der Mittelwert beider, danach höchstens 10 % je Wiederholung (nur bei mindestens 80 % des Hubs). Jeder neue Maßstab gilt erst ab dem unteren Umkehrpunkt.
+- Sicher: ab dem ersten unteren Umkehrpunkt (oder mit gemerktem Hub), Hub mindestens 40°, und nicht nahe der Drehachse: Liegt ĝ weniger als 20° von n, ist φ nicht bestimmt, wird gehalten, und die Lage ist unsicher.
+
+**Ablauf.** Eine Instanz je Satz, `init → (los) → verarbeite … → ende`, kein Zurücksetzen.
+- Ausdrücklicher Start `los()`: Bis dahin Lage 0; `los()` nimmt das stille Mittel, wenn es gerade still ist, sonst das zuletzt stille Mittel, wenn es höchstens 3 s alt ist, sonst den letzten Messwert. Ohne `wartetAufLos` steht die Ruhe mit der ersten Bewegung über 5° fest.
+- Ende `ende()`: Danach steht die Lage (unsicher), Umkehrpunkte, gemerkter Hub und größter Ausschlag ändern sich nicht mehr; eine angefangene Wiederholung (oberer Umkehrpunkt ohne unteren) fällt heraus und geht nicht in den Hub ein.
+- Zeit: `Lage.t` ist Sensorzeit. `losZeit` ist die Sensorzeit des Messwerts, bei dem `los()` wirksam wurde (ohne `wartetAufLos` die der ersten Bewegung); `sekundenSeitLos(t)` liefert die Zeit, die `Sollwelle` und `Tempoauswertung.erfasse(_:bei:)` erwarten.
+- Eine Rate, die nicht endlich oder nicht positiv ist, gilt als 50 Hz.
+
+**Grenzen.** Eine Drehung um die Senkrechte ändert ĝ nicht und ist unsichtbar (waagerecht schwenkende Hebelarme, Drücken ohne Drehung des Sensors). Das frühere Risiko „Pitch ±90°“ ist behoben: ĝ ist dort stetig, der Bericht prüft das an einem Kunstsignal mit Euler-Sprung.
+
+**Messung (`data/sensoraufnahmen/tempobericht.md`, erzeugt von `WinkelBerichtTests`).**
+- Auswahl: alle Aufnahmen mit bekannter Wiederholungszahl ≥ 5 (171 Sätze), gleich welcher Art: `repsWahr` aus `korrekturen.json`; die Mac-Aufnahmen mit `tempo` in `aufnahme.json` (ausgewählt über `label.reps` ≥ 5). „geeignet“ = gemerkter Hub am Satzende ≥ 40°.
+- Je Aufnahme zwei Läufe: ohne Start (Ruhe mit der ersten Bewegung, das Aufnehmen zählt mit) und mit geschätztem Start (nachträglich aus der ganzen Aufnahme geraten). Die Mac-Aufnahmen laufen statt geschätzt im echten Ablauf: `los()` an `# los`, `ende()` an `# ende`, der Rest der Aufnahme wird weiter eingespeist.
+- Soll der Mac-Sätze: die Taktgipfel, die Zeilen `# takt oben` bis `# ende`. Die Person folgte einem Metronom ohne unabhängige Zählung; die Soll-Zahl kommt von der Uhr. `label.reps` war von der Seite aus der Satzdauer vorbelegt und ist keine Zählung.
+- Gemessen sind nur die Zahl der Umkehrpunkte gegen das Soll und Sprünge der Lage zwischen zwei Messwerten. Nicht gemessen sind die Genauigkeit der Lage, die Verzögerung der Anzeige und der Lauf mit gemerktem Hub. Die Mac-Zeile beruht auf 7 geeigneten Sätzen einer Person an einem Abend mit 1 kg und zwei Übungen (Curl, Seitheben). „Sicher“ beginnt nach dem ersten unteren Umkehrpunkt und sagt deshalb wenig; „geeignet“ wählt nach dem Ergebnis der `Winkellage` selbst aus.
+- Zahlen (Bericht vom 24.11.2026; je Zelle ohne Start / geschätzter bzw. echter Start):
+
+| Teil, Art | Sätze | geeignet | Wdh.-Fehler | Sicher | Sätze mit Sprung | tragfähig |
+|---|---|---|---|---|---|---|
+| Abstimmung, kurzhantel | 63 | 45 / 37 | 1,0 / 1,0 | 100 % / 100 % | 22 / 12 | nein / nein |
+| Abstimmung, langhantel | 17 | 5 / 3 | 4,0 / 2,0 | 100 % / 96 % | 2 / 3 | nein / nein |
+| Abstimmung, stapel | 50 | 0 / 0 | – | – | – | nein / nein |
+| Prüfung, kurzhantel | 21 | 15 / 14 | 1,0 / 1,5 | 100 % / 100 % | 4 / 8 | nein / nein |
+| Prüfung, kurzhantel mit Los-Marke (Mac) | 11 | 7 / 7 | 0,0 / 0,0 | 100 % / 100 % | 0 / 3 | ja / nein |
+| Prüfung, stapel | 8 | 0 / 0 | – | – | – | nein / nein |
+
+  Im echten Ablauf der Mac-Sätze (von `los()` bis `ende()`) trifft die Zahl der Umkehrpunkte das Soll im Median genau (3 von 7 einen zu wenig), der Ruhefehler beim Los liegt im Median bei 1,3° (größter 5,2°; mit der früheren Regel „letzter Messwert“ 4,5–12,9° bei 4 Sätzen). Die Messlatte verfehlt er wegen dreier Sprünge über 0,2 (0,28 / 0,33 / 0,40), alle am Los: Die Lage steht bis `los()` auf 0 und springt dann auf die Bewegung, die vor dem Los schon begonnen hatte. Die neuen Sprünge in den Läufen ohne Start (Prüfung Kurzhantel 0 → 4) entstehen alle dort, wo die Lage nahe der Drehachse gehalten war und danach auf den wieder bestimmten Winkel springt. Beides ist so gebaut, wie entschieden, und nicht nachgestellt; ob die Anzeige es glätten soll, gehört zum App-Plan.
+
+**Entfernt.** Der Schätzer aus der Beschleunigung (`Lageschaetzer`, `Gleichanteil`, `Hilfslage`, `Schwerkraftquelle`, `Lagebezug`, der alte Tempobericht und `tools/sensorik-sim/tempo_nachrechnung.py`) ist vom Branch entfernt; der Code liegt unter dem Tag `archiv/tempo-beschleunigungsschaetzer`, seine Berichtsabschnitte eingefroren in `data/sensoraufnahmen/tempobericht-beschleunigung-2026-11-23.md`. `Tempofreigabe` entfällt.
+
+**Soll-Welle und Auswertung.** Die Plan-Tasks 7 und 8 sind ohne `startetOben` und ohne `gleichmaessig` umgesetzt (`Tempovorgabe`, `Sollwelle`, `Tempoauswertung`). Die Bahnbreite ist je Welle einstellbar (`Sollwelle(vorgabe:halbeBahnbreite:)`, Standard ±0,2); `Tempoergebnis` hat einen öffentlichen Initialisierer.
+
+**Offen für den App-Plan.**
+- Startauslöser ab dem zweiten Satz: Der Befund trägt nur mit ausdrücklichem Start (`los()`); ohne ihn zählt das Aufnehmen der Hantel mit.
+- Glättung der Anzeige: Die Messwerte kommen paarweise mit gleichem `t`; dazu die Sprünge am Los und nach dem Halten nahe der Drehachse.
+- Bestätigung an echter Last (mehr als 1 kg, mehrere Personen) und an Geräten mit Hebelarm.
