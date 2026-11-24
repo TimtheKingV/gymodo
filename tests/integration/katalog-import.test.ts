@@ -331,3 +331,29 @@ describe("Katalogimport Planfelder", () => {
     expect(eigene(zweiter.plan.uebungen, p).every((x) => x.art === "unveraendert")).toBe(true);
   });
 });
+
+describe("Katalogimport Kamera und Tempo", () => {
+  it("schreibt Kameraprofil und Tempo; zweiter Lauf aendert nichts", async () => {
+    const p = neuerPraefix();
+    const beispiel = beispielKatalog(p);
+    (beispiel.roh.exercises[0] as Record<string, unknown>).kamera = { profil: "ohne_kamera", beginnt_mit: "senken" };
+    (beispiel.roh.exercises[0] as Record<string, unknown>).tempo = { senken_s: 2.5, halten_s: 0.5, heben_s: 1.5 };
+    await importiere(beispiel);
+
+    const { data, error } = await admin
+      .from("exercises")
+      .select("kamera_profil, kamera_signal, kamera_seite, tempo_senken_s, tempo_halten_s, tempo_heben_s, tempo_beginnt_mit")
+      .eq("studio_id", GYMTAVO_STUDIO_ID)
+      .eq("catalog_key", `${p}brustpresse_neutral`)
+      .single();
+    expect(error).toBeNull();
+    expect({ ...data, tempo_senken_s: Number(data?.tempo_senken_s), tempo_halten_s: Number(data?.tempo_halten_s), tempo_heben_s: Number(data?.tempo_heben_s) }).toEqual({
+      kamera_profil: "ohne_kamera", kamera_signal: null, kamera_seite: null,
+      tempo_senken_s: 2.5, tempo_halten_s: 0.5, tempo_heben_s: 1.5, tempo_beginnt_mit: "senken",
+    });
+
+    const zweiter = await importiere(beispiel);
+    expect(eigene(zweiter.plan.uebungen, p).every((x) => x.art === "unveraendert")).toBe(true);
+    expect(zweiter.geschrieben.uebungen).toBe(0);
+  });
+});

@@ -389,3 +389,34 @@ describe("planeImport Planfelder", () => {
     expect(plane(b, istAus(plane(b, LEER))).uebungen[0]?.art).toBe("unveraendert");
   });
 });
+
+describe("planeImport Kamera und Tempo", () => {
+  const SPALTEN = ["kamera_profil", "kamera_signal", "kamera_seite", "tempo_senken_s", "tempo_halten_s", "tempo_heben_s", "tempo_beginnt_mit"];
+  const mitTempo = (senken: number) => {
+    const b = beispielKatalog();
+    Object.assign(b.roh.exercises[0] as Record<string, unknown>, {
+      kamera: { profil: "ohne_kamera", beginnt_mit: "heben" },
+      tempo: { senken_s: senken, halten_s: 0, heben_s: 1.5 },
+    });
+    return b;
+  };
+
+  it("ohne Angaben sind alle sieben Spalten null", () => {
+    const zeile = plane(beispielKatalog(), LEER).uebungen[0]!.zeile as Record<string, unknown>;
+    for (const s of SPALTEN) expect(zeile[s]).toBeNull();
+  });
+
+  it("nennt eine geaenderte tempo-Angabe als Feld der Uebung", () => {
+    const ist = istAus(plane(mitTempo(2.5), LEER));
+    const zweiter = plane(mitTempo(3), ist);
+    expect(zweiter.uebungen[0]?.art).toBe("geaendert");
+    expect(zweiter.uebungen[0]?.felder).toEqual(["tempo_senken_s"]);
+  });
+
+  it("haelt Zahlen aus der Datenbank, die als Text kommen, fuer gleich", () => {
+    const b = mitTempo(2.5);
+    const ist = istAus(plane(b, LEER));
+    Object.assign(ist.uebungen[0]!, { tempo_senken_s: "2.5", tempo_halten_s: "0.0", tempo_heben_s: "1.5" });
+    expect(plane(b, ist).uebungen[0]).toMatchObject({ art: "unveraendert", felder: [] });
+  });
+});

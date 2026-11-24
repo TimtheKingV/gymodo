@@ -1,4 +1,5 @@
 import type { KatalogDatei } from "./katalog-datei.js";
+import { kameraSpalten } from "./kamera.js";
 import { fotoPraefix, videoPraefix, type Medien, type Medium } from "./katalog-medien.js";
 import { PHOTO_BUCKET, VIDEO_BUCKET } from "./media.js";
 
@@ -57,6 +58,14 @@ export type UebungZeile = {
   plan_vorschlag: boolean;
   /** Etikett des ersten nicht abgeloesten Geraetetyps der Uebung; null nur ohne solchen Typ. */
   geraet_label: string | null;
+  /** Kameraprofil und Tempo (Migration 0077); alle null ohne kamera in der Datei. */
+  kamera_profil: string | null;
+  kamera_signal: string | null;
+  kamera_seite: string | null;
+  tempo_senken_s: number | null;
+  tempo_halten_s: number | null;
+  tempo_heben_s: number | null;
+  tempo_beginnt_mit: string | null;
   /** In Reihenfolge der Katalogdatei; Name aus dem Muskelverzeichnis der Datei. */
   muscles: { key: string; name: string; role: "primary" | "secondary" }[];
 };
@@ -142,7 +151,7 @@ const GERAETETYP_FELDER = [
 const EINSTELLUNG_FELDER = [
   "label", "kind", "min_value", "max_value", "step_value", "unit", "allowed_values", "sort_order",
 ] as const;
-const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max", "plan_baustein", "plan_typ", "plan_bereiche", "plan_vorschlag", "geraet_label", "muscles"] as const;
+const UEBUNG_FELDER = ["name", "description", "volume_kind", "target_min", "target_max", "plan_baustein", "plan_typ", "plan_bereiche", "plan_vorschlag", "geraet_label", "kamera_profil", "kamera_signal", "kamera_seite", "tempo_senken_s", "tempo_halten_s", "tempo_heben_s", "tempo_beginnt_mit", "muscles"] as const;
 const PRODUKT_FELDER = [
   "manufacturer", "series", "name", "model_code", "product_url", "note", "photo_path", "photo_rights",
   "load_unit", "load_step", "load_min", "load_max", "secondary_unit", "secondary_step", "secondary_min", "secondary_max",
@@ -272,6 +281,7 @@ export function planeImport(k: KatalogDatei, medien: Medien, ist: IstStand): Imp
         plan_bereiche: u.plan?.bereiche ?? [],
         plan_vorschlag: u.plan?.vorschlag ?? true,
         geraet_label: etikett.get(u.key) ?? null,
+        ...kameraSpalten(u.kamera, u.tempo),
         muscles: u.muscles.map((m) => ({ key: m.muscle, name: muskelName.get(m.muscle) ?? m.muscle, role: m.role })),
       },
       uebungNachKey.get(u.key),
