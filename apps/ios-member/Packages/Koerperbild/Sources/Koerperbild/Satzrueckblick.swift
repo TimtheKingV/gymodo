@@ -18,6 +18,8 @@ public struct Wiederholungsurteil: Sendable, Equatable {
 }
 
 /// Rueckblick auf einen Satz; die Listen enthalten 1-basierte Nummern bewerteter Wiederholungen.
+/// Die Listen sprechen von Hin- und Rueckweg; die Anzeige uebersetzt mit `Uebungstempo.phase(.kraftweg)` /
+/// `.phase(.ablassen)` in senken/heben.
 public struct Rueckblick: Sendable, Equatable {
     public let urteile: [Wiederholungsurteil]
 
@@ -70,8 +72,8 @@ public struct Satzrueckblick: Sendable {
             return Wiederholungsurteil(
                 anteilInBahn: anteil,
                 imTakt: bewertet ? (anteil ?? 0) >= Self.imTaktAb : nil,
-                hin: Self.wegurteil(dauer: w.dauerHin, soll: welle.vorgabe.kraftweg),
-                rueck: Self.wegurteil(dauer: w.dauerRueck, soll: welle.vorgabe.ablassen))
+                hin: Self.wegurteil(dauer: w.dauerHin, soll: welle.vorgabe.kraftweg, halten: welle.vorgabe.halten),
+                rueck: Self.wegurteil(dauer: w.dauerRueck, soll: welle.vorgabe.ablassen, halten: welle.vorgabe.halten))
         }
         return Rueckblick(urteile: urteile)
     }
@@ -83,11 +85,13 @@ public struct Satzrueckblick: Sendable {
         return Double(sichere.filter(\.inBahn).count) / Double(sichere.count)
     }
 
-    /// Kuerzer als 75 % der Soll-Dauer = zu schnell, laenger als 125 % = zu langsam; die Grenzen selbst sind im Tempo.
-    static func wegurteil(dauer: TimeInterval, soll: TimeInterval) -> Tempourteil {
+    /// Kuerzer als 75 % der Soll-Dauer = zu schnell, laenger als 125 % von Soll-Dauer plus Haltezeit = zu langsam;
+    /// die Grenzen selbst sind im Tempo. Die Haltezeit ist Spielraum nach oben, weil der Umkehrpunkt
+    /// (hoechster Messwert) irgendwo im Plateau liegt.
+    static func wegurteil(dauer: TimeInterval, soll: TimeInterval, halten: TimeInterval = 0) -> Tempourteil {
         let eps = 1e-9
         if dauer < soll * (1 - wegToleranz) - eps { return .zuSchnell }
-        if dauer > soll * (1 + wegToleranz) + eps { return .zuLangsam }
+        if dauer > (soll + halten) * (1 + wegToleranz) + eps { return .zuLangsam }
         return .imTempo
     }
 }
