@@ -212,6 +212,11 @@ struct BootstrapResponse: Decodable, Equatable, Sendable {
         /// das Geraet nicht mehr, deshalb steht es ueberall daneben, wo der
         /// Geraetekontext fehlt. nil: eigene Studio-Uebung oder alter Server.
         var geraetLabel: String? = nil
+        /// Kameraprofil und Tempo der Uebung (Rohwerte vom Server). nil bei
+        /// einem Server ohne die Felder, bei `null` und bei einem kaputten
+        /// Unterobjekt; gelesen werden `kameravorgabe` und `uebungstempo`.
+        var kamera: KameraDTO? = nil
+        var tempo: TempoDTO? = nil
     }
 
     struct Machine: Decodable, Equatable, Identifiable {
@@ -313,9 +318,22 @@ struct ProfilAntwort: Decodable, Equatable, Sendable {
     let onboardingCompletedAt: String?
 }
 
+struct KameraDTO: Decodable, Equatable, Hashable, Sendable {
+    let profil: String
+    let signal: String?
+    let seite: String?
+    let beginntMit: String
+}
+
+struct TempoDTO: Decodable, Equatable, Hashable, Sendable {
+    let senkenS: Double
+    let haltenS: Double
+    let hebenS: Double
+}
+
 extension BootstrapResponse.Exercise {
     private enum CodingKeys: String, CodingKey {
-        case id, name, description, volumeKind, targetMin, targetMax, muscles, geraetLabel
+        case id, name, description, volumeKind, targetMin, targetMax, muscles, geraetLabel, kamera, tempo
     }
 
     /// Eigener Decoder, weil die synthetisierte Variante ein fehlendes
@@ -331,5 +349,8 @@ extension BootstrapResponse.Exercise {
         targetMax = try c.decode(Int.self, forKey: .targetMax)
         muscles = c.decodeMuskeln(forKey: .muscles)
         geraetLabel = try c.decodeIfPresent(String.self, forKey: .geraetLabel)
+        // try?: ein kaputtes Unterobjekt macht nur das Feld nil, nicht die Antwort ungueltig.
+        kamera = (try? c.decodeIfPresent(KameraDTO.self, forKey: .kamera)) ?? nil
+        tempo = (try? c.decodeIfPresent(TempoDTO.self, forKey: .tempo)) ?? nil
     }
 }
