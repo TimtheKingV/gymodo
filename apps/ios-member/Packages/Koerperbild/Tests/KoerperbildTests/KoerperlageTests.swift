@@ -104,4 +104,62 @@ final class KoerperlageTests: XCTestCase {
         let k = lauf(werte, gemerkterHub: 120)
         XCTAssertEqual(k.wiederholungen.count, 4)   // vier vollstaendige Gipfel-Tal-Gipfel-Zyklen
     }
+
+    // MARK: Richtung bis zum Tal
+
+    func testRichtungBleibtRueckBisZumTal() {
+        var k = Koerperlage(vorgabe: curl, gemerkterHub: 120)
+        var gelost = false
+        var lagen: [Lage] = []
+        var zaehlzeiten: [Double] = []
+        var vorher = 0
+        for m in satz(wdh: 3, hin: 2, rueck: 2, von: 170, bis: 50) {
+            if !gelost && m.t >= 1.0 { k.los(t: m.t); gelost = true }
+            let l = k.verarbeite(t: m.t, skelett: armSkelett(ellbogenL: m.winkel, ellbogenR: m.winkel))
+            guard gelost else { continue }
+            lagen.append(l)
+            if k.wiederholungen.count > vorher { zaehlzeiten.append(m.t); vorher = k.wiederholungen.count }
+        }
+        XCTAssertEqual(zaehlzeiten.count, 3)
+        for (i, w) in k.wiederholungen.enumerated() {
+            let dazwischen = lagen.filter { $0.t >= zaehlzeiten[i] && $0.t <= w.ende }
+            XCTAssertFalse(dazwischen.isEmpty)
+            XCTAssertTrue(dazwischen.allSatisfy { $0.richtung != .hin }, "Wdh \(i)")
+            if i + 1 < k.wiederholungen.count {
+                let spaeter = lagen.first { $0.t >= k.wiederholungen[i + 1].beginn + 0.6 }!
+                XCTAssertEqual(spaeter.richtung, .hin, "Wdh \(i + 1)")
+            }
+        }
+    }
+
+    // MARK: Luecken an der Zaehlstelle
+
+    private func ueberlappungsfrei(_ ws: [Koerperwiederholung], file: StaticString = #filePath, line: UInt = #line) {
+        for (i, w) in ws.enumerated() {
+            XCTAssertTrue(w.beginn < w.umkehr && w.umkehr < w.ende, "Wdh \(i)", file: file, line: line)
+            if i > 0 { XCTAssertLessThanOrEqual(ws[i - 1].ende, w.beginn + 1e-9, "Wdh \(i)", file: file, line: line) }
+        }
+    }
+    func testLueckeUeberDenZaehlzeitpunktZaehltGenauEinmal() {
+        // Tal der dritten Wiederholung bei t = 13; gezaehlt wird etwa bei 12,6; 0,3 s ohne Skelett darueber.
+        let k = laufMitLuecke(satz(wdh: 6, hin: 2, rueck: 2, von: 170, bis: 50), von: 12.4, bis: 12.7)
+        XCTAssertEqual(k.wiederholungen.count, 6)
+        ueberlappungsfrei(k.wiederholungen)
+    }
+    func testLaengereLueckeImRueckwegZaehltNichtDoppelt() {
+        // 0,7 s ohne Skelett (ueber der 0,5-s-Grenze der Glaettung) im Rueckweg der dritten Wiederholung.
+        let k = laufMitLuecke(satz(wdh: 6, hin: 2, rueck: 2, von: 170, bis: 50), von: 12.0, bis: 12.7)
+        XCTAssertTrue((5...6).contains(k.wiederholungen.count), "\(k.wiederholungen.count)")
+        ueberlappungsfrei(k.wiederholungen)
+    }
+    func testUnterbrechenNachDemZaehlzeitpunktVorDemTal() {
+        var k = Koerperlage(vorgabe: curl, gemerkterHub: 120)
+        speise(&k, satz(wdh: 3, hin: 2, rueck: 2, von: 170, bis: 50), bis: 4.8)   // erste gezaehlt bei ~4,6, Tal bei 5,0
+        XCTAssertEqual(k.wiederholungen.count, 1)
+        k.unterbrechen()
+        XCTAssertEqual(k.wiederholungen.count, 1)
+        speise(&k, satz(wdh: 2, hin: 2, rueck: 2, von: 170, bis: 50), versatz: 20)
+        XCTAssertEqual(k.wiederholungen.count, 3)
+        ueberlappungsfrei(k.wiederholungen)
+    }
 }

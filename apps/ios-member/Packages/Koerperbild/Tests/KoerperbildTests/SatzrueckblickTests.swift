@@ -12,14 +12,14 @@ private func folgendeLagen(von: Double, bis: Double, versatz: Double, welle: Sol
     }
 }
 
-private func wiederholungen(anzahl: Int, soll: Tempovorgabe, versatz: Double = 0) -> [Koerperbild.Wiederholung] {
+private func wiederholungen(anzahl: Int, soll: Tempovorgabe, versatz: Double = 0) -> [Koerperwiederholung] {
     (0..<anzahl).map { k in
         let beginn = Double(k) * soll.periode + versatz
-        return Koerperbild.Wiederholung(beginn: beginn, umkehr: beginn + soll.kraftweg, ende: beginn + soll.periode)
+        return Koerperwiederholung(beginn: beginn, umkehr: beginn + soll.kraftweg, ende: beginn + soll.periode)
     }
 }
 
-private func ergebnis(lagen: [(Lage, Double)], welle: Sollwelle, hubWarGemerkt: Bool, reps: [Koerperbild.Wiederholung]) -> Rueckblick? {
+private func ergebnis(lagen: [(Lage, Double)], welle: Sollwelle, hubWarGemerkt: Bool, reps: [Koerperwiederholung]) -> Rueckblick? {
     var satz = Satzrueckblick(welle: welle, hubWarGemerkt: hubWarGemerkt)
     for (lage, s) in lagen { satz.erfasse(lage, sollzeit: s) }
     return satz.ergebnis(wiederholungen: reps)
@@ -56,7 +56,7 @@ func rueckblick(mitAusreisser ausreisser: Int, dauerHin: Double, soll: Tempovorg
                 }
                 lagen.append((Lage(t: s, lage: l, richtung: .unbekannt, sicher: true), s))
             }
-            reps[i] = Koerperbild.Wiederholung(beginn: r.beginn, umkehr: umkehr, ende: ende)
+            reps[i] = Koerperwiederholung(beginn: r.beginn, umkehr: umkehr, ende: ende)
         } else {
             lagen += folgendeLagen(von: r.beginn, bis: r.ende - schritt, versatz: 0, welle: welle)
         }

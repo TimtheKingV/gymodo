@@ -62,7 +62,7 @@ public struct Satzrueckblick: Sendable {
         eintraege.append(Eintrag(t: lage.t, sicher: lage.sicher, inBahn: welle.inDerBahn(lage.lage, bei: sollzeit)))
     }
 
-    public func ergebnis(wiederholungen: [Wiederholung]) -> Rueckblick? {
+    public func ergebnis(wiederholungen: [Koerperwiederholung]) -> Rueckblick? {
         guard wiederholungen.count >= Self.mindestWiederholungen else { return nil }
         let urteile = wiederholungen.enumerated().map { index, w -> Wiederholungsurteil in
             let anteil = anteilInBahn(w)
@@ -76,7 +76,7 @@ public struct Satzrueckblick: Sendable {
         return Rueckblick(urteile: urteile)
     }
 
-    private func anteilInBahn(_ w: Wiederholung) -> Double? {
+    private func anteilInBahn(_ w: Koerperwiederholung) -> Double? {
         let lagen = eintraege.filter { w.beginn <= $0.t && $0.t <= w.ende }
         let sichere = lagen.filter(\.sicher)
         guard !sichere.isEmpty, sichere.count * 2 >= lagen.count else { return nil }

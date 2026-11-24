@@ -2,7 +2,7 @@ import Foundation
 import Sensorik
 
 /// Eine gezaehlte Wiederholung: Beginn am unteren Umkehrpunkt (Startposition), Umkehr am oberen, Ende am unteren.
-public struct Wiederholung: Sendable, Equatable {
+public struct Koerperwiederholung: Sendable, Equatable {
     public let beginn: TimeInterval
     public let umkehr: TimeInterval
     public let ende: TimeInterval
@@ -58,6 +58,8 @@ public struct Koerperlage: Sendable {
         var umkehr: (u: Double, t: Double)?
         /// Die offene Wiederholung ist schon gezaehlt.
         var gezaehlt = false
+        /// Richtung im Tal-Abschnitt: `.rueck` bis das Tal durchschritten ist und der Winkel wieder ansteigt.
+        var talRichtung = Wegrichtung.hin
         /// Messwerte (Zeit, u) seit dem oberen Umkehrpunkt bzw. seit dem Tal.
         var rueckweg: [(t: TimeInterval, u: Double)] = []
         var letztesEnde = 0.0
@@ -67,7 +69,7 @@ public struct Koerperlage: Sendable {
 
     private enum Ereignis {
         case oberer
-        case fertig(Wiederholung, ausschlag: Double)
+        case fertig(Koerperwiederholung, ausschlag: Double)
         case endeKorrigiert(TimeInterval)
     }
 
@@ -81,7 +83,7 @@ public struct Koerperlage: Sendable {
     private var letzteLage = 0.0
     private var gemessenerMassstab: Double?
 
-    public private(set) var wiederholungen: [Wiederholung] = []
+    public private(set) var wiederholungen: [Koerperwiederholung] = []
     public private(set) var fuehrendeSeite: Koerperseite?
 
     public init(vorgabe: Kameravorgabe, gemerkterHub: Double?) {
@@ -152,6 +154,8 @@ public struct Koerperlage: Sendable {
             seiten[i].umkehr = nil
             seiten[i].gezaehlt = false
             seiten[i].rueckweg = []
+            // Der Ausschlag ist die Basis des vorlaeufigen Massstabs; eine neue Bewegung beginnt von vorn.
+            seiten[i].ausschlag = 0
             seiten[i].phase = seiten[i].vorzeichen == 0 ? .ruhe : .warteNaehe
         }
     }
@@ -218,7 +222,7 @@ public struct Koerperlage: Sendable {
         max(Self.grundSchwelle, Self.schwelleAnteil * massstab(s))
     }
 
-    private mutating func wiederholungGezaehlt(_ w: Wiederholung, ausschlag: Double) {
+    private mutating func wiederholungGezaehlt(_ w: Koerperwiederholung, ausschlag: Double) {
         wiederholungen.append(w)
         let g = Self.maxAenderungJeWiederholung
         if let alt = gemessenerMassstab, gemerkterHub != nil || wiederholungen.count >= 3 {
@@ -243,7 +247,7 @@ public struct Koerperlage: Sendable {
                     if fuehrendeSeite == Self.seite(i) { wiederholungGezaehlt(w, ausschlag: ausschlag) }
                 case .endeKorrigiert(let ende):
                     if fuehrendeSeite == Self.seite(i), let l = wiederholungen.last {
-                        wiederholungen[wiederholungen.count - 1] = Wiederholung(beginn: l.beginn, umkehr: l.umkehr, ende: ende)
+                        wiederholungen[wiederholungen.count - 1] = Koerperwiederholung(beginn: l.beginn, umkehr: l.umkehr, ende: ende)
                     }
                 }
             }
@@ -292,15 +296,18 @@ public struct Koerperlage: Sendable {
                 s.tief = (u, t)
                 s.rueckweg = [(t, u)]
                 s.gezaehlt = false
+                s.talRichtung = .rueck
                 ereignisse.append(.oberer)
             }
         case .unten:
             s.rueckweg.append((t, u))
             if u < s.tief.u { s.tief = (u, t) }
+            // Kleine Totzone gegen Zittern: erst ein Anstieg ueber das Talband kehrt die Richtung um.
+            if s.umkehr != nil, u > s.tief.u + Self.talband { s.talRichtung = .hin }
             let steigt = u >= s.tief.u + sw
             if !s.gezaehlt, let um = s.umkehr, steigt || u <= Self.rueckkehrLage * massstab(s) {
                 s.letztesEnde = ende(s)
-                ereignisse.append(.fertig(Wiederholung(beginn: s.beginn, umkehr: um.t, ende: s.letztesEnde),
+                ereignisse.append(.fertig(Koerperwiederholung(beginn: s.beginn, umkehr: um.t, ende: s.letztesEnde),
                                           ausschlag: um.u - s.tiefVorher))
                 s.gezaehlt = true
             } else if s.gezaehlt, s.umkehr != nil {
@@ -360,7 +367,7 @@ public struct Koerperlage: Sendable {
         switch s.phase {
         case .ruhe, .warteNaehe: richtung = .unbekannt
         case .oben: richtung = .hin
-        case .unten: richtung = (s.umkehr != nil && !s.gezaehlt) ? .rueck : .hin
+        case .unten: richtung = s.umkehr == nil ? .hin : s.talRichtung
         }
         return Lage(t: t, lage: lage, richtung: richtung, sicher: sicher)
     }
