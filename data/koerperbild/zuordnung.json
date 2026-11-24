@@ -305,7 +305,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie"
+    "grund": "kein Profil für Beingeräte"
   },
   "leg_curl_prone": {
     "kamera": {
@@ -319,7 +319,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie"
+    "grund": "kein Profil für Beingeräte"
   },
   "leg_curl_standing": {
     "kamera": {
@@ -333,7 +333,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie"
+    "grund": "kein Profil für Beingeräte"
   },
   "hip_abduction_machine": {
     "kamera": {
@@ -767,7 +767,7 @@
       "halten_s": 0,
       "heben_s": 1.5
     },
-    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie"
+    "grund": "kein Profil für Beingeräte"
   },
   "chest_press_single": {
     "kamera": {
@@ -2241,17 +2241,17 @@
   },
   "db_walking_lunge": {
     "kamera": {
-      "profil": "ganzkoerper_stehend",
-      "signal": "huefte",
+      "profil": "ohne_kamera",
+      "signal": null,
       "seite": "beide",
       "beginnt_mit": "senken"
     },
     "tempo": {
-      "senken_s": 3,
-      "halten_s": 1,
-      "heben_s": 2
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
     },
-    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+    "grund": "Abwechselnde Übung: ein Signal einer Körperseite sähe nur die halbe Zahl"
   },
   "db_lateral_lunge": {
     "kamera": {

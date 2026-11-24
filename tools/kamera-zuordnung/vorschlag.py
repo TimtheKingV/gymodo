@@ -24,7 +24,7 @@ AUSGABE_MD = WURZEL / "docs" / "kamera-zuordnung-2026-11.md"
 
 # --- Schluesselmuster (Regex auf Schluessel bzw. Namen, klein geschrieben) ---------------
 
-WECHSEL_NAME = re.compile(r"abwechselnd|im wechsel|alternierend")
+WECHSEL_NAME = re.compile(r"abwechselnd|im wechsel|alternierend|gehend|walking")
 
 # Regel 4
 STUETZ_MUSTER = re.compile(r"stütz|push|dip")
@@ -124,12 +124,14 @@ def profil_und_grund(key, name, gruppe, signal):
         return "ohne_kamera", None, "Schulterrotation: der Ellbogenwinkel ändert sich nicht"
     if (RUMPFBEUGE_MUSTER.search(text) and gruppe in ("kabelzug", "geraete")) or KEIN_SIGNAL_MUSTER.search(text):
         return "ohne_kamera", None, "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
-    if ARM_ISOLATION_MUSTER.search(text) and signal != "ellbogen":
-        return "ohne_kamera", None, "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte " + SIGNAL_WORT[signal]
+
 
     # Geraete fuer Beine/Huefte: nie ein Profil (Regel 5, gilt auch bei fremdem Signal).
     if gruppe == "geraete" and (bein_signal or BEIN_GERAET.search(key)) and not HAENGEND_MUSTER.search(text):
         return "ohne_kamera", None, GRUND_BEINGERAET
+
+    if ARM_ISOLATION_MUSTER.search(text) and signal != "ellbogen":
+        return "ohne_kamera", None, "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte " + SIGNAL_WORT[signal]
 
     if RUMPF_MUSTER.search(text):
         return "ohne_kamera", None, "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
@@ -176,8 +178,8 @@ def vorschlag(u, gruppe, zeile):
     if zeile["urteil"] != "zählt richtig":
         return eintrag("ohne_kamera", None, "Versuch: " + zeile["urteil"])
     # Regel 2
-    if WECHSEL_NAME.search(name.lower()):
-        return eintrag("ohne_kamera", None, "Seitenwechsel in der Übung, Kamera zählt das nicht sicher")
+    if WECHSEL_NAME.search(f"{key} {name.lower()}"):
+        return eintrag("ohne_kamera", None, "Abwechselnde Übung: ein Signal einer Körperseite sähe nur die halbe Zahl")
     # Regel 3
     signal = signal_aus(zeile["fuehrend"])
     if signal is None:
@@ -224,6 +226,8 @@ def schreibe_liste(katalog, ergebnis, geraete):
     z.append("- „zählt zu viel“: die Kamera zählte mehr Wiederholungen, als gemacht wurden.")
     z.append("- „zählt zu wenig“: die Kamera zählte weniger Wiederholungen, als gemacht wurden.")
     z.append("- „nicht erkannt“: die Kamera fand die Person im Video nicht.")
+    z.append("- „kein Urteil aus dem Versuch“: die Übung kam im Versuch nicht vor, es gibt also kein Ergebnis.")
+    z.append("- „kein Video“: zur Übung gibt es im Katalog noch kein Video, die Kamera konnte nicht ausprobiert werden.")
     z.append("- Nur Übungen mit „zählt richtig“ bekommen ein Profil; alle anderen bleiben vorerst ohne Kamera.")
     z.append("")
     z.append(f"## Zählung je Profil ({len(ergebnis)} Übungen mit Wiederholungen)")

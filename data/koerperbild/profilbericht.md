@@ -6,7 +6,7 @@ Jedes Video wird sechsmal hintereinander abgespielt (1 s Ruhe mit dem ersten Bil
 
 | Profil | Videos | richtig gezaehlt | Anteil | Median Pflichtgelenke | Stufe 1 bestanden |
 |---|---|---|---|---|---|
-| ganzkoerper_stehend | 19 | 17 | 89.5 % | 100.0 % | nein |
+| ganzkoerper_stehend | 18 | 16 | 88.9 % | 100.0 % | nein |
 | liegend | 19 | 19 | 100.0 % | 95.4 % | ja |
 | oberkoerper | 78 | 78 | 100.0 % | 100.0 % | ja |
 | stuetz_boden | 3 | 3 | 100.0 % | 100.0 % | ja |

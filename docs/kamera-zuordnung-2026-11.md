@@ -10,26 +10,31 @@ Urteile aus dem Versuch (jedes Video wurde von der Kamera-Erkennung durchgezähl
 - „zählt zu viel“: die Kamera zählte mehr Wiederholungen, als gemacht wurden.
 - „zählt zu wenig“: die Kamera zählte weniger Wiederholungen, als gemacht wurden.
 - „nicht erkannt“: die Kamera fand die Person im Video nicht.
+- „kein Urteil aus dem Versuch“: die Übung kam im Versuch nicht vor, es gibt also kein Ergebnis.
+- „kein Video“: zur Übung gibt es im Katalog noch kein Video, die Kamera konnte nicht ausprobiert werden.
 - Nur Übungen mit „zählt richtig“ bekommen ein Profil; alle anderen bleiben vorerst ohne Kamera.
 
 ## Zählung je Profil (239 Übungen mit Wiederholungen)
 
 | Profil | Übungen |
 |---|---|
-| Ganzkörper stehend | 19 |
+| Ganzkörper stehend | 18 |
 | Oberkörper | 78 |
 | Stütz am Boden | 3 |
 | Liegend | 19 |
 | Zug, hängend | 10 |
-| Ohne Kamera | 110 |
+| Ohne Kamera | 111 |
 
 ## Offener Punkt: Beingeräte
 
-Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile. Diese 10 Übungen stehen deshalb vorerst bei „Ohne Kamera“. Tim entscheidet, ob dafür ein siebtes Profil entstehen soll.
+Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile. Diese 14 Übungen stehen deshalb vorerst bei „Ohne Kamera“. Tim entscheidet, ob dafür ein siebtes Profil entstehen soll.
 
 - Beinpresse (Beinpresse)
 - Hackenschmidt-Kniebeuge (Hackenschmidt)
 - Beinstrecker (Beinstrecker)
+- Beinbeuger – sitzend (Beinbeuger)
+- Beinbeuger – liegend (Beinbeuger)
+- Beinbeuger – stehend (Beinbeuger)
 - Hüftabduktion (Ab-/Adduktoren)
 - Hüftadduktion (Ab-/Adduktoren)
 - Hüftstrecken (Gluteusmaschine)
@@ -37,8 +42,9 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 - Belt Squat (Belt-Squat-Maschine)
 - Beinpresse – einbeinig (Beinpresse)
 - Beinstrecker – einbeinig (Beinstrecker)
+- Beinbeuger – sitzend, einbeinig (Beinbeuger)
 
-## Ganzkörper stehend (19)
+## Ganzkörper stehend (18)
 
 | Übung | Gerät | Signal | Beginnt mit | Tempo | Grund |
 |---|---|---|---|---|---|
@@ -57,7 +63,6 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 | Good Morning | Langhantel | Hüfte | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte) |
 | Rumänisches Kreuzheben – einbeinig | Kurzhantel | Hüfte | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte) |
 | Kreuzheben | Kurzhantel | Hüfte | Heben | 2 s heben · 1 s halten · 3 s senken | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte) |
-| Ausfallschritt – gehend | Kurzhantel | Hüfte | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte) |
 | Sumo-Kniebeuge | Kurzhantel | Knie | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie) |
 | Kniebeuge | Körpergewicht | Knie | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie) |
 | Ausfallschritt – rückwärts | Körpergewicht | Knie | Senken | 3 s senken · 1 s halten · 2 s heben | Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie) |
@@ -192,7 +197,7 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 | Beinheben – hängend | Klimmzug-/Dip-Gerät | Hüfte | Heben | 1,5 s heben · 2,5 s senken | Beinheben im Hängen: gezählt wird über Hüfte, im Versuch richtig gezählt |
 | Knieheben – hängend | Klimmzug-/Dip-Gerät | Knie | Heben | 1,5 s heben · 2,5 s senken | Beinheben im Hängen: gezählt wird über Knie, im Versuch richtig gezählt |
 
-## Ohne Kamera (110)
+## Ohne Kamera (111)
 
 | Übung | Gerät | Signal | Beginnt mit | Tempo | Grund |
 |---|---|---|---|---|---|
@@ -201,9 +206,9 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 | Beinpresse | Beinpresse 45° | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Hackenschmidt-Kniebeuge | Hackenschmidt | – | Senken | 2,5 s senken · 1,5 s heben | kein Profil für Beingeräte |
 | Beinstrecker | Beinstrecker | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
-| Beinbeuger – sitzend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie |
-| Beinbeuger – liegend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie |
-| Beinbeuger – stehend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie |
+| Beinbeuger – sitzend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
+| Beinbeuger – liegend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
+| Beinbeuger – stehend | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
 | Hüftabduktion | Ab-/Adduktoren | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
 | Hüftadduktion | Ab-/Adduktoren | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
 | Hüftstrecken | Gluteusmaschine | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
@@ -218,7 +223,7 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 | Belt Squat | Belt-Squat-Maschine | – | Senken | 2,5 s senken · 1,5 s heben | kein Profil für Beingeräte |
 | Beinpresse – einbeinig | Beinpresse | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
 | Beinstrecker – einbeinig | Beinstrecker | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
-| Beinbeuger – sitzend, einbeinig | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Knie |
+| Beinbeuger – sitzend, einbeinig | Beinbeuger | – | Heben | 1,5 s heben · 2,5 s senken | kein Profil für Beingeräte |
 | Rudern – einarmig | Rudermaschine | – | Heben | 1,5 s heben · 2,5 s senken | Kein Urteil aus dem Versuch |
 | Wadenpressen | Beinpresse 45° | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu wenig |
 | Hüftabduktion | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Versuch: zählt zu viel |
@@ -244,6 +249,7 @@ Beingeräte (sitzende, liegende und stehende) passen in keins der sechs Profile.
 | Russian Twist | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Seitneigen | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbewegung: kein Gelenk im Bild folgt ihr |
 | Crunch – stehend | Kabelzug | – | Heben | 1,5 s heben · 2,5 s senken | Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab |
+| Ausfallschritt – gehend | Kurzhantel | – | Senken | 2,5 s senken · 1,5 s heben | Abwechselnde Übung: ein Signal einer Körperseite sähe nur die halbe Zahl |
 | Ausfallschritt – seitlich | Kurzhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch: zählt zu viel |
 | Bulgarian Split Squat | Langhantel | – | Senken | 2,5 s senken · 1,5 s heben | Versuch führte Schulter, das passt nicht zur Bewegung |
 | Wadenheben – einbeinig | Kurzhantel | – | Heben | 1,5 s heben · 2,5 s senken | Wadenheben: das Knie beugt nicht, die Bewegung liegt im Sprunggelenk |

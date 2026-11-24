@@ -28,6 +28,9 @@ describe("Kamera-Zuordnung", () => {
   it("Regel-Spotcheck: Beginn und Ausschluesse", () => {
     expect(zuordnung["db_squat_sides"].kamera.beginnt_mit).toBe("senken");
     expect(zuordnung["db_curl_standing"].kamera.beginnt_mit).toBe("heben");
+    expect(zuordnung["leg_curl_seated"].kamera.profil).toBe("ohne_kamera");
+    expect(zuordnung["leg_curl_seated"].grund).toContain("Beinger");
+    expect(zuordnung["db_walking_lunge"].kamera.profil).toBe("ohne_kamera");
     for (const key of ["bb_shrug", "cable_shrug", "db_wrist_extension", "db_calf_raise_single"]) {
       expect(zuordnung[key].kamera.profil, key).toBe("ohne_kamera");
     }
