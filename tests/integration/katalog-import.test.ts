@@ -354,6 +354,6 @@ describe("Katalogimport Kamera und Tempo", () => {
 
     const zweiter = await importiere(beispiel);
     expect(eigene(zweiter.plan.uebungen, p).every((x) => x.art === "unveraendert")).toBe(true);
-    expect(zweiter.geschrieben.uebungen).toBe(0);
+    expect(zweiter.geschrieben?.uebungen).toBe(0);
   });
 });
