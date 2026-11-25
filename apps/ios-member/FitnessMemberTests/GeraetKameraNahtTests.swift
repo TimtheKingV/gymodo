@@ -181,15 +181,22 @@ struct GeraetKameraNahtTests {
         #expect(double.ergebnisAufrufe == 0)
     }
 
-    @Test func zweiterKameraSatzOhnePauseEndeIstAbgelehntUndSchreibtNichts() async {
+    @Test func kameraSatzInDerPauseBeendetSieUndSichert() async {
         let a = aufbau()
         #expect(await a.sut.kameraSatzSichern(wiederholungen: 7) == .gesichert(letzterSatz: false))
-        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9)
-                == .abgelehnt("Satz konnte nicht gesichert werden."))
-        #expect(a.writes.geschriebene.count == 1)
-        // Der abgelehnte Versuch darf den ersten Satz nicht nachtragen lassen.
-        a.sut.umfangNachtragen(8)
-        #expect(a.writes.geschriebene.count == 1)
+        #expect(a.sut.laufendePause != nil)
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9) == .gesichert(letzterSatz: false))
+        #expect(a.writes.geschriebene.count == 2)
+    }
+
+    @Test func weitererKameraSatzNachDemLetztenSatzWirdGesichert() async {
+        let a = aufbau(satzZiel: 1)
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 7) == .gesichert(letzterSatz: true))
+        a.sut.weitererSatz()
+        #expect(a.sut.laufendePause != nil)
+        if case .abgelehnt = await a.sut.kameraSatzSichern(wiederholungen: 6) { Issue.record("abgelehnt") }
+        #expect(a.writes.geschriebene.count == 2)
+        #expect(a.writes.geschriebene.last?.body.volume == 6)
     }
 
     @Test func umfangNachtragenNachAbgelehntemKameraSatzTutNichts() async {

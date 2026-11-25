@@ -1639,6 +1639,8 @@ extension GeraetModel: KameraNaht {
     /// auf das Rad). Der Ablauf bleibt offen: der Rueckblick erscheint auch
     /// nach einem abgelehnten Satz.
     func kameraSatzSichern(wiederholungen: Int) async -> KameraSichern {
+        // Ein Kamera-Satz geht nie an einer Pause verloren (z. B. "Weiterer Satz" oeffnet eine neue Pause).
+        if case .pause = phase { pauseBeenden() }
         umfang = wiederholungen
         kameraSatzId = nil
         // Ein Grund aus einem frueheren Versuch gilt hier nicht.

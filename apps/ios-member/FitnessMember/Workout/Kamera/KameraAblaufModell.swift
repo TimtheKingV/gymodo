@@ -70,8 +70,13 @@ final class KameraAblaufModell {
             naht.kameraVerlassen(gezaehlt: nil)
             return
         }
-        self.start = start
         idleTimer(true)
+        // Wiederkehr der Ansicht (oder Sichern laeuft): der Stand bleibt, hoechstens startet die Kamera wieder.
+        if let schritt = ablauf?.schritt {
+            if ansicht == .ablauf, Self.bildSchritt(schritt) { await kameraStarten() }
+            return
+        }
+        self.start = start
         let mitVideo = naht.kameraEinstieg == .video
         neuerAblauf(mitVideo: mitVideo)
         videoOffen = mitVideo
@@ -103,7 +108,13 @@ final class KameraAblaufModell {
 
     func naechsterSatz() async {
         guard case .rueckblick(let daten) = ansicht else { return }
-        if daten.letzterSatz { naht.weitererSatz() } else { naht.pauseBeenden() }
+        if daten.letzterSatz {
+            naht.weitererSatz()
+            // "Weiterer Satz" oeffnet eine neue Pause, in der nichts gesichert wird: gleich beenden.
+            if naht.laufendePause != nil { naht.pauseBeenden() }
+        } else {
+            naht.pauseBeenden()
+        }
         await naechstenSatzBeginnen()
     }
 
@@ -150,8 +161,15 @@ final class KameraAblaufModell {
 
     private func kameraStarten() async {
         guard let start, !kameraLaeuft else { return }
+        // Ein spaeterer Start oder Stopp (Szenenwechsel durch den Erlaubnis-Dialog, Schliessen) entwertet diesen.
+        startNummer += 1
+        let nummer = startNummer
         var stand = erlaubnis()
-        if stand == .offen { stand = await anfragen() }
+        if stand == .offen {
+            stand = await anfragen()
+            guard nummer == startNummer, ansicht == .ablauf, !kameraLaeuft,
+                  let schritt = ablauf?.schritt, Self.bildSchritt(schritt) else { return }
+        }
         guard stand == .erlaubt else {
             ansicht = .erlaubnisFehlt
             return
@@ -159,8 +177,6 @@ final class KameraAblaufModell {
         let quelle = aktiveQuelle ?? quellenFabrik(start)
         aktiveQuelle = quelle
         quelle.beiFehler = { [weak self] in self?.kameraAusgefallen() }
-        startNummer += 1
-        let nummer = startNummer
         kameraLaeuft = true
         do {
             try await quelle.starten { [weak self] bild in self?.bildEmpfangen(bild) }
@@ -236,18 +252,31 @@ final class KameraAblaufModell {
     private func pauseBeobachten() {
         pausenwaechter?.cancel()
         pausenwaechter = Task { [weak self] in
-            while !Task.isCancelled, let self, case .rueckblick = self.ansicht,
-                  let ende = self.naht.laufendePause?.endetAm {
-                let rest = ende.timeIntervalSinceNow
+            var letzteEnde: Date?
+            while !Task.isCancelled {
+                // self nur kurz halten, nicht ueber den Schlaf.
+                guard let rest = self?.restDerPause(letzteEnde: &letzteEnde) else { return }
                 if rest > 0 {
                     try? await Task.sleep(for: .seconds(rest))
                     continue
                 }
-                self.naht.pauseBeenden()
-                await self.naechstenSatzBeginnen()
+                await self?.pauseIstAbgelaufen()
                 return
             }
         }
+    }
+
+    /// Restzeit der Pause; die Naht meldet eine abgelaufene Pause nicht mehr, darum gilt dann das gemerkte Ende.
+    private func restDerPause(letzteEnde: inout Date?) -> TimeInterval? {
+        guard case .rueckblick = ansicht, let ende = naht.laufendePause?.endetAm ?? letzteEnde else { return nil }
+        letzteEnde = ende
+        return ende.timeIntervalSinceNow
+    }
+
+    private func pauseIstAbgelaufen() async {
+        guard case .rueckblick = ansicht else { return }
+        naht.pauseBeenden()
+        await naechstenSatzBeginnen()
     }
 
     private func naechstenSatzBeginnen() async {

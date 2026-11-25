@@ -6,7 +6,7 @@ struct Hubspeicher {
     // UserDefaults ist threadsicher; die Struktur haelt nur die Referenz.
     nonisolated(unsafe) private let defaults: UserDefaults
 
-    nonisolated(unsafe) static let standard = Hubspeicher(defaults: .standard)
+    static let standard = Hubspeicher(defaults: .standard)
 
     init(defaults: UserDefaults) { self.defaults = defaults }
 

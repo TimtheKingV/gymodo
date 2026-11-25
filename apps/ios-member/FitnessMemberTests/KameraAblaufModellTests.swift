@@ -38,7 +38,11 @@ final class NahtDouble: KameraNaht {
     var kameraWahl: KameraWahl = .mitKamera
     var kameraEinstieg: KameraEinstieg = .video
     var anzeigeSatz = 1
-    var laufendePause: Resttimer?
+    /// Wie GeraetModel: nur eine laufende Pause zaehlt.
+    var laufendePause: Resttimer? { pause.flatMap { $0.laeuft() ? $0 : nil } }
+    private var pause: Resttimer?
+    /// Wie GeraetModel.phase: in der Pause (auch abgelaufen) wird nichts gesichert.
+    private var inPause = false
     var satzAbgelehnt: String?
 
     /// Was `kameraSatzSichern` antwortet, und die Pause, die das Sichern startet.
@@ -55,9 +59,13 @@ final class NahtDouble: KameraNaht {
     private(set) var weitereSaetze = 0
 
     func kameraSatzSichern(wiederholungen: Int) async -> KameraSichern {
+        if inPause { return .abgelehnt("Satz konnte nicht gesichert werden.") }
         gesichert.append(wiederholungen)
         if sichernPausiert { try? await Task.sleep(for: .milliseconds(50)) }
-        if case .gesichert = sichernAntwort { laufendePause = pauseNachSichern }
+        if case .gesichert = sichernAntwort {
+            pause = pauseNachSichern
+            inPause = pauseNachSichern != nil
+        }
         return sichernAntwort
     }
 
@@ -71,9 +79,15 @@ final class NahtDouble: KameraNaht {
     func umfangNachtragen(_ wiederholungen: Int) { nachgetragen.append(wiederholungen) }
     func pauseBeenden() {
         pausenEnden += 1
-        laufendePause = nil
+        pause = nil
+        inPause = false
     }
-    func weitererSatz() { weitereSaetze += 1 }
+    /// Wie GeraetModel: "Weiterer Satz" oeffnet eine neue Pause.
+    func weitererSatz() {
+        weitereSaetze += 1
+        pause = Resttimer(dauer: 60)
+        inPause = true
+    }
 }
 
 @MainActor
@@ -108,6 +122,11 @@ struct KameraAblaufModellTests {
         let quelle = TestBildquelle()
         let speicher: Hubspeicher
         var erlaubnis: Kameraerlaubnis = .erlaubt
+        /// Haelt `anfragen` an, bis `anfrageFreigeben()` kommt.
+        var anfrageHalten = false
+        private var anfrageWeiter: CheckedContinuation<Void, Never>?
+        var anfrageWartet: Bool { anfrageWeiter != nil }
+        func anfrageFreigeben() { anfrageWeiter?.resume(); anfrageWeiter = nil }
         var antwortAufAnfrage: Kameraerlaubnis = .erlaubt
         private(set) var anfragen = 0
         private(set) var idleZustand: Bool?
@@ -124,6 +143,7 @@ struct KameraAblaufModellTests {
                 erlaubnis: { [unowned self] in erlaubnis },
                 anfragen: { [unowned self] in
                     anfragen += 1
+                    if anfrageHalten { await withCheckedContinuation { anfrageWeiter = $0 } }
                     erlaubnis = antwortAufAnfrage
                     return antwortAufAnfrage
                 },
@@ -215,6 +235,37 @@ struct KameraAblaufModellTests {
         #expect(a.anfragen == 1)
         #expect(a.quelle.startAufrufe == 1)
         #expect(a.modell.ansicht == .ablauf)
+    }
+
+    @Test func schliessenWaehrendDerAnfrageStartetKeineKamera() async {
+        let a = Aufbau()
+        a.erlaubnis = .offen
+        a.anfrageHalten = true
+        await a.modell.erscheint()
+        let aufstellen = Task { await a.modell.handyAufstellen() }
+        await warte { a.anfrageWartet }
+        a.modell.verschwindet()
+        a.anfrageFreigeben()
+        await aufstellen.value
+        #expect(a.quelle.startAufrufe == 0)
+        #expect(a.modell.ansicht == .ablauf)
+    }
+
+    @Test func szenenwechselWaehrendDerAnfrageStartetKameraNurEinmal() async {
+        let a = Aufbau(einstieg: .aufstellen)
+        a.erlaubnis = .offen
+        a.anfrageHalten = true
+        let erscheint = Task { await a.modell.erscheint() }
+        await warte { a.anfrageWartet }
+        a.modell.szene(aktiv: false)
+        a.modell.szene(aktiv: true)
+        a.anfrageFreigeben()
+        await erscheint.value
+        await warte { a.anfrageWartet }
+        a.anfrageFreigeben()
+        await warte { a.quelle.startAufrufe >= 1 }
+        try? await Task.sleep(for: .milliseconds(50))
+        #expect(a.quelle.startAufrufe == 1)
     }
 
     @Test func abgelehnteAnfrageZeigtHinweis() async {
@@ -344,8 +395,38 @@ struct KameraAblaufModellTests {
         await a.modell.satzBeenden()
         await a.modell.naechsterSatz()
         #expect(a.naht.weitereSaetze == 1)
-        #expect(a.naht.pausenEnden == 0)
+        // Die neue Pause des Geraets ist beendet, sonst wuerde der naechste Satz abgelehnt.
+        #expect(a.naht.pausenEnden == 1)
+        #expect(a.naht.laufendePause == nil)
         #expect(a.modell.ablauf?.schritt == .aufstellen)
+        // Der Zusatzsatz wird gesichert, nicht von einer Pause abgelehnt.
+        await a.satzMit(wiederholungen: 1)
+        await a.modell.satzBeenden()
+        #expect(a.naht.gesichert == [3, 1])
+        guard case .rueckblick(let daten) = a.modell.ansicht else { Issue.record("\(a.modell.ansicht)"); return }
+        #expect(daten.abgelehnt == nil)
+    }
+
+    @Test func pausenendeStartetNaechstenSatzAuchWennDieNahtSieSchonAlsAbgelaufenMeldet() async {
+        let a = Aufbau()
+        a.naht.pauseNachSichern = Resttimer(dauer: 0.15)
+        await a.satzMit(wiederholungen: 3)
+        await a.modell.satzBeenden()
+        #expect(a.naht.laufendePause != nil)
+        await warte { a.quelle.startAufrufe == 2 }
+        #expect(a.naht.laufendePause == nil)
+        #expect(a.naht.pausenEnden >= 1)
+        #expect(a.modell.ablauf?.schritt == .aufstellen)
+    }
+
+    @Test func wiederkehrDerAnsichtWaehrendDesRueckblicksBehaeltIhn() async {
+        let a = Aufbau()
+        a.naht.pauseNachSichern = Resttimer(dauer: 60)
+        await a.satzMit(wiederholungen: 3)
+        await a.modell.satzBeenden()
+        await a.modell.erscheint()
+        guard case .rueckblick = a.modell.ansicht else { Issue.record("\(a.modell.ansicht)"); return }
+        #expect(a.naht.gesichert == [3])
     }
 
     @Test func hubWirdGemerktUndBeimNaechstenSatzGenutzt() async {
