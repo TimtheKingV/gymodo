@@ -593,6 +593,11 @@ struct GeraetScreen: View {
     /// Liste (Testnotiz 13.10., #3) -- auch er erst in onDismiss.
     @State private var startNachWechsel = false
     @State private var uebungsstartOffen = false
+    /// Das Kamera-Vollbild haengt an eigenem Zustand statt am Modell: oeffnet das Modell es, waehrend das
+    /// Start-Sheet noch schliesst, kann SwiftUI die Anzeige verwerfen. `kameraCoverSichtbar` sagt, ob sie
+    /// wirklich steht, damit `kameraCoverNachziehen` nur dann neu ansetzt, wenn sie fehlt.
+    @State private var kameraCoverOffen = false
+    @State private var kameraCoverSichtbar = false
 
     private enum AbschlussFolge {
         case weitereUebung
@@ -682,7 +687,7 @@ struct GeraetScreen: View {
         // Ohne ihn fehlte bei einer neuen Uebung die Einweisung (Testnotiz
         // 13.10., #3). Schliessen laesst die Raeder der neuen Uebung stehen;
         // der Erstkontakt bleibt offen und kommt beim naechsten Mal wieder.
-        .sheet(isPresented: $uebungsstartOffen) {
+        .sheet(isPresented: $uebungsstartOffen, onDismiss: kameraCoverNachziehen) {
             UebungsstartSheet(modell: modell, beiStart: { werte in
                 // Wie uebungStarten in TrainingRootView: der Drawer sagt
                 // ohne laufendes Training, dass dieser Tipp die Uhr startet.
@@ -742,10 +747,13 @@ struct GeraetScreen: View {
         // Der Kamera-Ablauf als Vollbild. An einem eigenen Hintergrund-View, damit er nicht mit der
         // Kalibrierungs-Abdeckung am selben View kollidiert.
         .background {
-            Color.clear.fullScreenCover(isPresented: $modell.kameraAblaufOffen) {
+            Color.clear.fullScreenCover(isPresented: kameraCoverBindung) {
                 KameraAblaufCover(naht: modell)
+                    .onAppear { kameraCoverSichtbar = true }
+                    .onDisappear { kameraCoverSichtbar = false }
             }
         }
+        .onChange(of: modell.kameraAblaufOffen, initial: true) { _, offen in kameraCoverOffen = offen }
         // "Einstellung aendern" auf der Satzseite. Der Erstkontakt selbst
         // laeuft seit der Testnotiz 11.10. (#6) im Drawer VOR der Seite.
         .fullScreenCover(isPresented: $modell.kalibrierungOffen) {
@@ -760,6 +768,23 @@ struct GeraetScreen: View {
                 modell.kalibrierungOffen = false
             }
         }
+    }
+
+    /// Das Modell bestimmt das Oeffnen (onChange); das Schliessen durch das Cover (Ende des Rueckblicks) geht
+    /// zurueck ins Modell. `set` laeuft nur bei einem Schliessen durch SwiftUI, nicht bei unseren Zuweisungen.
+    private var kameraCoverBindung: Binding<Bool> {
+        Binding(get: { kameraCoverOffen },
+                set: { neu in
+                    kameraCoverOffen = neu
+                    if !neu { modell.kameraAblaufOffen = false }
+                })
+    }
+
+    /// Nach dem Schliessen eines Sheets: wollte das Modell das Vollbild oeffnen und es steht nicht, neu ansetzen.
+    private func kameraCoverNachziehen() {
+        guard modell.kameraAblaufOffen, !kameraCoverSichtbar else { return }
+        kameraCoverOffen = false
+        DispatchQueue.main.async { kameraCoverOffen = modell.kameraAblaufOffen }
     }
 
     /// "Übung abschließen" aus Pause und Raedern (nach der Satzfrage): mit
