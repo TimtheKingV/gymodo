@@ -9,6 +9,8 @@ final class FrontkameraQuelle: Bildquelle {
     let anzeige = AVSampleBufferDisplayLayer()
     var beiFehler: (@MainActor () -> Void)?
     private let kern: Kern
+    /// Zaehlt Starts und Stopps; ein Start, der nach einem Stopp zurueckkehrt, gilt nicht mehr.
+    private var laufNummer = 0
 
     init() {
         anzeige.videoGravity = .resizeAspectFill
@@ -16,16 +18,29 @@ final class FrontkameraQuelle: Bildquelle {
     }
 
     func starten(beiBild: @escaping @MainActor (Kamerabild) -> Void) async throws {
+        laufNummer += 1
+        let nummer = laufNummer
         guard await Kameraerlaubnis.anfragen() == .erlaubt else { throw BildquellenFehler.nichtErlaubt }
+        guard nummer == laufNummer else { throw CancellationError() }
+        let gefiltert: @MainActor (Kamerabild) -> Void = { [weak self] bild in
+            guard let self, self.laufNummer == nummer else { return }
+            beiBild(bild)
+        }
         let beiAusfall: @Sendable () -> Void = { [weak self] in
             Task { @MainActor in self?.beiFehler?() }
         }
-        guard await kern.starten(beiBild: beiBild, beiAusfall: beiAusfall) else {
-            throw BildquellenFehler.nichtVerfuegbar
+        let lief = await kern.starten(beiBild: gefiltert, beiAusfall: beiAusfall)
+        guard nummer == laufNummer else {
+            kern.stoppen()
+            throw CancellationError()
         }
+        guard lief else { throw BildquellenFehler.nichtVerfuegbar }
     }
 
-    func stoppen() { kern.stoppen() }
+    func stoppen() {
+        laufNummer += 1
+        kern.stoppen()
+    }
 
     /// Alles, was AVFoundation auf der Capture-Queue anfasst.
     // @unchecked: Zustand wird nur auf `queue` gelesen und geschrieben (AVFoundation und
@@ -39,7 +54,7 @@ final class FrontkameraQuelle: Bildquelle {
         private var beiBild: (@MainActor (Kamerabild) -> Void)?
         private var drehung: AVCaptureDevice.RotationCoordinator?
         private var beobachtung: NSKeyValueObservation?
-        private var fehlerBeobachter: NSObjectProtocol?
+        private var beobachter: [NSObjectProtocol] = []
 
         init(renderer: AVSampleBufferVideoRenderer) { self.renderer = renderer }
 
@@ -52,7 +67,7 @@ final class FrontkameraQuelle: Bildquelle {
                         return
                     }
                     if !self.sitzung.isRunning { self.sitzung.startRunning() }
-                    weiter.resume(returning: true)
+                    weiter.resume(returning: self.sitzung.isRunning)
                 }
             }
         }
@@ -60,10 +75,8 @@ final class FrontkameraQuelle: Bildquelle {
         func stoppen() {
             queue.async {
                 self.beiBild = nil
-                if let beobachter = self.fehlerBeobachter {
-                    NotificationCenter.default.removeObserver(beobachter)
-                    self.fehlerBeobachter = nil
-                }
+                self.beobachter.forEach { NotificationCenter.default.removeObserver($0) }
+                self.beobachter = []
                 self.beobachtung = nil
                 self.ausgabe.setSampleBufferDelegate(nil, queue: nil)
                 if self.sitzung.isRunning { self.sitzung.stopRunning() }
@@ -93,27 +106,31 @@ final class FrontkameraQuelle: Bildquelle {
 
             let koordinator = AVCaptureDevice.RotationCoordinator(device: geraet, previewLayer: nil)
             drehung = koordinator
-            let setzen = { [weak verbindung] (winkel: CGFloat) in
-                guard let verbindung, verbindung.isVideoRotationAngleSupported(winkel) else { return }
-                verbindung.videoRotationAngle = winkel
-            }
-            setzen(koordinator.videoRotationAngleForHorizonLevelCapture)
+            winkelSetzen(koordinator.videoRotationAngleForHorizonLevelCapture)
             beobachtung = koordinator.observe(\.videoRotationAngleForHorizonLevelCapture, options: [.new]) { [weak self] k, _ in
                 let winkel = k.videoRotationAngleForHorizonLevelCapture
-                self?.queue.async { setzen(winkel) }
+                guard let kern = self else { return }
+                kern.queue.async { kern.winkelSetzen(winkel) }
             }
-            if let alt = fehlerBeobachter { NotificationCenter.default.removeObserver(alt) }
-            fehlerBeobachter = NotificationCenter.default.addObserver(
-                forName: AVCaptureSession.runtimeErrorNotification, object: sitzung, queue: nil
-            ) { _ in beiAusfall() }
+            beobachter.forEach { NotificationCenter.default.removeObserver($0) }
+            // Laufzeitfehler und Unterbrechung (Anruf, Multitasking, Systemlast) gelten gleich als Ausfall.
+            beobachter = [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification].map {
+                NotificationCenter.default.addObserver(forName: $0, object: sitzung, queue: nil) { _ in beiAusfall() }
+            }
             return true
+        }
+
+        /// Nur auf `queue` aufrufen.
+        private func winkelSetzen(_ winkel: CGFloat) {
+            guard let verbindung = ausgabe.connection(with: .video), verbindung.isVideoRotationAngleSupported(winkel) else { return }
+            verbindung.videoRotationAngle = winkel
         }
 
         func captureOutput(_ output: AVCaptureOutput, didOutput probe: CMSampleBuffer, from connection: AVCaptureConnection) {
             bildSofortZeigen(probe, auf: renderer)
             var skelett: Skelett?
             if let pixel = CMSampleBufferGetImageBuffer(probe) { skelett = erkenner.erkennen(pixel) }
-            let bild = Kamerabild(t: CMSampleBufferGetPresentationTimeStamp(probe).seconds, skelett: skelett, anzeige: probe)
+            let bild = Kamerabild(t: CMSampleBufferGetPresentationTimeStamp(probe).seconds, skelett: skelett, anzeige: nil)
             guard let beiBild else { return }
             Task { @MainActor in beiBild(bild) }
         }

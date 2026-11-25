@@ -13,6 +13,7 @@ final class AbspielQuelle: Bildquelle {
     private let wurzel: String
     private let name: String
     private var lauf: Lauf?
+    private var laufNummer = 0
 
     init(wurzel: String, start: KameraStart) {
         self.wurzel = wurzel
@@ -21,6 +22,8 @@ final class AbspielQuelle: Bildquelle {
     }
 
     func starten(beiBild: @escaping @MainActor (Kamerabild) -> Void) async throws {
+        stoppen()
+        let nummer = laufNummer
         guard let key = KameraTestprofile.katalogKey(name: name) else { throw BildquellenFehler.nichtVerfuegbar }
         let videoUrl = URL(fileURLWithPath: wurzel).appendingPathComponent("catalog/media/videos/\(key).mp4")
         let skelettUrl = URL(fileURLWithPath: wurzel).appendingPathComponent("data/koerperbild/skelette/\(key).skelett.json")
@@ -30,14 +33,25 @@ final class AbspielQuelle: Bildquelle {
         let asset = AVURLAsset(url: videoUrl)
         guard let spur = try? await asset.loadTracks(withMediaType: .video).first,
               let rate = try? await spur.load(.nominalFrameRate) else { throw BildquellenFehler.nichtVerfuegbar }
-        stoppen()
+        guard nummer == laufNummer else { throw CancellationError() }
+        let gefiltert: @MainActor (Kamerabild) -> Void = { [weak self] bild in
+            guard let self, self.laufNummer == nummer else { return }
+            beiBild(bild)
+        }
+        let beiAusfall: @Sendable () -> Void = { [weak self] in
+            Task { @MainActor in
+                guard let self, self.laufNummer == nummer else { return }
+                self.beiFehler?()
+            }
+        }
         let neu = Lauf(asset: asset, spur: spur, takt: 1 / Double(max(1, rate)), folge: folge,
-                       renderer: anzeige.sampleBufferRenderer, beiBild: beiBild)
+                       renderer: anzeige.sampleBufferRenderer, beiBild: gefiltert, beiAusfall: beiAusfall)
         lauf = neu
         neu.starten()
     }
 
     func stoppen() {
+        laufNummer += 1
         lauf?.beenden()
         lauf = nil
     }
@@ -52,11 +66,14 @@ final class AbspielQuelle: Bildquelle {
         private let folge: Skelettfolge
         private let renderer: AVSampleBufferVideoRenderer
         private let beiBild: @MainActor (Kamerabild) -> Void
+        private let beiAusfall: @Sendable () -> Void
         private let schloss = NSLock()
         private var laeuft = true
 
         init(asset: AVURLAsset, spur: AVAssetTrack, takt: Double, folge: Skelettfolge,
-             renderer: AVSampleBufferVideoRenderer, beiBild: @escaping @MainActor (Kamerabild) -> Void) {
+             renderer: AVSampleBufferVideoRenderer, beiBild: @escaping @MainActor (Kamerabild) -> Void,
+             beiAusfall: @escaping @Sendable () -> Void) {
+            self.beiAusfall = beiAusfall
             self.asset = asset
             self.spur = spur
             self.takt = takt
@@ -69,15 +86,17 @@ final class AbspielQuelle: Bildquelle {
         func beenden() { schloss.withLock { laeuft = false } }
         func starten() { Thread.detachNewThread { self.schleife() } }
 
+        private func melden() { if weiter { beiAusfall() } }
+
         private func schleife() {
             while weiter {
-                guard let leser = try? AVAssetReader(asset: asset) else { return }
+                guard let leser = try? AVAssetReader(asset: asset) else { melden(); return }
                 let aus = AVAssetReaderTrackOutput(track: spur, outputSettings: [
                     kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
                     kCVPixelBufferIOSurfacePropertiesKey as String: [String: Any](),
                 ])
                 leser.add(aus)
-                guard leser.startReading() else { return }
+                guard leser.startReading() else { melden(); return }
                 renderer.flush()
                 var naechstes = CACurrentMediaTime()
                 var nummer = 0
@@ -85,7 +104,7 @@ final class AbspielQuelle: Bildquelle {
                     let skelett = nummer < folge.bilder.count ? folge.bilder[nummer] : nil
                     nummer += 1
                     bildSofortZeigen(probe, auf: renderer)
-                    let bild = Kamerabild(t: CACurrentMediaTime(), skelett: skelett, anzeige: probe)
+                    let bild = Kamerabild(t: CACurrentMediaTime(), skelett: skelett, anzeige: nil)
                     let ruf = beiBild
                     Task { @MainActor in ruf(bild) }
                     naechstes += takt
