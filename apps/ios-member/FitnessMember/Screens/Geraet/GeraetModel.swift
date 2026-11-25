@@ -365,6 +365,8 @@ final class GeraetModel {
     /// wieder darf, nachgestartet werden (Pause vorbereitet, dann ohne Kamera).
     private var sensorUebersprungen = false
     private var startUmfang: Int?
+    /// Der Satz, den die Kamera zuletzt gesichert hat: nur der darf nachgetragen werden.
+    private var kameraSatzId: UUID?
     private var sensorStill: Bool { kameraWahl == .mitKamera || kameraSatzOhneSensor }
 
     /// Wie das Mitglied an diesem Geraet gelandet ist.
@@ -1228,6 +1230,7 @@ final class GeraetModel {
         kameraWahl = .keine
         kameraAblaufOffen = false
         kameraSatzOhneSensor = false
+        startUmfang = nil
         mitschnittBeginnen()
     }
 
@@ -1262,10 +1265,11 @@ final class GeraetModel {
         let befestigung = zaehler?.befestigung
         // Herkunft nur bei Wiederholungen: der Server lehnt sie sonst ab (Spec B 6.3).
         let ergebnis: ZaehlerErgebnis?
-        if volumeKind == .reps && !istCardio {
-            // Im Kamera-Satz zaehlt die Kamera: der Sensor hat nichts gezaehlt.
-            ergebnis = sensorStill ? nil : zaehler?.ergebnis()
+        if volumeKind == .reps && !istCardio && !sensorStill {
+            ergebnis = zaehler?.ergebnis()
         } else {
+            // Auch im Kamera-Satz: zaehlte der Sensor schon, bevor die
+            // Kamera uebernahm, hoert er jetzt auf.
             zaehler?.satzVerworfen()
             ergebnis = nil
         }
@@ -1633,8 +1637,15 @@ extension GeraetModel: KameraNaht {
     /// nach einem abgelehnten Satz.
     func kameraSatzSichern(wiederholungen: Int) async -> KameraSichern {
         umfang = wiederholungen
+        kameraSatzId = nil
+        // Ein Grund aus einem frueheren Versuch gilt hier nicht.
+        satzAbgelehnt = nil
+        let vorher = gesicherteSaetze
         satzLokalSichern(problemFlag: false, problemReason: nil)
-        if let grund = satzAbgelehnt { return .abgelehnt(grund) }
+        guard gesicherteSaetze > vorher else {
+            return .abgelehnt(satzAbgelehnt ?? "Satz konnte nicht gesichert werden.")
+        }
+        kameraSatzId = sessions.letzterWrite(blockId: blockId)?.setId
         return .gesichert(letzterSatz: phase == .abschluss)
     }
 
@@ -1661,6 +1672,7 @@ extension GeraetModel: KameraNaht {
     }
 
     func umfangNachtragen(_ wiederholungen: Int) {
+        guard let kameraSatzId, sessions.letzterWrite(blockId: blockId)?.setId == kameraSatzId else { return }
         sessions.umfangNachtragen(blockId: blockId, umfang: wiederholungen, enqueue: enqueue)
     }
 }

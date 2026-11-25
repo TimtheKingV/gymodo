@@ -170,6 +170,40 @@ struct GeraetKameraNahtTests {
         #expect(double.ergebnisAufrufe == 0)
     }
 
+    @Test func kameraSatzBeendetEinenSchonZaehlendenSensor() async {
+        let double = ZaehlerDouble()
+        let a = aufbau(startwerte: nil, zaehler: double)
+        a.sut.geraetGeoeffnet()
+        a.sut.kameraWiederAufnehmen()
+        let vorher = double.verworfen
+        _ = await a.sut.kameraSatzSichern(wiederholungen: 7)
+        #expect(double.verworfen == vorher + 1)
+        #expect(double.ergebnisAufrufe == 0)
+    }
+
+    @Test func zweiterKameraSatzOhnePauseEndeIstAbgelehntUndSchreibtNichts() async {
+        let a = aufbau()
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 7) == .gesichert(letzterSatz: false))
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9)
+                == .abgelehnt("Satz konnte nicht gesichert werden."))
+        #expect(a.writes.geschriebene.count == 1)
+        // Der abgelehnte Versuch darf den ersten Satz nicht nachtragen lassen.
+        a.sut.umfangNachtragen(8)
+        #expect(a.writes.geschriebene.count == 1)
+    }
+
+    @Test func umfangNachtragenNachAbgelehntemKameraSatzTutNichts() async {
+        let sessions = WorkoutSessionStore(fileStore: SessionFileStore(
+            directory: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        _ = sessions.satzSichern(station: .testGeraet("m9", studioId: "s2"), exerciseId: "e1",
+                                 einheiten: .kilogrammWiederholungen, load: 50, volume: 10,
+                                 problemFlag: false, problemReason: nil)
+        let a = aufbau(sessions: sessions)
+        _ = await a.sut.kameraSatzSichern(wiederholungen: 7)
+        a.sut.umfangNachtragen(8)
+        #expect(a.writes.geschriebene.isEmpty)
+    }
+
     @Test func kameraSatzStartetDenSensorNicht() {
         let double = ZaehlerDouble()
         let a = aufbau(zaehler: double)
@@ -280,6 +314,7 @@ struct GeraetKameraNahtTests {
         a.sut.uebungWechseln(zu: "e1")
         #expect(a.sut.kameraWahl == .keine)
         #expect(!a.sut.kameraAblaufOffen)
+        #expect(a.sut.kameraStart?.sollWiederholungen == nil)
     }
 
     @Test func umfangNachtragenSchicktDenLetztenSatzErneut() async {
