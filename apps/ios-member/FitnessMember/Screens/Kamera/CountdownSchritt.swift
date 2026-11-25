@@ -7,19 +7,14 @@ struct CountdownSchritt: View {
     let satz: Int
     /// nil: wartet noch auf kurze Ruhe; sonst 3, 2, 1.
     let rest: Int?
-    let skelett: Skelett?
-    let ziel: Livebildziel
     let beiAbbrechen: () -> Void
     let beiOhneKamera: () -> Void
 
     var body: some View {
-        ZStack {
-            KameraBildflaeche(ziel: ziel, skelett: skelett, profil: start.vorgabe.profil, bestanden: true)
-            VStack(spacing: 0) {
-                kopf
-                Spacer(minLength: 0)
-                fuss
-            }
+        VStack(spacing: 0) {
+            kopf
+            Spacer(minLength: 0)
+            fuss
         }
         .foregroundStyle(DesignSystem.Color.text)
     }
@@ -58,9 +53,10 @@ struct CountdownSchritt: View {
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)
-                Text(rest.map(String.init) ?? "–")
+                // Solange die Ruhe fehlt, steht die 3 gedaempft: der Countdown laeuft noch nicht.
+                Text(rest.map(String.init) ?? "3")
                     .font(DesignSystem.Typography.wertHeld)
-                    .foregroundStyle(DesignSystem.Color.accent)
+                    .foregroundStyle(rest == nil ? DesignSystem.Color.textMuted : DesignSystem.Color.accent)
                     .contentTransition(.numericText())
             }
             .accessibilityElement(children: .combine)
@@ -87,6 +83,7 @@ struct CountdownSchritt: View {
     return CountdownSchritt(
         start: KameraStart(exerciseId: "x", name: "Kniebeuge", geraet: "Langhantel", vorgabe: vorgabe,
                            tempo: .standard(beginntMit: .senken), sollWiederholungen: 8, satzZiel: 3),
-        satz: 2, rest: 3, skelett: KameraVorschau.skelett(), ziel: .leer, beiAbbrechen: {}, beiOhneKamera: {})
+        satz: 2, rest: 3, beiAbbrechen: {}, beiOhneKamera: {})
+        .background { KameraBildflaeche(ziel: .leer, skelett: KameraVorschau.skelett(), profil: vorgabe.profil, bestanden: true) }
 }
 #endif

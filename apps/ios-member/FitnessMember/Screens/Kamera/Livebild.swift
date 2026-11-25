@@ -32,7 +32,8 @@ final class LivebildAnsicht: UIView {
 
     func zeige(_ neu: AVSampleBufferDisplayLayer?, gespiegelt: Bool) {
         if ebene !== neu {
-            ebene?.removeFromSuperlayer()
+            // Nur entfernen, was noch in dieser Ansicht haengt: eine neue Ansicht kann die Ebene schon uebernommen haben.
+            if let alt = ebene, alt.superlayer === layer { alt.removeFromSuperlayer() }
             ebene = neu
             if let neu {
                 neu.videoGravity = .resizeAspectFill

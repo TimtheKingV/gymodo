@@ -6,20 +6,16 @@ struct AufstellSchritt: View {
     let start: KameraStart
     let anweisung: Aufstellanweisung
     let fehlendeGruppen: Set<Gelenkgruppe>
-    let skelett: Skelett?
-    let ziel: Livebildziel
     let beiOhneKamera: () -> Void
 
     private var profil: Kameraprofil { start.vorgabe.profil }
 
     var body: some View {
-        ZStack {
-            KameraBildflaeche(ziel: ziel, skelett: skelett, profil: profil, warnend: anweisung != .passt)
-            VStack(spacing: 0) {
-                kopf
-                Spacer(minLength: 0)
-                fuss
-            }
+        // Livebild, Strichfigur und Rahmen liegen unter allen Kamera-Schritten (KameraAblaufAnsicht).
+        VStack(spacing: 0) {
+            kopf
+            Spacer(minLength: 0)
+            fuss
         }
         .foregroundStyle(DesignSystem.Color.text)
     }
@@ -184,8 +180,8 @@ struct KameraFehltSchritt: View {
     return AufstellSchritt(
         start: KameraStart(exerciseId: "x", name: "Kniebeuge", geraet: "Langhantel", vorgabe: vorgabe,
                            tempo: .standard(beginntMit: .senken), sollWiederholungen: 8, satzZiel: 3),
-        anweisung: .schrittZurueck, fehlendeGruppen: [.fuesse], skelett: KameraVorschau.skelett(),
-        ziel: .leer, beiOhneKamera: {})
+        anweisung: .schrittZurueck, fehlendeGruppen: [.fuesse], beiOhneKamera: {})
+        .background { KameraBildflaeche(ziel: .leer, skelett: KameraVorschau.skelett(), profil: vorgabe.profil, warnend: true) }
 }
 
 #Preview("7.2 Oberkörper, passt") {
@@ -193,8 +189,8 @@ struct KameraFehltSchritt: View {
     return AufstellSchritt(
         start: KameraStart(exerciseId: "x", name: "Bizeps-Curl", geraet: "Kurzhantel", vorgabe: vorgabe,
                            tempo: .standard(beginntMit: .heben), sollWiederholungen: 10, satzZiel: 3),
-        anweisung: .passt, fehlendeGruppen: [], skelett: KameraVorschau.skelett(),
-        ziel: .leer, beiOhneKamera: {})
+        anweisung: .passt, fehlendeGruppen: [], beiOhneKamera: {})
+        .background { KameraBildflaeche(ziel: .leer, skelett: KameraVorschau.skelett(), profil: vorgabe.profil) }
 }
 
 #Preview("7.2 Kamera fehlt") {

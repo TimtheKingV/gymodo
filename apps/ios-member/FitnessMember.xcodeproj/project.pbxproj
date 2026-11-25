@@ -188,6 +188,7 @@
 		635B651CF96DE3A5916EB956 /* ProfilZeilenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28729494126B3B466AEDB7C4 /* ProfilZeilenTests.swift */; };
 		64DE54AADAEF254C04697CD4 /* GewichtEintragenHilfenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */; };
 		654AF8E43FB77829C0D2E8FD /* TrainingsProfilTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC6A66221FC823101AC2CAC /* TrainingsProfilTests.swift */; };
+		65AFE01A88E242EF665814C8 /* StrichfigurTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D559AAB6307BF377581083 /* StrichfigurTests.swift */; };
 		6710FD66A97A901737C9964D /* MuskelModell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9468EF001EEA568A88DFBE0B /* MuskelModell.swift */; };
 		67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */; };
 		6812F175D0293265578050F9 /* NFCTagLeser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33916355F38A81716A43C018 /* NFCTagLeser.swift */; };
@@ -807,6 +808,7 @@
 		A4D94FBAD16BC92BA99E252C /* PausenKnoepfe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PausenKnoepfe.swift; sourceTree = "<group>"; };
 		A4F639845D0DFE96D645C8E0 /* PlanWoche.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanWoche.swift; sourceTree = "<group>"; };
 		A5CA620D337B41A12B5D8A33 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A5D559AAB6307BF377581083 /* StrichfigurTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrichfigurTests.swift; sourceTree = "<group>"; };
 		A611FB701374C11335D844E4 /* BelegungsleisteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BelegungsleisteTests.swift; sourceTree = "<group>"; };
 		A66B745D0188C1156F97EE5B /* SensorAufnahmeKoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeKoordinator.swift; sourceTree = "<group>"; };
 		A7C465BC565F5CCD8965C8F8 /* ScanWege.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanWege.swift; sourceTree = "<group>"; };
@@ -1427,6 +1429,7 @@
 				9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */,
 				90D823D0040288974F755113 /* StationTestdaten.swift */,
 				A9600E3544B452BECB058708 /* StationTests.swift */,
+				A5D559AAB6307BF377581083 /* StrichfigurTests.swift */,
 				C696DD1314C884FF6A54B333 /* StudiosListeTests.swift */,
 				C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */,
 				5D01D5A0C042B12A034AC4BC /* TestnotizAblageTests.swift */,
@@ -2290,6 +2293,7 @@
 				9E3E041191EB9672BE0AAFF0 /* StammdatenTests.swift in Sources */,
 				1A11AF9A67AC137B03D64DC9 /* StationTestdaten.swift in Sources */,
 				465B5D2B577283F081B21B34 /* StationTests.swift in Sources */,
+				65AFE01A88E242EF665814C8 /* StrichfigurTests.swift in Sources */,
 				215187D05D933026E5A2804A /* StudiosListeTests.swift in Sources */,
 				9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */,
 				57A315378B9D590DB52C7122 /* TestnotizAblageTests.swift in Sources */,
