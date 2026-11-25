@@ -350,6 +350,15 @@ struct GeraetKameraNahtTests {
         #expect(a.sessions.aktiveSession()?.bloecke.first?.saetze.first?.volume == 8)
     }
 
+    @Test func umfangNachtragenUnterEinsTutNichts() async {
+        let a = aufbau()
+        _ = await a.sut.kameraSatzSichern(wiederholungen: 7)
+        a.sut.umfangNachtragen(0)
+        a.sut.umfangNachtragen(-3)
+        #expect(a.writes.geschriebene.count == 1)
+        #expect(a.sessions.aktiveSession()?.bloecke.first?.saetze.first?.volume == 7)
+    }
+
     @Test func umfangNachtragenOhneSatzTutNichts() {
         let a = aufbau()
         a.sut.umfangNachtragen(8)

@@ -1687,7 +1687,7 @@ extension GeraetModel: KameraNaht {
     }
 
     func umfangNachtragen(_ wiederholungen: Int) {
-        guard let kameraSatzId, sessions.letzterWrite(blockId: blockId)?.setId == kameraSatzId else { return }
+        guard wiederholungen >= 1, let kameraSatzId, sessions.letzterWrite(blockId: blockId)?.setId == kameraSatzId else { return }
         sessions.umfangNachtragen(blockId: blockId, umfang: wiederholungen, enqueue: enqueue)
     }
 }
