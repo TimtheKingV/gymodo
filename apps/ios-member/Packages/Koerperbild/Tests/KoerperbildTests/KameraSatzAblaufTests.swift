@@ -275,7 +275,7 @@ final class KameraSatzAblaufTests: XCTestCase {
     // MARK: Task 3 Helfer
 
     /// Stand-Bilder bis die Los-Marke gesetzt ist; `t` laeuft weiter. Gibt die Los-Marke zurueck.
-    func losen(_ a: inout KameraSatzAblauf, hub: Double? = nil, t: inout Double) -> Double {
+    func losen(_ a: inout KameraSatzAblauf, t: inout Double) -> Double {
         while t < 20, a.schritt != .satz {
             a.bild(t: t, skelett: skelett(knie: oben))
             t += 1 / rate
@@ -388,7 +388,7 @@ final class KameraSatzAblaufTests: XCTestCase {
 
     // MARK: Satzende, keine Bewegung, Hub
 
-    func testAchtSekundenRuheBeendenDenSatz() {
+    func testAchtSekundenRuheBeendenDenSatz() throws {
         var a = neu()
         var t = 0.0
         let los = losen(&a, t: &t)
@@ -402,11 +402,10 @@ final class KameraSatzAblaufTests: XCTestCase {
             else { XCTAssertEqual(a.schritt, .satz) }
             t += 1 / rate
         }
-        let nach = try? XCTUnwrap(fertigNach)
-        XCTAssertNotNil(nach)
+        let nach = try XCTUnwrap(fertigNach)
         // Die Ruhe beginnt kurz nach dem Ende der letzten Bewegung (Ruhefenster 0,5 s).
-        XCTAssertGreaterThan(nach ?? 0, 8.0 - 0.1)
-        XCTAssertLessThan(nach ?? 99, 8.0 + 1.0)
+        XCTAssertGreaterThan(nach, 8.0 - 0.1)
+        XCTAssertLessThan(nach, 8.0 + 1.0)
     }
 
     func testRuheOhneWiederholungBeendetNichtSondernMeldetKeineBewegung() {
@@ -512,5 +511,51 @@ final class KameraSatzAblaufTests: XCTestCase {
             XCTAssertEqual(a.schritt, .satz)
             t += 1 / rate
         }
+    }
+
+    // MARK: Review Task 3
+
+    func testBewegungImVorlaufZaehltNicht() {
+        var a = neu()
+        var t = 0.0
+        let los = losen(&a, t: &t)
+        lauf(&a, t: &t, los: los, bis: los + 7)
+        XCTAssertEqual(a.wiederholungen, 2)
+        stillBis(&a, t: &t, bis: t + 1.3, ohneFuesse: true)
+        XCTAssertEqual(a.schritt, .verloren)
+        // Wieder im Bild; sobald der Vorlauf laeuft, eine ganze Wiederholung (1,8 s) hinein.
+        while a.schritt == .verloren {
+            a.bild(t: t, skelett: skelett(knie: oben))
+            t += 1 / rate
+        }
+        XCTAssertEqual(a.schritt, .vorlauf(rest: 2))
+        let beginn = t
+        while a.schritt != .satz, t < beginn + 5 {
+            let s = (t - beginn) / 1.8
+            let w = oben - hub * (1 - cos(2 * .pi * min(1, s))) / 2
+            a.bild(t: t, skelett: skelett(knie: w))
+            XCTAssertEqual(a.wiederholungen, 2)
+            t += 1 / rate
+        }
+        XCTAssertEqual(a.schritt, .satz)
+        XCTAssertEqual(a.wiederholungen, 2)
+    }
+
+    func testBildrateWirdAusserhalbDesSatzesZurueckgesetzt() {
+        var a = neu()
+        var t = 0.0
+        _ = losen(&a, t: &t)
+        stillBis(&a, t: &t, bis: t + 3.1, rate: 10)
+        XCTAssertTrue(a.bildrateZuNiedrig)
+        a.unterbrechen()
+        XCTAssertEqual(a.schritt, .verloren)
+        XCTAssertFalse(a.bildrateZuNiedrig)
+
+        var b = neu()
+        t = 0
+        _ = losen(&b, t: &t)
+        stillBis(&b, t: &t, bis: t + 7, rate: 10)
+        XCTAssertEqual(b.schritt, .keineBewegung)
+        XCTAssertFalse(b.bildrateZuNiedrig)
     }
 }

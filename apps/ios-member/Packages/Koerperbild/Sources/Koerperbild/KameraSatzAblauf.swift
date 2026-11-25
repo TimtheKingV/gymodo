@@ -113,6 +113,12 @@ public struct KameraSatzAblauf: Sendable {
         pruefung.eingabe(t: t, skelett: skelett)
         let lage = koerperlage.verarbeite(t: t, skelett: skelett)
         bildrateAktualisieren(t: t)
+        // Ausserhalb des Satzes zaehlt keine Bewegung: die Lage laeuft weiter (fuer `istRuhig` und die neue
+        // Los-Marke), eine angefangene Wiederholung faellt aber in jedem Bild weg und wird nie gezaehlt.
+        switch schritt {
+        case .verloren, .vorlauf: koerperlage.unterbrechen()
+        default: break
+        }
         switch schritt {
         case .aufstellen:
             anweisung = Aufstellanweisung.aus(skelett: skelett, pruefung: pruefung, vorgabe: vorgabe)
@@ -133,6 +139,7 @@ public struct KameraSatzAblauf: Sendable {
         }
         switch schritt {
         case .satz, .vorlauf: bildrateZuNiedrig = bildrateZuNiedrig(t: t)
+        case .verloren, .keineBewegung: bildrateZuNiedrig = false
         default: break
         }
     }
@@ -172,6 +179,7 @@ public struct KameraSatzAblauf: Sendable {
         guard schritt == .keineBewegung else { return }
         satzrueckblick = Satzrueckblick(welle: welle, hubWarGemerkt: koerperlage.hubWarGemerkt)
         spur = []
+        bildrateZuNiedrig = false
         sollzeit = nil
         losMarke = nil
         countdownBeginn = nil
@@ -189,6 +197,7 @@ public struct KameraSatzAblauf: Sendable {
             takt = .imTakt
             nebenDerBahnSeit = nil
             vorlaufBeginn = nil
+            bildrateZuNiedrig = false
             schritt = .verloren
         case .countdown:
             countdownBeginn = nil
