@@ -4,8 +4,7 @@ import SwiftUI
 /// 7.6: der Rueckblick nach dem Satz mit Balken je Wiederholung, Pausenuhr und dem Weg weiter.
 struct RueckblickAnsicht: View {
     let start: KameraStart
-    /// Der Satz, auf den sich der Rueckblick bezieht.
-    let satz: Int
+    let nummern: Rueckblicknummern
     let daten: KameraAblaufModell.Rueckblickdaten
     let pauseEnde: Date?
     let beiSchliessen: () -> Void
@@ -54,7 +53,7 @@ struct RueckblickAnsicht: View {
                 .padding(.leading, -12)
                 Spacer()
             }
-            Text("\(start.name.uppercased()) · SATZ \(satz) VON \(start.satzZiel)")
+            Text("\(start.name.uppercased()) · \(nummern.kopfText)")
                 .font(DesignSystem.Typography.label)
                 .tracking(0.9)
                 .foregroundStyle(DesignSystem.Color.textMuted)
@@ -186,7 +185,7 @@ struct RueckblickAnsicht: View {
                 PrimaryButton(title: "Gerät abschließen") { beiSchliessen() }
                 textknopf("Weiterer Satz") { Task { await beiNaechsterSatz() } }
             } else {
-                PrimaryButton(title: "Satz \(satz + 1) starten") { await beiNaechsterSatz() }
+                PrimaryButton(title: "Satz \(nummern.knopf) starten") { await beiNaechsterSatz() }
             }
             if daten.abgelehnt == nil {
                 textknopf("Wdh. korrigieren") { korrigierenOffen = true }
@@ -209,7 +208,7 @@ struct RueckblickAnsicht: View {
         return Wiederholungsurteil(anteilInBahn: 0.9, imTakt: !schnell, hin: schnell ? .zuSchnell : .imTempo, rueck: .imTempo)
     }
     return RueckblickAnsicht(
-        start: .vorschau, satz: 2,
+        start: .vorschau, nummern: Rueckblicknummern(anzeigeSatz: 3, gesichert: true, satzZiel: 3),
         daten: .init(wiederholungen: 8, rueckblick: Koerperbild.Rueckblick(urteile: urteile), abgelehnt: nil,
                      letzterSatz: false, tempo: KameraStart.vorschau.tempo),
         pauseEnde: Date().addingTimeInterval(90), beiSchliessen: {}, beiNaechsterSatz: {}, beiKorrigieren: { _ in })
@@ -217,7 +216,7 @@ struct RueckblickAnsicht: View {
 
 #Preview("7.6 Zu kurz, letzter Satz") {
     RueckblickAnsicht(
-        start: .vorschau, satz: 3,
+        start: .vorschau, nummern: Rueckblicknummern(anzeigeSatz: 3, gesichert: false, satzZiel: 3),
         daten: .init(wiederholungen: 2, rueckblick: nil, abgelehnt: "Satz konnte nicht gesichert werden.",
                      letzterSatz: true, tempo: KameraStart.vorschau.tempo),
         pauseEnde: nil, beiSchliessen: {}, beiNaechsterSatz: {}, beiKorrigieren: { _ in })

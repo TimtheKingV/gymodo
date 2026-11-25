@@ -57,10 +57,9 @@ struct KameraAblaufAnsicht: View {
         case .kameraFehlt:
             KameraFehltSchritt(beiOhneKamera: { modell.ohneKamera() })
         case .rueckblick(let daten):
-            // Gesichert: anzeigeSatz steht schon auf dem naechsten Satz.
-            let gesichert = daten.abgelehnt == nil
-            let aktuell = min(max(1, gesichert ? satz - 1 : satz), start.satzZiel)
-            RueckblickAnsicht(start: start, satz: aktuell, daten: daten, pauseEnde: modell.pauseEnde,
+            RueckblickAnsicht(start: start,
+                              nummern: Rueckblicknummern(anzeigeSatz: satz, gesichert: daten.abgelehnt == nil,
+                                                         satzZiel: start.satzZiel), daten: daten, pauseEnde: modell.pauseEnde,
                               beiSchliessen: { modell.rueckblickSchliessen() },
                               beiNaechsterSatz: { await modell.naechsterSatz() },
                               beiKorrigieren: { modell.umfangKorrigieren($0) })

@@ -138,11 +138,11 @@ struct SatzSchritt: View {
         switch takt {
         case .imTakt: return "Im Takt"
         case .zuSchnell:
-            return phase == .halten || phase == nil ? "Zu schnell, länger halten"
-                                                    : "Zu schnell, langsamer \(verb(phase!))"
+            guard let phase, phase != .halten else { return "Zu schnell, länger halten" }
+            return "Zu schnell, langsamer \(verb(phase))"
         case .zuLangsam:
-            if phase == .halten || phase == nil { return "Zu langsam, jetzt \(verb(tempo.phase(.ablassen)))" }
-            return "Zu langsam, zügiger \(verb(phase!))"
+            guard let phase, phase != .halten else { return "Zu langsam, jetzt \(verb(tempo.phase(.ablassen)))" }
+            return "Zu langsam, zügiger \(verb(phase))"
         }
     }
 
