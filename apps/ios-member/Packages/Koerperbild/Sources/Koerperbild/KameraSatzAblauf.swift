@@ -191,6 +191,8 @@ public struct KameraSatzAblauf: Sendable {
     /// App im Hintergrund: der Satz pausiert (`.verloren`), ein Countdown beginnt beim Aufstellen von vorn.
     /// Die festgehaltene Seite bleibt.
     public mutating func unterbrechen() {
+        // Die Kamera steht; nach dem Neustart fehlt die Zwischenzeit, die darf keine niedrige Bildrate vortaeuschen.
+        bildzeiten = []
         switch schritt {
         case .satz, .vorlauf:
             koerperlage.unterbrechen()

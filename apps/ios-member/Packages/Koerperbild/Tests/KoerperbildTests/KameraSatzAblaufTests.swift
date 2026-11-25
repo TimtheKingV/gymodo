@@ -558,4 +558,21 @@ final class KameraSatzAblaufTests: XCTestCase {
         XCTAssertEqual(b.schritt, .keineBewegung)
         XCTAssertFalse(b.bildrateZuNiedrig)
     }
+
+    func testKameraNeustartNachUnterbrechenMeldetKeineNiedrigeBildrate() {
+        var a = neu()
+        var t = 0.0
+        let los = losen(&a, t: &t)
+        lauf(&a, t: &t, los: los, bis: los + 4)
+        a.unterbrechen()
+        // Die Kamera war 5 s aus; danach kommen 30 Bilder/s durch Verloren und den 2-s-Vorlauf.
+        t += 5
+        let ende = t + 3.5
+        while t < ende {
+            a.bild(t: t, skelett: skelett(knie: oben))
+            XCTAssertFalse(a.bildrateZuNiedrig, "bei t=\(t) \(a.schritt)")
+            t += 1 / rate
+        }
+        XCTAssertEqual(a.schritt, .satz)
+    }
 }
