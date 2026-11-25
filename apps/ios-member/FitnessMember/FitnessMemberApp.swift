@@ -76,6 +76,19 @@ struct FitnessMemberApp: App {
 
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            if let demo = KameraDemoAnsicht.name {
+                KameraDemoAnsicht(name: demo).environment(videoVorrat)
+            } else {
+                hauptansicht
+            }
+            #else
+            hauptansicht
+            #endif
+        }
+    }
+
+    private var hauptansicht: some View {
             RootView(apiClient: apiClient)
                 .testnotizInstallieren(netz: netzwerkMonitor, katalog: catalogStore, session: sessionStore)
                 .environment(sessionStore)
@@ -113,7 +126,6 @@ struct FitnessMemberApp: App {
                         pendingTagStore.captureUngueltig()
                     }
                 }
-        }
     }
 }
 

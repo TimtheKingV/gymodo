@@ -84,6 +84,7 @@
 		2521FD94ACF38940E2EAF8AC /* HomeKurseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A00954754396E772B78770 /* HomeKurseTests.swift */; };
 		252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3572D3614535C8EE4621C5E1 /* ProfilWrite.swift */; };
 		2653F678814003A4DEAA7630 /* Belastung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30418C6B8FF7A6F65873B95A /* Belastung.swift */; };
+		2723C280040C0FFAF837F791 /* KameraDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729CA3B5F6D3002ACBC0CE57 /* KameraDemo.swift */; };
 		2769CE98758DF7F0EB27020D /* GeraeteGruppierung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3580AB3B2DA3667EF4346D5A /* GeraeteGruppierung.swift */; };
 		28414353525E577667FD88AA /* KameraAblaufModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F011BB44DF0812F139E6800 /* KameraAblaufModellTests.swift */; };
 		286251A6DE657B6FB5A84126 /* EinweisungMedien.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8E953EACA62AC14B31001AA /* EinweisungMedien.swift */; };
@@ -717,6 +718,7 @@
 		70EDCD91DBF3DA79135DC7C5 /* KurseAnsicht.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAnsicht.swift; sourceTree = "<group>"; };
 		7115CDC39F17B5DF97E47CD8 /* QRScannerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerController.swift; sourceTree = "<group>"; };
 		718C690CC2C544C9C8550447 /* CalibrationWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationWrite.swift; sourceTree = "<group>"; };
+		729CA3B5F6D3002ACBC0CE57 /* KameraDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KameraDemo.swift; sourceTree = "<group>"; };
 		7363EEF3A82BFEA08F81E493 /* ExerciseVideosResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseVideosResponse.swift; sourceTree = "<group>"; };
 		758481038BBBDDBB2647CA79 /* AccessibilityBaumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityBaumTests.swift; sourceTree = "<group>"; };
 		761B6ACA4FD549615771E3C6 /* CodeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeEntry.swift; sourceTree = "<group>"; };
@@ -1234,6 +1236,7 @@
 				BC9C5FFB9A9AE8C3B3AEA395 /* FrontkameraQuelle.swift */,
 				565C621FD7A3EE0BA24E861F /* Hubspeicher.swift */,
 				CBF1EBAF2B842C20A09B925A /* KameraAblaufModell.swift */,
+				729CA3B5F6D3002ACBC0CE57 /* KameraDemo.swift */,
 				B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */,
 				222A0024EE25F8694A0F5ACE /* KameraNaht.swift */,
 				392953CC8B5BE86858A51CAA /* KameraTestprofile.swift */,
@@ -1994,6 +1997,7 @@
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
 				612D4A70938B7EF5969FD5C2 /* KameraAblaufAnsicht.swift in Sources */,
 				8AC1CEA6572A03B6B775A225 /* KameraAblaufModell.swift in Sources */,
+				2723C280040C0FFAF837F791 /* KameraDemo.swift in Sources */,
 				45139848BB97882E88734C05 /* KameraNaht.swift in Sources */,
 				0DC6DE4B08F3A83BCFCAAE60 /* KameraTestprofile.swift in Sources */,
 				A1D59A1A88D88B9D99878BE4 /* KameraVorschau.swift in Sources */,
