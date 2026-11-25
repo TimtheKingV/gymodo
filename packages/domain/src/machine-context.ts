@@ -11,6 +11,7 @@ import { signMediaUrl, signMediaUrls } from "./media-store.js";
 import type { LoadUnit, VolumeKind } from "./belastung.js";
 import { CARDIO_SELECT, cardioDesSatzes, cardioListeDesModells, type CardioGeraet, type CardioWert, type CardioWerte, type CardioZeile } from "./cardio.js";
 import { stationAufloesen } from "./workout.js";
+import { kameraAusZeile, type KameraZeileOptional, type UebungKamera, type UebungTempo } from "./kamera.js";
 import { toBlocks, type BlockInput, type ProgressionSuggestion } from "./progression.js";
 import { uebungsSchluessel, vorschlagAusZiel } from "./plangewichte.js";
 import { ladeZieleFuerPaareOhneAbbruch } from "./ziel-vorschlag.js";
@@ -73,6 +74,10 @@ export type MachineContext = {
     muscles: UebungsMuskel[];
     /** Kurzes Etikett des Geraetetyps; null bei eigenen Studio-Uebungen. */
     geraetLabel: string | null;
+    /** Kameraprofil der Uebung (Migration 0077); null ohne Profil. */
+    kamera: UebungKamera | null;
+    /** Tempo je Wiederholung; null ohne Profil oder Tempo. */
+    tempo: UebungTempo | null;
     /** Ebenfalls signiert; null, solange kein Video da ist (Spec 6.8). */
     instructionVideoUrl: string | null;
   }>;
@@ -226,7 +231,7 @@ type ModellZeile = {
 
 type LinkRow = {
   equipment_model_id: string;
-  exercises: {
+  exercises: KameraZeileOptional & {
     id: string;
     name: string;
     description: string | null;
@@ -265,6 +270,22 @@ export function uebungenZusammenfuehren(
   return ergebnis;
 }
 
+/** Eine Uebung im Kontext der Station: Zeile aus der Datenbank plus signierte Video-URL. */
+export function kontextUebung(uebung: LinkRow["exercises"], instructionVideoUrl: string | null) {
+  return {
+    id: uebung.id,
+    name: uebung.name,
+    description: uebung.description,
+    volumeKind: uebung.volume_kind,
+    targetMin: uebung.target_min,
+    targetMax: uebung.target_max,
+    muscles: muskelnAusSpalte(uebung.muscles),
+    geraetLabel: uebung.geraet_label ?? null,
+    ...kameraAusZeile(uebung),
+    instructionVideoUrl,
+  };
+}
+
 /**
  * Der gemeinsame Rumpf fuer Geraet und Typ. Was an einer Station haengt --
  * zuletzt genutzte Uebung, Historie, Vorschlag -- liest er ueber dieselbe
@@ -294,7 +315,7 @@ async function kontextAufbauen(
   const { data: links } = await client
     .from("equipment_model_exercises")
     .select(
-      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label), instruction_assets (storage_path)",
+      "equipment_model_id, sort_order, exercises (id, name, description, volume_kind, target_min, target_max, muscles, geraet_label, kamera_profil, kamera_signal, kamera_seite, tempo_senken_s, tempo_halten_s, tempo_heben_s, tempo_beginnt_mit), instruction_assets (storage_path)",
     )
     .in("equipment_model_id", modellIds)
     .order("sort_order", { ascending: true });
@@ -317,17 +338,9 @@ async function kontextAufbauen(
       : Promise.resolve(null),
   ]);
 
-  const exercises = zusammen.map(({ uebung, videoPfad }) => ({
-    id: uebung.id,
-    name: uebung.name,
-    description: uebung.description,
-    volumeKind: uebung.volume_kind,
-    targetMin: uebung.target_min,
-    targetMax: uebung.target_max,
-    muscles: muskelnAusSpalte(uebung.muscles),
-    geraetLabel: uebung.geraet_label ?? null,
-    instructionVideoUrl: (videoPfad && videoUrls.get(videoPfad)) || null,
-  }));
+  const exercises = zusammen.map(({ uebung, videoPfad }) =>
+    kontextUebung(uebung, (videoPfad && videoUrls.get(videoPfad)) || null),
+  );
 
   // Die Saetze dieser Station: am Geraet ueber machine_id, am Typ ueber die
   // Saetze ohne Geraet an diesem Typ -- ein Studio-Geraet hat eigene Stufen

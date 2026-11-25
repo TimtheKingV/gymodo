@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift test --package-path apps/ios-member/Packages/Sensorik
+      - run: swift test --package-path apps/ios-member/Packages/Koerperbild
       # Spec B 5.5: Jede Iteration muss im Diff sichtbar sein. Der Test
       # schreibt den Guetebericht neu; weicht er vom eingecheckten ab, ist
       # der eingecheckte veraltet und die CI faellt durch. safe.directory,

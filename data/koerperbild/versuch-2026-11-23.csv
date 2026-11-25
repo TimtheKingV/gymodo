@@ -1,0 +1,190 @@
+id;geraet;bilder;erkannt_prozent;gelenke;fuehrend;hub_grad;wege;beugen_s;strecken_s;urteil
+ab_crunch_machine;ab_crunch;115;100;14.7;Schulter links;50;11;3.13;1.67;zählt richtig
+assisted_dip;assist_dip_chin;86;100;13.1;Ellbogen links;100;11;2.29;1.29;zählt richtig
+assisted_pullup;assist_dip_chin;85;99;12.1;Schulter links;146;11;1.50;2.04;zählt richtig
+assisted_pullup_neutral;assist_dip_chin;97;100;11.9;Ellbogen links;116;11;1.33;2.71;zählt richtig
+assisted_pullup_supinated;assist_dip_chin;87;91;11.1;Schulter links;145;11;1.58;2.04;zählt richtig
+back_extension_machine;back_extension;105;100;13.9;Ellbogen links;48;11;1.83;2.54;zählt richtig
+bb_bench;barbell, bank_flach, rack;91;100;11.4;Schulter links;213;11;2.83;0.96;zählt richtig
+bb_bulgarian_split_squat;barbell, rack, bank_flach;79;100;13.5;Schulter links;89;11;0.96;2.33;zählt richtig
+bb_calf_raise;barbell, rack;77;100;15.0;–;0;0;0.00;0.00;zählt zu wenig
+bb_close_bench;barbell, bank_flach, rack;91;100;9.5;Ellbogen rechts;174;11;2.50;1.29;zählt richtig
+bb_curl;barbell;88;100;14.9;Ellbogen links;168;11;1.62;2.04;zählt richtig
+bb_deadlift;barbell;105;100;14.3;Hüfte links;121;11;2.46;1.92;zählt richtig
+bb_decline_bench;barbell, bank_negativ, rack;95;93;10.6;Ellbogen rechts;182;12;0.79;3.17;zählt richtig
+bb_front_squat;barbell, rack;104;100;14.9;Knie links;90;11;2.08;2.25;zählt richtig
+bb_glute_bridge;barbell, matte;82;83;10.1;–;0;0;0.00;0.00;zählt zu wenig
+bb_good_morning;barbell, rack;99;100;10.4;Hüfte rechts;73;11;3.25;0.87;zählt richtig
+bb_high_squat;barbell, rack;86;100;14.1;Ellbogen links;175;11;1.83;1.75;zählt richtig
+bb_hip_thrust;barbell, bank_flach;92;100;13.6;Hüfte links;60;11;1.88;1.96;zählt richtig
+bb_incline;barbell, bank_verstellbar, rack;99;100;13.8;Schulter links;178;11;1.75;2.38;zählt richtig
+bb_rdl;barbell;104;100;15.0;Hüfte links;77;11;2.54;1.79;zählt richtig
+bb_reverse_grip_bench;barbell, bank_flach, rack;81;2;6.0;–;0;0;0.00;0.00;nicht erkannt
+bb_reverse_lunge;barbell, rack;89;100;13.8;Knie rechts;77;11;2.08;1.62;zählt richtig
+bb_row_over;barbell;80;100;13.4;Ellbogen rechts;107;11;1.58;1.75;zählt richtig
+bb_row_under;barbell;90;100;14.5;Ellbogen rechts;71;11;1.96;1.79;zählt richtig
+bb_seated_press;barbell, bank_lehne, rack;102;100;14.6;Ellbogen rechts;191;11;2.75;1.50;zählt richtig
+bb_shrug;barbell;75;100;15.0;Ellbogen rechts;60;11;1.50;1.62;zählt richtig
+bb_standing_press;barbell, rack;102;100;15.0;Schulter links;141;11;2.29;1.96;zählt richtig
+bb_sumo;barbell;85;100;15.0;Knie links;87;11;2.12;1.42;zählt richtig
+belt_squat_machine;belt_squat;81;100;15.0;Knie rechts;94;11;1.92;1.46;zählt richtig
+bw_back_extension_floor;matte;77;100;11.0;Hüfte rechts;23;11;1.08;2.12;zählt richtig
+bw_bird_dog;matte;65;100;12.3;Schulter rechts;72;11;1.54;1.17;zählt richtig
+bw_crunch;matte;65;100;14.7;Schulter rechts;100;11;1.46;1.25;zählt richtig
+bw_dead_bug;matte;178;76;9.1;Ellbogen rechts;54;23;2.62;0.17;zählt zu viel
+bw_glute_bridge;matte;57;98;7.0;–;0;0;0.00;0.00;zählt zu wenig
+bw_glute_bridge_single;matte;72;100;8.0;Hüfte rechts;26;11;0.96;2.04;zählt richtig
+bw_leg_raise_lying;matte;75;100;9.7;Hüfte rechts;52;11;1.58;1.54;zählt richtig
+bw_pushup;;89;100;13.8;Ellbogen rechts;103;11;2.08;1.62;zählt richtig
+bw_pushup_incline;bank_flach;111;100;14.2;Ellbogen rechts;94;11;2.96;1.67;zählt richtig
+bw_pushup_knee;matte;84;100;11.8;Ellbogen rechts;100;11;2.08;1.42;zählt richtig
+bw_reverse_lunge;;69;100;13.0;Knie links;90;11;1.71;1.17;zählt richtig
+bw_side_leg_raise;matte;72;99;12.3;Schulter rechts;143;10;1.08;1.92;zählt richtig
+bw_squat;;91;100;14.6;Knie links;121;11;2.08;1.71;zählt richtig
+cable_bench_press;kabel_doppel, bank_flach;67;100;13.2;Ellbogen links;100;11;1.17;1.62;zählt richtig
+cable_chest_press_single;kabel_einzel;82;100;13.5;Schulter rechts;59;11;1.92;1.50;zählt richtig
+cable_chest_press_standing;kabel_doppel;75;100;15.0;Ellbogen links;108;11;1.62;1.50;zählt richtig
+cable_chop_high_low;kabel_einzel;72;100;15.0;Ellbogen links;273;11;1.33;1.67;zählt richtig
+cable_concentration_curl;kabel_einzel, bank_flach;75;100;15.0;Ellbogen rechts;97;11;1.37;1.75;zählt richtig
+cable_crunch_kneeling;kabel_einzel;92;100;12.1;Hüfte links;70;11;1.58;2.25;zählt richtig
+cable_crunch_standing;kabel_einzel;67;100;15.0;Hüfte links;48;11;1.37;1.42;zählt richtig
+cable_curl_bar;kabel_einzel;77;100;14.7;Ellbogen rechts;111;11;1.21;2.00;zählt richtig
+cable_curl_single;kabel_einzel;82;100;15.0;Ellbogen links;131;11;1.46;1.96;zählt richtig
+cable_decline_fly;kabel_doppel, bank_negativ;96;30;10.1;Ellbogen rechts;68;11;2.67;1.33;nicht erkannt
+cable_face_pull;kabel_einzel;80;100;15.0;Ellbogen rechts;208;11;1.88;1.46;zählt richtig
+cable_fly_mid;kabel_doppel;77;100;15.0;Ellbogen rechts;118;11;1.96;1.25;zählt richtig
+cable_front_raise_bar;kabel_einzel;97;100;14.7;Schulter links;88;11;1.83;2.21;zählt richtig
+cable_hammer_curl;kabel_einzel;75;100;15.0;Ellbogen links;99;11;1.21;1.92;zählt richtig
+cable_high_curl;kabel_doppel;75;100;15.0;Ellbogen links;101;11;1.29;1.83;zählt richtig
+cable_high_row_kneeling;kabel_einzel;96;100;14.1;Schulter links;110;11;1.96;2.04;zählt richtig
+cable_hip_abduction;kabel_einzel;67;100;14.3;Ellbogen rechts;113;23;0.29;0.25;zählt zu viel
+cable_hip_adduction;kabel_einzel;81;100;15.0;–;0;0;0.00;0.00;zählt zu wenig
+cable_hip_extension;kabel_einzel;97;100;15.0;Hüfte rechts;29;11;2.04;2.00;zählt richtig
+cable_incline_fly;kabel_doppel, bank_verstellbar;80;100;14.1;Ellbogen links;235;11;1.54;1.79;zählt richtig
+cable_incline_press;kabel_doppel, bank_verstellbar;87;100;15.0;Schulter links;149;11;2.08;1.54;zählt richtig
+cable_incline_row;kabel_einzel, bank_verstellbar;57;100;14.1;Ellbogen rechts;99;11;0.96;1.42;zählt richtig
+cable_kickback;kabel_einzel;72;100;14.6;Ellbogen rechts;68;11;1.79;1.21;zählt richtig
+cable_lat_single_kneeling;kabel_einzel;62;100;14.9;Schulter links;100;11;1.25;1.33;zählt richtig
+cable_lateral_raise;kabel_einzel;92;100;15.0;Schulter links;85;11;2.21;1.62;zählt richtig
+cable_lift_low_high;kabel_einzel;75;100;14.9;Ellbogen rechts;239;11;1.08;2.04;zählt richtig
+cable_low_fly;kabel_doppel;85;100;15.0;Ellbogen rechts;125;11;1.46;2.08;zählt richtig
+cable_pallof_press;kabel_einzel;100;100;14.5;Ellbogen rechts;78;59;0.08;0.12;zählt zu viel
+cable_preacher_curl;kabel_einzel, scottbank;85;100;15.0;Ellbogen links;121;11;1.54;2.00;zählt richtig
+cable_pull_through;kabel_einzel;97;100;14.1;Hüfte links;75;11;2.04;2.00;zählt richtig
+cable_pushdown_supinated;kabel_einzel;77;100;14.1;Ellbogen rechts;70;11;2.04;1.17;zählt richtig
+cable_pushdown_vbar;kabel_einzel;97;100;15.0;Ellbogen rechts;74;11;2.04;2.00;zählt richtig
+cable_reverse_curl;kabel_einzel;95;100;15.0;Ellbogen links;130;11;1.96;2.00;zählt richtig
+cable_reverse_fly_standing;kabel_doppel;62;100;15.0;Ellbogen rechts;251;11;1.71;0.88;zählt richtig
+cable_rotation;kabel_einzel;90;100;14.7;Ellbogen rechts;191;11;2.42;1.33;zählt richtig
+cable_row_neutral;cable_row;76;100;13.9;Schulter rechts;100;11;1.96;1.21;zählt richtig
+cable_row_rope;kabel_einzel, bank_ruder;87;100;14.3;Ellbogen rechts;99;11;1.25;2.38;zählt richtig
+cable_row_single;cable_row;82;100;15.0;Ellbogen rechts;116;11;1.54;1.88;zählt richtig
+cable_row_standing_v;kabel_einzel;92;100;14.1;Schulter rechts;89;11;2.12;1.71;zählt richtig
+cable_row_wide;cable_row;91;100;12.9;Ellbogen rechts;127;11;1.71;2.08;zählt richtig
+cable_shoulder_external_rotation;kabel_einzel;96;100;14.6;Ellbogen links;171;11;3.08;0.92;zählt richtig
+cable_shoulder_internal_rotation;kabel_einzel;72;100;15.0;Ellbogen rechts;173;11;1.58;1.42;zählt richtig
+cable_shoulder_press;kabel_doppel;72;100;15.0;Schulter links;147;11;1.75;1.25;zählt richtig
+cable_shrug;kabel_einzel;95;100;14.0;Ellbogen rechts;80;12;0.25;3.71;zählt richtig
+cable_side_bend;kabel_einzel;65;100;15.0;Ellbogen links;61;11;1.08;1.63;zählt richtig
+cable_straight_arm_pulldown;kabel_einzel;72;100;14.9;Schulter links;101;11;1.38;1.62;zählt richtig
+cable_triceps_overhead;kabel_einzel;55;100;15.0;Ellbogen links;66;11;1.21;1.08;zählt richtig
+cable_triceps_overhead_single;kabel_einzel;96;100;14.9;Ellbogen rechts;179;11;1.12;2.88;zählt richtig
+cable_upright_row;kabel_einzel;75;100;15.0;Ellbogen rechts;142;11;1.17;1.96;zählt richtig
+calf_press_45;leg_press_45;80;100;7.2;–;0;0;0.00;0.00;zählt zu wenig
+calf_raise_seated_machine;seated_calf;95;100;14.9;Knie rechts;33;22;0.42;1.62;zählt zu viel
+calf_raise_standing_machine;standing_calf;87;100;13.0;Knie rechts;23;11;2.96;0.67;zählt richtig
+chest_press_neutral;chest_press;87;100;15.0;Schulter rechts;66;11;1.42;2.21;zählt richtig
+chest_press_pronated;chest_press;102;100;14.3;Ellbogen rechts;109;11;1.83;2.42;zählt richtig
+chest_press_single;independent_chest_press;70;100;15.0;Schulter rechts;78;11;1.71;1.21;zählt richtig
+db_arnold_press;dumbbell, bank_lehne;82;100;14.7;Ellbogen rechts;189;11;2.00;1.42;zählt richtig
+db_bench_neutral;dumbbell, bank_flach;72;100;14.3;Ellbogen links;203;11;1.92;1.08;zählt richtig
+db_bench_press;dumbbell, bank_flach;78;100;10.4;Schulter rechts;120;11;2.46;0.79;zählt richtig
+db_bulgarian_split_squat;dumbbell, bank_flach;85;100;14.0;Knie rechts;131;23;1.33;0.12;zählt zu viel
+db_calf_raise;dumbbell;104;100;14.2;–;0;0;0.00;0.00;zählt zu wenig
+db_calf_raise_single;dumbbell, stufe;75;100;15.0;Knie links;92;11;1.37;1.75;zählt richtig
+db_calf_seated;dumbbell, bank_flach;75;100;15.0;Ellbogen rechts;20;10;1.54;1.58;zählt richtig
+db_concentration;dumbbell, bank_flach;100;100;15.0;Ellbogen rechts;144;11;2.33;1.83;zählt richtig
+db_cross_hammer;dumbbell;179;100;15.0;Ellbogen links;148;11;3.83;3.62;zählt richtig
+db_curl_standing;dumbbell;82;100;15.0;Ellbogen rechts;164;11;1.62;1.79;zählt richtig
+db_deadlift;dumbbell;82;100;14.2;Hüfte links;86;11;2.33;1.08;zählt richtig
+db_decline_press;dumbbell, bank_negativ;101;100;9.7;Ellbogen links;200;11;2.00;2.21;zählt richtig
+db_external_rotation_side;dumbbell, matte;77;100;15.0;Ellbogen links;183;11;1.62;1.58;zählt richtig
+db_flat_fly;dumbbell, bank_flach;85;100;14.1;Schulter rechts;218;11;1.88;1.67;zählt richtig
+db_forward_lunge;dumbbell;76;100;13.6;Knie rechts;104;11;2.04;1.12;zählt richtig
+db_front_raise;dumbbell;73;100;14.3;Schulter rechts;81;11;1.79;1.25;zählt richtig
+db_goblet_squat;dumbbell;89;100;15.0;Knie links;105;11;2.08;1.62;zählt richtig
+db_hammer_curl;dumbbell;67;100;14.9;Ellbogen links;176;11;1.08;1.71;zählt richtig
+db_incline_curl;dumbbell, bank_verstellbar;98;100;14.1;Ellbogen rechts;136;11;1.92;2.17;zählt richtig
+db_incline_fly;dumbbell, bank_verstellbar;89;100;14.3;Schulter links;140;11;2.12;1.58;zählt richtig
+db_incline_press;dumbbell, bank_verstellbar;70;100;14.5;Ellbogen links;159;11;1.71;1.21;zählt richtig
+db_kickback_supported;dumbbell, bank_flach;89;100;15.0;Ellbogen rechts;74;11;1.83;1.88;zählt richtig
+db_lateral_lunge;dumbbell;153;100;15.0;Hüfte rechts;22;23;1.92;1.21;zählt zu viel
+db_lateral_raise;dumbbell;74;100;15.0;Schulter rechts;80;11;1.79;1.29;zählt richtig
+db_lateral_seated;dumbbell, bank_flach;85;100;15.0;Schulter links;74;11;2.21;1.33;zählt richtig
+db_preacher;dumbbell, scottbank;75;100;14.0;Ellbogen links;126;11;1.29;1.83;zählt richtig
+db_press_standing;dumbbell;73;100;15.0;Schulter rechts;105;11;1.71;1.33;zählt richtig
+db_pullover;dumbbell, bank_flach;95;64;8.1;Schulter links;32;11;0.88;3.08;zählt richtig
+db_reverse_curl;dumbbell;75;100;14.7;Ellbogen links;166;11;1.88;1.25;zählt richtig
+db_reverse_fly;dumbbell;97;100;15.0;Schulter links;120;11;2.21;1.83;zählt richtig
+db_reverse_fly_incline;dumbbell, bank_verstellbar;75;100;13.3;Knie links;122;10;1.33;1.79;zählt richtig
+db_reverse_lunge;dumbbell;79;100;13.6;Knie links;75;11;1.92;1.38;zählt richtig
+db_romanian_deadlift;dumbbell;96;100;14.8;Hüfte rechts;64;11;2.25;1.75;zählt richtig
+db_row_bent;dumbbell;72;100;14.7;Ellbogen links;131;11;1.38;1.62;zählt richtig
+db_row_chest_supported;dumbbell, bank_verstellbar;76;100;12.6;Ellbogen rechts;85;11;1.42;1.75;zählt richtig
+db_row_supported;dumbbell, bank_flach;85;100;14.8;Ellbogen rechts;104;11;1.67;1.88;zählt richtig
+db_russian_twist;dumbbell, matte;157;100;12.2;Ellbogen rechts;239;12;4.08;2.46;zählt richtig
+db_shoulder_press_seated;dumbbell, bank_verstellbar;69;100;15.0;Ellbogen rechts;120;11;1.25;1.62;zählt richtig
+db_shrug;dumbbell;97;100;14.9;–;0;0;0.00;0.00;zählt zu wenig
+db_side_bend;dumbbell;89;100;15.0;Hüfte rechts;36;11;2.00;1.71;zählt richtig
+db_single_leg_rdl;dumbbell;95;100;14.6;Hüfte rechts;68;11;2.12;1.83;zählt richtig
+db_spider;dumbbell, bank_verstellbar;47;100;14.1;Ellbogen rechts;86;11;0.88;1.08;zählt richtig
+db_squat_sides;dumbbell;88;100;14.7;Knie links;123;11;2.21;1.46;zählt richtig
+db_step_up;dumbbell, stufe;94;100;13.8;Knie rechts;55;23;1.04;0.75;zählt zu viel
+db_sumo_squat;dumbbell;76;100;15.0;Knie rechts;64;11;1.75;1.42;zählt richtig
+db_triceps_lying;dumbbell, bank_flach;89;74;10.5;Schulter rechts;35;11;2.50;1.21;zählt richtig
+db_triceps_overhead;dumbbell, bank_flach;111;100;13.7;Ellbogen rechts;109;11;2.62;2.00;zählt richtig
+db_walking_lunge;dumbbell;94;100;13.6;Hüfte rechts;79;11;1.96;1.96;zählt richtig
+db_wrist_curl;dumbbell, bank_flach;105;100;14.9;–;0;0;0.00;0.00;zählt zu wenig
+db_wrist_extension;dumbbell, bank_flach;85;100;14.8;Ellbogen rechts;31;11;0.96;2.58;zählt richtig
+db_zottman;dumbbell;186;100;15.0;Ellbogen links;172;11;4.42;3.33;zählt richtig
+ez_curl;ez_bar;90;100;14.5;Ellbogen links;128;11;1.67;2.08;zählt richtig
+ez_lying_triceps;ez_bar, bank_flach;101;100;12.7;Schulter rechts;119;11;2.21;2.00;zählt richtig
+ez_overhead;ez_bar;89;100;14.4;Ellbogen rechts;144;11;2.25;1.46;zählt richtig
+ez_preacher;ez_bar, scottbank;85;100;13.8;Ellbogen rechts;104;11;1.67;1.88;zählt richtig
+ez_reverse;ez_bar;77;100;14.9;Ellbogen rechts;133;11;1.29;1.92;zählt richtig
+ez_upright_row;ez_bar;97;100;15.0;Ellbogen links;133;11;1.54;2.50;zählt richtig
+hack_squat_machine;hack_squat;84;100;13.9;Knie links;92;11;1.75;1.75;zählt richtig
+hanging_knee_raise;assist_dip_chin;62;100;13.8;Knie links;111;11;1.08;1.50;zählt richtig
+hanging_leg_raise;assist_dip_chin;62;100;13.3;Hüfte links;95;11;0.71;1.88;zählt richtig
+high_row_machine;high_row;85;100;11.5;Ellbogen links;172;13;2.42;1.12;zählt zu viel
+hip_abduction_machine;hip_ab_adduction;77;100;15.0;Hüfte links;41;11;1.33;1.88;zählt richtig
+hip_adduction_machine;hip_adduction;70;100;15.0;Knie links;51;11;1.38;1.54;zählt richtig
+hip_extension_machine;hip_extension;72;100;15.0;Ellbogen links;46;11;1.08;1.92;zählt richtig
+hip_thrust_machine;hip_thrust;70;100;13.3;Hüfte links;31;11;1.50;1.42;zählt richtig
+incline_chest_press;incline_press;75;100;13.9;Schulter links;217;12;0.88;2.25;zählt richtig
+lat_machine_pronated;lever_lat;87;100;14.7;Ellbogen links;179;11;1.33;2.29;zählt richtig
+lat_pulldown_neutral;cable_lat;100;100;14.9;Ellbogen links;212;11;2.12;2.04;zählt richtig
+lat_pulldown_pronated;cable_lat;96;100;15.0;Ellbogen links;154;11;1.92;2.08;zählt richtig
+lat_pulldown_supinated;cable_lat;92;100;14.9;Ellbogen links;124;11;1.92;1.92;zählt richtig
+lateral_raise_machine;lateral_raise;60;100;15.0;Schulter rechts;83;11;1.42;1.08;zählt richtig
+leg_curl_prone;prone_curl;77;100;13.3;Knie rechts;95;11;1.25;1.96;zählt richtig
+leg_curl_seated;seated_leg_curl;80;100;11.9;Knie rechts;65;11;1.04;2.29;zählt richtig
+leg_curl_seated_single;seated_leg_curl;77;100;11.5;Knie links;66;11;1.17;2.04;zählt richtig
+leg_curl_standing;standing_curl;96;100;12.8;Knie rechts;73;11;1.71;2.29;zählt richtig
+leg_extension_machine;leg_extension;60;100;12.3;Knie rechts;51;11;1.42;1.08;zählt richtig
+leg_extension_single;leg_extension;75;100;14.3;Knie rechts;52;11;1.83;1.29;zählt richtig
+leg_press_45;leg_press_45;66;100;8.1;–;0;0;0.00;0.00;zählt zu wenig
+leg_press_horizontal;horizontal_leg_press;67;100;10.5;Knie rechts;68;11;1.54;1.25;zählt richtig
+leg_press_horizontal_single;horizontal_leg_press;75;100;11.3;Knie links;98;11;2.38;0.75;zählt richtig
+pec_deck_handles;pec_deck;95;100;14.7;Ellbogen links;214;11;0.83;3.12;zählt richtig
+preacher_curl_machine;preacher_curl;80;100;14.7;Ellbogen rechts;126;11;1.29;2.04;zählt richtig
+pullover_machine;pullover;90;100;14.5;Schulter rechts;214;11;2.12;1.62;zählt richtig
+reverse_fly_machine;pec_deck;90;100;14.7;Ellbogen rechts;326;11;2.08;1.67;zählt richtig
+row_machine_neutral;supported_row;96;100;14.1;Schulter links;122;11;1.83;2.17;zählt richtig
+row_machine_pronated;row_pronated;70;100;13.4;Schulter links;149;11;1.42;1.50;zählt richtig
+seated_dip_machine;seated_dip;80;100;14.9;Ellbogen links;83;11;1.75;1.58;zählt richtig
+shoulder_press_machine;shoulder_press;82;100;14.6;Ellbogen rechts;157;11;1.71;1.71;zählt richtig
+torso_rotation_machine;torso_rotation;80;100;15.0;Ellbogen rechts;140;11;1.00;2.33;zählt richtig
+triceps_extension_machine;triceps_extension;70;100;15.0;Ellbogen rechts;100;11;1.71;1.21;zählt richtig
+triceps_pushdown_bar;kabel_einzel;77;100;13.5;Ellbogen rechts;80;11;1.92;1.29;zählt richtig
+triceps_pushdown_rope;kabel_einzel;67;100;13.2;Ellbogen rechts;91;11;1.67;1.12;zählt richtig

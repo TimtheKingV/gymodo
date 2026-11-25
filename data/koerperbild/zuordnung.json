@@ -1,0 +1,3348 @@
+{
+  "chest_press_neutral": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "chest_press_pronated": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "incline_chest_press": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "pec_deck_handles": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "shoulder_press_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "lateral_raise_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "reverse_fly_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "row_machine_neutral": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "row_machine_pronated": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "high_row_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "lat_machine_pronated": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "pullover_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "assisted_pullup": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "assisted_dip": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "preacher_curl_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "triceps_extension_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "seated_dip_machine": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "leg_press_horizontal": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_press_45": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "hack_squat_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_extension_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_curl_seated": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_curl_prone": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_curl_standing": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "hip_abduction_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "hip_adduction_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "hip_extension_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "calf_raise_standing_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Wadenheben: das Knie beugt nicht, die Bewegung liegt im Sprunggelenk"
+  },
+  "calf_raise_seated_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "ab_crunch_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
+  },
+  "back_extension_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch führte Ellbogen, das passt nicht zur Bewegung"
+  },
+  "torso_rotation_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "lat_pulldown_pronated": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "lat_pulldown_neutral": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "lat_pulldown_supinated": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_row_neutral": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_row_wide": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_row_single": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_face_pull": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_straight_arm_pulldown": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "triceps_pushdown_rope": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "triceps_pushdown_bar": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_triceps_overhead": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_curl_bar": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_hammer_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_lateral_raise": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_fly_mid": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_hip_extension": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "cable_pallof_press": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "cable_crunch_kneeling": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
+  },
+  "hip_thrust_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "belt_squat_machine": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_press_horizontal_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_extension_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "leg_curl_seated_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "kein Profil für Beingeräte"
+  },
+  "chest_press_single": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "row_machine_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Urteil aus dem Versuch"
+  },
+  "calf_press_45": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "cable_chest_press_standing": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_chest_press_single": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_lat_single_kneeling": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_reverse_fly_standing": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_front_raise_bar": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_pull_through": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "cable_hip_abduction": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "cable_hip_adduction": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "cable_shoulder_external_rotation": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Schulterrotation: der Ellbogenwinkel ändert sich nicht"
+  },
+  "cable_shoulder_internal_rotation": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Schulterrotation: der Ellbogenwinkel ändert sich nicht"
+  },
+  "cable_high_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_triceps_overhead_single": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_bench_press": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_incline_press": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_flat_fly": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_row_supported": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_row_chest_supported": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_shoulder_press_seated": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_lateral_raise": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_front_raise": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_reverse_fly": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_curl_standing": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_hammer_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_incline_curl": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_triceps_overhead": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_triceps_lying": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Schulter"
+  },
+  "db_kickback_supported": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_goblet_squat": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "db_romanian_deadlift": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "db_reverse_lunge": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "db_bulgarian_split_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "db_calf_raise": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "cable_decline_fly": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: nicht erkannt"
+  },
+  "cable_low_fly": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_incline_fly": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_bench_press": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_incline_press": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_incline_row": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_high_row_kneeling": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_row_standing_v": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_row_rope": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_preacher_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_concentration_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_reverse_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_pushdown_supinated": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_pushdown_vbar": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_kickback": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_shoulder_press": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "cable_shrug": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Schulterheben: der Ellbogen bleibt gestreckt, die Bewegung kommt aus dem Schultergürtel"
+  },
+  "cable_rotation": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "cable_chop_high_low": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "cable_lift_low_high": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "db_arnold_press": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_bench_neutral": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_incline_fly": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_pullover": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_shrug": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "db_row_bent": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_press_standing": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_lateral_seated": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "db_concentration": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_preacher": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_spider": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_cross_hammer": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_zottman": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_reverse_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_forward_lunge": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "db_step_up": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "db_squat_sides": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "db_calf_seated": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Wadenheben: das Knie beugt nicht, die Bewegung liegt im Sprunggelenk"
+  },
+  "db_side_bend": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "bb_bench": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "bb_incline": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "bb_close_bench": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_high_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch führte Ellbogen, das passt nicht zur Bewegung"
+  },
+  "bb_front_squat": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "bb_deadlift": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bb_rdl": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bb_sumo": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "bb_row_over": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_row_under": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_seated_press": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_shrug": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Schulterheben: der Ellbogen bleibt gestreckt, die Bewegung kommt aus dem Schultergürtel"
+  },
+  "bb_glute_bridge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "bb_reverse_lunge": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "ez_curl": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "ez_reverse": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "ez_preacher": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "ez_lying_triceps": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Arm-Isolationsübung (Curl, Trizeps): nur der Ellbogen bildet sie ab, der Versuch führte Schulter"
+  },
+  "ez_overhead": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "assisted_pullup_neutral": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "assisted_pullup_supinated": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Klimmzug- oder Latzug-Bewegung am Griff, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "hanging_leg_raise": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Beinheben im Hängen: gezählt wird über Hüfte, im Versuch richtig gezählt"
+  },
+  "hanging_knee_raise": {
+    "kamera": {
+      "profil": "zug_haengend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Beinheben im Hängen: gezählt wird über Knie, im Versuch richtig gezählt"
+  },
+  "db_russian_twist": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "cable_side_bend": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbewegung: kein Gelenk im Bild folgt ihr"
+  },
+  "cable_crunch_standing": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
+  },
+  "bb_hip_thrust": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bb_good_morning": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "db_single_leg_rdl": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "db_deadlift": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "db_walking_lunge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Abwechselnde Übung: ein Signal einer Körperseite sähe nur die halbe Zahl"
+  },
+  "db_lateral_lunge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "db_sumo_squat": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "bb_bulgarian_split_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch führte Schulter, das passt nicht zur Bewegung"
+  },
+  "db_calf_raise_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Wadenheben: das Knie beugt nicht, die Bewegung liegt im Sprunggelenk"
+  },
+  "bb_calf_raise": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "bb_standing_press": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "bb_decline_bench": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_decline_press": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bb_reverse_grip_bench": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: nicht erkannt"
+  },
+  "ez_upright_row": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "cable_upright_row": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "db_reverse_fly_incline": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch führte Knie, das passt nicht zur Bewegung"
+  },
+  "db_external_rotation_side": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Schulterrotation: der Ellbogenwinkel ändert sich nicht"
+  },
+  "db_wrist_curl": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "db_wrist_extension": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Handgelenkübung: die Bewegung findet nur im Handgelenk statt"
+  },
+  "cable_curl_single": {
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Oberkörperübung, im Versuch richtig gezählt (Signal Ellbogen)"
+  },
+  "bw_crunch": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Schulter)"
+  },
+  "bw_leg_raise_lying": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bw_dead_bug": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu viel"
+  },
+  "bw_bird_dog": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Rumpfbeuge bzw. Vierfüßlerbewegung: kein Gelenkwinkel von Ellbogen, Schulter, Hüfte oder Knie bildet sie ab"
+  },
+  "bw_back_extension_floor": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bw_pushup": {
+    "kamera": {
+      "profil": "stuetz_boden",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Liegestütz oder Dip: der Ellbogen beugt und streckt, im Versuch richtig gezählt"
+  },
+  "bw_pushup_incline": {
+    "kamera": {
+      "profil": "stuetz_boden",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Liegestütz oder Dip: der Ellbogen beugt und streckt, im Versuch richtig gezählt"
+  },
+  "bw_pushup_knee": {
+    "kamera": {
+      "profil": "stuetz_boden",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Liegestütz oder Dip: der Ellbogen beugt und streckt, im Versuch richtig gezählt"
+  },
+  "bw_squat": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "bw_reverse_lunge": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    },
+    "grund": "Stehende Übung mit Kniebeuge oder Hüftbewegung, im Versuch richtig gezählt (Signal Knie)"
+  },
+  "bw_glute_bridge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch: zählt zu wenig"
+  },
+  "bw_glute_bridge_single": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Übung im Liegen oder auf der Bank, im Versuch richtig gezählt (Signal Hüfte)"
+  },
+  "bw_side_leg_raise": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Versuch führte Schulter, das passt nicht zur Bewegung"
+  },
+  "bw_plank_shoulder_tap": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_side_plank_hip_dip": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_russian_twist": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_bicycle_crunch": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_reverse_crunch": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_v_up": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_pushup_close": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_pushup_decline": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_pike_pushup": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_bench_dip": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_prone_lat_pull": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_prone_row": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_box_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_single_leg_box_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_forward_lunge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_lateral_lunge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_bulgarian_split_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_step_up": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_hip_thrust": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_glute_bridge_long": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_single_leg_rdl": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_calf_raise": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_calf_raise_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_side_adduction": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_clamshell": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_y_raise_prone": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_reverse_fly_prone": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_scapula_pushup": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "bw_tibialis_raise": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_swing": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_swing_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_deadlift": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_single_leg_rdl": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_clean": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_snatch": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_goblet_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_front_squat": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_reverse_lunge": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_thruster": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_row_supported": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_row_bent": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_high_pull": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_press_single": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_push_press": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_floor_press": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_halo": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_turkish_getup": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_windmill": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  },
+  "kb_russian_twist": {
+    "kamera": {
+      "profil": "ohne_kamera",
+      "signal": null,
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    },
+    "grund": "Kein Video, keine Kamera"
+  }
+}

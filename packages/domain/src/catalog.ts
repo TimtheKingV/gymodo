@@ -10,6 +10,7 @@ import {
   type VolumeKind,
 } from "./belastung.js";
 import { cardioListeSchema, type CardioWert } from "./cardio.js";
+import { kameraAusZeile, type KameraZeileOptional, type UebungKamera, type UebungTempo } from "./kamera.js";
 import { DomainError } from "./errors.js";
 import { VIDEO_BUCKET } from "./media.js";
 import { requireStudioStaff } from "./studio.js";
@@ -1231,6 +1232,10 @@ export type CatalogTypeExercise = {
   targetMax: number;
   /** Kurzes Etikett des Geraetetyps neben dem Namen (0076); null, solange der Import es nicht gesetzt hat. */
   geraetLabel: string | null;
+  /** Kameraprofil der Uebung (Migration 0077); null ohne Profil. */
+  kamera: UebungKamera | null;
+  /** Tempo je Wiederholung; null ohne Profil oder Tempo. */
+  tempo: UebungTempo | null;
   sortOrder: number;
   videoStoragePath: string | null;
   videoDurationS: number | null;
@@ -1348,7 +1353,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     .from("equipment_models")
     .select(
       `id, name, manufacturer, category, retired, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max, cardio_werte, photo_path,
-       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max, geraet_label), instruction_assets (storage_path, duration_s)),
+       equipment_model_exercises (sort_order, exercises (id, name, description, volume_kind, target_min, target_max, geraet_label, kamera_profil, kamera_signal, kamera_seite, tempo_senken_s, tempo_halten_s, tempo_heben_s, tempo_beginnt_mit), instruction_assets (storage_path, duration_s)),
        catalog_product_types (catalog_products (id, catalog_key, manufacturer, series, name, model_code, note, photo_path, photo_rights, load_unit, load_step, load_min, load_max, secondary_unit, secondary_step, secondary_min, secondary_max))`,
     )
     .eq("studio_id", katalogId)
@@ -1373,7 +1378,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
     photo_path: string | null;
     equipment_model_exercises: Array<{
       sort_order: number;
-      exercises: {
+      exercises: KameraZeileOptional & {
         id: string;
         name: string;
         description: string | null;
@@ -1416,6 +1421,7 @@ export async function listCatalogTypes(client: SupabaseClient): Promise<CatalogT
           targetMin: link.exercises.target_min,
           targetMax: link.exercises.target_max,
           geraetLabel: link.exercises.geraet_label ?? null,
+          ...kameraAusZeile(link.exercises),
           sortOrder: link.sort_order,
           videoStoragePath: video?.storage_path ?? null,
           videoDurationS: video?.duration_s ?? null,

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CATEGORIES, GROUPS, LOAD_UNITS, MAX_VOLUME, VOLUME_KINDS } from "./belastung.js";
 import { cardioWertSchema } from "./cardio.js";
+import { kameraDateiSchema, kameraFehler, tempoDateiSchema } from "./kamera.js";
 import { MAX_VIDEO_SECONDS } from "./media.js";
 import { BAUSTEINE, BEREICHE, PLAN_TYPEN } from "./trainingsplan-typen.js";
 
@@ -145,6 +146,9 @@ const uebungSchema = z
       })
       .strict()
       .optional(),
+    // Kameraprofil und Uebungstempo (Migration 0077); ohne Angabe bleibt die Uebung ohne beides.
+    kamera: kameraDateiSchema.optional(),
+    tempo: tempoDateiSchema.optional(),
   })
   .strict();
 
@@ -342,6 +346,7 @@ function querPruefen(k: KatalogDatei): string[] {
     if (u.target_max > MAX_VOLUME[u.volume_kind]) {
       fehler.push(`${wo}: target_max ist groesser als ${MAX_VOLUME[u.volume_kind]} (Obergrenze fuer ${u.volume_kind})`);
     }
+    for (const f of kameraFehler(u.kamera, u.tempo, u.volume_kind, { nurFreigeschaltet: true })) fehler.push(`${wo}: ${f}`);
     // Eine Uebung ohne Geraetetyp waere in der App unerreichbar.
     if (!zugeordnet.has(u.key)) fehler.push(`${wo}: haengt an keinem Geraetetyp`);
     if (!u.muscles.some((m) => m.role === "primary")) {

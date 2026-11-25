@@ -5,6 +5,8 @@ import { anhaengbareUebungen, eigeneUebungen, gymtavoZeilen, uebungenStand } fro
 function uebung(id: string, video: string | null = null, geraetLabel: string | null = null) {
   return {
     geraetLabel,
+    kamera: null,
+    tempo: null,
     exerciseId: id,
     name: `Übung ${id}`,
     description: null,

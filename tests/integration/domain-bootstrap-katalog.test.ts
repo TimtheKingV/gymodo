@@ -75,7 +75,9 @@ beforeAll(async () => {
     // Default, daher steht muscles in jeder Zeile.
     .insert([
       { studio_id: GYMTAVO, name: `Face Pull ${kennung}`, description: "Ellbogen hoch.", muscles: [{ key: "rear-delt", name: "Hintere Schulter", role: "primary" }], target_min: 12, target_max: 15 },
-      { studio_id: GYMTAVO, name: `Trizepsdruecken ${kennung}`, muscles: [], target_min: 10, target_max: 12 },
+      { studio_id: GYMTAVO, name: `Trizepsdruecken ${kennung}`, muscles: [], target_min: 10, target_max: 12,
+        kamera_profil: "ganzkoerper_stehend", kamera_signal: "knie", kamera_seite: "beide",
+        tempo_senken_s: 3, tempo_halten_s: 1, tempo_heben_s: 2, tempo_beginnt_mit: "senken" },
       { studio_id: studio.id, name: `Hausuebung ${kennung}`, muscles: [], target_min: 8, target_max: 12 },
     ])
     .select("id");
@@ -161,6 +163,24 @@ describe("getBootstrap -- Gymtavo-Katalog", () => {
     expect(kabelzug?.exercises[1]?.description).toBeNull();
     expect(kabelzug?.exercises[0]?.muscles).toEqual([{ key: "rear-delt", name: "Hintere Schulter", role: "primary" }]);
     expect(kabelzug?.exercises[1]?.muscles).toEqual([]);
+  });
+
+  it("liefert Kameraprofil und Tempo der Uebung, ohne Profil null", async () => {
+    const client = await userClient(mitgliedEmail);
+
+    const bootstrap = await getBootstrap(client);
+
+    const kabelzug = bootstrap.catalog?.equipmentTypes.find((t) => t.id === typ);
+    expect(kabelzug?.exercises[0]).toMatchObject({ kamera: null, tempo: null });
+    expect(kabelzug?.exercises[1]).toMatchObject({
+      kamera: { profil: "ganzkoerper_stehend", signal: "knie", seite: "beide", beginntMit: "senken" },
+      tempo: { senkenS: 3, haltenS: 1, hebenS: 2 },
+    });
+    const geraet = bootstrap.machines.find((m) => m.id === maschine);
+    expect(geraet?.exercises.find((u) => u.id === katalogUebung2)).toMatchObject({
+      kamera: { profil: "ganzkoerper_stehend" },
+      tempo: { hebenS: 2 },
+    });
   });
 
   it("fuehrt Studio-Modelle nicht als Gymtavo-Typen", async () => {

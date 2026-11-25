@@ -152,13 +152,24 @@ describe("uebungAusZeile", () => {
   it("reicht die Beschreibung fuer die Einweisung offline durch", () => {
     expect(
       uebungAusZeile({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volume_kind: "reps", target_min: 12, target_max: 15 }),
-    ).toEqual({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volumeKind: "reps", targetMin: 12, targetMax: 15, muscles: [], geraetLabel: null });
+    ).toEqual({ id: "e1", name: "Face Pull", description: "Ellbogen hoch.", volumeKind: "reps", targetMin: 12, targetMax: 15, muscles: [], geraetLabel: null, kamera: null, tempo: null });
   });
 
   it("reicht das Geraete-Etikett durch", () => {
     expect(
       uebungAusZeile({ id: "e1", name: "Bizepscurl", description: null, volume_kind: "reps", target_min: 8, target_max: 12, geraet_label: "Kurzhantel" }).geraetLabel,
     ).toBe("Kurzhantel");
+  });
+
+  it("liest Kameraprofil und Tempo aus den Spalten", () => {
+    expect(
+      uebungAusZeile({ id: "e1", name: "Kniebeuge", description: null, volume_kind: "reps", target_min: 8, target_max: 12,
+        kamera_profil: "ganzkoerper_stehend", kamera_signal: "knie", kamera_seite: "beide",
+        tempo_senken_s: "3.0", tempo_halten_s: "1.0", tempo_heben_s: "2.0", tempo_beginnt_mit: "senken" }),
+    ).toMatchObject({
+      kamera: { profil: "ganzkoerper_stehend", signal: "knie", seite: "beide", beginntMit: "senken" },
+      tempo: { senkenS: 3, haltenS: 1, hebenS: 2 },
+    });
   });
 
   it("reicht die Muskeln unveraendert durch", () => {

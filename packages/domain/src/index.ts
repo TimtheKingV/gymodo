@@ -396,3 +396,21 @@ export {
   setCardioCheck,
 } from "./cardio-checks.js";
 export type { CardioCheck } from "./cardio-checks.js";
+export {
+  FREIGESCHALTETE_PROFILE,
+  KAMERA_PROFILE,
+  KAMERA_SEITEN,
+  KAMERA_SIGNALE,
+  TEMPO_BEGINN,
+  kameraAusZeile,
+  kameraDateiSchema,
+  kameraFehler,
+  kameraSpalten,
+  tempoDateiSchema,
+  type KameraProfil,
+  type KameraSeite,
+  type KameraSignal,
+  type TempoBeginn,
+  type UebungKamera,
+  type UebungTempo,
+} from "./kamera.js";

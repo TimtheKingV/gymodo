@@ -1,6 +1,6 @@
 import Foundation
 
-public enum Weg: Sendable, Equatable { case kraftweg, ablassen }
+public enum Weg: Sendable, Equatable { case kraftweg, halten, ablassen }
 
 /// Umkehrpunkt oder Mitte eines Wegs der Soll-Welle.
 public struct Taktmarke: Sendable, Equatable {
@@ -13,7 +13,7 @@ public struct Taktmarke: Sendable, Equatable {
 }
 
 /// Soll-Lage der Last als reine Funktion der Zeit seit der Los-Marke (Tempo-Spec 6.3).
-/// Je Wiederholung ein Kraftweg (0 → 1) und ein Ablassen (1 → 0), jeweils eine Cosinus-Flanke ohne Haltezeit.
+/// Je Wiederholung ein Kraftweg (0 → 1), optional ein Halten oben (Lage 1) und ein Ablassen (1 → 0), jeweils eine Cosinus-Flanke.
 public struct Sollwelle: Sendable, Equatable {
     public static let standardHalbeBahnbreite = 0.2
 
@@ -34,7 +34,9 @@ public struct Sollwelle: Sendable, Equatable {
         if tau < vorgabe.kraftweg {
             return Self.flanke(tau / vorgabe.kraftweg)
         }
-        return 1 - Self.flanke((tau - vorgabe.kraftweg) / vorgabe.ablassen)
+        let ablassStart = vorgabe.kraftweg + vorgabe.halten
+        if tau < ablassStart { return 1 }
+        return 1 - Self.flanke((tau - ablassStart) / vorgabe.ablassen)
     }
 
     /// 0-basiert, nil vor der Los-Marke.
@@ -45,7 +47,9 @@ public struct Sollwelle: Sendable, Equatable {
 
     public func weg(bei t: TimeInterval) -> Weg? {
         guard t.isFinite, t >= 0 else { return nil }
-        return t.truncatingRemainder(dividingBy: vorgabe.periode) < vorgabe.kraftweg ? .kraftweg : .ablassen
+        let tau = t.truncatingRemainder(dividingBy: vorgabe.periode)
+        if tau < vorgabe.kraftweg { return .kraftweg }
+        return tau < vorgabe.kraftweg + vorgabe.halten ? .halten : .ablassen
     }
 
     public func zielzeit(wiederholungen: Int) -> TimeInterval {
@@ -59,10 +63,9 @@ public struct Sollwelle: Sendable, Equatable {
         let p = vorgabe.periode
         guard let erste = Int(exactly: (max(von, 0) / p).rounded(.down)),
               let letzte = Int(exactly: (bis / p).rounded(.up)) else { return [] }
-        let punkte: [(Double, Double)] = [
-            (0, 0), (vorgabe.kraftweg / 2, 0.5),
-            (vorgabe.kraftweg, 1), (vorgabe.kraftweg + vorgabe.ablassen / 2, 0.5),
-        ]
+        var punkte: [(Double, Double)] = [(0, 0), (vorgabe.kraftweg / 2, 0.5), (vorgabe.kraftweg, 1)]
+        if vorgabe.halten > 0 { punkte.append((vorgabe.kraftweg + vorgabe.halten, 1)) }
+        punkte.append((vorgabe.kraftweg + vorgabe.halten + vorgabe.ablassen / 2, 0.5))
         var marken: [Taktmarke] = []
         for k in erste...letzte {
             let start = Double(k) * p

@@ -328,3 +328,28 @@ describe("pruefeKatalog plan", () => {
     expect(pruefeKatalog(beispielKatalog().roh).ok).toBe(true);
   });
 });
+
+describe("pruefeKatalog kamera und tempo", () => {
+  const setze = (roh: ReturnType<typeof beispielKatalog>["roh"], felder: Record<string, unknown>) => Object.assign(roh.exercises[0] as Record<string, unknown>, felder);
+
+  it("nimmt ohne_kamera mit Tempo an", () => {
+    const { roh } = beispielKatalog();
+    setze(roh, { kamera: { profil: "ohne_kamera", beginnt_mit: "senken" }, tempo: { senken_s: 3, halten_s: 1, heben_s: 2 } });
+    const pruefung = pruefeKatalog(roh);
+    expect(pruefung.ok && pruefung.wert.exercises[0]?.kamera).toEqual({ profil: "ohne_kamera", signal: null, seite: "beide", beginnt_mit: "senken" });
+  });
+  it("lehnt tempo ohne kamera mit Index und Schluessel ab", () => {
+    const fehler = fehlerVon((roh) => setze(roh, { tempo: { senken_s: 3, halten_s: 1, heben_s: 2 } }));
+    expect(fehler).toHaveLength(1);
+    expect(fehler[0]).toMatch(/^exercises\[0\] "[^"]+": tempo nur zusammen mit kamera/);
+  });
+  it("lehnt ein nicht freigeschaltetes Profil ab", () => {
+    const fehler = fehlerVon((roh) => setze(roh, { kamera: { profil: "oberkoerper", signal: "ellbogen", beginnt_mit: "heben" } }));
+    expect(fehler).toHaveLength(1);
+    expect(fehler[0]).toMatch(/^exercises\[0\] .*freigeschaltet/);
+  });
+  it("lehnt ein vertipptes Feld ab", () => {
+    const fehler = fehlerVon((roh) => setze(roh, { kamera: { profil: "ohne_kamera", signl: null, beginnt_mit: "heben" } }));
+    expect(fehler.join("\n")).toMatch(/unbekanntes Feld "signl"/);
+  });
+});
