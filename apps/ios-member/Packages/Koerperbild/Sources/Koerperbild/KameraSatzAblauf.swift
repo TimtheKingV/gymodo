@@ -50,6 +50,15 @@ public struct KameraSatzAblauf: Sendable {
     static let spurDauer: TimeInterval = 6
     /// Vorausschau, an der die Richtung der Soll-Welle erkannt wird.
     static let richtungsschritt: TimeInterval = 0.05
+    static let vorlaufSekunden: TimeInterval = 2
+    /// Ununterbrochene Ruhe, nach der ein Satz mit mindestens einer Wiederholung von selbst endet.
+    static let ruheBisSatzende: TimeInterval = 8
+    /// Unruhe, die laenger als das dauert, zaehlt als Bewegung seit der Los-Marke.
+    static let bewegungAb: TimeInterval = 0.5
+    /// Ohne Wiederholung nach so vielen Wellenperioden: keine Bewegung erkannt.
+    static let perioden = 2.0
+    static let bildrateFenster: TimeInterval = 3
+    static let mindestBildrate = 15.0
 
     public private(set) var schritt: Schritt
     public private(set) var sollzeit: TimeInterval?
@@ -68,6 +77,11 @@ public struct KameraSatzAblauf: Sendable {
     private var losMarke: TimeInterval?
     private var seiteFestgehalten = false
     private var nebenDerBahnSeit: TimeInterval?
+    private var vorlaufBeginn: TimeInterval?
+    private var ruheSeit: TimeInterval?
+    private var unruheSeit: TimeInterval?
+    private var bewegtSichSeitLos = false
+    private var bildzeiten: [TimeInterval] = []
 
     public init(vorgabe: Kameravorgabe, tempo: Uebungstempo, gemerkterHub: Double?, mitVideo: Bool) {
         self.vorgabe = vorgabe
@@ -98,6 +112,7 @@ public struct KameraSatzAblauf: Sendable {
     public mutating func bild(t: TimeInterval, skelett: Skelett?) {
         pruefung.eingabe(t: t, skelett: skelett)
         let lage = koerperlage.verarbeite(t: t, skelett: skelett)
+        bildrateAktualisieren(t: t)
         switch schritt {
         case .aufstellen:
             anweisung = Aufstellanweisung.aus(skelett: skelett, pruefung: pruefung, vorgabe: vorgabe)
@@ -106,8 +121,19 @@ public struct KameraSatzAblauf: Sendable {
             countdown(t: t)
         case .satz:
             satz(t: t, lage: lage)
+        case .verloren:
+            if pruefung.bestanden {
+                vorlaufBeginn = t
+                schritt = .vorlauf(rest: Int(Self.vorlaufSekunden))
+            }
+        case .vorlauf:
+            vorlauf(t: t)
         default:
             break
+        }
+        switch schritt {
+        case .satz, .vorlauf: bildrateZuNiedrig = bildrateZuNiedrig(t: t)
+        default: break
         }
     }
 
@@ -120,7 +146,10 @@ public struct KameraSatzAblauf: Sendable {
     }
 
     public mutating func satzBeenden() {
-        guard schritt == .satz else { return }
+        switch schritt {
+        case .satz, .verloren, .vorlauf: break
+        default: return
+        }
         let n = wiederholungen
         guard n >= 1 else {
             schritt = .fertig(.ohneKamera(gezaehlt: nil))
@@ -138,6 +167,38 @@ public struct KameraSatzAblauf: Sendable {
         schritt = .fertig(.ohneKamera(gezaehlt: n > 0 ? n : nil))
     }
 
+    /// Nach `.keineBewegung`: zurueck in den Countdown, Rueckblick und Spur beginnen neu.
+    public mutating func neuStarten() {
+        guard schritt == .keineBewegung else { return }
+        satzrueckblick = Satzrueckblick(welle: welle, hubWarGemerkt: koerperlage.hubWarGemerkt)
+        spur = []
+        sollzeit = nil
+        losMarke = nil
+        countdownBeginn = nil
+        takt = .imTakt
+        ruhemessungZuruecksetzen()
+        schritt = .countdown(rest: nil)
+    }
+
+    /// App im Hintergrund: der Satz pausiert (`.verloren`), ein Countdown beginnt beim Aufstellen von vorn.
+    /// Die festgehaltene Seite bleibt.
+    public mutating func unterbrechen() {
+        switch schritt {
+        case .satz, .vorlauf:
+            koerperlage.unterbrechen()
+            takt = .imTakt
+            nebenDerBahnSeit = nil
+            vorlaufBeginn = nil
+            schritt = .verloren
+        case .countdown:
+            countdownBeginn = nil
+            schritt = .aufstellen
+        default:
+            break
+        }
+        pruefung.zuruecksetzen()
+    }
+
     // MARK: Schritte
 
     private mutating func countdown(t: TimeInterval) {
@@ -153,16 +214,54 @@ public struct KameraSatzAblauf: Sendable {
         let vergangen = t - (countdownBeginn ?? t)
         if vergangen >= Self.countdownSekunden {
             koerperlage.los(t: t)
-            losMarke = t
-            sollzeit = 0
+            neueLosMarke(t)
             schritt = .satz
         } else {
             schritt = .countdown(rest: Int((Self.countdownSekunden - vergangen).rounded(.up)))
         }
     }
 
+    private mutating func vorlauf(t: TimeInterval) {
+        guard let beginn = vorlaufBeginn else { return }
+        if pruefung.verloren {
+            vorlaufBeginn = nil
+            schritt = .verloren
+            return
+        }
+        let vergangen = t - beginn
+        if vergangen >= Self.vorlaufSekunden {
+            koerperlage.los(t: t)
+            neueLosMarke(t)
+            schritt = .satz
+        } else {
+            schritt = .vorlauf(rest: Int((Self.vorlaufSekunden - vergangen).rounded(.up)))
+        }
+    }
+
+    private mutating func neueLosMarke(_ t: TimeInterval) {
+        losMarke = t
+        sollzeit = 0
+        vorlaufBeginn = nil
+        nebenDerBahnSeit = nil
+        ruhemessungZuruecksetzen()
+    }
+
+    private mutating func ruhemessungZuruecksetzen() {
+        ruheSeit = nil
+        unruheSeit = nil
+        bewegtSichSeitLos = false
+    }
+
     private mutating func satz(t: TimeInterval, lage: Lage) {
         guard let losMarke else { return }
+        if pruefung.verloren {
+            // Laenger als 1 s ohne Pflichtgelenke: der Satz pausiert, `sollzeit` steht.
+            koerperlage.unterbrechen()
+            takt = .imTakt
+            nebenDerBahnSeit = nil
+            schritt = .verloren
+            return
+        }
         let s = t - losMarke
         sollzeit = s
         satzrueckblick.erfasse(lage, sollzeit: s)
@@ -172,10 +271,42 @@ public struct KameraSatzAblauf: Sendable {
             pruefung.seiteFesthalten(seite)
             seiteFestgehalten = true
         }
-        takt(t: t, sollzeit: s, lage: lage)
+        taktPruefen(t: t, sollzeit: s, lage: lage)
+        satzendePruefen(t: t, sollzeit: s)
     }
 
-    private mutating func takt(t: TimeInterval, sollzeit s: TimeInterval, lage: Lage) {
+    private mutating func satzendePruefen(t: TimeInterval, sollzeit s: TimeInterval) {
+        if koerperlage.hubZuKlein {
+            schritt = .bewegungZuKlein
+            return
+        }
+        let ruhig = koerperlage.istRuhig
+        ruheSeit = ruhig ? (ruheSeit ?? t) : nil
+        if ruhig {
+            unruheSeit = nil
+        } else {
+            unruheSeit = unruheSeit ?? t
+            if t - (unruheSeit ?? t) > Self.bewegungAb { bewegtSichSeitLos = true }
+        }
+        if wiederholungen >= 1 {
+            if let seit = ruheSeit, t - seit >= Self.ruheBisSatzende { satzBeenden() }
+        } else if s > Self.perioden * tempo.vorgabe.periode, !bewegtSichSeitLos {
+            schritt = .keineBewegung
+        }
+    }
+
+    private mutating func bildrateAktualisieren(t: TimeInterval) {
+        bildzeiten.append(t)
+        while bildzeiten.count > 1, bildzeiten[1] <= t - Self.bildrateFenster { bildzeiten.removeFirst() }
+    }
+
+    /// Mittlere Bildrate der letzten 3 s unter 15/s; erst wenn das Fenster voll ist.
+    private func bildrateZuNiedrig(t: TimeInterval) -> Bool {
+        guard let erste = bildzeiten.first, t - erste >= Self.bildrateFenster - 1e-9 else { return false }
+        return Double(bildzeiten.count - 1) / (t - erste) < Self.mindestBildrate
+    }
+
+    private mutating func taktPruefen(t: TimeInterval, sollzeit s: TimeInterval, lage: Lage) {
         guard lage.sicher else {
             nebenDerBahnSeit = nil
             return
