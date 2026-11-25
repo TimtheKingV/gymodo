@@ -31,6 +31,8 @@ final class KameraAblaufModell {
     private(set) var ansicht: Ansicht = .ablauf
     private(set) var ablauf: KameraSatzAblauf?
     var videoOffen = false
+    /// Das zuletzt erkannte Skelett fuer die Strichfigur; nil ohne laufende Kamera.
+    private(set) var letztesSkelett: Skelett?
     var quelle: (any Bildquelle)? { aktiveQuelle }
 
     private let naht: any KameraNaht
@@ -198,6 +200,7 @@ final class KameraAblaufModell {
         startNummer += 1
         kameraLaeuft = false
         aktiveQuelle?.stoppen()
+        letztesSkelett = nil
     }
 
     /// Kann fuer einen Ausfall zweimal kommen; das zweite Mal ist wirkungslos.
@@ -212,6 +215,7 @@ final class KameraAblaufModell {
     private func bildEmpfangen(_ bild: Kamerabild) {
         guard ansicht == .ablauf, kameraLaeuft, var maschine = ablauf else { return }
         if case .fertig = maschine.schritt { return }
+        letztesSkelett = bild.skelett
         maschine.bild(t: bild.t, skelett: bild.skelett)
         ablauf = maschine
         satzendePruefen()

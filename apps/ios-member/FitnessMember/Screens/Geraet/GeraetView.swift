@@ -725,6 +725,13 @@ struct GeraetScreen: View {
         .sheet(isPresented: $problemOffen, onDismiss: { modell.zirkelMeldungNachholen() }) {
             ProblemSheet(modell: modell) {}
         }
+        // Der Kamera-Ablauf als Vollbild. An einem eigenen Hintergrund-View, damit er nicht mit der
+        // Kalibrierungs-Abdeckung am selben View kollidiert.
+        .background {
+            Color.clear.fullScreenCover(isPresented: $modell.kameraAblaufOffen) {
+                KameraAblaufCover(naht: modell)
+            }
+        }
         // "Einstellung aendern" auf der Satzseite. Der Erstkontakt selbst
         // laeuft seit der Testnotiz 11.10. (#6) im Drawer VOR der Seite.
         .fullScreenCover(isPresented: $modell.kalibrierungOffen) {
