@@ -1628,7 +1628,10 @@ extension GeraetModel: KameraNaht {
     /// alles wie heute.
     var kameraStart: KameraStart? {
         guard !imZirkel, !istCardio,
-              let uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
+              var uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
+        #if DEBUG
+        uebung = KameraTestprofile.ergaenzt(uebung)
+        #endif
         return uebung.kameraStart(satzZiel: satzZiel, sollWiederholungen: startUmfang)
     }
 

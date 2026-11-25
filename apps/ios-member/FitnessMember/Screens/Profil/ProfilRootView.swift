@@ -14,6 +14,9 @@ struct ProfilRootView: View {
     @AppStorage(Einstellungen.zirkelPauseSekundenKey) private var zirkelPauseSekunden =
         Einstellungen.zirkelPauseVorgabe
     @AppStorage(Einstellungen.satzZielKey) private var satzZiel = Einstellungen.satzZielVorgabe
+    #if DEBUG
+    @AppStorage(KameraTestprofile.schluessel) private var kameraTestprofile = false
+    #endif
 
     @State private var nameOffen = false
     /// Die drei Picker-Felder aus "ÜBER DICH" plus "Richtung" aus
@@ -299,6 +302,14 @@ struct ProfilRootView: View {
             #if DEBUG
             // Paket 3, F4: der Tracker wird hier eingerichtet, nicht im Training.
             if Funktionen.sensorKarte { TrackerProfilZeile() }
+            Toggle(isOn: $kameraTestprofile) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kamera-Testprofile")
+                    Text("Profile aus dem Zuordnungsvorschlag (Ganzkörper stehend, Oberkörper)")
+                        .font(DesignSystem.Typography.fliesstext)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
+            }
             #endif
 
             NavigationLink("Passwort ändern") { MemberPasswortAendernView() }

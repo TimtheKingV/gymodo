@@ -1,0 +1,1442 @@
+[
+  {
+    "name": "Dips",
+    "key": "assisted_dip",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl",
+    "key": "bb_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Kreuzheben",
+    "key": "bb_deadlift",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Frontkniebeuge",
+    "key": "bb_front_squat",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Good Morning",
+    "key": "bb_good_morning",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Rumänisches Kreuzheben",
+    "key": "bb_rdl",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Ausfallschritt – rückwärts",
+    "key": "bb_reverse_lunge",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Rudern – Obergriff",
+    "key": "bb_row_over",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – Untergriff",
+    "key": "bb_row_under",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterdrücken – sitzend",
+    "key": "bb_seated_press",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterdrücken – stehend",
+    "key": "bb_standing_press",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Kreuzheben – Sumo",
+    "key": "bb_sumo",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Ausfallschritt – rückwärts",
+    "key": "bw_reverse_lunge",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Kniebeuge",
+    "key": "bw_squat",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Brustdrücken – einarmig",
+    "key": "cable_chest_press_single",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Brustdrücken – stehend",
+    "key": "cable_chest_press_standing",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Konzentrationscurl",
+    "key": "cable_concentration_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl – Stange",
+    "key": "cable_curl_bar",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl – einarmig",
+    "key": "cable_curl_single",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Face Pull",
+    "key": "cable_face_pull",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Flys – Brusthöhe",
+    "key": "cable_fly_mid",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Frontheben",
+    "key": "cable_front_raise_bar",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Hammercurl – Seil",
+    "key": "cable_hammer_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl – hoch, beidarmig",
+    "key": "cable_high_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "High Row – kniend",
+    "key": "cable_high_row_kneeling",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Hüftstrecken",
+    "key": "cable_hip_extension",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Rudern – brustgestützt",
+    "key": "cable_incline_row",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizeps-Kickback – einarmig",
+    "key": "cable_kickback",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Seitheben – einarmig",
+    "key": "cable_lateral_raise",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Flys – von unten",
+    "key": "cable_low_fly",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Scottcurl",
+    "key": "cable_preacher_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Pull-through",
+    "key": "cable_pull_through",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Trizepsdrücken – Untergriff",
+    "key": "cable_pushdown_supinated",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsdrücken – V-Stange",
+    "key": "cable_pushdown_vbar",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Curl",
+    "key": "cable_reverse_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Flys – stehend",
+    "key": "cable_reverse_fly_standing",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – enger Neutralgriff",
+    "key": "cable_row_neutral",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – sitzend, Seil",
+    "key": "cable_row_rope",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – einarmig",
+    "key": "cable_row_single",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – stehend, V-Griff",
+    "key": "cable_row_standing_v",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – breiter Obergriff",
+    "key": "cable_row_wide",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterdrücken – stehend",
+    "key": "cable_shoulder_press",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Gestrecktes Armziehen",
+    "key": "cable_straight_arm_pulldown",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsstrecken über Kopf – Seil",
+    "key": "cable_triceps_overhead",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsstrecken über Kopf – einarmig",
+    "key": "cable_triceps_overhead_single",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Aufrechtes Rudern",
+    "key": "cable_upright_row",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Brustpresse – Neutralgriff",
+    "key": "chest_press_neutral",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Brustpresse – Obergriff",
+    "key": "chest_press_pronated",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Brustpresse – einarmig",
+    "key": "chest_press_single",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Arnold Press",
+    "key": "db_arnold_press",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Konzentrationscurl",
+    "key": "db_concentration",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Hammercurl – Cross-Body",
+    "key": "db_cross_hammer",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl",
+    "key": "db_curl_standing",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Kreuzheben",
+    "key": "db_deadlift",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Ausfallschritt – vorwärts",
+    "key": "db_forward_lunge",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Frontheben",
+    "key": "db_front_raise",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Goblet Squat",
+    "key": "db_goblet_squat",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Hammercurl",
+    "key": "db_hammer_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizeps-Kickback – einarmig, abgestützt",
+    "key": "db_kickback_supported",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Seitheben",
+    "key": "db_lateral_raise",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Seitheben – sitzend",
+    "key": "db_lateral_seated",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Scottcurl",
+    "key": "db_preacher",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterdrücken – stehend",
+    "key": "db_press_standing",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Überzüge",
+    "key": "db_pullover",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Curl",
+    "key": "db_reverse_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Flys – vorgebeugt",
+    "key": "db_reverse_fly",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Ausfallschritt – rückwärts",
+    "key": "db_reverse_lunge",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Rumänisches Kreuzheben",
+    "key": "db_romanian_deadlift",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Rudern – vorgebeugt",
+    "key": "db_row_bent",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – brustgestützt",
+    "key": "db_row_chest_supported",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – einarmig, abgestützt",
+    "key": "db_row_supported",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterdrücken – sitzend",
+    "key": "db_shoulder_press_seated",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rumänisches Kreuzheben – einbeinig",
+    "key": "db_single_leg_rdl",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Spider Curl",
+    "key": "db_spider",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Kniebeuge",
+    "key": "db_squat_sides",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Sumo-Kniebeuge",
+    "key": "db_sumo_squat",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 3,
+      "halten_s": 1,
+      "heben_s": 2
+    }
+  },
+  {
+    "name": "Trizepsstrecken über Kopf",
+    "key": "db_triceps_overhead",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Zottman Curl",
+    "key": "db_zottman",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Bizepscurl",
+    "key": "ez_curl",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsstrecken über Kopf",
+    "key": "ez_overhead",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Scottcurl",
+    "key": "ez_preacher",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Curl",
+    "key": "ez_reverse",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Aufrechtes Rudern",
+    "key": "ez_upright_row",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schrägbrustpresse",
+    "key": "incline_chest_press",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Seitheben",
+    "key": "lateral_raise_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Butterfly",
+    "key": "pec_deck_handles",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Scottcurl",
+    "key": "preacher_curl_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Überzüge",
+    "key": "pullover_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Reverse Flys",
+    "key": "reverse_fly_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – enger Neutralgriff",
+    "key": "row_machine_neutral",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Rudern – Obergriff",
+    "key": "row_machine_pronated",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Dips – sitzend",
+    "key": "seated_dip_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Schulterpresse",
+    "key": "shoulder_press_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsstrecken",
+    "key": "triceps_extension_machine",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsdrücken – Stange",
+    "key": "triceps_pushdown_bar",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  },
+  {
+    "name": "Trizepsdrücken – Seil",
+    "key": "triceps_pushdown_rope",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 2.5,
+      "halten_s": 0,
+      "heben_s": 1.5
+    }
+  }
+]
