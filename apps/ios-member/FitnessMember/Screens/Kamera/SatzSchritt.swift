@@ -70,7 +70,7 @@ struct SatzSchritt: View {
     private var kopf: some View {
         HStack(spacing: DesignSystem.Spacing.s12) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text("SATZ \(satz) VON \(start.satzZiel)")
+                Text("\(Satzkopf.text(satz: satz, ziel: start.satzZiel))")
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)
@@ -249,7 +249,7 @@ struct HinweisSchritt: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("SATZ \(satz) VON \(start.satzZiel) · \(start.name.uppercased())")
+                Text("\(Satzkopf.text(satz: satz, ziel: start.satzZiel)) · \(start.name.uppercased())")
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)

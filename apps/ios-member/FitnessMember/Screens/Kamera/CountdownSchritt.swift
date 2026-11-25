@@ -22,7 +22,7 @@ struct CountdownSchritt: View {
     private var kopf: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
             HStack {
-                Text("SATZ \(satz) VON \(start.satzZiel) · \(start.name.uppercased())")
+                Text("\(Satzkopf.text(satz: satz, ziel: start.satzZiel)) · \(start.name.uppercased())")
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)

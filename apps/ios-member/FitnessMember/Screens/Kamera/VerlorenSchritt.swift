@@ -21,7 +21,7 @@ struct VerlorenSchritt: View {
     private var kopf: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s4) {
-                Text("SATZ \(satz) VON \(start.satzZiel) · PAUSIERT")
+                Text("\(Satzkopf.text(satz: satz, ziel: start.satzZiel)) · PAUSIERT")
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)
@@ -82,7 +82,7 @@ struct VorlaufSchritt: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("SATZ \(satz) VON \(start.satzZiel) · \(start.name.uppercased())")
+                Text("\(Satzkopf.text(satz: satz, ziel: start.satzZiel)) · \(start.name.uppercased())")
                     .font(DesignSystem.Typography.label)
                     .tracking(0.9)
                     .foregroundStyle(DesignSystem.Color.textMuted)

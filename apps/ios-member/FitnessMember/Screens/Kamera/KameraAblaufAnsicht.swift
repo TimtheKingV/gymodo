@@ -71,8 +71,9 @@ struct KameraAblaufAnsicht: View {
     /// Die Schritte mit Kamerabild.
     private func zeigtKamera(_ schritt: KameraSatzAblauf.Schritt) -> Bool {
         switch schritt {
-        case .aufstellen, .countdown, .satz, .verloren, .vorlauf, .keineBewegung, .bewegungZuKlein: true
-        case .video, .fertig: false
+        case .aufstellen, .countdown, .satz, .verloren, .vorlauf, .keineBewegung: true
+        // bewegungZuKlein: die Kamera steht, ein eingefrorenes Bild waere irrefuehrend.
+        case .video, .fertig, .bewegungZuKlein: false
         }
     }
 
@@ -84,6 +85,8 @@ struct KameraAblaufAnsicht: View {
                 KameraBildflaeche(ziel: ziel, skelett: modell.letztesSkelett, profil: start.vorgabe.profil,
                                   bestanden: bestanden(ablauf.schritt), warnend: ablauf.schritt == .aufstellen && ablauf.anweisung != .passt,
                                   dezent: ablauf.schritt == .satz, hervor: signalgelenke(start))
+            } else if ablauf.schritt == .bewegungZuKlein {
+                DesignSystem.Color.bg.ignoresSafeArea()
             }
             schritt(ablauf, start: start)
         }

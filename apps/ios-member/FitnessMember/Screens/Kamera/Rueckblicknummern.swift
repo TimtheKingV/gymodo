@@ -14,5 +14,10 @@ struct Rueckblicknummern: Equatable {
     }
 
     /// "SATZ 2 VON 3"; ein Zusatzsatz ueber dem Ziel ohne "VON".
-    var kopfText: String { kopf > satzZiel ? "SATZ \(kopf)" : "SATZ \(kopf) VON \(satzZiel)" }
+    var kopfText: String { Satzkopf.text(satz: kopf, ziel: satzZiel) }
+}
+
+/// "SATZ 2 VON 3" fuer die Kopfzeilen; ein Zusatzsatz ueber dem Ziel ohne "VON".
+enum Satzkopf {
+    static func text(satz: Int, ziel: Int) -> String { satz > ziel ? "SATZ \(satz)" : "SATZ \(satz) VON \(ziel)" }
 }

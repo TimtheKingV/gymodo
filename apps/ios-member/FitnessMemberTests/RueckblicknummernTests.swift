@@ -24,4 +24,10 @@ import Testing
         #expect(n.kopf == 4 && n.knopf == 5)
         #expect(n.kopfText == "SATZ 4")
     }
+
+    @Test func satzkopfDerAblaufSchritte() {
+        #expect(Satzkopf.text(satz: 2, ziel: 3) == "SATZ 2 VON 3")
+        #expect(Satzkopf.text(satz: 3, ziel: 3) == "SATZ 3 VON 3")
+        #expect(Satzkopf.text(satz: 4, ziel: 3) == "SATZ 4")
+    }
 }
