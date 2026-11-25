@@ -27,13 +27,15 @@ final class FrontkameraQuelle: Bildquelle {
             beiBild(bild)
         }
         let beiAusfall: @Sendable () -> Void = { [weak self] in
-            Task { @MainActor in self?.beiFehler?() }
+            Task { @MainActor in
+                guard let self, self.laufNummer == nummer else { return }
+                self.beiFehler?()
+            }
         }
         let lief = await kern.starten(beiBild: gefiltert, beiAusfall: beiAusfall)
-        guard nummer == laufNummer else {
-            kern.stoppen()
-            throw CancellationError()
-        }
+        // Kein eigenes kern.stoppen(): stoppen() hat den Stopp schon eingereiht, ein zweiter koennte
+        // die Sitzung eines neueren Starts beenden.
+        guard nummer == laufNummer else { throw CancellationError() }
         guard lief else { throw BildquellenFehler.nichtVerfuegbar }
     }
 
