@@ -367,6 +367,8 @@ final class GeraetModel {
     private var startUmfang: Int?
     /// Der Satz, den die Kamera zuletzt gesichert hat: nur der darf nachgetragen werden.
     private var kameraSatzId: UUID?
+    /// Die laufende Pause hat ein Kamera-Satz geoeffnet: derselbe Satz darf nicht noch einmal gesichert werden.
+    private var pauseAusKameraSatz = false
     private var sensorStill: Bool { kameraWahl == .mitKamera || kameraSatzOhneSensor }
 
     /// Wie das Mitglied an diesem Geraet gelandet ist.
@@ -1198,6 +1200,7 @@ final class GeraetModel {
     }
 
     func uebungWechseln(zu neue: String) {
+        pauseAusKameraSatz = false
         uebungId = neue
         let letzter = letzterSatz(fuer: neue)
         belastung = Rastwerte.naechster(
@@ -1402,6 +1405,7 @@ final class GeraetModel {
     /// den Raedern -- ein Mitglied, das vorzeitig weitermacht, landet nicht
     /// in einem anderen Zustand als eines, das die Pause aussitzt.
     func pauseBeenden() {
+        pauseAusKameraSatz = false
         // Ablauf-Task und "Weiter" koennen beide feuern. Der zweite Aufruf
         // wuerde den eben begonnenen Mitschnitt sofort wieder abbrechen.
         guard phase != .eingabe else { return }
@@ -1417,6 +1421,7 @@ final class GeraetModel {
     /// Am Cardio-Geraet ohne Pause: sie boete nur die Belastungsaenderung an,
     /// und eine Belastung wird dort nie gesendet.
     func weitererSatz() {
+        pauseAusKameraSatz = false
         kameraSatzVorbereiten()
         if istCardio {
             phase = .eingabe
@@ -1639,8 +1644,12 @@ extension GeraetModel: KameraNaht {
     /// auf das Rad). Der Ablauf bleibt offen: der Rueckblick erscheint auch
     /// nach einem abgelehnten Satz.
     func kameraSatzSichern(wiederholungen: Int) async -> KameraSichern {
-        // Ein Kamera-Satz geht nie an einer Pause verloren (z. B. "Weiterer Satz" oeffnet eine neue Pause).
-        if case .pause = phase { pauseBeenden() }
+        if case .pause = phase {
+            // Derselbe Satz zweimal gemeldet: nichts schreiben. Eine fremde Pause (z. B. "Weiterer Satz")
+            // endet dagegen, damit der Kamera-Satz nie an ihr verloren geht.
+            if pauseAusKameraSatz { return .abgelehnt("Satz ist schon gesichert.") }
+            pauseBeenden()
+        }
         umfang = wiederholungen
         kameraSatzId = nil
         // Ein Grund aus einem frueheren Versuch gilt hier nicht.
@@ -1651,6 +1660,7 @@ extension GeraetModel: KameraNaht {
             return .abgelehnt(satzAbgelehnt ?? "Satz konnte nicht gesichert werden.")
         }
         kameraSatzId = sessions.letzterWrite(blockId: blockId)?.setId
+        pauseAusKameraSatz = true
         return .gesichert(letzterSatz: phase == .abschluss)
     }
 

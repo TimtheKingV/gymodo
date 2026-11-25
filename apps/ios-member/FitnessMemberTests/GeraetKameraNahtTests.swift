@@ -181,11 +181,21 @@ struct GeraetKameraNahtTests {
         #expect(double.ergebnisAufrufe == 0)
     }
 
-    @Test func kameraSatzInDerPauseBeendetSieUndSichert() async {
+    @Test func zweiterKameraSatzDerselbenPauseIstAbgelehntUndSchreibtNichts() async {
         let a = aufbau()
         #expect(await a.sut.kameraSatzSichern(wiederholungen: 7) == .gesichert(letzterSatz: false))
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9) == .abgelehnt("Satz ist schon gesichert."))
+        #expect(a.writes.geschriebene.count == 1)
+        // Der abgelehnte Versuch laesst Umfang und Satz des ersten unberuehrt.
+        #expect(a.sut.umfang == 7)
+    }
+
+    @Test func kameraSatzInEinerFremdenPauseBeendetSieUndSichert() async {
+        let a = aufbau(satzZiel: 1)
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 7) == .gesichert(letzterSatz: true))
+        a.sut.weitererSatz()
         #expect(a.sut.laufendePause != nil)
-        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9) == .gesichert(letzterSatz: false))
+        #expect(await a.sut.kameraSatzSichern(wiederholungen: 9) == .gesichert(letzterSatz: true))
         #expect(a.writes.geschriebene.count == 2)
     }
 
