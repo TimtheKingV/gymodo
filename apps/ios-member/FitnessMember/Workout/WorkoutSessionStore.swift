@@ -279,6 +279,37 @@ final class WorkoutSessionStore {
         enqueue(PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body))
     }
 
+    /// Setzt den Umfang am Satz der laufenden Einheit. Nur lokal.
+    func umfangSetzen(setId: UUID, umfang: Int) {
+        guard var session = gespeicherteSession else { return }
+        for b in session.bloecke.indices {
+            if let s = session.bloecke[b].saetze.firstIndex(where: { $0.id == setId }) {
+                session.bloecke[b].saetze[s].volume = umfang
+                gespeicherteSession = session
+                fileStore.save(session)
+                return
+            }
+        }
+    }
+
+    /// Korrigiert die Wiederholungen des zuletzt gesicherten Satzes des
+    /// Blocks (Rueckblick des Kamera-Ablaufs): ersetzt volume lokal und
+    /// reiht denselben Satz mit demselben setId erneut ein. Die Herkunft
+    /// bleibt, wie sie ist. Ohne letzten Satz in der Einheit: nichts.
+    func umfangNachtragen(blockId: String, umfang: Int, enqueue: (PendingSetWrite) -> Void) {
+        guard let letzter = letzterWrite(blockId: blockId) else { return }
+        var body = letzter.body
+        body.volume = umfang
+        // Eine schon beantwortete Reserve-Frage gehoert weiter zum Satz.
+        if let rir = reserven[blockId]?.rir { body.rir = rir }
+        umfangSetzen(setId: letzter.setId, umfang: umfang)
+        let neu = PendingSetWrite(sessionId: letzter.sessionId, setId: letzter.setId, body: body)
+        // Als neuer letzter Write, damit ein spaeterer Nachtrag (Reserve)
+        // nicht auf dem alten Umfang aufbaut.
+        letzteWrites[blockId] = neu
+        enqueue(neu)
+    }
+
     /// Gibt die Kennung zurueck, damit der Aufrufer POST .../complete
     /// schicken kann -- oder, ohne Satz, gar nichts (TrainingRootView.beenden
     /// verwirft dann).

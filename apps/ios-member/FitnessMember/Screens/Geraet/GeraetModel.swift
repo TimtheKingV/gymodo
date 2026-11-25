@@ -141,7 +141,7 @@ final class GeraetModel {
     }
 
     private func automatikEreignis(_ ereignis: SatzAutomatik.Ereignis) {
-        guard automatikAn, !anZirkelAbgegeben, !zirkelSatzAbgegeben, phase != .abschluss,
+        guard !sensorStill, automatikAn, !anZirkelAbgegeben, !zirkelSatzAbgegeben, phase != .abschluss,
               sessions.aktiveSession()?.istPausiert == false, hatAutomatikStartwerte else { return }
         switch ereignis {
         case .begonnen(let kennung, let beginn, _):
@@ -350,6 +350,23 @@ final class GeraetModel {
     }
     private(set) var zaehlerZustand: ZaehlerZustand = .aus
 
+    // MARK: Naht zum Kamera-Ablauf (KameraNaht.swift)
+
+    /// Ob die Uebung mit der Kamera gezaehlt wird. Solange .mitKamera, ist
+    /// der Sensor stillgelegt: zwei Zaehler fuer einen Satz gaebe zwei Zahlen.
+    private(set) var kameraWahl: KameraWahl = .keine
+    private(set) var kameraEinstieg: KameraEinstieg = .video
+    /// Les- und schreibbar fuer die Bindung des Vollbilds.
+    var kameraAblaufOffen = false
+    /// Der laufende Satz hat mit der Kamera begonnen: der Sensor bleibt
+    /// still, auch wenn das Mitglied danach "ohne Kamera" weiterzaehlt.
+    private var kameraSatzOhneSensor = false
+    /// Der Sensor wurde bei diesem Kontext uebersprungen und muss, wenn er
+    /// wieder darf, nachgestartet werden (Pause vorbereitet, dann ohne Kamera).
+    private var sensorUebersprungen = false
+    private var startUmfang: Int?
+    private var sensorStill: Bool { kameraWahl == .mitKamera || kameraSatzOhneSensor }
+
     /// Wie das Mitglied an diesem Geraet gelandet ist.
     ///
     /// Nach einem Scan war das Telefon am Geraet. Nach einer Auswahl aus
@@ -480,7 +497,14 @@ final class GeraetModel {
     /// der Mitschnitt beginnt sofort, wie sonst nach `countdownBeenden()`.
     func uebungStarten(mit startwerte: Startwerte, mitCountdown: Bool = true) {
         startwerteUebernehmen(startwerte)
-        if mitCountdown {
+        if mitCountdown, kameraStart != nil {
+            // Die Kamera ersetzt den Countdown: erst das Video, dann der Aufstell-Check.
+            phase = .eingabe
+            kameraWahl = .mitKamera
+            kameraEinstieg = .video
+            kameraAblaufOffen = true
+            mitschnittBeginnen()
+        } else if mitCountdown {
             phase = .bereit(Resttimer(dauer: Startcountdown.dauer))
         } else {
             phase = .eingabe
@@ -493,6 +517,7 @@ final class GeraetModel {
     private func startwerteUebernehmen(_ startwerte: Startwerte) {
         belastung = Rastwerte.naechster(zu: startwerte.belastung, in: belastungsWerte)
         umfang = Rastwerte.naechster(zu: startwerte.umfang, in: umfangsWerte)
+        startUmfang = startwerte.umfang
         if let neben = startwerte.nebenbelastung, nebenmodell != nil {
             nebenbelastung = Rastwerte.naechster(zu: neben, in: nebenbelastungsWerte)
             nebenbelastungVomNutzer = true
@@ -1200,6 +1225,9 @@ final class GeraetModel {
         // Die Zaehlung der alten Uebung gilt nicht fuer die neue.
         zaehler?.satzVerworfen()
         sensorKontextOffen = false
+        kameraWahl = .keine
+        kameraAblaufOffen = false
+        kameraSatzOhneSensor = false
         mitschnittBeginnen()
     }
 
@@ -1235,7 +1263,8 @@ final class GeraetModel {
         // Herkunft nur bei Wiederholungen: der Server lehnt sie sonst ab (Spec B 6.3).
         let ergebnis: ZaehlerErgebnis?
         if volumeKind == .reps && !istCardio {
-            ergebnis = zaehler?.ergebnis()
+            // Im Kamera-Satz zaehlt die Kamera: der Sensor hat nichts gezaehlt.
+            ergebnis = sensorStill ? nil : zaehler?.ergebnis()
         } else {
             zaehler?.satzVerworfen()
             ergebnis = nil
@@ -1373,6 +1402,7 @@ final class GeraetModel {
         // wuerde den eben begonnenen Mitschnitt sofort wieder abbrechen.
         guard phase != .eingabe else { return }
         phase = .eingabe
+        kameraSatzVorbereiten()
         mitschnittBeginnen()
     }
 
@@ -1383,6 +1413,7 @@ final class GeraetModel {
     /// Am Cardio-Geraet ohne Pause: sie boete nur die Belastungsaenderung an,
     /// und eine Belastung wird dort nie gesendet.
     func weitererSatz() {
+        kameraSatzVorbereiten()
         if istCardio {
             phase = .eingabe
             mitschnittBeginnen()
@@ -1418,6 +1449,7 @@ final class GeraetModel {
         #endif
         if sensorKontextOffen {
             if !vorbereiten { mitschnitt?.automatikBestaetigt(beginn: ProcessInfo.processInfo.systemUptime) }
+            if sensorUebersprungen { sensorStarten() }
             return
         }
         sensorKontextOffen = true
@@ -1430,10 +1462,30 @@ final class GeraetModel {
         if vorbereiten { mitschnitt?.automatikVorbereiten(aufnahmeKontext) }
         else { mitschnitt?.eingabeBegonnen(aufnahmeKontext) }
         zaehlerZustand = .aus
+        // Der Mitschnitt laeuft weiter, nur der Sensor schweigt.
+        if kameraWahl == .mitKamera { kameraSatzOhneSensor = true }
+        sensorStarten()
+    }
+
+    /// Zaehler und Automatik beginnen -- ausser im Kamera-Satz.
+    private func sensorStarten() {
+        guard !sensorStill else { sensorUebersprungen = true; return }
+        sensorUebersprungen = false
         zaehler?.satzBeginnt(SatzZaehlerKontext(station: station, exerciseId: uebungId, volumeKind: volumeKind)) {
             [weak self] meldung in self?.zaehlerMeldung(meldung)
         }
         zaehler?.automatikBeobachten { [weak self] in self?.automatikEreignis($0) }
+    }
+
+    /// Am Satzanfang (Pausenende, weiterer Satz): mit Kamera oeffnet der
+    /// Ablauf beim Aufstell-Check, sonst darf der Sensor wieder zaehlen.
+    private func kameraSatzVorbereiten() {
+        if kameraWahl == .mitKamera {
+            kameraEinstieg = .aufstellen
+            kameraAblaufOffen = true
+        } else {
+            kameraSatzOhneSensor = false
+        }
     }
 
     /// Ohne Zaehler (Release) gibt es keinen Schalter; dann ist nichts aus.
@@ -1441,7 +1493,8 @@ final class GeraetModel {
 
     private func zaehlerMeldung(_ meldung: ZaehlerMeldung) {
         // Automatik aus: kein Rad-Feed, keine Haptik, kein "Zahl pruefen".
-        guard automatikAn else { return }
+        // Im Kamera-Satz kommt die Zahl von der Kamera.
+        guard automatikAn, !sensorStill else { return }
         // Nach dem Drehen gehoert das Rad der Hand: keine Spruenge mehr.
         if case .vonHand = zaehlerZustand { return }
         switch meldung {
@@ -1561,5 +1614,53 @@ final class GeraetModel {
             }
             return false
         }
+    }
+}
+
+// MARK: - Naht zum Kamera-Ablauf
+
+extension GeraetModel: KameraNaht {
+    /// nil im Zirkel, an Cardio-Geraeten und ohne Kameraprofil: dort bleibt
+    /// alles wie heute.
+    var kameraStart: KameraStart? {
+        guard !imZirkel, !istCardio,
+              let uebung = station.exercises.first(where: { $0.id == uebungId }) else { return nil }
+        return uebung.kameraStart(satzZiel: satzZiel, sollWiederholungen: startUmfang)
+    }
+
+    /// Sichert den Satz mit der gezaehlten Zahl, wie sie ist (kein Einrasten
+    /// auf das Rad). Der Ablauf bleibt offen: der Rueckblick erscheint auch
+    /// nach einem abgelehnten Satz.
+    func kameraSatzSichern(wiederholungen: Int) async -> KameraSichern {
+        umfang = wiederholungen
+        satzLokalSichern(problemFlag: false, problemReason: nil)
+        if let grund = satzAbgelehnt { return .abgelehnt(grund) }
+        return .gesichert(letzterSatz: phase == .abschluss)
+    }
+
+    func kameraVerlassen(gezaehlt: Int?) {
+        kameraWahl = .ohneKamera
+        kameraAblaufOffen = false
+        // Der Sensor bleibt fuer diesen Satz still: er hat ihn nie begonnen.
+        kameraSatzOhneSensor = true
+        if let gezaehlt {
+            umfang = gezaehlt
+            zaehlerZustand = .vonHand(gezaehlt)
+        }
+    }
+
+    func kameraAblaufSchliessen() {
+        kameraAblaufOffen = false
+    }
+
+    func kameraWiederAufnehmen() {
+        kameraWahl = .mitKamera
+        kameraEinstieg = .aufstellen
+        kameraAblaufOffen = true
+        if case .pause = phase { pauseBeenden() }
+    }
+
+    func umfangNachtragen(_ wiederholungen: Int) {
+        sessions.umfangNachtragen(blockId: blockId, umfang: wiederholungen, enqueue: enqueue)
     }
 }

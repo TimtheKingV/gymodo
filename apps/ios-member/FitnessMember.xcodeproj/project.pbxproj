@@ -129,6 +129,7 @@
 		44520832FCC324FD2A42E9A3 /* TestnotizProtokollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056DF9A32E77D8CCCB5DEB7D /* TestnotizProtokollTests.swift */; };
 		446F01DC2B037EBD87014F20 /* VerlaufStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F549FAB0B22E1E37C716899 /* VerlaufStore.swift */; };
 		44EA0E9CBF440F567DCD049C /* ResttimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707F099CE279C3111DDD2149 /* ResttimerTests.swift */; };
+		45139848BB97882E88734C05 /* KameraNaht.swift in Sources */ = {isa = PBXBuildFile; fileRef = 222A0024EE25F8694A0F5ACE /* KameraNaht.swift */; };
 		452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */; };
 		465B5D2B577283F081B21B34 /* StationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9600E3544B452BECB058708 /* StationTests.swift */; };
 		46A801925575715402AB9D10 /* Cardio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F27A57D86B2B8554A876337 /* Cardio.swift */; };
@@ -376,6 +377,7 @@
 		D1F0654F7807359543631402 /* HomePlanTagAbschnitt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18930F8B3CFA13BC88E98278 /* HomePlanTagAbschnitt.swift */; };
 		D210153ED76FD99772A0BA91 /* PlanTagListe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3967B3A1429E241D76B5B5 /* PlanTagListe.swift */; };
 		D3188785E04F588B5CAB9B24 /* TestnotizMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8986332EF5EB9BFBAD49056F /* TestnotizMarkdownTests.swift */; };
+		D4722F29BA330D8090D3A564 /* GeraetKameraNahtTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85323FA2EE160B03C876759F /* GeraetKameraNahtTests.swift */; };
 		D4DC4C517F6EFFA9972C6864 /* ProfilZeilen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BE170B46B4E45F1FF5E26C /* ProfilZeilen.swift */; };
 		D4FE376F4BBB40802B3FD999 /* Testnotiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D036BE10720B20565F673DA /* Testnotiz.swift */; };
 		D597930DA2A2355569030A44 /* muskelmodell.json in Resources */ = {isa = PBXBuildFile; fileRef = 6DEFFFD2670D7A8FAE9624F1 /* muskelmodell.json */; };
@@ -517,6 +519,7 @@
 		213A5216BA472EAE4240C049 /* MemberPasswortAendernView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortAendernView.swift; sourceTree = "<group>"; };
 		2178B549D47187CBB06809D8 /* EinheitVerwerfenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EinheitVerwerfenTests.swift; sourceTree = "<group>"; };
 		218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginMailView.swift; sourceTree = "<group>"; };
+		222A0024EE25F8694A0F5ACE /* KameraNaht.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KameraNaht.swift; sourceTree = "<group>"; };
 		22E2DF311877D3BA39FFA5D5 /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
 		234AEB0C3D9DAD8514164B68 /* Sensorik */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Sensorik; path = Packages/Sensorik; sourceTree = SOURCE_ROOT; };
 		2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalenderzelleTests.swift; sourceTree = "<group>"; };
@@ -699,6 +702,7 @@
 		83A7C08B1E55D753C748A62B /* Stammdaten.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stammdaten.swift; sourceTree = "<group>"; };
 		83A8B71893CB0948BB6A7FE6 /* ZielSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZielSheet.swift; sourceTree = "<group>"; };
 		84E77689A1801FF48C88046D /* Trainingsplan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trainingsplan.swift; sourceTree = "<group>"; };
+		85323FA2EE160B03C876759F /* GeraetKameraNahtTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetKameraNahtTests.swift; sourceTree = "<group>"; };
 		860C70249404ED6DB23710D3 /* Laufzeitkontext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Laufzeitkontext.swift; sourceTree = "<group>"; };
 		86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelAblauf.swift; sourceTree = "<group>"; };
 		879F10A38EBE7C7B18CEE67E /* UebungKameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungKameraTests.swift; sourceTree = "<group>"; };
@@ -1165,6 +1169,7 @@
 		3F8CCBC3B968331A9DD8AA36 /* Kamera */ = {
 			isa = PBXGroup;
 			children = (
+				222A0024EE25F8694A0F5ACE /* KameraNaht.swift */,
 				93E1B6015E04C044CED8AC97 /* UebungKamera.swift */,
 			);
 			path = Kamera;
@@ -1302,6 +1307,7 @@
 				3079E05EA80F06693AFB7C9D /* GeraetEinstiegsartTests.swift */,
 				61EBAF697D264131A8B819C9 /* GeraetEinstiegTests.swift */,
 				96D6F218F01CA038480D1DD4 /* GeraeteKachelTests.swift */,
+				85323FA2EE160B03C876759F /* GeraetKameraNahtTests.swift */,
 				C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */,
 				28B7DB665B9FCD092E398F23 /* GeraetModelTests.swift */,
 				26938FABB4BBFFF4A17B5D63 /* GewichtEintragenHilfenTests.swift */,
@@ -1878,6 +1884,7 @@
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,
 				B92439396CE2B728C3A2B5DA /* Kalenderzelle.swift in Sources */,
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
+				45139848BB97882E88734C05 /* KameraNaht.swift in Sources */,
 				C2DE29ED55762D2C1E529802 /* KursDetailView.swift in Sources */,
 				11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */,
 				CAAF4B2F7DB1A2B433A728B7 /* KursTerminZeile.swift in Sources */,
@@ -2119,6 +2126,7 @@
 				7154595728E9914007ACDBCD /* FortsetzbarkeitTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,
 				4EFF9FE217AD707A64430569 /* GeraetEinstiegsartTests.swift in Sources */,
+				D4722F29BA330D8090D3A564 /* GeraetKameraNahtTests.swift in Sources */,
 				FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */,
 				DB3955D030762B13093FA54C /* GeraetModelTests.swift in Sources */,
 				E083161F5526B66B7D721901 /* GeraeteAuswahlTests.swift in Sources */,
