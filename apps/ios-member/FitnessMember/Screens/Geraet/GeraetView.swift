@@ -781,10 +781,14 @@ struct GeraetScreen: View {
     }
 
     /// Nach dem Schliessen eines Sheets: wollte das Modell das Vollbild oeffnen und es steht nicht, neu ansetzen.
+    /// Erst nach dem Ende der Sheet-Animation pruefen: ein nur aufgeschobenes
+    /// Vollbild meldet sich bis dahin selbst als sichtbar und bleibt unberuehrt.
     private func kameraCoverNachziehen() {
-        guard modell.kameraAblaufOffen, !kameraCoverSichtbar else { return }
-        kameraCoverOffen = false
-        DispatchQueue.main.async { kameraCoverOffen = modell.kameraAblaufOffen }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            guard modell.kameraAblaufOffen, !kameraCoverSichtbar else { return }
+            kameraCoverOffen = false
+            DispatchQueue.main.async { kameraCoverOffen = modell.kameraAblaufOffen }
+        }
     }
 
     /// "Übung abschließen" aus Pause und Raedern (nach der Satzfrage): mit
