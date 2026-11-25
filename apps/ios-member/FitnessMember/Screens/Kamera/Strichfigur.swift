@@ -8,6 +8,9 @@ struct Strichfigur: View {
     var gespiegelt = true
     /// Warnfarbe statt Akzent, solange die Aufstellung nicht passt.
     var warnend = false
+    /// Im Satz: alles auf 50 %, nur diese Gelenke (das Signalgelenk) und ihre Knochen kraeftig.
+    var dezent = false
+    var hervor: Set<Gelenk> = []
 
     static let knochen: [(Gelenk, Gelenk)] = [
         (.nase, .hals),
@@ -39,18 +42,25 @@ struct Strichfigur: View {
                 return Self.abbilden(x: p.x, y: p.y, seitenverhaeltnis: skelett.seitenverhaeltnis,
                                      in: groesse, gespiegelt: gespiegelt)
             }
+            let stil = StrokeStyle(lineWidth: warnend ? 3 : 4, lineCap: .round, lineJoin: .round)
+            let schwach: Double = dezent ? 0.5 : 1
             var linien = Path()
+            var starkeLinien = Path()
             for (a, b) in Self.knochen {
                 guard let pa = punkt(a), let pb = punkt(b) else { continue }
-                linien.move(to: pa)
-                linien.addLine(to: pb)
+                if dezent, hervor.contains(a), hervor.contains(b) {
+                    starkeLinien.move(to: pa); starkeLinien.addLine(to: pb)
+                } else {
+                    linien.move(to: pa); linien.addLine(to: pb)
+                }
             }
-            kontext.stroke(linien, with: .color(farbe),
-                           style: StrokeStyle(lineWidth: warnend ? 3 : 4, lineCap: .round, lineJoin: .round))
+            kontext.stroke(linien, with: .color(farbe.opacity(schwach)), style: stil)
+            kontext.stroke(starkeLinien, with: .color(farbe), style: stil)
             for gelenk in Gelenk.allCases {
                 guard let p = punkt(gelenk) else { continue }
+                let stark = !dezent || hervor.contains(gelenk)
                 kontext.fill(Path(ellipseIn: CGRect(x: p.x - 5, y: p.y - 5, width: 10, height: 10)),
-                             with: .color(farbe))
+                             with: .color(farbe.opacity(stark ? 1 : 0.5)))
             }
         }
         .allowsHitTesting(false)

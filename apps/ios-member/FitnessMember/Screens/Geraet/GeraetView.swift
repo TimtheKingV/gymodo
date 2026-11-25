@@ -248,7 +248,21 @@ struct GeraetView: View {
             // ist schon gesichert, deshalb ohne die Frage nach dem offenen
             // Satz (#5); erst der Abschluss mit der Reserve-Frage (E4).
             beiAbschliessen: beiUebungAbschliessen,
-            beiZirkelBeginnen: { beiZirkelBeginnen?() })
+            beiZirkelBeginnen: { beiZirkelBeginnen?() },
+            kameraKnopf: kameraKnopf)
+    }
+
+    /// Zurueck zur Kamera: "Satz n mit Kamera" (der Satz lief mit Kamera, Rueckblick geschlossen) bzw.
+    /// "Mit Kamera" nach "Ohne Kamera". Nur, wo es einen Kamera-Ablauf gibt.
+    private var kameraKnopf: PausenKameraKnopf? {
+        switch modell.kameraWahl {
+        case .mitKamera:
+            PausenKameraKnopf(titel: "Satz \(modell.anzeigeSatz) mit Kamera", aktion: modell.kameraWiederAufnehmen)
+        case .ohneKamera where modell.kameraStart != nil:
+            PausenKameraKnopf(titel: "Mit Kamera", aktion: modell.kameraWiederAufnehmen)
+        default:
+            nil
+        }
     }
 
     /// Der letzte Zweig von `inhalt`: kein Countdown, keine Pause, kein

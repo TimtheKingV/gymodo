@@ -37,12 +37,14 @@ struct KameraBildflaeche: View {
     let profil: Kameraprofil
     var bestanden = false
     var warnend = false
+    var dezent = false
+    var hervor: Set<Gelenk> = []
 
     var body: some View {
         ZStack {
             DesignSystem.Color.surfaceRaised
             Livebild(ziel: ziel)
-            Strichfigur(skelett: skelett, gespiegelt: ziel.gespiegelt, warnend: warnend)
+            Strichfigur(skelett: skelett, gespiegelt: ziel.gespiegelt, warnend: warnend, dezent: dezent, hervor: hervor)
             Aufstellrahmen(profil: profil, bestanden: bestanden)
         }
         .ignoresSafeArea()

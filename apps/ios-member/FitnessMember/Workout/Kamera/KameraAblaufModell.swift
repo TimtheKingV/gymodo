@@ -34,6 +34,8 @@ final class KameraAblaufModell {
     /// Das zuletzt erkannte Skelett fuer die Strichfigur; nil ohne laufende Kamera.
     private(set) var letztesSkelett: Skelett?
     var quelle: (any Bildquelle)? { aktiveQuelle }
+    /// Ende der laufenden Pause fuer die Uhr im Rueckblick.
+    var pauseEnde: Date? { naht.laufendePause?.endetAm }
 
     private let naht: any KameraNaht
     private let quellenFabrik: @MainActor (KameraStart) -> any Bildquelle

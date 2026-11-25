@@ -13,8 +13,12 @@ struct Wellenband: View {
     var spur: [KameraSatzAblauf.Spurpunkt] = []
     var punkt: Double?
     var takt: KameraSatzAblauf.Takt = .imTakt
-    /// Gedaempft, solange die Welle wartet (Tracking verloren).
+    /// Soll-Zahl erreicht: die Soll-Linie tritt auf 30 % zurueck.
     var gedaempft = false
+    /// Die Welle wartet (Tracking verloren): das ganze Band tritt zurueck.
+    var wartend = false
+    /// Der Punkt steht auf einer nicht sicheren Lage (35 % Deckkraft).
+    var punktSicher = true
 
     static let fenster = 2.5
     static let jetztAnteil = 0.4
@@ -48,7 +52,7 @@ struct Wellenband: View {
                 if px == 0 { soll.move(to: p) } else { soll.addLine(to: p) }
                 px += 3
             }
-            kontext.stroke(soll, with: .color(DesignSystem.Color.text.opacity(0.55)),
+            kontext.stroke(soll, with: .color(DesignSystem.Color.text.opacity(gedaempft ? 0.30 : 0.55)),
                            style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
 
             // Spur: ab dem letzten Punkt in der Bahn warnfarben, wenn der Takt nicht stimmt.
@@ -81,10 +85,10 @@ struct Wellenband: View {
             if let punkt {
                 let farbe = takt == .imTakt ? DesignSystem.Color.accent : DesignSystem.Color.warn
                 kontext.fill(Path(ellipseIn: CGRect(x: xJetzt - 9, y: y(punkt) - 9, width: 18, height: 18)),
-                             with: .color(farbe))
+                             with: .color(farbe.opacity(punktSicher ? 1 : 0.35)))
             }
         }
-        .opacity(gedaempft ? 0.4 : 1)
+        .opacity(wartend ? 0.4 : 1)
         .accessibilityLabel("Tempo-Welle: \(tempo.inWorten)")
     }
 }

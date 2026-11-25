@@ -56,9 +56,14 @@ struct KameraAblaufAnsicht: View {
             ErlaubnisFehltSchritt(beiEinstellungen: Self.einstellungenOeffnen, beiOhneKamera: { modell.ohneKamera() })
         case .kameraFehlt:
             KameraFehltSchritt(beiOhneKamera: { modell.ohneKamera() })
-        case .rueckblick:
-            // Task 9 ersetzt das durch den Rueckblick.
-            PlatzhalterSchritt(text: "Satz geschafft", beiOhneKamera: { modell.rueckblickSchliessen() })
+        case .rueckblick(let daten):
+            // Gesichert: anzeigeSatz steht schon auf dem naechsten Satz.
+            let gesichert = daten.abgelehnt == nil
+            let aktuell = min(max(1, gesichert ? satz - 1 : satz), start.satzZiel)
+            RueckblickAnsicht(start: start, satz: aktuell, daten: daten, pauseEnde: modell.pauseEnde,
+                              beiSchliessen: { modell.rueckblickSchliessen() },
+                              beiNaechsterSatz: { await modell.naechsterSatz() },
+                              beiKorrigieren: { modell.umfangKorrigieren($0) })
         case .ablauf:
             if let ablauf = modell.ablauf { ablaufInhalt(ablauf, start: start) } else { DesignSystem.Color.bg.ignoresSafeArea() }
         }
@@ -78,15 +83,23 @@ struct KameraAblaufAnsicht: View {
         ZStack {
             if zeigtKamera(ablauf.schritt) {
                 KameraBildflaeche(ziel: ziel, skelett: modell.letztesSkelett, profil: start.vorgabe.profil,
-                                  bestanden: bestanden(ablauf.schritt), warnend: ablauf.schritt == .aufstellen && ablauf.anweisung != .passt)
+                                  bestanden: bestanden(ablauf.schritt), warnend: ablauf.schritt == .aufstellen && ablauf.anweisung != .passt,
+                                  dezent: ablauf.schritt == .satz, hervor: signalgelenke(start))
             }
             schritt(ablauf, start: start)
         }
     }
 
+    /// Im Satz bleibt nur das Signalgelenk kraeftig (beide Seiten, die Seite wechselt mit der Person).
+    private func signalgelenke(_ start: KameraStart) -> Set<Gelenk> {
+        guard let signal = start.vorgabe.signal else { return [] }
+        let l = signal.gelenke(.links), r = signal.gelenke(.rechts)
+        return [l.0, l.1, l.2, r.0, r.1, r.2]
+    }
+
     private func bestanden(_ schritt: KameraSatzAblauf.Schritt) -> Bool {
         switch schritt {
-        case .aufstellen, .video, .fertig: false
+        case .aufstellen, .video, .fertig, .verloren: false
         default: true
         }
     }
@@ -103,33 +116,30 @@ struct KameraAblaufAnsicht: View {
         case .countdown(let rest):
             CountdownSchritt(start: start, satz: satz, rest: rest,
                              beiAbbrechen: { modell.abbrechen() }, beiOhneKamera: { modell.ohneKamera() })
-        case .satz, .verloren, .vorlauf, .keineBewegung, .bewegungZuKlein, .fertig:
-            // Task 9 baut Satz, Tracking verloren, Vorlauf und die Fehlerfaelle.
-            PlatzhalterSchritt(text: "Satz läuft", beiOhneKamera: { modell.ohneKamera() })
+        case .satz:
+            SatzSchritt(start: start, satz: satz, anzeige: Satzanzeige(ablauf), videoOffen: Bindable(modell).videoOffen,
+                        beiSatzBeenden: { await modell.satzBeenden() }, beiOhneKamera: { modell.ohneKamera() })
+        case .verloren:
+            VerlorenSchritt(start: start, satz: satz, wiederholungen: ablauf.wiederholungen,
+                            beiOhneKamera: { modell.ohneKamera() }, beiSatzBeenden: { await modell.satzBeenden() })
+        case .vorlauf(let rest):
+            VorlaufSchritt(start: start, satz: satz, rest: rest, beiOhneKamera: { modell.ohneKamera() },
+                           bildrateZuNiedrig: ablauf.bildrateZuNiedrig)
+        case .keineBewegung:
+            HinweisSchritt(start: start, satz: satz, titel: "Bereit? Tippen zum Neustart",
+                           beiKarte: { modell.neuStarten() }, beiOhneKamera: { modell.ohneKamera() })
+        case .bewegungZuKlein:
+            HinweisSchritt(start: start, satz: satz, titel: "Wir erkennen die Bewegung nicht sicher",
+                           knopf: ("Ohne Kamera weiterzählen", { modell.ohneKamera() }),
+                           beiOhneKamera: { modell.ohneKamera() })
+        case .fertig:
+            // Das Satzende wird gerade gesichert; der Rueckblick folgt.
+            Color.clear
         }
     }
 
     private static func einstellungenOeffnen() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
-    }
-}
-
-/// Bis Task 9 die Schritte baut: eine schlichte Flaeche mit Ausweg.
-private struct PlatzhalterSchritt: View {
-    let text: String
-    let beiOhneKamera: () -> Void
-
-    var body: some View {
-        VStack(spacing: DesignSystem.Spacing.s16) {
-            Spacer()
-            Text(text).font(.system(size: 22, weight: .heavy))
-            Spacer()
-            PrimaryButton(title: "Weiter") { beiOhneKamera() }
-        }
-        .padding(DesignSystem.Spacing.s16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DesignSystem.Color.bg.ignoresSafeArea())
-        .foregroundStyle(DesignSystem.Color.text)
     }
 }
