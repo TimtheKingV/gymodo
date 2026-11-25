@@ -82,6 +82,7 @@
 		252B2A2CF5B923A6E4C79DD0 /* ProfilWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3572D3614535C8EE4621C5E1 /* ProfilWrite.swift */; };
 		2653F678814003A4DEAA7630 /* Belastung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30418C6B8FF7A6F65873B95A /* Belastung.swift */; };
 		2769CE98758DF7F0EB27020D /* GeraeteGruppierung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3580AB3B2DA3667EF4346D5A /* GeraeteGruppierung.swift */; };
+		28414353525E577667FD88AA /* KameraAblaufModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F011BB44DF0812F139E6800 /* KameraAblaufModellTests.swift */; };
 		286251A6DE657B6FB5A84126 /* EinweisungMedien.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8E953EACA62AC14B31001AA /* EinweisungMedien.swift */; };
 		2867121C23926588568A4707 /* LoginMailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218ADC42D32AAB9758D0AB91 /* LoginMailView.swift */; };
 		28DB21D330D60931AE02D035 /* OnboardingAntwortenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F2DAEB38D14F84C2ECC1B /* OnboardingAntwortenTests.swift */; };
@@ -240,6 +241,7 @@
 		88D226B7DC4D4323F2005C59 /* PlanWerteAuswahlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DE6D82E426A6724457DE81 /* PlanWerteAuswahlTests.swift */; };
 		8A1DA3B61BCDFBCE5195D8ED /* SensorQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CA7F946AF789AD52181CFC3 /* SensorQuelle.swift */; };
 		8ABBC7C611A45FC0912C2057 /* TrackerEinrichtungView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67AAD9BD74F403E75A2976A /* TrackerEinrichtungView.swift */; };
+		8AC1CEA6572A03B6B775A225 /* KameraAblaufModell.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBF1EBAF2B842C20A09B925A /* KameraAblaufModell.swift */; };
 		8B75427616870118E08E4936 /* NetzwerkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398AB48ADA8A1BB8EDB1C086 /* NetzwerkMonitor.swift */; };
 		8C1C7D2E198E0CB922AB48BB /* EinheitVerwerfen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB20D0098C4EAC5A32B4EA0E /* EinheitVerwerfen.swift */; };
 		8C535331CEE2284DCD2F88CA /* MuskelAuswertung.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1E8C81E65A1D4F315BC214D /* MuskelAuswertung.swift */; };
@@ -275,6 +277,7 @@
 		9E3E041191EB9672BE0AAFF0 /* StammdatenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AF7AC0FF4D60C0CA0FA03A2 /* StammdatenTests.swift */; };
 		9E4947346E28638E0FA99C6A /* TagLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C969EE52D1CA2B5138D6E1A6 /* TagLinkTests.swift */; };
 		9E6545220B0AEA93E8EABE53 /* PlanWochenKarten.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEE91087FF1DF7B63D3D199 /* PlanWochenKarten.swift */; };
+		9F50D431937644124E8E99E9 /* Hubspeicher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 565C621FD7A3EE0BA24E861F /* Hubspeicher.swift */; };
 		9F9C2DD14DE85363DE57FD09 /* ZeitachseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */; };
 		9FD2A7E63039D26A96C9948F /* HomeZiele.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14DFB2ABD1F2AB50BB6C680 /* HomeZiele.swift */; };
 		A0C914A14EC835E76790F385 /* HaeufigkeitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A14BF1CD97585C27C23C7C12 /* HaeufigkeitTests.swift */; };
@@ -552,6 +555,7 @@
 		2CA28C58722A47519E135720 /* SensorAufnahmeKoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorAufnahmeKoordinatorTests.swift; sourceTree = "<group>"; };
 		2DC3378D45751B2BE6267611 /* AuthCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthCopy.swift; sourceTree = "<group>"; };
 		2E80C62D7C18C643E429AA9A /* ZirkelErweiternTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelErweiternTests.swift; sourceTree = "<group>"; };
+		2F011BB44DF0812F139E6800 /* KameraAblaufModellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KameraAblaufModellTests.swift; sourceTree = "<group>"; };
 		2F5420FC0962C00F11FFCD65 /* PrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryButton.swift; sourceTree = "<group>"; };
 		2F85DB74C44633BFB4BAAB94 /* PasswordPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordPolicy.swift; sourceTree = "<group>"; };
 		2F89B657647B40C20CCA5FE4 /* PendingWriteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingWriteStore.swift; sourceTree = "<group>"; };
@@ -635,6 +639,7 @@
 		52AEEDE047FBD3EAFC7C992E /* ZaehlerKoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZaehlerKoordinator.swift; sourceTree = "<group>"; };
 		54F72606A30A2CE5C9E3E128 /* KurseTagesindikatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseTagesindikatorTests.swift; sourceTree = "<group>"; };
 		55093183C1B476C12C44B469 /* ScannerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerSheet.swift; sourceTree = "<group>"; };
+		565C621FD7A3EE0BA24E861F /* Hubspeicher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hubspeicher.swift; sourceTree = "<group>"; };
 		56687DDC4FFF0F3570211A36 /* PlanReihenfolgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanReihenfolgeTests.swift; sourceTree = "<group>"; };
 		57043EA2F2DFD5D046567083 /* Resttimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Resttimer.swift; sourceTree = "<group>"; };
 		57867EE19A811E2774CB4D0B /* FilterBausteine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterBausteine.swift; sourceTree = "<group>"; };
@@ -837,6 +842,7 @@
 		CA443E7FB8DF3C02F909E2E2 /* PlanEinrichtenKarte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEinrichtenKarte.swift; sourceTree = "<group>"; };
 		CB59D56AD33C31AE1F0089FF /* TagProtokoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagProtokoll.swift; sourceTree = "<group>"; };
 		CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzvergleichTests.swift; sourceTree = "<group>"; };
+		CBF1EBAF2B842C20A09B925A /* KameraAblaufModell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KameraAblaufModell.swift; sourceTree = "<group>"; };
 		CC4A8AD1E1541C488239F73D /* UebungskarteModellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UebungskarteModellTests.swift; sourceTree = "<group>"; };
 		CCED0D7ADE6A9AE97571B076 /* Koerperbild */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Koerperbild; path = Packages/Koerperbild; sourceTree = SOURCE_ROOT; };
 		CD2C414143359BA7CE04FAD3 /* Medienablage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Medienablage.swift; sourceTree = "<group>"; };
@@ -1188,6 +1194,8 @@
 				7E68BBDA83225B0572C69D86 /* AbspielQuelle.swift */,
 				1F540E59B0B478F0B6FA27FB /* Bildquelle.swift */,
 				BC9C5FFB9A9AE8C3B3AEA395 /* FrontkameraQuelle.swift */,
+				565C621FD7A3EE0BA24E861F /* Hubspeicher.swift */,
+				CBF1EBAF2B842C20A09B925A /* KameraAblaufModell.swift */,
 				B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */,
 				222A0024EE25F8694A0F5ACE /* KameraNaht.swift */,
 				392953CC8B5BE86858A51CAA /* KameraTestprofile.swift */,
@@ -1340,6 +1348,7 @@
 				EC41D34D6C45ECA67DC8B7D5 /* HomeZeilenTests.swift */,
 				178A941D7DAEF42B0D12FC59 /* HomeZieleTests.swift */,
 				2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */,
+				2F011BB44DF0812F139E6800 /* KameraAblaufModellTests.swift */,
 				7A472F3544A253FED00030D6 /* KameraTestprofileTests.swift */,
 				02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */,
 				5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */,
@@ -1907,11 +1916,13 @@
 				7B323A589D9B8BE99A031994 /* HomeZeilen.swift in Sources */,
 				9FD2A7E63039D26A96C9948F /* HomeZiele.swift in Sources */,
 				6A59A84F41992865C3BDFF92 /* HomeZieleView.swift in Sources */,
+				9F50D431937644124E8E99E9 /* Hubspeicher.swift in Sources */,
 				750CEBE3A0D07E711D31D94F /* InlineBanner.swift in Sources */,
 				B8218DBF6B9B3168086F00E6 /* JSONValue.swift in Sources */,
 				762BAF4D2EA117D55549EDED /* JoinResult.swift in Sources */,
 				B92439396CE2B728C3A2B5DA /* Kalenderzelle.swift in Sources */,
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
+				8AC1CEA6572A03B6B775A225 /* KameraAblaufModell.swift in Sources */,
 				45139848BB97882E88734C05 /* KameraNaht.swift in Sources */,
 				0DC6DE4B08F3A83BCFCAAE60 /* KameraTestprofile.swift in Sources */,
 				105A0D19709C373F46B570AB /* Kameraerlaubnis.swift in Sources */,
@@ -2172,6 +2183,7 @@
 				223F8FDD1BA1AFE59AF71D8C /* HomeZeilenTests.swift in Sources */,
 				876C68594995FB10C4C5F383 /* HomeZieleTests.swift in Sources */,
 				083EDED79E112D31F4F5DE41 /* KalenderzelleTests.swift in Sources */,
+				28414353525E577667FD88AA /* KameraAblaufModellTests.swift in Sources */,
 				29D258A313213B2058387BC3 /* KameraTestprofileTests.swift in Sources */,
 				E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */,
 				8E100E38496E1212C0FF9042 /* KursZustandTests.swift in Sources */,
