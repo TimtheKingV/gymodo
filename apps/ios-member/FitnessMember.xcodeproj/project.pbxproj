@@ -36,6 +36,7 @@
 		0E9F219ADEE737580E75D93A /* Geraetegruppe.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC32FC76BF907811DC7EFA7C /* Geraetegruppe.swift */; };
 		0F23761D47A8B1CAFDAA582B /* TestnotizEintrag.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BC48D13AE6028E26E09E52 /* TestnotizEintrag.swift */; };
 		0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */; };
+		105A0D19709C373F46B570AB /* Kameraerlaubnis.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */; };
 		10F957824659379153EAEFFB /* EinheitKarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
@@ -191,6 +192,7 @@
 		6A1B6C63F3A7BB4D29C3320B /* CardioRaster.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2680F7C1EDB171506672B7F1 /* CardioRaster.swift */; };
 		6A59A84F41992865C3BDFF92 /* HomeZieleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30FF5A6BBD8F56D126611CB8 /* HomeZieleView.swift */; };
 		6A76BD1CA4324AA4D5E12AE6 /* Minikurve.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DF496B3317F9A17CF267BE /* Minikurve.swift */; };
+		6BC60A32B47D155183E5CCEB /* Bildquelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F540E59B0B478F0B6FA27FB /* Bildquelle.swift */; };
 		6BE0ACA06057EE31AA06D998 /* UebungKameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879F10A38EBE7C7B18CEE67E /* UebungKameraTests.swift */; };
 		6C1C7736AAA82B6C3372EEA1 /* AusschnittTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF4AD6F764733094933FC52 /* AusschnittTests.swift */; };
 		6D9BB0F3300A962F99BA3266 /* PlanEinheitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90F1277D374D9CD6444D4452 /* PlanEinheitView.swift */; };
@@ -358,6 +360,7 @@
 		C9C1FB87A7FDC1EB8B223CE7 /* HomeKurse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE895F8555B096627408B103 /* HomeKurse.swift */; };
 		CA9FEF94E8BCFF95DCBF8A48 /* TestnotizFensterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1311D4DD8AF74E5D3E800ED /* TestnotizFensterTests.swift */; };
 		CAAF4B2F7DB1A2B433A728B7 /* KursTerminZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24A6AF8DBFE441551A5A0E9 /* KursTerminZeile.swift */; };
+		CB42D949B4850860503A0A50 /* AbspielQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E68BBDA83225B0572C69D86 /* AbspielQuelle.swift */; };
 		CB6614C63C3A5E94C4197CD7 /* PlanReihenfolgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56687DDC4FFF0F3570211A36 /* PlanReihenfolgeTests.swift */; };
 		CB7700F93F31020EC32F92CA /* SatzvergleichTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F06768F0BD680121ACAB5 /* SatzvergleichTests.swift */; };
 		CBB43A0EC79168878C2B5A0D /* OnboardingSchreiberTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4773C0A268BE47D48C1059 /* OnboardingSchreiberTests.swift */; };
@@ -417,6 +420,7 @@
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		E81A5235896758441947E5A5 /* PlanWochenRechnung.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A32C4350EDD88BB8790978 /* PlanWochenRechnung.swift */; };
 		E82A9E515726BBBF77B45AD2 /* BelastungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D659FEA5E712905994628D /* BelastungTests.swift */; };
+		E8903369DD8679F99844B604 /* KoerperErkennung in Frameworks */ = {isa = PBXBuildFile; productRef = 5FD49046BCBD2BA58A860C4F /* KoerperErkennung */; };
 		E9F322710ED44F9FC30002B2 /* WorkoutSessionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C040CEC32DA51B93411E58C /* WorkoutSessionStoreTests.swift */; };
 		E9F883B378238A0C91352496 /* Produktgrenze.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1501004104FEAA91F19C1 /* Produktgrenze.swift */; };
 		EA568214BF5138F1363FB6D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B68C408348334AEBF697CDB /* Assets.xcassets */; };
@@ -456,6 +460,7 @@
 		FD45B7AE6C6405B0C6799772 /* KurseMeineEinteilungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9131802B15B415EE3362E /* KurseMeineEinteilungTests.swift */; };
 		FD62234F40FA6EC5536A4261 /* WiederaufnehmenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF69A2B9BA45645C30560CDC /* WiederaufnehmenTests.swift */; };
 		FDA54C34231DE3E958EF06D9 /* GeraetKontextLadenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98822FA4FAF85142CC27A3F /* GeraetKontextLadenTests.swift */; };
+		FF523006ED9F9649FB9F8585 /* FrontkameraQuelle.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC9C5FFB9A9AE8C3B3AEA395 /* FrontkameraQuelle.swift */; };
 		FF660231717EEF021CAE16EF /* KursZustand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186F9A8308C2902F45F6E10E /* KursZustand.swift */; };
 		FFBA4D6E06D3C027545D75BC /* TrainingsProfil.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0C91A11B17C15BDDAE6BED7 /* TrainingsProfil.swift */; };
 		FFCCA2D99BEE07CF72E14EFF /* ReserveSkala.swift in Sources */ = {isa = PBXBuildFile; fileRef = 978059008AA97910D1DE0F64 /* ReserveSkala.swift */; };
@@ -516,6 +521,7 @@
 		1E651ABDF81EA57E18D7363D /* CatalogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogStore.swift; sourceTree = "<group>"; };
 		1EACD17EBDD11DD861E371D3 /* GeraetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetView.swift; sourceTree = "<group>"; };
 		1F21C7D80571408B3CF415E1 /* FensterUmschalter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FensterUmschalter.swift; sourceTree = "<group>"; };
+		1F540E59B0B478F0B6FA27FB /* Bildquelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bildquelle.swift; sourceTree = "<group>"; };
 		1F7551BF185923696CE8280A /* SatzZaehler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SatzZaehler.swift; sourceTree = "<group>"; };
 		20071A27526D769989C545B0 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		202362B13EEBB364F0A58245 /* PausenScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PausenScreen.swift; sourceTree = "<group>"; };
@@ -699,6 +705,7 @@
 		7D1E2849DF1B81F506595B3A /* Pfadbereinigung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pfadbereinigung.swift; sourceTree = "<group>"; };
 		7D79A89B3E91A0F18C9E8DBC /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		7DFA493A0E3D01C9A52BEFD6 /* CardioChecksStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioChecksStore.swift; sourceTree = "<group>"; };
+		7E68BBDA83225B0572C69D86 /* AbspielQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbspielQuelle.swift; sourceTree = "<group>"; };
 		7EF233ECD7B6B1CBEF906E04 /* SensorProtokollTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorProtokollTests.swift; sourceTree = "<group>"; };
 		7F27A57D86B2B8554A876337 /* Cardio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cardio.swift; sourceTree = "<group>"; };
 		803825B89FF7EAF1AD8C6CE9 /* StudioBeitretenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudioBeitretenView.swift; sourceTree = "<group>"; };
@@ -810,8 +817,10 @@
 		B76CEB6D3CEED5662117CF5E /* Ziel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ziel.swift; sourceTree = "<group>"; };
 		B7D33E9D76FD801A8ED325AB /* ToastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastTests.swift; sourceTree = "<group>"; };
 		B8CD72E24D559ACE32FF8817 /* KurseWochenInhaltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseWochenInhaltTests.swift; sourceTree = "<group>"; };
+		B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kameraerlaubnis.swift; sourceTree = "<group>"; };
 		BA2A6BDB5767BEB528FEE947 /* HomeRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRootView.swift; sourceTree = "<group>"; };
 		BC66ACF7FB394ECB319166C3 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		BC9C5FFB9A9AE8C3B3AEA395 /* FrontkameraQuelle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrontkameraQuelle.swift; sourceTree = "<group>"; };
 		BDD0B70AC6B9D5C40460B59C /* HomeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRoute.swift; sourceTree = "<group>"; };
 		C1FDC941E94BAAD9B86155BC /* TrainingsplanAblauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingsplanAblauf.swift; sourceTree = "<group>"; };
 		C24A6AF8DBFE441551A5A0E9 /* KursTerminZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursTerminZeile.swift; sourceTree = "<group>"; };
@@ -946,6 +955,7 @@
 				3B26567CF080FB300019E7A8 /* Auth in Frameworks */,
 				C73E66D8E05ADA6677268097 /* Sensorik in Frameworks */,
 				1C28D39F1B41BCA2AD8A76D0 /* Koerperbild in Frameworks */,
+				E8903369DD8679F99844B604 /* KoerperErkennung in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1175,6 +1185,10 @@
 		3F8CCBC3B968331A9DD8AA36 /* Kamera */ = {
 			isa = PBXGroup;
 			children = (
+				7E68BBDA83225B0572C69D86 /* AbspielQuelle.swift */,
+				1F540E59B0B478F0B6FA27FB /* Bildquelle.swift */,
+				BC9C5FFB9A9AE8C3B3AEA395 /* FrontkameraQuelle.swift */,
+				B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */,
 				222A0024EE25F8694A0F5ACE /* KameraNaht.swift */,
 				392953CC8B5BE86858A51CAA /* KameraTestprofile.swift */,
 				93E1B6015E04C044CED8AC97 /* UebungKamera.swift */,
@@ -1729,6 +1743,7 @@
 				B1DA3D9245AAF15DFFD8CA8F /* Auth */,
 				5860B6C386613098F40006F1 /* Sensorik */,
 				266B2F8AD86B79C6EBAE0322 /* Koerperbild */,
+				5FD49046BCBD2BA58A860C4F /* KoerperErkennung */,
 			);
 			productName = FitnessMember;
 			productReference = 5F603D042C4DE6ADD6D6A2CC /* FitnessMember.app */;
@@ -1811,6 +1826,7 @@
 				9B358A72607B4F450BF64E0C /* APIError.swift in Sources */,
 				6FA2B21BCF8845E6A3DDF95C /* AblaufListe.swift in Sources */,
 				E61A8795F4C4B77FA8595599 /* Ablaufzeile.swift in Sources */,
+				CB42D949B4850860503A0A50 /* AbspielQuelle.swift in Sources */,
 				87865E436B888BE06D25F6F7 /* AbspielSensorQuelle.swift in Sources */,
 				D73848050F680755E93B0CEB /* AccessibilityBaum.swift in Sources */,
 				8670A7D07F79AE8232169234 /* AppConfig.swift in Sources */,
@@ -1828,6 +1844,7 @@
 				72E7D4549F672199CE5DE950 /* Belegungsleiste.swift in Sources */,
 				E77B229BFB49822EB132B48A /* BelegungsleisteView.swift in Sources */,
 				87AF5ECCD9E902B52A1B76C1 /* BeschwerdenSheet.swift in Sources */,
+				6BC60A32B47D155183E5CCEB /* Bildquelle.swift in Sources */,
 				99C6072F04520557A7E34EDC /* Bildschirmfoto.swift in Sources */,
 				A53325E109EED91CB9834B54 /* BluetoothSensorQuelle.swift in Sources */,
 				B75DBE9A4610A66C9A455DE1 /* BootstrapFileStore.swift in Sources */,
@@ -1861,6 +1878,7 @@
 				EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */,
 				BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */,
 				452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */,
+				FF523006ED9F9649FB9F8585 /* FrontkameraQuelle.swift in Sources */,
 				3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */,
 				207B8D6F6D17D7C2F5BA2FA5 /* GeraetEinstieg.swift in Sources */,
 				80BDCB40CB6953255B669BB5 /* GeraetErkanntView.swift in Sources */,
@@ -1896,6 +1914,7 @@
 				2D961BA7EA388A8E6895AD01 /* KalibrierungSchritt.swift in Sources */,
 				45139848BB97882E88734C05 /* KameraNaht.swift in Sources */,
 				0DC6DE4B08F3A83BCFCAAE60 /* KameraTestprofile.swift in Sources */,
+				105A0D19709C373F46B570AB /* Kameraerlaubnis.swift in Sources */,
 				C2DE29ED55762D2C1E529802 /* KursDetailView.swift in Sources */,
 				11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */,
 				CAAF4B2F7DB1A2B433A728B7 /* KursTerminZeile.swift in Sources */,
@@ -2281,7 +2300,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um deine Wiederholungen zu zählen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen und beim Training deine Bewegung zu erkennen. Die Bilder bleiben auf deinem iPhone.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2392,7 +2411,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Gymtavo;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Gymtavo verbindet sich mit deinem Bewegungssensor, um deine Wiederholungen zu zählen.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen und beim Training deine Bewegung zu erkennen. Die Bilder bleiben auf deinem iPhone.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2553,6 +2572,10 @@
 		5860B6C386613098F40006F1 /* Sensorik */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Sensorik;
+		};
+		5FD49046BCBD2BA58A860C4F /* KoerperErkennung */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = KoerperErkennung;
 		};
 		B1DA3D9245AAF15DFFD8CA8F /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
