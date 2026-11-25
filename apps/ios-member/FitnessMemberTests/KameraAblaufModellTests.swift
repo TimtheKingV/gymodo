@@ -130,6 +130,8 @@ struct KameraAblaufModellTests {
         var antwortAufAnfrage: Kameraerlaubnis = .erlaubt
         private(set) var anfragen = 0
         private(set) var idleZustand: Bool?
+        /// Der Wert, den der Bildschirm vor dem Oeffnen hatte.
+        var idleVorher = false
         var t = 0.0
         var modell: KameraAblaufModell!
 
@@ -147,7 +149,8 @@ struct KameraAblaufModellTests {
                     erlaubnis = antwortAufAnfrage
                     return antwortAufAnfrage
                 },
-                idleTimer: { [unowned self] in idleZustand = $0 })
+                idleTimer: { [unowned self] in idleZustand = $0 },
+                idleTimerStand: { [unowned self] in idleVorher })
         }
 
         /// Ruhig stehen, bis der Countdown durch ist und der Satz laeuft.
@@ -480,5 +483,29 @@ struct KameraAblaufModellTests {
         a.modell.verschwindet()
         #expect(!a.quelle.laeuft)
         #expect(a.idleZustand == false)
+    }
+
+    @Test func verschwindetStelltDenFruehherenIdleTimerWiederHer() async {
+        let a = Aufbau()
+        a.idleVorher = true
+        await a.modell.erscheint()
+        #expect(a.idleZustand == true)
+        a.modell.verschwindet()
+        #expect(a.idleZustand == true)
+    }
+
+    @Test func verweigerteErlaubnisZeigtSchonImVideoDenWegInDieEinstellungen() async {
+        let a = Aufbau(einstieg: .video)
+        a.erlaubnis = .verweigert
+        await a.modell.erscheint()
+        #expect(a.modell.ansicht == .erlaubnisFehlt)
+        #expect(a.quelle.startAufrufe == 0)
+
+        a.erlaubnis = .erlaubt
+        a.modell.szene(aktiv: true)
+        await Task.yield()
+        #expect(a.modell.ansicht == .ablauf)
+        #expect(a.modell.ablauf?.schritt == .video)
+        #expect(a.quelle.startAufrufe == 0)
     }
 }

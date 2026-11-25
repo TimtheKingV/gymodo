@@ -43,6 +43,9 @@ final class KameraAblaufModell {
     private let erlaubnis: () -> Kameraerlaubnis
     private let anfragen: () async -> Kameraerlaubnis
     private let idleTimer: @MainActor (Bool) -> Void
+    private let idleTimerStand: @MainActor () -> Bool
+    /// Der Wert vor dem Oeffnen, den das Schliessen zurueckgibt (statt blind `false`).
+    private var idleTimerVorher: Bool?
 
     private var start: KameraStart?
     private var aktiveQuelle: (any Bildquelle)?
@@ -58,13 +61,15 @@ final class KameraAblaufModell {
          hub: Hubspeicher = .standard,
          erlaubnis: @escaping () -> Kameraerlaubnis = { .aktuell },
          anfragen: @escaping () async -> Kameraerlaubnis = Kameraerlaubnis.anfragen,
-         idleTimer: @escaping @MainActor (Bool) -> Void = { UIApplication.shared.isIdleTimerDisabled = $0 }) {
+         idleTimer: @escaping @MainActor (Bool) -> Void = { UIApplication.shared.isIdleTimerDisabled = $0 },
+         idleTimerStand: @escaping @MainActor () -> Bool = { UIApplication.shared.isIdleTimerDisabled }) {
         self.naht = naht
         self.quellenFabrik = quelle
         self.hub = hub
         self.erlaubnis = erlaubnis
         self.anfragen = anfragen
         self.idleTimer = idleTimer
+        self.idleTimerStand = idleTimerStand
     }
 
     // MARK: Einstieg
@@ -74,6 +79,7 @@ final class KameraAblaufModell {
             naht.kameraVerlassen(gezaehlt: nil)
             return
         }
+        if idleTimerVorher == nil { idleTimerVorher = idleTimerStand() }
         idleTimer(true)
         // Wiederkehr der Ansicht (oder Sichern laeuft): der Stand bleibt, hoechstens startet die Kamera wieder.
         if let schritt = ablauf?.schritt {
@@ -85,7 +91,12 @@ final class KameraAblaufModell {
         neuerAblauf(mitVideo: mitVideo)
         videoOffen = mitVideo
         ansicht = .ablauf
-        if !mitVideo { await kameraStarten() }
+        if mitVideo {
+            // Schon verweigert: gleich der Weg in die Einstellungen statt "Handy aufstellen" (Spec 11).
+            if erlaubnis() == .verweigert { ansicht = .erlaubnisFehlt }
+        } else {
+            await kameraStarten()
+        }
     }
 
     func handyAufstellen() async {
@@ -142,7 +153,8 @@ final class KameraAblaufModell {
         } else if ansicht == .erlaubnisFehlt, erlaubnis() == .erlaubt {
             // Zurueck aus den Einstellungen mit erteilter Erlaubnis.
             ansicht = .ablauf
-            Task { await kameraStarten() }
+            // Im Video-Schritt startet die Kamera erst mit "Handy aufstellen".
+            if let schritt = ablauf?.schritt, Self.bildSchritt(schritt) { Task { await kameraStarten() } }
         }
     }
 
@@ -150,7 +162,8 @@ final class KameraAblaufModell {
         pausenwaechter?.cancel()
         pausenwaechter = nil
         kameraStoppen()
-        idleTimer(false)
+        if let vorher = idleTimerVorher { idleTimer(vorher) }
+        idleTimerVorher = nil
     }
 
     // MARK: Kamera
