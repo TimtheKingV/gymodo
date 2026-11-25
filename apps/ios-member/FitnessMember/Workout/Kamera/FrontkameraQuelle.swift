@@ -54,8 +54,6 @@ final class FrontkameraQuelle: Bildquelle {
         private let renderer: AVSampleBufferVideoRenderer
         private let erkenner = PoseErkenner()
         private var beiBild: (@MainActor (Kamerabild) -> Void)?
-        private var drehung: AVCaptureDevice.RotationCoordinator?
-        private var beobachtung: NSKeyValueObservation?
         private var beobachter: [NSObjectProtocol] = []
 
         init(renderer: AVSampleBufferVideoRenderer) { self.renderer = renderer }
@@ -79,7 +77,6 @@ final class FrontkameraQuelle: Bildquelle {
                 self.beiBild = nil
                 self.beobachter.forEach { NotificationCenter.default.removeObserver($0) }
                 self.beobachter = []
-                self.beobachtung = nil
                 self.ausgabe.setSampleBufferDelegate(nil, queue: nil)
                 if self.sitzung.isRunning { self.sitzung.stopRunning() }
             }
@@ -106,20 +103,23 @@ final class FrontkameraQuelle: Bildquelle {
             verbindung.automaticallyAdjustsVideoMirroring = false
             verbindung.isVideoMirrored = false
 
+            // Nur hochkant (Spec, Entscheidung 4): der Winkel wird einmal beim Start gewaehlt (90 oder 270,
+            // je nachdem, wie herum das Handy hochkant steht) und folgt der Schwerkraft danach nicht mehr.
             let koordinator = AVCaptureDevice.RotationCoordinator(device: geraet, previewLayer: nil)
-            drehung = koordinator
-            winkelSetzen(koordinator.videoRotationAngleForHorizonLevelCapture)
-            beobachtung = koordinator.observe(\.videoRotationAngleForHorizonLevelCapture, options: [.new]) { [weak self] k, _ in
-                let winkel = k.videoRotationAngleForHorizonLevelCapture
-                guard let kern = self else { return }
-                kern.queue.async { kern.winkelSetzen(winkel) }
-            }
+            winkelSetzen(Self.hochkantWinkel(koordinator.videoRotationAngleForHorizonLevelCapture))
             beobachter.forEach { NotificationCenter.default.removeObserver($0) }
             // Laufzeitfehler und Unterbrechung (Anruf, Multitasking, Systemlast) gelten gleich als Ausfall.
             beobachter = [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification].map {
                 NotificationCenter.default.addObserver(forName: $0, object: sitzung, queue: nil) { _ in beiAusfall() }
             }
             return true
+        }
+
+        /// Der naechste hochkant-Winkel (90 oder 270) zum Winkel der Schwerkraft; Querlage faellt auf 90.
+        static func hochkantWinkel(_ winkel: CGFloat) -> CGFloat {
+            let w = winkel.truncatingRemainder(dividingBy: 360)
+            let n = w < 0 ? w + 360 : w
+            return abs(n - 270) < abs(n - 90) ? 270 : 90
         }
 
         /// Nur auf `queue` aufrufen.
