@@ -10,6 +10,6 @@
     "baseUrl": ".",
     "paths": { "@/*": ["./apps/web/*"] }
   },
-  "include": ["tests/**/*.ts", "e2e/**/*.ts", "*.config.ts"],
+  "include": ["tests/**/*.ts", "e2e/**/*.ts", "tools/flow-import/**/*.ts", "*.config.ts"],
   "exclude": ["node_modules"]
 }
