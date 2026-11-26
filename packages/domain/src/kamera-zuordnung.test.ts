@@ -10,8 +10,18 @@ const zuordnung = lies("data/koerperbild/zuordnung.json");
 const katalog = lies("catalog/gymtavo.json");
 
 describe("Kamera-Zuordnung", () => {
+  // Die HIIT-Flow-Uebungen haben bewusst keine Kameraangabe im Katalog; ihr Profil kommt nur im
+  // Debug-Build aus KameraTestprofile.json (Spec Flow mit Kamera). Sie stehen deshalb nicht in der Zuordnung.
+  const flowOhneKamera = new Set([
+    "bw_burpee_slow", "bw_jumping_jack", "bw_toe_touch_jackknife", "bw_burpee_thigh_tap", "bw_squat_pulse",
+    "bw_lunge_kick", "bw_leg_drop_pull", "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_skater_jump",
+    "bw_burpee_jump",
+  ]);
   it("deckt genau die Uebungen mit Wiederholungen ab", () => {
-    const reps = katalog.exercises.filter((u: any) => u.volume_kind === "reps").map((u: any) => u.key).sort();
+    const reps = katalog.exercises
+      .filter((u: any) => u.volume_kind === "reps" && !flowOhneKamera.has(u.key))
+      .map((u: any) => u.key)
+      .sort();
     expect(Object.keys(zuordnung).sort()).toEqual(reps);
   });
   it("jeder Eintrag besteht Schema und Regeln (ohne Freischalt-Liste)", () => {

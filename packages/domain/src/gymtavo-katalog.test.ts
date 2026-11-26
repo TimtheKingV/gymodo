@@ -158,13 +158,25 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
     const k = katalog();
     const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
-    const sekunden = k.exercises.filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key)).map((u) => u.key);
+    // Die 16 Uebungen des HIIT-Flows (Task flow-mit-kamera) haben bewusst keine Plan-Merkmale:
+    // sie laufen nur im Flow und werden nicht von selbst in Plaene aufgenommen.
+    const flowUebungen = [
+      "bw_high_kicks", "bw_burpee_slow", "bw_jumping_jack", "bw_toe_touch_jackknife", "bw_scissor_kicks",
+      "bw_burpee_thigh_tap", "bw_squat_pulse", "bw_swimmer", "bw_lunge_kick", "bw_leg_drop_pull",
+      "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_flutter_kicks", "bw_skater_jump", "bw_crunch_hold",
+      "bw_burpee_jump",
+    ];
+    const sekunden = k.exercises
+      .filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key) && !flowUebungen.includes(u.key))
+      .map((u) => u.key);
     expect(sekunden).toEqual([
       "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
       "bw_plank_knee", "bw_side_plank_knee",
       "kb_farmers_walk", "kb_suitcase_carry", "kb_overhead_carry",
     ]);
-    expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
+    const ohnePlan = k.exercises.filter((u) => !u.plan).map((u) => u.key);
+    expect(ohnePlan.filter((key) => !flowUebungen.includes(key))).toEqual(sekunden);
+    expect(ohnePlan.filter((key) => flowUebungen.includes(key))).toEqual(flowUebungen);
   });
 
   // Ohne Video und ohne Tims Durchsicht waehlt der Generator eine Uebung nicht von selbst.
@@ -178,7 +190,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(49);
+    expect(typen[0]!.exercises).toHaveLength(65);
   });
 
   // Kettlebells gibt es nur in festen Stufen: 2-kg-Raster ab 4 kg trifft den klassischen
