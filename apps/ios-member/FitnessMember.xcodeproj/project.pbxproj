@@ -138,6 +138,7 @@
 		3FE258C3FB0CE6005D2E1765 /* ZirkelAblauf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86E221D17E89C85ED62A2190 /* ZirkelAblauf.swift */; };
 		3FEB8C480E33977A36B75C37 /* EinweisungSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3BA42E747095E74D6BF83A /* EinweisungSchritt.swift */; };
 		4196455285CC682E9475A449 /* WertZeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B00715694B1D3131EDABCE /* WertZeile.swift */; };
+		4201075E5C1C6840E0CBF424 /* FlowKameraModellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD95783FD93E47F2BD9CCC5 /* FlowKameraModellTests.swift */; };
 		42306793BB6C4D03FC384B86 /* HomeSerieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138ED9C458C59851090DA3F5 /* HomeSerieView.swift */; };
 		42B77C328425F61506D26ADA /* UebungsGruppierungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77CD8F083B18A9C6710DF1C0 /* UebungsGruppierungTests.swift */; };
 		42F254CA382E78A97F1AC840 /* TrainingRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F3F334438C1FBD98C386D0 /* TrainingRootView.swift */; };
@@ -428,6 +429,7 @@
 		D76C207642BEE6F3A8CD20B1 /* GeraetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EACD17EBDD11DD861E371D3 /* GeraetView.swift */; };
 		D7D0A86C205DB3CEE919B413 /* KursePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61347522ED4FCD304DD194B5 /* KursePlan.swift */; };
 		D7EE3E0F56383A33915BEAC1 /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C8636341914B90296B220 /* AppConfigTests.swift */; };
+		D85F17D4EDB3BEFBCC9E6376 /* FlowKameraModell.swift in Sources */ = {isa = PBXBuildFile; fileRef = D62311B4F4D54D19856F3860 /* FlowKameraModell.swift */; };
 		D85F1EF7AA87F03089F8F73D /* KurseHerkunftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A0239BC8D0EA913F1574D8 /* KurseHerkunftTests.swift */; };
 		D8FC4734BD5913AD7B3C4573 /* PlanAntworten.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55BDA0E6C00194C77131387 /* PlanAntworten.swift */; };
 		D9003B708636A8AF96E1D2AA /* UebungsVideosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DBACD8FF94DEE90B68EE25 /* UebungsVideosTests.swift */; };
@@ -541,6 +543,7 @@
 		0922864C7B289CC11400B5CB /* TestnotizScreenModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizScreenModifier.swift; sourceTree = "<group>"; };
 		09FAC63CC9144EB0A1BC6148 /* ZirkelUebungswahlSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelUebungswahlSheet.swift; sourceTree = "<group>"; };
 		0A1A5E3036C702D35974F098 /* Fortsetzbarkeit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fortsetzbarkeit.swift; sourceTree = "<group>"; };
+		0BD95783FD93E47F2BD9CCC5 /* FlowKameraModellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowKameraModellTests.swift; sourceTree = "<group>"; };
 		0BF47616568404291DA341CF /* FlowRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowRing.swift; sourceTree = "<group>"; };
 		0C1F25DDB964E2DB96CC488C /* OnboardingSchritte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSchritte.swift; sourceTree = "<group>"; };
 		0DE16B16CA9E4D25698A02C0 /* KurseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseStore.swift; sourceTree = "<group>"; };
@@ -936,6 +939,7 @@
 		D50BD9B08F5E126815EAACAC /* RootDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootDestination.swift; sourceTree = "<group>"; };
 		D5DB91C9C99E1790C7FBBC98 /* AbspielSensorQuelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AbspielSensorQuelleTests.swift; sourceTree = "<group>"; };
 		D5EDFCF55AFA4CDCD53104DC /* TrainingAbschlussView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingAbschlussView.swift; sourceTree = "<group>"; };
+		D62311B4F4D54D19856F3860 /* FlowKameraModell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowKameraModell.swift; sourceTree = "<group>"; };
 		D6331BCAA9F1DFF57341B82E /* MemberPasswortNeuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPasswortNeuView.swift; sourceTree = "<group>"; };
 		D63A4690C06EAE94032AB45E /* CardioGeraetModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioGeraetModelTests.swift; sourceTree = "<group>"; };
 		D675A52C3F8105746B55542A /* MuskelAuswertungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuskelAuswertungTests.swift; sourceTree = "<group>"; };
@@ -1415,6 +1419,7 @@
 				A63AF6186EBEDC102F2BE70B /* FlowAblaufTests.swift */,
 				B4D73B7E61D3B0E9FB227031 /* FlowAnzeigeTests.swift */,
 				9F374F25615C0D8FD096C646 /* FlowDTOTests.swift */,
+				0BD95783FD93E47F2BD9CCC5 /* FlowKameraModellTests.swift */,
 				24F624033ED18681337E7905 /* FlowLaufTests.swift */,
 				6BEDD10A00964ADA170330D8 /* FlowStoreTests.swift */,
 				5D7CA4C05C09354D37047527 /* FlowUebungenTests.swift */,
@@ -1806,6 +1811,7 @@
 			children = (
 				CE98DAC2484C60ADE3FE6898 /* FlowAblauf.swift */,
 				8847760CBDAF89C45F6799D2 /* FlowFileStore.swift */,
+				D62311B4F4D54D19856F3860 /* FlowKameraModell.swift */,
 				A5B5E4F11AD3B3F662794820 /* FlowLauf.swift */,
 				176A9EE101E8E0EFDA1C8B44 /* FlowStore.swift */,
 				25320C95E2943537EC6FCE02 /* FlowUebungen.swift */,
@@ -2038,6 +2044,7 @@
 				7ABB63FE096868419139FB2C /* FlowAblauf.swift in Sources */,
 				E16B7EE2C9149E8194ECF7CB /* FlowDetailView.swift in Sources */,
 				22A801F809791BD31ED3590A /* FlowFileStore.swift in Sources */,
+				D85F17D4EDB3BEFBCC9E6376 /* FlowKameraModell.swift in Sources */,
 				5B0212312ACCDB83CCDCDA0C /* FlowLauf.swift in Sources */,
 				189398178807DCDBE32EF4FC /* FlowLaufView.swift in Sources */,
 				DE6C4D4EEE79AD471061C1FC /* FlowListeView.swift in Sources */,
@@ -2342,6 +2349,7 @@
 				05958860FF51909351B952C0 /* FlowAblaufTests.swift in Sources */,
 				1166ED35247CC429E99877D2 /* FlowAnzeigeTests.swift in Sources */,
 				E2DED68B8C38792C44082457 /* FlowDTOTests.swift in Sources */,
+				4201075E5C1C6840E0CBF424 /* FlowKameraModellTests.swift in Sources */,
 				03492F29A00C782EC4B7EE11 /* FlowLaufTests.swift in Sources */,
 				75203BC1FC1DB8685CAD15DA /* FlowStoreTests.swift in Sources */,
 				EBA384712797E6E6CC728ADF /* FlowUebungenTests.swift in Sources */,
