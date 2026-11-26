@@ -116,3 +116,17 @@ func laufEinarmig(arbeitet: Koerperseite, sicherheitRuhend: Double, sicherheitAr
 func laufRoh(vorzeichenWinkel: [Messwert]) -> Koerperlage {
     lauf(vorzeichenWinkel)
 }
+
+/// Linke Seite im Bild, Kniewinkel `winkel` (Hueft-Knie-Fuss); die Fuesse fehlen bei `ohneFuesse`.
+/// Geteilt von den Tests fuer `KameraSatzAblauf` und `FlowZaehler`.
+func kniebeugeSkelett(knie winkel: Double, ohneFuesse: Bool = false) -> Skelett {
+    let a = winkel * .pi / 180
+    var punkte: [Gelenk: Punkt] = [
+        .schulterL: Punkt(x: 0.5, y: 0.2, sicherheit: 1),
+        .hueftL: Punkt(x: 0.5, y: 0.5, sicherheit: 1),
+        .knieL: Punkt(x: 0.5, y: 0.7, sicherheit: 1),
+        .fussL: Punkt(x: 0.5 + 0.2 * sin(a), y: 0.7 - 0.2 * cos(a), sicherheit: 1),
+    ]
+    if ohneFuesse { punkte[.fussL] = nil }
+    return Skelett(punkte: punkte, seitenverhaeltnis: 1)
+}
