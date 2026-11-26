@@ -113,7 +113,7 @@ describe("/me/flow-runs/{runId}", () => {
     expect((await PUT(...put(runId, tokenOhne, lauf({ flowId: flowKatalog })))).status).toBe(204);
     const { data } = await serviceClient().from("flow_runs").select("id, studio_id").eq("id", runId);
     expect(data).toHaveLength(1);
-    expect(data![0].studio_id).toBe(KATALOG_STUDIO);
+    expect(data![0]!.studio_id).toBe(KATALOG_STUDIO);
   });
 
   it("Nutzer ohne Studio: Lauf eines Studio-Flows ist 404", async () => {
