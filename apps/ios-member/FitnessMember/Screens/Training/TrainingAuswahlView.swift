@@ -23,6 +23,8 @@ struct TrainingAuswahlView: View {
     /// E10: freies Training auf der Kategorie Cardio.
     let beiCardio: () -> Void
     let beiFrei: () -> Void
+    /// Fuer die Flow-Liste (Follow-along), die ihren eigenen Store anlegt.
+    let apiClient: APIClient
 
     @State private var vorziehen: VorziehenAuftrag?
     /// Setzt das Blatt nach erfolgreichem Vorziehen; der Wechsel in den
@@ -52,6 +54,7 @@ struct TrainingAuswahlView: View {
                     weitere(modell.weitere, naechster: modell.naechsteEinheitKey, namen: namen)
                 }
                 freiesTraining
+                flowsZeile
             }
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s16)
@@ -203,6 +206,34 @@ struct TrainingAuswahlView: View {
         .buttonStyle(PressButtonStyle())
         .accessibilityHint("Öffnet die Geräteliste ohne Plan")
         .testnotizElement("training.auswahl.frei", typ: "Button")
+    }
+
+    private var flowsZeile: some View {
+        NavigationLink {
+            FlowListeView(apiClient: apiClient)
+        } label: {
+            HStack(spacing: DesignSystem.Spacing.s12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Flows")
+                        .font(DesignSystem.Typography.uebungsname)
+                        .foregroundStyle(DesignSystem.Color.text)
+                    Text("Angeleitete Workouts zum Mitmachen")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(DesignSystem.Color.textFaint)
+            }
+            .padding(DesignSystem.Spacing.s16)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Color.line, lineWidth: 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressButtonStyle())
+        .accessibilityHint("Öffnet die Liste der Flows")
     }
 
     private func abschnittTitel(_ text: String) -> some View {
