@@ -35,6 +35,18 @@ export function bereinigeVtt(vtt: string): string[] {
   return zeilen;
 }
 
+/** Die Video-ID: letzte nicht leere Zeile der yt-dlp-Ausgabe (`--print id`); YouTube-IDs sind 11 Zeichen. */
+export function videoIdAusAusgabe(stdout: string): string | null {
+  const zeilen = stdout.split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
+  const id = zeilen[zeilen.length - 1];
+  return id && /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+}
+
+/** Die Untertiteldatei dieses Videos (`<id>.<sprache>.vtt`), nicht irgendeine .vtt im Ordner. */
+export function waehleVtt(dateien: string[], id: string): string | undefined {
+  return [...dateien].sort().find((f) => f.startsWith(`${id}.`) && f.endsWith(".vtt"));
+}
+
 function fehler(meldung: string): never {
   console.error(meldung);
   process.exit(1);
@@ -54,8 +66,14 @@ function main(): void {
       "--sub-langs",
       "de.*",
       "--no-playlist",
+      // Gibt die Video-ID auf stdout aus (sonst wuerde --print nur simulieren).
+      "--print",
+      "id",
+      "--no-simulate",
       "-o",
       join(ausgabe, "%(id)s"),
+      // Alles danach ist Argument, nie Option (keine Argument-Injektion ueber die URL).
+      "--",
       url,
     ],
     { encoding: "utf8" },
@@ -67,7 +85,9 @@ function main(): void {
   }
   if (lauf.status !== 0) fehler(`yt-dlp ist fehlgeschlagen (Code ${lauf.status}):\n${lauf.stderr}`);
 
-  const datei = readdirSync(ausgabe).find((f) => f.endsWith(".vtt"));
+  const id = videoIdAusAusgabe(lauf.stdout);
+  if (!id) fehler("Die Video-ID konnte aus der yt-dlp-Ausgabe nicht gelesen werden.");
+  const datei = waehleVtt(readdirSync(ausgabe), id);
   if (!datei) fehler("Keine deutschen Untertitel fuer dieses Video gefunden.");
   const zeilen = bereinigeVtt(readFileSync(join(ausgabe, datei), "utf8"));
   writeFileSync(join(ausgabe, "transkript.txt"), `${zeilen.join("\n")}\n`);

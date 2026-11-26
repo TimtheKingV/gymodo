@@ -78,7 +78,7 @@ describe("/me/flows", () => {
     expect(flows).toHaveLength(1);
     expect(flows[0].id).toBe(flowA);
     expect(flows[0].schritte.map((s: { position: number }) => s.position)).toEqual([1, 2]);
-    expect(flows[0].dauerS).toBe(100);
+    expect(flows[0].dauerS).toBe(80); // 30+10+40, die Pause des letzten Schritts zaehlt nicht
   });
 
   it("ohne Mitgliedschaft: flows []", async () => {
@@ -108,6 +108,12 @@ describe("/me/flow-runs/{runId}", () => {
 
   it("runId ohne UUID-Form ist 422", async () => {
     expect((await PUT(...put("abc", tokenA, lauf()))).status).toBe(422);
+  });
+
+  it("flowId ohne UUID-Form oder lose Datumsangabe ist 422 statt 500", async () => {
+    expect((await PUT(...put(crypto.randomUUID(), tokenA, lauf({ flowId: "kein-uuid" })))).status).toBe(422);
+    expect((await PUT(...put(crypto.randomUUID(), tokenA, lauf({ startedAt: "2026-02-30T10:00:00Z" })))).status).toBe(422);
+    expect((await PUT(...put(crypto.randomUUID(), tokenA, lauf({ endedAt: "gestern" })))).status).toBe(422);
   });
 
   it("kaputter Rumpf oder falsche Feldtypen sind 422", async () => {

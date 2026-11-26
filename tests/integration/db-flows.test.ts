@@ -127,4 +127,11 @@ describe("flows RLS", () => {
       .insert({ flow_id: flowA, position: 0, name: "x", work_s: 10, rest_s: 0 });
     expect(p.error).not.toBeNull();
   });
+
+  it("(f) negative rest_s scheitert am Check", async () => {
+    const r = await serviceClient()
+      .from("flow_steps")
+      .insert({ flow_id: flowA, position: 6, name: "x", work_s: 10, rest_s: -1 });
+    expect(r.error).not.toBeNull();
+  });
 });

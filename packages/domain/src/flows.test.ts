@@ -14,6 +14,10 @@ describe("flowDauerS", () => {
   it("summiert Arbeit und Pause aller Schritte", () => {
     expect(flowDauerS([{ workS: 40, restS: 20 }, { workS: 40, restS: 0 }])).toBe(100);
   });
+  it("ignoriert die Pause des letzten Schritts", () => {
+    expect(flowDauerS([{ workS: 40, restS: 20 }, { workS: 40, restS: 20 }])).toBe(100);
+    expect(flowDauerS([{ workS: 30, restS: 99 }])).toBe(30);
+  });
   it("ist 0 ohne Schritte", () => {
     expect(flowDauerS([])).toBe(0);
   });
@@ -22,6 +26,10 @@ describe("flowDauerS", () => {
 describe("pruefeFlowRun", () => {
   it("nimmt einen beendeten Lauf", () => {
     expect(pruefeFlowRun(basis, 20)).toEqual(basis);
+  });
+  it("nimmt Bruchsekunden und Offset", () => {
+    const run = { ...basis, startedAt: "2026-11-26T11:00:00.250+01:00", endedAt: "2026-11-26T10:20:00.5Z" };
+    expect(pruefeFlowRun(run, 20)).toEqual(run);
   });
   it("nimmt einen Abbruch bei Schritt 3 von 20", () => {
     const run = { ...basis, outcome: "aborted" as const, lastStep: 3 };
@@ -33,6 +41,12 @@ describe("pruefeFlowRun", () => {
     ["Ende vor Start", { endedAt: "2026-11-26T09:00:00Z" }],
     ["finished mit lastStep ungleich Schrittzahl", { lastStep: 19 }],
     ["id keine UUID", { id: "abc" }],
+    ["flowId keine UUID", { flowId: "nicht-uuid" }],
+    ["Datum ohne Zeitzone", { startedAt: "2026-11-26T10:00:00" }],
+    ["Datum nur Tag", { startedAt: "2026-11-26" }],
+    ["Datum lose formatiert", { endedAt: "Nov 26 2026 10:20" }],
+    ["30. Februar", { startedAt: "2026-02-30T10:00:00Z" }],
+    ["Stunde 25", { endedAt: "2026-11-26T25:00:00Z" }],
   ])("weist ab: %s", (_n, abw) => {
     expect(() => pruefeFlowRun({ ...basis, ...abw }, 20)).toThrow(expect.objectContaining({ code: "validation_failed" }));
   });

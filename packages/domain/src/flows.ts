@@ -32,18 +32,49 @@ export type FlowRunEingabe = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Gesamtdauer in Sekunden: Arbeit plus Pause aller Schritte. */
+const ISO_ZEIT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Strikter ISO-8601-Zeitpunkt mit Zeitzone. Date.parse ist zu nachsichtig
+ * (nimmt z. B. den 30. Februar), die Datenbank lehnt ihn aber ab -- das wuerde
+ * als 500 enden und von der App endlos wiederholt.
+ */
+export function istIsoZeitpunkt(wert: unknown): wert is string {
+  if (typeof wert !== "string") return false;
+  const m = ISO_ZEIT.exec(wert);
+  if (!m) return false;
+  const [jahr, monat, tag, std, min, sek] = [m[1], m[2], m[3], m[4], m[5], m[6]].map(Number) as [number, number, number, number, number, number];
+  if (monat < 1 || monat > 12 || std > 23 || min > 59 || sek > 59) return false;
+  if (tag < 1 || tag > new Date(Date.UTC(jahr, monat, 0)).getUTCDate()) return false;
+  const offset = m[8]!;
+  if (offset !== "Z") {
+    const [oh, om] = [Number(offset.slice(1, 3)), Number(offset.slice(4, 6))];
+    if (oh > 23 || om > 59) return false;
+  }
+  return !Number.isNaN(Date.parse(wert));
+}
+
+/**
+ * Gesamtdauer in Sekunden: Arbeit plus Pause. Die Pause des LETZTEN Schritts
+ * zaehlt nicht (nach ihm ist der Flow fertig; die App ignoriert sie).
+ */
 export function flowDauerS(schritte: Pick<FlowSchritt, "workS" | "restS">[]): number {
-  return schritte.reduce((summe, s) => summe + s.workS + s.restS, 0);
+  return schritte.reduce((summe, s, i) => summe + s.workS + (i === schritte.length - 1 ? 0 : s.restS), 0);
+}
+
+/** Formatpruefung ohne Datenbank: IDs als UUID, Zeitpunkte als strenges ISO-8601, Ende nicht vor Start. */
+export function pruefeFlowRunFormat(run: FlowRunEingabe): void {
+  if (!UUID.test(run.id)) throw new DomainError("validation_failed", "Die Lauf-ID ist keine gueltige UUID.");
+  if (!UUID.test(run.flowId)) throw new DomainError("validation_failed", "Die Flow-ID ist keine gueltige UUID.");
+  if (!istIsoZeitpunkt(run.startedAt) || !istIsoZeitpunkt(run.endedAt)) {
+    throw new DomainError("validation_failed", "Start und Ende muessen gueltige Zeitpunkte sein.");
+  }
+  if (Date.parse(run.endedAt) < Date.parse(run.startedAt)) throw new DomainError("validation_failed", "Das Ende liegt vor dem Start.");
 }
 
 /** Prueft einen gemeldeten Durchlauf gegen die Schrittzahl des Flows. */
 export function pruefeFlowRun(run: FlowRunEingabe, schrittAnzahl: number): FlowRunEingabe {
-  if (!UUID.test(run.id)) throw new DomainError("validation_failed", "Die Lauf-ID ist keine gueltige UUID.");
-  const start = Date.parse(run.startedAt);
-  const ende = Date.parse(run.endedAt);
-  if (Number.isNaN(start) || Number.isNaN(ende)) throw new DomainError("validation_failed", "Start und Ende muessen gueltige Zeitpunkte sein.");
-  if (ende < start) throw new DomainError("validation_failed", "Das Ende liegt vor dem Start.");
+  pruefeFlowRunFormat(run);
   if (!Number.isInteger(run.lastStep) || run.lastStep < 1 || run.lastStep > schrittAnzahl) {
     throw new DomainError("validation_failed", "Der letzte Schritt liegt ausserhalb des Flows.");
   }
@@ -105,6 +136,7 @@ export async function listFlows(client: SupabaseClient): Promise<Flow[]> {
 
 /** Speichert einen Durchlauf. Idempotent: dieselbe `id` erneut zu senden aendert nichts. */
 export async function recordFlowRun(client: SupabaseClient, userId: string, run: FlowRunEingabe): Promise<void> {
+  pruefeFlowRunFormat(run);
   const flow = await client
     .from("flows")
     .select("studio_id, flow_steps(position)")

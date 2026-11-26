@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bereinigeVtt } from "./transkript";
+import { bereinigeVtt, videoIdAusAusgabe, waehleVtt } from "./transkript";
 
 const VTT = `WEBVTT
 Kind: captions
@@ -34,5 +34,25 @@ describe("bereinigeVtt", () => {
 
   it("gibt bei leerem Text eine leere Liste", () => {
     expect(bereinigeVtt("WEBVTT\n\n")).toEqual([]);
+  });
+});
+
+describe("videoIdAusAusgabe", () => {
+  it("nimmt die letzte nicht leere Zeile", () => {
+    expect(videoIdAusAusgabe("[info] irgendwas\ndQw4w9WgXcQ\n\n")).toBe("dQw4w9WgXcQ");
+  });
+  it("lehnt Unbrauchbares ab", () => {
+    expect(videoIdAusAusgabe("")).toBeNull();
+    expect(videoIdAusAusgabe("ERROR: nope")).toBeNull();
+  });
+});
+
+describe("waehleVtt", () => {
+  it("nimmt nur die Datei dieses Videos", () => {
+    const dateien = ["alt123456AB.de.vtt", "dQw4w9WgXcQ.de.vtt", "transkript.txt"];
+    expect(waehleVtt(dateien, "dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ.de.vtt");
+  });
+  it("liefert undefined, wenn nur fremde Untertitel da sind", () => {
+    expect(waehleVtt(["alt123456AB.de.vtt"], "dQw4w9WgXcQ")).toBeUndefined();
   });
 });
