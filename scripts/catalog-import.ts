@@ -16,6 +16,7 @@ const HILFE = `Aufruf: pnpm catalog:import [datei] [--dry-run] [--ja]
 
   datei      Katalogdatei, Vorgabe catalog/gymtavo.json
   --dry-run  zeigt den Plan; laedt nichts hoch und schreibt nichts
+  --nur-videos  fasst nur Videos an (Dateien und Datensaetze), sonst nichts
   --ja       bestaetigt das Schreiben gegen ein nicht-lokales Ziel
 `;
 
@@ -30,6 +31,7 @@ async function main(): Promise<void> {
     allowPositionals: true,
     options: {
       "dry-run": { type: "boolean", default: false },
+      "nur-videos": { type: "boolean", default: false },
       ja: { type: "boolean", default: false },
       hilfe: { type: "boolean", short: "h", default: false },
     },
@@ -61,7 +63,7 @@ async function main(): Promise<void> {
   const admin = createClient(url, umgebung("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { plan, geschrieben } = await importiereKatalog(admin, geladen.wert.katalog, geladen.wert.medien, { trocken });
+  const { plan, geschrieben } = await importiereKatalog(admin, geladen.wert.katalog, geladen.wert.medien, { trocken, nurVideos: values["nur-videos"] === true });
   console.log(berichtText(plan));
   console.log(
     geschrieben === null

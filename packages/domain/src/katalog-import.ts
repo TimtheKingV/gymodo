@@ -3,6 +3,7 @@ import { DomainError } from "./errors.js";
 import { GYMTAVO_STUDIO_ID, type KatalogDatei } from "./katalog-datei.js";
 import type { Medien, Medium } from "./katalog-medien.js";
 import {
+  nurVideos,
   planeImport,
   type ImportPlan,
   type IstEinstellung,
@@ -31,7 +32,7 @@ import { PHOTO_BUCKET, VIDEO_BUCKET } from "./media.js";
 export { GYMTAVO_STUDIO_ID, pruefeKatalog, type KatalogDatei } from "./katalog-datei.js";
 export { produktFotoPraefix, pruefeMedien, type Medien, type Medium } from "./katalog-medien.js";
 export { ladeKatalog } from "./katalog-laden.js";
-export { berichtText, planeImport, type ImportPlan, type IstStand, type Posten } from "./katalog-plan.js";
+export { berichtText, nurVideos, planeImport, type ImportPlan, type IstStand, type Posten } from "./katalog-plan.js";
 
 /** PostgREST liefert hoechstens max_rows Zeilen (1000, supabase/config.toml). */
 const BLOCK = 500;
@@ -273,9 +274,10 @@ export async function importiereKatalog(
   admin: SupabaseClient,
   katalog: KatalogDatei,
   medien: Medien,
-  optionen: { trocken: boolean },
+  optionen: { trocken: boolean; nurVideos?: boolean },
 ): Promise<{ plan: ImportPlan; geschrieben: Geschrieben | null }> {
-  const plan = planeImport(katalog, medien, await leseIstStand(admin));
+  const voll = planeImport(katalog, medien, await leseIstStand(admin));
+  const plan = optionen.nurVideos === true ? nurVideos(voll) : voll;
   if (optionen.trocken) return { plan, geschrieben: null };
   return { plan, geschrieben: await fuehreAus(admin, plan) };
 }
