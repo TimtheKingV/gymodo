@@ -1,6 +1,6 @@
 # Flow mit Kamera – Entwurf
 
-**Stand:** 26. November 2026 · **Status:** Entwurf, wartet auf Tims Freigabe
+**Stand:** 26. November 2026 · **Status:** Von Tim am 26.11.2026 freigegeben; „Mein Vorschlag“-Punkte gelten, bleiben aber gekennzeichnet
 **Zweig:** `claude/flow-kamera` (Arbeitsbereich `.claude/worktrees/flow-kamera`), abgezweigt von `claude/kamera-ablauf`
 **Bezug:** `2026-11-26-follow-along-flows-design.md` (Flows, auf master, PR #118), `2026-11-24-kamera-tempo-ablauf-design.md` (Kamera-Spec), `docs/superpowers/plans/2026-11-25-kamera-ablauf-e3-e4.md` (Kamera-Oberfläche, nur auf `claude/kamera-ablauf`)
 **Wer was entschieden hat:** „Tim“ heißt im Gespräch am 26.11. gesagt. „Mein Vorschlag“ heißt von Claude gesetzt und von Tim noch nicht bestätigt.
@@ -33,7 +33,7 @@ Tim will den Flow „HIIT 20 Minuten“ einmal als echtes geführtes Training in
 | 16 | Blickrichtung | Das Handy steht einmal, aber die Übungen brauchen verschiedene Blickrichtungen (Kniebeuge und Bodenübungen von der Seite, Jumping Jacks von vorn). Die Pause zeigt deshalb bei Kamera-Schritten eine Zeile „Stell dich seitlich zur Kamera“ bzw. „Schau zur Kamera“, abgeleitet aus dem Profil. Passt es trotzdem nicht, greift Entscheidung 11 | Mein Vorschlag |
 | 17 | Bodenübungen | Die Profile `stuetz_boden` und `liegend` sind am iPhone ungeprüft. Liegestütze und Leg Drop & Pull gelten deshalb als Versuch, nicht als sicher. Die Aufstellprüfung bleibt stehend; eine zweite Prüfung im Liegen gibt es nicht | Mein Vorschlag |
 | 18 | Build für den Test | Signierter Debug-Build direkt aus Xcode auf Tims iPhone. Nur dort gibt es die Testprofile; Release und TestFlight zählen nichts | Mein Vorschlag |
-| 19 | Sichtbarkeit der neuen Übungen | Sie hängen am Gerätetyp `bodyweight` und erscheinen damit in jedem Studio im Freien Training unter „Körpergewicht“. In Trainingspläne geraten sie nicht (kein `plan`-Block). Ein Ausblend-Merkmal wird nicht gebaut | Mein Vorschlag, **Tim bestätigt** |
+| 19 | Sichtbarkeit der neuen Übungen | Sie hängen am Gerätetyp `bodyweight` und erscheinen damit in jedem Studio im Freien Training unter „Körpergewicht“. In Trainingspläne geraten sie nicht (kein `plan`-Block). Ein Ausblend-Merkmal wird nicht gebaut | Tim |
 
 ## 3. Ziele, Nicht-Ziele, Anti-Ziele
 
@@ -219,7 +219,7 @@ E3 hängt an Tims Abnahme und läuft neben E4 und E5.
 
 ## 15. Offen bei Tim
 
-1. **Reihenfolge der PRs:** `claude/kamera-ablauf` hat noch keinen PR. Entweder erst der Kamera-Ablauf allein, dann dieser Zweig, oder beides in einem PR.
+1. ~~Reihenfolge der PRs~~ Entschieden (Tim, 26.11.): Der Kamera-Ablauf geht in diesem Zweig mit, ein gemeinsamer PR.
 2. Liste aus Abschnitt 8 und die neuen Übungsnamen.
 3. Abnahme der Videos.
 4. Freigaben für Prod, jeweils einzeln.
