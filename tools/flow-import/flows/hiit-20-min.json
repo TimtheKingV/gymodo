@@ -55,8 +55,7 @@
       "beschreibung": "In der tiefen Kniebeuge bleiben und mit kleinen Bewegungen auf und ab federn.",
       "workS": 40,
       "restS": 20,
-      "istWarmup": false,
-      "unsicher": true
+      "istWarmup": false
     },
     {
       "name": "Plank",
@@ -105,8 +104,7 @@
       "beschreibung": "Nach vorn abspringen, weich landen und mit den Händen den Boden berühren.",
       "workS": 40,
       "restS": 20,
-      "istWarmup": false,
-      "unsicher": true
+      "istWarmup": false
     },
     {
       "name": "Squat mit Händen zum Boden",

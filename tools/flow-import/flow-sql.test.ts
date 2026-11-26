@@ -63,9 +63,12 @@ describe("flows/hiit-20-min.json", () => {
     expect(flowDauerS(e.schritte)).toBe(1180);
   });
 
-  it("markiert genau Schritt 7 und 14 als unsicher", () => {
+  it("enthaelt nach Bestaetigung der Namen (26.11.) keine unsicheren Schritte mehr und laesst sich in SQL umsetzen", () => {
     const e = pruefeFlowEntwurf(roh);
-    const pos = e.schritte.flatMap((s, i) => (s.unsicher ? [i + 1] : []));
-    expect(pos).toEqual([7, 14]);
+    expect(e.schritte.some((s) => s.unsicher)).toBe(false);
+    const sql = flowZuSql(e, STUDIO);
+    expect(sql).toContain("Squat-Pulse");
+    expect(sql).toContain("Weitsprung mit Bodenberührung");
+    expect((sql.match(/insert into public\.flow_steps/g) ?? []).length).toBeGreaterThanOrEqual(1);
   });
 });
