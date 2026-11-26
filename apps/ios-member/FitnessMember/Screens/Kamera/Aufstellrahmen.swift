@@ -39,13 +39,15 @@ struct KameraBildflaeche: View {
     var warnend = false
     var dezent = false
     var hervor: Set<Gelenk> = []
+    /// Ohne Rahmen nur Livebild und Strichfigur (Arbeitsphase im Flow).
+    var mitRahmen = true
 
     var body: some View {
         ZStack {
             DesignSystem.Color.surfaceRaised
             Livebild(ziel: ziel)
             Strichfigur(skelett: skelett, gespiegelt: ziel.gespiegelt, warnend: warnend, dezent: dezent, hervor: hervor)
-            Aufstellrahmen(profil: profil, bestanden: bestanden)
+            if mitRahmen { Aufstellrahmen(profil: profil, bestanden: bestanden) }
         }
         .ignoresSafeArea()
     }
@@ -53,10 +55,11 @@ struct KameraBildflaeche: View {
 
 /// "Ohne Kamera" oben rechts, in jedem Schritt.
 struct OhneKameraKnopf: View {
+    var titel = "Ohne Kamera"
     let aktion: () -> Void
 
     var body: some View {
-        Button("Ohne Kamera", action: aktion)
+        Button(titel, action: aktion)
             .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(DesignSystem.Color.text)
             .frame(minHeight: 44)

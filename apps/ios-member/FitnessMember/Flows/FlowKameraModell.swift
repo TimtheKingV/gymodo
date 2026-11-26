@@ -61,6 +61,13 @@ final class FlowKameraModell {
     static let aufstellVorgabe = Kameravorgabe(profil: .ganzkoerperStehend, signal: .knie, seite: .beide)!
 
     private(set) var start: Start
+    /// Aufstellen oder sein Hinweis steht noch an; der Lauf hat nicht begonnen.
+    var vorDemStart: Bool {
+        switch start {
+        case .aufstellen, .erlaubnisFehlt, .kameraFehlt: true
+        case .bereit, .ohneKamera: false
+        }
+    }
     /// false nach "Ohne Kamera starten", ohne Erlaubnis und bei Flows ohne Kamera-Schritt.
     var mitKamera: Bool { hatKameraSchritt && start == .bereit }
     /// Nur waehrend der Arbeitsphase eines Kamera-Schritts.
@@ -86,6 +93,9 @@ final class FlowKameraModell {
     private let leerlaufTakt: Duration?
 
     private var aktiveQuelle: (any Bildquelle)?
+    /// Die zuletzt gebaute Quelle und fuer welche Uebung: dieselbe Uebung (Aufstellen und erster Schritt,
+    /// wiederholte Uebungen) nimmt dieselbe Quelle, deren Stopp und Start dann sicher hintereinander laufen.
+    @ObservationIgnored private var letzteQuelle: (exerciseId: String, quelle: any Bildquelle)?
     private var einsatz: Einsatz?
     private var kameraLaeuft = false
     /// Zaehlt Starts und Stopps; ein Start, der nach einem Stopp zurueckkehrt, gilt nicht mehr.
@@ -267,13 +277,19 @@ final class FlowKameraModell {
         await kameraAn(.schritt(i), start: start)
     }
 
-    /// Startet je Einsatz eine eigene Quelle (die Abspielquelle zeigt die Uebung des Schritts).
+    /// Eine andere Uebung bekommt eine eigene Quelle (die Abspielquelle zeigt die Uebung des Schritts).
     private func kameraAn(_ neu: Einsatz, start: KameraStart) async {
         if kameraLaeuft, einsatz == neu { return }
         kameraAus()
         startNummer += 1
         let nummer = startNummer
-        let quelle = quellenFabrik(start)
+        let quelle: any Bildquelle
+        if let letzte = letzteQuelle, letzte.exerciseId == start.exerciseId {
+            quelle = letzte.quelle
+        } else {
+            quelle = quellenFabrik(start)
+            letzteQuelle = (start.exerciseId, quelle)
+        }
         aktiveQuelle = quelle
         einsatz = neu
         kameraLaeuft = true

@@ -153,6 +153,7 @@ struct AufstellSchritt: View {
 /// 7.2, wenn die Kamera nicht startet.
 struct KameraFehltSchritt: View {
     let beiOhneKamera: () -> Void
+    var ohneKameraTitel = "Ohne Kamera trainieren"
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s16) {
@@ -164,7 +165,7 @@ struct KameraFehltSchritt: View {
                 .font(.system(size: 22, weight: .heavy))
                 .multilineTextAlignment(.center)
             Spacer()
-            PrimaryButton(title: "Ohne Kamera trainieren") { beiOhneKamera() }
+            PrimaryButton(title: ohneKameraTitel) { beiOhneKamera() }
         }
         .padding(.horizontal, DesignSystem.Spacing.s16)
         .padding(.bottom, DesignSystem.Spacing.s16)

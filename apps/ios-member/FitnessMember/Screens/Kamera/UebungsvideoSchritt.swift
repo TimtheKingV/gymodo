@@ -125,6 +125,7 @@ struct UebungsvideoSchritt: View {
 struct ErlaubnisFehltSchritt: View {
     let beiEinstellungen: () -> Void
     let beiOhneKamera: () -> Void
+    var ohneKameraTitel = "Ohne Kamera trainieren"
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s16) {
@@ -138,7 +139,7 @@ struct ErlaubnisFehltSchritt: View {
             Spacer()
             VStack(spacing: DesignSystem.Spacing.s8) {
                 PrimaryButton(title: "In den Einstellungen erlauben") { beiEinstellungen() }
-                Button("Ohne Kamera trainieren", action: beiOhneKamera)
+                Button(ohneKameraTitel, action: beiOhneKamera)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(DesignSystem.Color.text)
                     .frame(maxWidth: .infinity, minHeight: 48)
