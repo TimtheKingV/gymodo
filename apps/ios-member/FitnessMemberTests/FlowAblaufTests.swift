@@ -45,4 +45,32 @@ struct FlowAblaufTests {
     @Test func negativeEingabeWieNull() {
         #expect(ablauf().zustand(nachS: -5) == ablauf().zustand(nachS: 0))
     }
+
+    /// Letzter Schritt mit rest_s > 0 (die DB verbietet das nicht).
+    private func ablaufMitRestAmEnde() -> FlowAblauf {
+        func schritt(_ n: Int, rest: Int) -> FlowSchritt {
+            FlowSchritt(position: n, name: "S\(n)", beschreibung: nil, workS: 40, restS: rest, istWarmup: false)
+        }
+        return FlowAblauf(schritte: [schritt(1, rest: 20), schritt(2, rest: 20)])
+    }
+
+    @Test func restAmLetztenSchrittErzeugtKeinePauseUndEndetFertig() {
+        let a = ablaufMitRestAmEnde()
+        #expect(a.gesamtS == 100) // 40 + 20 + 40, die Pause des letzten Schritts zaehlt nicht
+        #expect(a.zustand(nachS: 63.0) == .arbeit(schritt: 1, restS: 40))
+        #expect(a.zustand(nachS: 102.9) == .arbeit(schritt: 1, restS: 1))
+        #expect(a.zustand(nachS: 103.0) == .fertig)
+        #expect(a.zustand(nachS: 120) == .fertig)
+    }
+
+    @Test func keinZustandVerweistAufEinenSchrittAusserhalb() {
+        let a = ablaufMitRestAmEnde()
+        for zehntel in 0...1500 {
+            switch a.zustand(nachS: Double(zehntel) / 10) {
+            case .arbeit(let s, _): #expect(s < 2)
+            case .pause(let n, _): #expect(n < 2)
+            case .countdown, .fertig: break
+            }
+        }
+    }
 }

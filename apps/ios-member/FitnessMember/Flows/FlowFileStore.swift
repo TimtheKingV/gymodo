@@ -1,24 +1,33 @@
 import Foundation
 
-/// Platte fuer Follow-along-Flows: der Katalog-Cache (`flows.json`) und die
-/// noch nicht gesendeten Runs (`flow-runs-offen.json`). Nach dem Muster von
-/// KurseFileStore: ein verderbtes oder fehlendes File ist ein leerer Bestand,
-/// nie ein Absturzgrund.
+/// Platte fuer Follow-along-Flows: der Katalog-Cache (`flows-<userId>.json`)
+/// und die noch nicht gesendeten Runs (`flow-runs-offen-<userId>.json`).
+/// Wie BootstrapFileStore (Offline-Spec 3a/4c) steht die User-ID im
+/// Dateinamen: ein anderes Konto auf demselben Geraet findet die Dateien nie,
+/// und ein offener Run wird nie mit fremdem Token gesendet. Nach dem Muster
+/// von KurseFileStore ist ein verderbtes oder fehlendes File ein leerer
+/// Bestand, nie ein Absturzgrund.
 final class FlowFileStore: @unchecked Sendable {
-    private let flowsURL: URL
-    private let offeneURL: URL
+    private let directory: URL
 
     init(directory: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        flowsURL = directory.appendingPathComponent("flows.json")
-        offeneURL = directory.appendingPathComponent("flow-runs-offen.json")
+        self.directory = directory
     }
 
-    func ladeFlows() -> [Flow] { lade(flowsURL) }
-    func speichereFlows(_ flows: [Flow]) { speichere(flows, flowsURL) }
+    private func flowsURL(_ userId: String) -> URL {
+        directory.appendingPathComponent("flows-\(userId).json")
+    }
 
-    func ladeOffene() -> [FlowRunEingabe] { lade(offeneURL) }
-    func speichereOffene(_ runs: [FlowRunEingabe]) { speichere(runs, offeneURL) }
+    private func offeneURL(_ userId: String) -> URL {
+        directory.appendingPathComponent("flow-runs-offen-\(userId).json")
+    }
+
+    func ladeFlows(userId: String) -> [Flow] { lade(flowsURL(userId)) }
+    func speichereFlows(_ flows: [Flow], userId: String) { speichere(flows, flowsURL(userId)) }
+
+    func ladeOffene(userId: String) -> [FlowRunEingabe] { lade(offeneURL(userId)) }
+    func speichereOffene(_ runs: [FlowRunEingabe], userId: String) { speichere(runs, offeneURL(userId)) }
 
     private func lade<T: Decodable>(_ url: URL) -> [T] {
         guard let data = try? Data(contentsOf: url) else { return [] }

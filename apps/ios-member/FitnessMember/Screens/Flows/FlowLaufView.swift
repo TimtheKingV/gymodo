@@ -88,7 +88,7 @@ struct FlowLaufView: View {
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
         case .arbeit(let index, let rest):
-            let schritt = flow.schritte[index]
+            let schritt = flow.schritte[min(index, flow.schritte.count - 1)]
             VStack(spacing: DesignSystem.Spacing.s16) {
                 ueberschrift("SCHRITT \(index + 1) VON \(flow.schritte.count)")
                 Text(schritt.name)
@@ -111,7 +111,9 @@ struct FlowLaufView: View {
                 }
             }
         case .pause(let naechster, let rest):
-            let schritt = flow.schritte[naechster]
+            // FlowAblauf erzeugt nach dem letzten Schritt nie eine Pause; die
+            // Klammer haelt den Zugriff trotzdem im Bereich.
+            let schritt = flow.schritte[min(naechster, flow.schritte.count - 1)]
             VStack(spacing: DesignSystem.Spacing.s24) {
                 ueberschrift("PAUSE")
                 Text("Als Nächstes")
@@ -122,7 +124,7 @@ struct FlowLaufView: View {
                     .font(DesignSystem.Typography.screentitel)
                     .foregroundStyle(DesignSystem.Color.text)
                     .multilineTextAlignment(.center)
-                FlowRing(rest: Double(rest) / Double(max(1, flow.schritte[naechster - 1].restS)),
+                FlowRing(rest: Double(rest) / Double(max(1, flow.schritte[max(0, min(naechster, flow.schritte.count) - 1)].restS)),
                          beschriftung: "PAUSE", ziffer: "\(rest)", kante: 160)
             }
         case .fertig:
@@ -157,7 +159,7 @@ struct FlowLaufView: View {
             if fertig {
                 PrimaryButton(title: "Fertig") { dismiss() }
             } else {
-                PrimaryButton(title: lauf.istPausiert ? "Fortsetzen" : "Pause") {
+                PrimaryButton(title: lauf.istPausiert ? "Weiter" : "Anhalten") {
                     if lauf.istPausiert { lauf.fortsetzen() } else { lauf.pausieren() }
                 }
                 SecondaryButton(title: "Abbrechen") { rueckfrage = true }

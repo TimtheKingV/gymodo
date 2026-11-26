@@ -514,7 +514,7 @@ struct TrainingRootView: View {
                         }
                     }
                     if TrainingTab.zeigtFlowsZeile(einstieg: einstieg, laeuft: session != nil) {
-                        FlowsEinstiegZeile(apiClient: apiClient)
+                        FlowsEinstiegZeile()
                     }
                 }
             } trainingsinhalt: {

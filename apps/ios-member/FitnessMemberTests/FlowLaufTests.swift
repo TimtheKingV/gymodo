@@ -102,4 +102,47 @@ struct FlowLaufTests {
         #expect(l.zustand == .fertig)
         #expect(l.abgeschlossenerRun()?.lastStep == 3)
     }
+
+    @Test func abbrechenImLetztenSchrittLiefertAbgebrochenMitSchrittAnzahl() {
+        let uhr = Uhr()
+        let l = lauf(uhr)
+        l.starten()
+        uhr.weiter(3 + 40 + 20 + 40 + 20 + 39) // Schritt 3, eine Sekunde vor Schluss
+        #expect(l.zustand == .arbeit(schritt: 2, restS: 1))
+        let run = l.abbrechen()
+        #expect(run?.outcome == "aborted")
+        #expect(run?.lastStep == flow().schritte.count)
+    }
+
+    @Test func pauseImCountdownFriertDieUhrEinUndFortsetzenLaeuftWeiter() {
+        let uhr = Uhr()
+        let l = lauf(uhr)
+        l.starten()
+        uhr.weiter(1)
+        #expect(l.zustand == .countdown(restS: 2))
+        l.pausieren()
+        uhr.weiter(30)
+        #expect(l.zustand == .countdown(restS: 2))
+        l.fortsetzen()
+        #expect(l.zustand == .countdown(restS: 2))
+        uhr.weiter(2)
+        #expect(l.zustand == .arbeit(schritt: 0, restS: 40))
+    }
+
+    @Test func abbrechenWaehrendPauseNutztAbbruchzeitUndLetztenSchritt() {
+        let uhr = Uhr()
+        let l = lauf(uhr)
+        l.starten()
+        let start = uhr.jetzt
+        uhr.weiter(3 + 40 + 5) // Pause nach Schritt 1
+        l.pausieren()
+        uhr.weiter(100)
+        let run = l.abbrechen()
+        #expect(run?.outcome == "aborted")
+        #expect(run?.lastStep == 1)
+        let format = ISO8601DateFormatter()
+        #expect(run?.startedAt == format.string(from: start))
+        // Ende = Zeitpunkt des Abbruchs (148 s nach Start), nicht der Pausenbeginn (48 s).
+        #expect(run?.endedAt == format.string(from: start.addingTimeInterval(148)))
+    }
 }

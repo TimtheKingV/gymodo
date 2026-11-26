@@ -26,13 +26,15 @@ struct FlowAblauf: Sendable {
         for (i, s) in schritte.enumerated() {
             t += Double(s.workS)
             liste.append((t, .arbeit(i)))
-            if s.restS > 0 {
+            // Nach dem LETZTEN Schritt gibt es keine Pause: der Flow ist dann
+            // fertig, auch wenn die Daten dort rest_s > 0 haben.
+            if s.restS > 0, i < schritte.count - 1 {
                 t += Double(s.restS)
                 liste.append((t, .pause(i + 1)))
             }
         }
         grenzen = liste
-        gesamtS = schritte.reduce(0) { $0 + $1.workS + $1.restS }
+        gesamtS = Int(t) - Self.countdownS
     }
 
     func zustand(nachS vergangen: Double) -> FlowZustand {

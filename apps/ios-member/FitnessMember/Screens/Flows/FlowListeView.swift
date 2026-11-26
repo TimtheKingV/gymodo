@@ -28,23 +28,45 @@ enum FlowAnzeige {
     }
 }
 
-/// Die Liste der Follow-along-Flows im Training-Tab. Besitzt den FlowStore
-/// (Cache, offene Runs) fuer Liste, Detail und Lauf.
-struct FlowListeView: View {
-    @State private var store: FlowStore
+/// Welcher Text die Liste ersetzt, solange es keine Flows gibt.
+enum FlowListeInhalt: Equatable {
+    case flows, laedt, fehler, leer
 
-    init(apiClient: APIClient) {
-        _store = State(initialValue: FlowStore(loader: apiClient, dateiStore: FlowFileStore()))
+    static func von(flowsLeer: Bool, ladeZustand: FlowLadeZustand) -> FlowListeInhalt {
+        guard flowsLeer else { return .flows }
+        switch ladeZustand {
+        case .idle, .laedt: return .laedt
+        case .fehler: return .fehler
+        case .geladen: return .leer
+        }
     }
+}
+
+/// Die Liste der Follow-along-Flows im Training-Tab. Der FlowStore (Cache,
+/// offene Runs) gehoert der App und kommt ueber die Umgebung.
+struct FlowListeView: View {
+    @Environment(FlowStore.self) private var store
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.s12) {
-                if store.flows.isEmpty {
+                switch FlowListeInhalt.von(flowsLeer: store.flows.isEmpty, ladeZustand: store.ladeZustand) {
+                case .laedt:
+                    HStack(spacing: DesignSystem.Spacing.s8) {
+                        ProgressView().tint(DesignSystem.Color.accent)
+                        Text("Lädt …")
+                            .font(DesignSystem.Typography.fliesstext)
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                    }
+                case .fehler:
+                    Text("Flows konnten nicht geladen werden. Bitte Verbindung prüfen.")
+                        .font(DesignSystem.Typography.fliesstext)
+                        .foregroundStyle(DesignSystem.Color.textMuted)
+                case .leer:
                     Text("Noch keine Flows verfügbar.")
                         .font(DesignSystem.Typography.fliesstext)
                         .foregroundStyle(DesignSystem.Color.textMuted)
-                } else {
+                case .flows:
                     ForEach(store.flows) { flow in
                         NavigationLink {
                             FlowDetailView(flow: flow, store: store)
@@ -62,8 +84,8 @@ struct FlowListeView: View {
         .navigationTitle("Flows")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            // Zuerst alte Runs nachsenden, dann den Katalog auffrischen.
-            await store.offeneRunsSenden()
+            // Alte Runs sendet schon die App (Start, Aktivwerden, Netz); hier
+            // genuegt der Katalog.
             await store.laden()
         }
     }

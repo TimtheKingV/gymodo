@@ -3,11 +3,9 @@ import SwiftUI
 /// Die "Flows"-Zeile im Training-Tab; schiebt die Flow-Liste auf den Stack.
 /// Geteilt von der Plan-Auswahl und der Geraeteliste (ohne Plan / freies Training).
 struct FlowsEinstiegZeile: View {
-    let apiClient: APIClient
-
     var body: some View {
         NavigationLink {
-            FlowListeView(apiClient: apiClient)
+            FlowListeView()
         } label: {
             HStack(spacing: DesignSystem.Spacing.s12) {
                 VStack(alignment: .leading, spacing: 2) {

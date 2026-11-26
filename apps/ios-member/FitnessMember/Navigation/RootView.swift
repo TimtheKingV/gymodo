@@ -6,6 +6,7 @@ struct RootView: View {
     @Environment(WorkoutSessionStore.self) private var workoutStore
     @Environment(KurseStore.self) private var kurseStore
     @Environment(VerlaufStore.self) private var verlaufStore
+    @Environment(FlowStore.self) private var flowStore
     @Environment(TrainingsplanAblaufStore.self) private var planAblauf
     @Environment(\.scenePhase) private var scenePhase
 
@@ -59,6 +60,9 @@ struct RootView: View {
                 // gespeicherte sofort da (Offline-Spec 3a). Kam er aus dem
                 // Cache, wird trotzdem nachgeladen -- er kann Stunden alt sein.
                 let ausCache = catalogStore.anmelden(userId: session.userId)
+                // Flow-Cache und offene Runs gehoeren diesem Konto (Dateiname
+                // mit User-ID), nie dem vorigen auf demselben Geraet.
+                flowStore.anmelden(userId: session.userId)
                 // Nicht nur .idle: auch nach .failed muss ein neuer Anlauf
                 // moeglich sein. Aber auch nicht mehr als das: ein
                 // Passwortwechsel liefert eine neue Session (neuer
@@ -71,6 +75,9 @@ struct RootView: View {
                 // Der Besitzer der Warteschlange steht erst jetzt fest -- der
                 // Flush beim App-Start lief davor ins Leere (Offline-Spec 4c).
                 await catalogStore.flushPending()
+                // Flows: liegen vom letzten Mal noch Runs dieses Kontos offen,
+                // gehen sie jetzt mit seinem Token raus.
+                await flowStore.offeneRunsSenden()
             } else if hatteSession {
                 hatteSession = false
                 catalogStore.reset()
@@ -88,6 +95,9 @@ struct RootView: View {
                 // Der Planablauf ebenso: Plan und Einheiten gehoeren dem
                 // abgemeldeten Konto.
                 planAblauf.reset()
+                // Flow-Cache und offene Runs gehoeren dem abgemeldeten Konto
+                // (die Dateien bleiben, der Speicher nicht).
+                flowStore.reset()
             }
         }
         // Der Planablauf folgt Bootstrap und Ort. Auch im Vordergrund: die
@@ -96,7 +106,10 @@ struct RootView: View {
         .onChange(of: catalogStore.bootstrapStand, initial: true) { planVorbereiten() }
         .onChange(of: catalogStore.activeStudioId) { planVorbereiten() }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { planVorbereiten() }
+            if phase == .active {
+                planVorbereiten()
+                Task { await flowStore.offeneRunsSenden() }
+            }
         }
     }
 

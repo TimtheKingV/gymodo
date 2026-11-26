@@ -54,7 +54,7 @@ struct TrainingAuswahlView: View {
                     weitere(modell.weitere, naechster: modell.naechsteEinheitKey, namen: namen)
                 }
                 freiesTraining
-                FlowsEinstiegZeile(apiClient: apiClient)
+                FlowsEinstiegZeile()
             }
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s16)
