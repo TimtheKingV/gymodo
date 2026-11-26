@@ -43,6 +43,7 @@ Der Probelauf mit dem Video „20 Minuten Ganzkörper HIIT-Workout" (Sascha Hube
 - `flow_runs`: `id` (clientseitig erzeugt, wie `workout_sessions`), `flow_id`, `user_id`, `studio_id`, `started_at`, `completed_at`, `last_step`, `completed_reason` (`finished` / `aborted`).
 - RLS wie bei den bestehenden Tabellen: Mitglieder des Studios lesen Flows, Schreiben von `flow_runs` nur durch das Mitglied selbst, Flows nur über das Importskript beziehungsweise Service-Zugriff.
 - Studio-weit statt global, damit es zum übrigen Modell passt (**meine Annahme**, siehe offene Fragen).
+- **Gymtavo-Katalog (Stand 26.11., Migration 0079):** Ein Flow im Katalog-Studio (`is_catalog`, feste id `00000000-0000-4000-8000-000000000001`) ist für jeden Angemeldeten lesbar, auch ohne Studio, wie Geräte und Übungen (Spec `2026-10-06-gymtavo-katalog-offener-zugang-design.md`, 5.2). Ein Lauf eines Katalog-Flows trägt das Katalog-Studio als `studio_id`. Geschrieben werden Flows weiterhin nur per Service-Zugriff. Ein einziger Seed gilt damit für alle Studios.
 
 ## Importweg
 

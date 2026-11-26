@@ -15,10 +15,14 @@ const put = (runId: string, auth?: string, body?: unknown): [Request, { params: 
   { params: Promise.resolve({ runId }) },
 ];
 
+// Festes Katalog-Studio aus Migration 0047: seine Flows sieht jeder Angemeldete (0079).
+const KATALOG_STUDIO = "00000000-0000-4000-8000-000000000001";
+
 let studioA: string;
 let studioB: string;
 let flowA: string;
 let flowB: string;
+let flowKatalog: string;
 let tokenA: string;
 let tokenOhne: string;
 
@@ -45,6 +49,7 @@ beforeAll(async () => {
   studioB = await neuesStudio("API Flows B");
   flowA = await neuerFlow(studioA, "api-flow-a");
   flowB = await neuerFlow(studioB, "api-flow-b");
+  flowKatalog = await neuerFlow(KATALOG_STUDIO, `api-katalog-${crypto.randomUUID().slice(0, 8)}`);
   const email = uniqueEmail("api-flows-a");
   const id = await createTestUser(email);
   const { error } = await serviceClient().from("studio_memberships").insert({ studio_id: studioA, user_id: id, role: "member" });
@@ -74,15 +79,22 @@ describe("/me/flows", () => {
     const antwort = await GET(get(tokenA));
     expect(antwort.status).toBe(200);
     expect(antwort.headers.get("cache-control")).toBe("private, no-store");
-    const { flows } = await antwort.json();
-    expect(flows).toHaveLength(1);
-    expect(flows[0].id).toBe(flowA);
-    expect(flows[0].schritte.map((s: { position: number }) => s.position)).toEqual([1, 2]);
-    expect(flows[0].dauerS).toBe(80); // 30+10+40, die Pause des letzten Schritts zaehlt nicht
+    const { flows } = (await antwort.json()) as { flows: { id: string; studioId: string; dauerS: number; schritte: { position: number }[] }[] };
+    const eigener = flows.find((f) => f.id === flowA);
+    expect(eigener).toBeDefined();
+    expect(eigener!.schritte.map((s) => s.position)).toEqual([1, 2]);
+    expect(eigener!.dauerS).toBe(80); // 30+10+40, die Pause des letzten Schritts zaehlt nicht
+    expect(flows.map((f) => f.id)).not.toContain(flowB);
+    // Mehr als das eigene Studio und der Katalog ist nie dabei.
+    expect(flows.every((f) => f.studioId === studioA || f.studioId === KATALOG_STUDIO)).toBe(true);
   });
 
-  it("ohne Mitgliedschaft: flows []", async () => {
-    expect(await (await GET(get(tokenOhne))).json()).toEqual({ flows: [] });
+  it("ohne Mitgliedschaft: nur Flows des Katalog-Studios, keine fremden Studios", async () => {
+    const { flows } = (await (await GET(get(tokenOhne))).json()) as { flows: { id: string; studioId: string }[] };
+    expect(flows.map((f) => f.id)).toContain(flowKatalog);
+    expect(flows.map((f) => f.id)).not.toContain(flowA);
+    expect(flows.map((f) => f.id)).not.toContain(flowB);
+    expect(flows.every((f) => f.studioId === KATALOG_STUDIO)).toBe(true);
   });
 });
 
@@ -93,6 +105,20 @@ describe("/me/flow-runs/{runId}", () => {
     expect((await PUT(...put(runId, tokenA, lauf()))).status).toBe(204);
     const { data } = await serviceClient().from("flow_runs").select("id").eq("id", runId);
     expect(data).toHaveLength(1);
+  });
+
+  it("Nutzer ohne Studio speichert einen Lauf des Katalog-Flows (204), doppelt bleibt eine Zeile", async () => {
+    const runId = crypto.randomUUID();
+    expect((await PUT(...put(runId, tokenOhne, lauf({ flowId: flowKatalog })))).status).toBe(204);
+    expect((await PUT(...put(runId, tokenOhne, lauf({ flowId: flowKatalog })))).status).toBe(204);
+    const { data } = await serviceClient().from("flow_runs").select("id, studio_id").eq("id", runId);
+    expect(data).toHaveLength(1);
+    expect(data![0].studio_id).toBe(KATALOG_STUDIO);
+  });
+
+  it("Nutzer ohne Studio: Lauf eines Studio-Flows ist 404", async () => {
+    const antwort = await PUT(...put(crypto.randomUUID(), tokenOhne, lauf({ flowId: flowA })));
+    expect(antwort.status).toBe(404);
   });
 
   it("fremder Flow ist 404", async () => {
