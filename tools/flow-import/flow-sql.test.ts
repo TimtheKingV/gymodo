@@ -53,6 +53,51 @@ describe("flowZuSql", () => {
   });
 });
 
+describe("flowZuSql mit uebung", () => {
+  const KATALOG = "00000000-0000-4000-8000-000000000001";
+
+  function mitUebung(): FlowEntwurf {
+    const e = entwurf();
+    e.schritte[1]!.uebung = "bw_pushup";
+    return e;
+  }
+
+  it("ohne uebung entsteht kein exercise_id und keine Sicherung", () => {
+    const sql = flowZuSql(entwurf(), STUDIO);
+    expect(sql).not.toContain("exercise_id");
+    expect(sql).not.toContain("raise exception");
+  });
+
+  it("loest den Schluessel im Katalogstudio auf, unabhaengig vom Ziel-Studio", () => {
+    const sql = flowZuSql(mitUebung(), STUDIO);
+    expect(sql).toContain("exercise_id");
+    expect(sql).toContain(
+      `(select id from public.exercises where studio_id = '${KATALOG}' and catalog_key = 'bw_pushup')`,
+    );
+    const inserts = sql.split("insert into public.flow_steps").slice(1);
+    expect(inserts[0]).not.toContain("exercise_id");
+    expect(inserts[1]).toContain("exercise_id");
+  });
+
+  it("bricht die Transaktion ab, wenn nicht jeder Schluessel aufgeloest wurde", () => {
+    const sql = flowZuSql(mitUebung(), STUDIO);
+    expect(sql).toContain("raise exception");
+    expect(sql).toMatch(/<> 1 then/);
+    expect(sql.indexOf("raise exception")).toBeLessThan(sql.lastIndexOf("commit;"));
+    expect(sql.indexOf("raise exception")).toBeGreaterThan(sql.lastIndexOf("insert into public.flow_steps"));
+  });
+
+  it("wirft bei Schluesseln, die der Katalog nicht kennt", () => {
+    const e = entwurf();
+    e.schritte[1]!.uebung = "bw_gibtsnicht";
+    expect(() => flowZuSql(e, STUDIO, new Set(["bw_pushup"]))).toThrow("Unbekannte Katalogschluessel: 2 (bw_gibtsnicht).");
+  });
+
+  it("akzeptiert Schluessel, die der Katalog kennt", () => {
+    expect(() => flowZuSql(mitUebung(), STUDIO, new Set(["bw_pushup"]))).not.toThrow();
+  });
+});
+
 describe("flows/hiit-20-min.json", () => {
   const roh: unknown = JSON.parse(readFileSync(join(__dirname, "flows", "hiit-20-min.json"), "utf8"));
 
