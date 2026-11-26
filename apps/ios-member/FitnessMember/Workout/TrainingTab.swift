@@ -66,6 +66,13 @@ enum TrainingTab {
         einstieg == .auswahl && !laeuft && hatPlan
     }
 
+    /// Die Flows-Zeile steht auf der Geraeteliste vor einem Training (ohne Plan
+    /// und im freien Training), nicht in einer laufenden Session und nicht im
+    /// Plan-Einstieg. Mit Plan steht sie in der Auswahl (`TrainingAuswahlView`).
+    static func zeigtFlowsZeile(einstieg: TrainingEinstieg, laeuft: Bool) -> Bool {
+        !laeuft && einstieg != .plan
+    }
+
     /// Das freie Training zeigt die Geraeteliste ohne Plankarte.
     static func zeigtPlankarte(einstieg: TrainingEinstieg) -> Bool {
         einstieg != .frei

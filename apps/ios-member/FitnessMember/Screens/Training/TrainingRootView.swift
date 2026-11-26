@@ -513,6 +513,9 @@ struct TrainingRootView: View {
                             planPositionAntippen($0, bloecke: session?.bloecke ?? [])
                         }
                     }
+                    if TrainingTab.zeigtFlowsZeile(einstieg: einstieg, laeuft: session != nil) {
+                        FlowsEinstiegZeile(apiClient: apiClient)
+                    }
                 }
             } trainingsinhalt: {
                 if let session {
