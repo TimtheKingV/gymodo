@@ -14,7 +14,8 @@
     "tags": "tsx scripts/tags.ts",
     "catalog:import": "tsx scripts/catalog-import.ts",
     "catalog:videos": "tsx scripts/katalog-videos-einspielen.ts",
-    "flow:transkript": "tsx tools/flow-import/transkript.ts"
+    "flow:transkript": "tsx tools/flow-import/transkript.ts",
+    "flow:sql": "tsx tools/flow-import/flow-sql.ts"
   },
   "dependencies": {
     "@fitretro/domain": "workspace:*"
