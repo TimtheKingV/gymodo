@@ -66,3 +66,16 @@ struct TrainingAuswahlTests {
         #expect(TrainingAuswahl.danach(einheitKey: "B", einheitKeys: ["A", "B", "C"]) == "C")
     }
 }
+
+/// Wo der Einstieg "Flows" im Training-Tab steht (ohne Plan, frei, nicht im Training).
+struct FlowsEinstiegTests {
+    @Test func ohnePlanUndFreiOhneSessionMitFlows() {
+        #expect(TrainingTab.zeigtFlowsZeile(einstieg: .auswahl, laeuft: false))
+        #expect(TrainingTab.zeigtFlowsZeile(einstieg: .frei, laeuft: false))
+    }
+
+    @Test func nichtImLaufendenTrainingUndNichtImPlanEinstieg() {
+        #expect(!TrainingTab.zeigtFlowsZeile(einstieg: .frei, laeuft: true))
+        #expect(!TrainingTab.zeigtFlowsZeile(einstieg: .plan, laeuft: false))
+    }
+}

@@ -480,3 +480,44 @@ export function berichtText(plan: ImportPlan): string {
   melden("Produktfoto nach Rechteentzug entfernt, Objekt bleibt liegen", plan.gemeldet.entzogeneFotos);
   return zeilen.join("\n");
 }
+
+/**
+ * Engt einen Plan auf die Videos ein: alles andere gilt als unveraendert und
+ * wird nicht geschrieben, hochgeladen wird nur im Video-Bucket. Die ids der
+ * Geraete und Verknuepfungen bleiben, die neuen Videos brauchen sie.
+ * Braucht ein Video eine Verknuepfung, die es noch nicht gibt, bricht es ab:
+ * die muesste der volle Import anlegen.
+ */
+export function nurVideos(plan: ImportPlan): ImportPlan {
+  const verknuepfungen = new Map(plan.verknuepfungen.map((p) => [p.schluessel, p]));
+  for (const v of plan.videos) {
+    if (v.art === "unveraendert" || v.id !== null) continue;
+    if (verknuepfungen.get(v.schluessel)?.id == null) {
+      throw new Error(`Video "${v.schluessel}": die Verknuepfung gibt es in der Datenbank noch nicht -- dafuer braucht es den vollen Import.`);
+    }
+  }
+  const unveraendert = <Z>(liste: Posten<Z>[]): Posten<Z>[] =>
+    liste.map((p) => ({ ...p, art: "unveraendert" as const, felder: [] }));
+  return {
+    ...plan,
+    geraetetypen: unveraendert(plan.geraetetypen),
+    einstellungen: unveraendert(plan.einstellungen),
+    uebungen: unveraendert(plan.uebungen),
+    verknuepfungen: unveraendert(plan.verknuepfungen),
+    produkte: unveraendert(plan.produkte),
+    produktTypen: unveraendert(plan.produktTypen),
+    uploads: plan.uploads.filter((m) => m.bucket === VIDEO_BUCKET),
+    gemeldet: {
+      ...plan.gemeldet,
+      geraetetypen: [],
+      uebungen: [],
+      einstellungen: [],
+      verknuepfungen: [],
+      fremdeFotos: [],
+      produkte: [],
+      produktTypen: [],
+      zurueckgehalteneFotos: [],
+      entzogeneFotos: [],
+    },
+  };
+}

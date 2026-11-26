@@ -11,6 +11,8 @@ struct FitnessMemberApp: App {
     /// Cardio-Haken fuer Plan-Tab und Home (Marken der Streak-Woche).
     @State private var cardioChecks = CardioChecksStore()
     @State private var verlaufStore: VerlaufStore
+    /// Follow-along-Flows: Katalog-Cache und offene Runs, ein Store fuer die App.
+    @State private var flowStore: FlowStore
     @State private var netzwerkMonitor: NetzwerkMonitor
     @State private var pendingTagStore = PendingTagStore()
     /// Die Uebungsvideos fuer Training UND Home: die Fortschrittszeilen auf
@@ -67,6 +69,7 @@ struct FitnessMemberApp: App {
         _catalogStore = State(initialValue: katalog)
         _planAblauf = State(initialValue: ablauf)
         _kurseStore = State(initialValue: KurseStore(loader: client, fileStore: KurseFileStore()))
+        _flowStore = State(initialValue: FlowStore(loader: client, dateiStore: FlowFileStore()))
         _verlaufStore = State(initialValue: VerlaufStore(loader: client, fileStore: VerlaufFileStore()))
         apiClient = client
         // Vor der ersten View: so ist die Muskelgeometrie fertig dekodiert,
@@ -98,6 +101,7 @@ struct FitnessMemberApp: App {
                 .environment(kurseStore)
                 .environment(cardioChecks)
                 .environment(verlaufStore)
+                .environment(flowStore)
                 .environment(netzwerkMonitor)
                 .environment(pendingTagStore)
                 .environment(videoVorrat)
@@ -109,6 +113,7 @@ struct FitnessMemberApp: App {
                     // Der bisher fehlende Ausloeser der Schreib-Warteschlange.
                     netzwerkMonitor.start {
                         Task { await catalogStore.flushPending() }
+                        Task { await flowStore.offeneRunsSenden() }
                     }
                     await catalogStore.flushPending()
                 }

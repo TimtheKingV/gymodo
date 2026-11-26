@@ -23,6 +23,8 @@ struct TrainingAuswahlView: View {
     /// E10: freies Training auf der Kategorie Cardio.
     let beiCardio: () -> Void
     let beiFrei: () -> Void
+    /// Fuer die Flow-Liste (Follow-along), die ihren eigenen Store anlegt.
+    let apiClient: APIClient
 
     @State private var vorziehen: VorziehenAuftrag?
     /// Setzt das Blatt nach erfolgreichem Vorziehen; der Wechsel in den
@@ -52,6 +54,7 @@ struct TrainingAuswahlView: View {
                     weitere(modell.weitere, naechster: modell.naechsteEinheitKey, namen: namen)
                 }
                 freiesTraining
+                FlowsEinstiegZeile()
             }
             .padding(.horizontal, 20)
             .padding(.vertical, DesignSystem.Spacing.s16)
