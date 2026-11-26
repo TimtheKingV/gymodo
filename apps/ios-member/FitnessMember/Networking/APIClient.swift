@@ -222,6 +222,22 @@ actor APIClient {
         try await executeNoContent(path: "me/goals/\(kind)", method: "DELETE")
     }
 
+    // MARK: - Follow-along-Flows
+
+    func flows() async throws(APIError) -> [Flow] {
+        struct Antwort: Decodable { let flows: [Flow] }
+        return try await get("me/flows", as: Antwort.self).flows
+    }
+
+    /// PUT je Run-Id, idempotent (204) -- Wiederholen ist sicher.
+    func putFlowRun(_ run: FlowRunEingabe) async throws(APIError) {
+        let bodyData: Data
+        do { bodyData = try encoder.encode(run) }
+        catch { throw APIError.encodingFailed }
+        try await executeNoContent(url: baseURL.appendingPathComponent("me/flow-runs/\(run.id)"),
+                                   method: "PUT", bodyData: bodyData)
+    }
+
     // MARK: - Trainingsplan (Etappe 3)
 
     /// 404 heisst "noch kein Profil" und ist hier kein Fehler.
@@ -396,8 +412,12 @@ actor APIClient {
         try await executeNoContent(url: baseURL.appendingPathComponent(path), method: method)
     }
 
-    private func executeNoContent(url: URL, method: String) async throws(APIError) {
-        let request = try await anfrage(url: url, method: method)
+    private func executeNoContent(url: URL, method: String, bodyData: Data? = nil) async throws(APIError) {
+        var request = try await anfrage(url: url, method: method)
+        if let bodyData {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = bodyData
+        }
 
         let data: Data
         let response: URLResponse

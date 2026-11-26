@@ -493,7 +493,8 @@ struct TrainingRootView: View {
                     einstieg = .frei
                     pfad.append(.kategorie(.cardio))
                 },
-                beiFrei: { einstieg = .frei })
+                beiFrei: { einstieg = .frei },
+                apiClient: apiClient)
             // Ohne Scanwege (E8), aber Hinweise wie ein ungueltiger Link
             // muessen auch hier sichtbar sein.
             .safeAreaInset(edge: .bottom) { fuss(mitScanWegen: false) }
@@ -511,6 +512,9 @@ struct TrainingRootView: View {
                         PlanKarteBereich(session: session, fotoLader: apiClient, vorschauLader: vorschauLader) {
                             planPositionAntippen($0, bloecke: session?.bloecke ?? [])
                         }
+                    }
+                    if TrainingTab.zeigtFlowsZeile(einstieg: einstieg, laeuft: session != nil) {
+                        FlowsEinstiegZeile()
                     }
                 }
             } trainingsinhalt: {

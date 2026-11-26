@@ -1,0 +1,152 @@
+{
+  "key": "hiit-20-min",
+  "titel": "HIIT 20 Minuten",
+  "beschreibung": null,
+  "level": "mittel",
+  "quelle": {
+    "url": "https://www.youtube.com/watch?v=dS4uUM5UfOA",
+    "kanal": "Sascha Huber"
+  },
+  "schritte": [
+    {
+      "name": "High Kicks",
+      "beschreibung": "Abwechselnd die gestreckten Beine nach vorn hochschwingen und das Becken locker halten.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": true
+    },
+    {
+      "name": "Slow Burpees",
+      "beschreibung": "Kontrolliert in die Hocke, zum Liegestütz zurück und ruhig wieder aufrichten.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": true
+    },
+    {
+      "name": "Jumping Jacks",
+      "beschreibung": "Mit kleinen Sprüngen Arme und Beine gleichzeitig öffnen und schließen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": true
+    },
+    {
+      "name": "Toe Touches + Jackknifes",
+      "beschreibung": "Im Wechsel die Zehen mit den Händen berühren und Oberkörper und Beine zusammenklappen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Mini Scissor Kicks",
+      "beschreibung": "Auf dem Rücken liegend die Beine flach überkreuzen, ohne den unteren Rücken abzuheben.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Burpees mit Oberschenkel-Berührung",
+      "beschreibung": "Nach jedem Burpee im Stand kurz die Oberschenkel abklatschen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Squat-Pulse",
+      "beschreibung": "In der tiefen Kniebeuge bleiben und mit kleinen Bewegungen auf und ab federn.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Plank",
+      "beschreibung": "Den Körper auf den Unterarmen als gerade Linie halten und den Bauch anspannen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Swimmer",
+      "beschreibung": "In Bauchlage gegengleich Arme und Beine heben und flatternd bewegen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Russian Twist",
+      "beschreibung": "Im Sitz mit angehobenen Füßen den Oberkörper von Seite zu Seite drehen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Lunge + Kick",
+      "beschreibung": "Einen Ausfallschritt machen und beim Aufstehen das hintere Bein nach vorn kicken.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Liegestütze",
+      "beschreibung": "Den Körper gerade halten und die Brust kontrolliert Richtung Boden senken.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Leg Drop & Pull",
+      "beschreibung": "Beine gestreckt absenken und danach mit der Bauchkraft wieder zur Brust ziehen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Weitsprung mit Bodenberührung",
+      "beschreibung": "Nach vorn abspringen, weich landen und mit den Händen den Boden berühren.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Squat mit Händen zum Boden",
+      "beschreibung": "Tief in die Kniebeuge gehen, die Hände zum Boden führen und kräftig aufrichten.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Plank mit Knie zur Brust",
+      "beschreibung": "Aus der Liegestützposition abwechselnd ein Knie zur Brust ziehen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Flutter Kicks",
+      "beschreibung": "Auf dem Rücken die gestreckten Beine schnell und klein auf und ab bewegen.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Skater Jumps",
+      "beschreibung": "Seitlich von Bein zu Bein springen, wie beim Eisschnelllauf, und das Gleichgewicht halten.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Crunch-Halten",
+      "beschreibung": "Den Oberkörper anheben und die Spannung im Bauch in der oberen Position halten.",
+      "workS": 40,
+      "restS": 20,
+      "istWarmup": false
+    },
+    {
+      "name": "Burpees mit Streckung",
+      "beschreibung": "Nach dem Burpee mit einem Strecksprung hoch abspringen und die Arme nach oben führen.",
+      "workS": 40,
+      "restS": 0,
+      "istWarmup": false
+    }
+  ]
+}
