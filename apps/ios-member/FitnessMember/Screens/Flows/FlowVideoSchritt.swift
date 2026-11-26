@@ -2,8 +2,9 @@ import AVFoundation
 import SwiftUI
 
 /// Ein Flow-Schritt mit dem Video der Uebung: Ueberschrift, Video als
-/// Schleife, darunter Name und Beschreibung. Ohne `videoURL` (oder wenn die
-/// Datei nicht abspielbar ist) steht an Stelle des Videos der Ring.
+/// Schleife, darunter Name und Beschreibung. Ohne `video` steht an Stelle des
+/// Videos der Ring. Das Asset kommt fertig vorbereitet vom Aufrufer, damit ein
+/// Phasenwechsel mit demselben Video nichts neu aufbaut.
 struct FlowVideoSchritt: View {
     let ueberschrift: String
     /// Kleine Zeile ueber dem Namen ("Als Nächstes"); nil: keine.
@@ -12,11 +13,8 @@ struct FlowVideoSchritt: View {
     let beschreibung: String?
     /// Wohin das Mitglied schaut oder steht, wenn die Kamera zaehlt.
     let blickzeile: String?
-    let videoURL: URL?
+    let video: AVAsset?
     let ringErsatz: FlowRing
-
-    private enum Videostand { case laedt, da(AVAsset), keins }
-    @State private var videostand = Videostand.laedt
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.s16) {
@@ -52,34 +50,18 @@ struct FlowVideoSchritt: View {
                 }
             }
         }
-        .task(id: videoURL) {
-            guard let videoURL else { videostand = .keins; return }
-            videostand = .laedt
-            if let asset = await Schleifenvideo.nurBild(videoURL) {
-                videostand = .da(asset)
-            } else {
-                videostand = .keins
-            }
-        }
     }
 
     @ViewBuilder
     private var flaeche: some View {
-        switch videostand {
-        case .da(let asset):
-            Schleifenvideo(asset: asset, ganz: true)
+        if let video {
+            Schleifenvideo(asset: video, ganz: true)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 160, maxHeight: 340)
                 .background(DesignSystem.Color.surfaceRaised)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
                 .accessibilityHidden(true)
-        case .laedt:
-            // Platz halten, damit der Text nicht springt, wenn das Video eintrifft.
-            DesignSystem.Color.surfaceRaised
-                .frame(maxWidth: .infinity)
-                .frame(height: 240)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.haupt))
-        case .keins:
+        } else {
             ringErsatz
         }
     }
@@ -90,16 +72,16 @@ struct FlowVideoSchritt: View {
     FlowVideoSchritt(
         ueberschrift: "PAUSE", zeile: "Als Nächstes", name: "Liegestütze",
         beschreibung: "Den Körper gerade halten, die Brust zum Boden senken.",
-        blickzeile: "Stell dich seitlich zur Kamera", videoURL: nil,
+        blickzeile: "Stell dich seitlich zur Kamera", video: nil,
         ringErsatz: FlowRing(rest: 0.6, beschriftung: "PAUSE", ziffer: "14", kante: 160))
         .padding(20)
         .background(DesignSystem.Color.bg)
 }
 
-#Preview("Mit Video (nicht abspielbar)") {
+#Preview("Mit Video (Datei fehlt)") {
     FlowVideoSchritt(
         ueberschrift: "SCHRITT 2 VON 20", zeile: nil, name: "Liegestütze", beschreibung: nil,
-        blickzeile: nil, videoURL: URL(fileURLWithPath: "/nicht/da.mp4"),
+        blickzeile: nil, video: AVURLAsset(url: URL(fileURLWithPath: "/nicht/da.mp4")),
         ringErsatz: FlowRing(rest: 0.6, beschriftung: "ARBEIT", ziffer: "31", kante: 160))
         .padding(20)
         .background(DesignSystem.Color.bg)

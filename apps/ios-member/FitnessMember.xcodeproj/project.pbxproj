@@ -455,6 +455,7 @@
 		E5D5C299EF2C249F20BEA4B9 /* KursDetailInhaltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02610C837B8435320AACE71B /* KursDetailInhaltTests.swift */; };
 		E61A8795F4C4B77FA8595599 /* Ablaufzeile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9299CF3867BDD51F257D81 /* Ablaufzeile.swift */; };
 		E64981273BFE15AE13E3F69C /* TestnotizScreenModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0922864C7B289CC11400B5CB /* TestnotizScreenModifier.swift */; };
+		E71C96CDCBF13AF18E253655 /* FlowVideoPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A8C7DC80F27402EFD9F3148 /* FlowVideoPlan.swift */; };
 		E77B229BFB49822EB132B48A /* BelegungsleisteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB083ACE9E51B4E98A6065F /* BelegungsleisteView.swift */; };
 		E7A45EB36FF558A4EFDA9A14 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A36C578F3E7767ABE5EE6B6 /* AuthError.swift */; };
 		E81A5235896758441947E5A5 /* PlanWochenRechnung.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9A32C4350EDD88BB8790978 /* PlanWochenRechnung.swift */; };
@@ -825,6 +826,7 @@
 		997E6C8C1241617E7FCB0B8F /* ZirkelPauseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZirkelPauseView.swift; sourceTree = "<group>"; };
 		99F4FCF4F273CAB328BF77EE /* SetWriteHerkunftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetWriteHerkunftTests.swift; sourceTree = "<group>"; };
 		99FE5AD96A31D9C0295ED5AB /* TrainingEinstiegSpeicherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingEinstiegSpeicherTests.swift; sourceTree = "<group>"; };
+		9A8C7DC80F27402EFD9F3148 /* FlowVideoPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowVideoPlan.swift; sourceTree = "<group>"; };
 		9AB12AC4B9078522360F6C20 /* CardioVerlaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardioVerlaufTests.swift; sourceTree = "<group>"; };
 		9ABF3C0BB5050A962881A269 /* GeraeteAuswahlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraeteAuswahlView.swift; sourceTree = "<group>"; };
 		9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseWeek.swift; sourceTree = "<group>"; };
@@ -1807,6 +1809,7 @@
 				A5B5E4F11AD3B3F662794820 /* FlowLauf.swift */,
 				176A9EE101E8E0EFDA1C8B44 /* FlowStore.swift */,
 				25320C95E2943537EC6FCE02 /* FlowUebungen.swift */,
+				9A8C7DC80F27402EFD9F3148 /* FlowVideoPlan.swift */,
 			);
 			path = Flows;
 			sourceTree = "<group>";
@@ -2041,6 +2044,7 @@
 				0C27ADEE6AD086ACCBE9CC0E /* FlowRing.swift in Sources */,
 				7EA80C75713C23C6CDC95B3B /* FlowStore.swift in Sources */,
 				3D4936C4D20A0C74C422CF9B /* FlowUebungen.swift in Sources */,
+				E71C96CDCBF13AF18E253655 /* FlowVideoPlan.swift in Sources */,
 				5354664DCE2B785839CAE991 /* FlowVideoSchritt.swift in Sources */,
 				AEE5F33B4A199942A3303FDE /* FlowZeitPille.swift in Sources */,
 				71B2B0D3A98B9A5EE540A4D7 /* FlowsEinstiegZeile.swift in Sources */,
