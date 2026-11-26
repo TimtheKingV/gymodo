@@ -54,8 +54,10 @@ enum KameraTestprofile {
 
     /// Nur wenn `aktiv` und die Uebung kein Serverprofil hat; studioeigene
     /// Uebungen (unbekannter Name) bleiben ohne.
-    static func ergaenzt(_ uebung: BootstrapResponse.Exercise) -> BootstrapResponse.Exercise {
-        guard aktiv, uebung.kamera == nil, let eintrag = eintraege[uebung.name] else { return uebung }
+    /// `eingeschaltet` laesst Tests den Schalter vorgeben, ohne UserDefaults anzufassen.
+    static func ergaenzt(_ uebung: BootstrapResponse.Exercise,
+                         eingeschaltet: Bool = KameraTestprofile.aktiv) -> BootstrapResponse.Exercise {
+        guard eingeschaltet, uebung.kamera == nil, let eintrag = eintraege[uebung.name] else { return uebung }
         var ergebnis = uebung
         ergebnis.kamera = KameraDTO(profil: eintrag.kamera.profil, signal: eintrag.kamera.signal,
                                     seite: eintrag.kamera.seite, beginntMit: eintrag.kamera.beginntMit)

@@ -129,6 +129,7 @@
 		3BFC7E42856070DC113345B1 /* Ausgewogenheit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33390D3B1F76175CEE039764 /* Ausgewogenheit.swift */; };
 		3CD1164921DFFE2CEB9E5177 /* TestnotizMenue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124682B7B2E451091CD871EE /* TestnotizMenue.swift */; };
 		3D434A9FDCC360100D327428 /* WorkoutSessionStore+Ortswechsel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE33B9185B90C6212243F73 /* WorkoutSessionStore+Ortswechsel.swift */; };
+		3D4936C4D20A0C74C422CF9B /* FlowUebungen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25320C95E2943537EC6FCE02 /* FlowUebungen.swift */; };
 		3D61BC9B4ACB30A4AB753B39 /* Funktionen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A2D02E4D28E39A0B02C8AA0 /* Funktionen.swift */; };
 		3D88489EE677ECE6088E4860 /* OnboardingSchreiber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DCD40386E60DD37CDA35015 /* OnboardingSchreiber.swift */; };
 		3E81E42F2530109B113C5F05 /* PausenKnoepfe.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D94FBAD16BC92BA99E252C /* PausenKnoepfe.swift */; };
@@ -461,6 +462,7 @@
 		EA568214BF5138F1363FB6D5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B68C408348334AEBF697CDB /* Assets.xcassets */; };
 		EA5DECD109C663F376C7348C /* Sensorik in Frameworks */ = {isa = PBXBuildFile; productRef = 11530AD23701292C11CEA828 /* Sensorik */; };
 		EAAD1E9DE594A3109314751F /* PlanKalenderKontext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BF32B8D3E1CBF0B570EEF40 /* PlanKalenderKontext.swift */; };
+		EBA384712797E6E6CC728ADF /* FlowUebungenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D7CA4C05C09354D37047527 /* FlowUebungenTests.swift */; };
 		EC0E21421C05D51C3F32E51D /* UebungWechselnSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FFF2CD62E84CDAE426125B5 /* UebungWechselnSheet.swift */; };
 		ECAC52AAA7B56D82D52951B2 /* Aufstellrahmen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 021BB105E9134D0810AF2300 /* Aufstellrahmen.swift */; };
 		EE50C11A23D706E757F7645D /* FitnessMemberApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B7B340D20BD85FE3AF612F /* FitnessMemberApp.swift */; };
@@ -577,6 +579,7 @@
 		2353FE282D4892F87C027C9B /* KalenderzelleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KalenderzelleTests.swift; sourceTree = "<group>"; };
 		24F624033ED18681337E7905 /* FlowLaufTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLaufTests.swift; sourceTree = "<group>"; };
 		252C3FD021F6C5CB033A8E7D /* Zeitpunkt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zeitpunkt.swift; sourceTree = "<group>"; };
+		25320C95E2943537EC6FCE02 /* FlowUebungen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowUebungen.swift; sourceTree = "<group>"; };
 		256B9DE3CD0E562482D52FD8 /* AudioSitzungTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSitzungTests.swift; sourceTree = "<group>"; };
 		25E2F0617E6BB56D9A3CA19D /* CodeDigitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDigitsView.swift; sourceTree = "<group>"; };
 		2649BC7BF1FBB612071FC3FA /* TrackerSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerSymbol.swift; sourceTree = "<group>"; };
@@ -698,6 +701,7 @@
 		5BEA03DCAFAFE701E8EE10E1 /* KurseAnsichtTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KurseAnsichtTests.swift; sourceTree = "<group>"; };
 		5C18F50D5DFB2CBD6785AADA /* Stepper44.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stepper44.swift; sourceTree = "<group>"; };
 		5D01D5A0C042B12A034AC4BC /* TestnotizAblageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizAblageTests.swift; sourceTree = "<group>"; };
+		5D7CA4C05C09354D37047527 /* FlowUebungenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowUebungenTests.swift; sourceTree = "<group>"; };
 		5DFA0BACC339F4B9F8299206 /* ZeitachseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZeitachseTests.swift; sourceTree = "<group>"; };
 		5E86C2CE1222506D926E3290 /* PlanTabZustandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTabZustandTests.swift; sourceTree = "<group>"; };
 		5EB0A74AED76277EDA61C783 /* PlanTabZustand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTabZustand.swift; sourceTree = "<group>"; };
@@ -1404,6 +1408,7 @@
 				9F374F25615C0D8FD096C646 /* FlowDTOTests.swift */,
 				24F624033ED18681337E7905 /* FlowLaufTests.swift */,
 				6BEDD10A00964ADA170330D8 /* FlowStoreTests.swift */,
+				5D7CA4C05C09354D37047527 /* FlowUebungenTests.swift */,
 				1AC1A105822BFDC2A755321E /* FortschrittsfensterTests.swift */,
 				08AD532CE7BC4878C4686DD0 /* FortsetzbarkeitTests.swift */,
 				F7540F5EE9A274DBB75E9219 /* GeraeteAuswahlTests.swift */,
@@ -1792,6 +1797,7 @@
 				8847760CBDAF89C45F6799D2 /* FlowFileStore.swift */,
 				A5B5E4F11AD3B3F662794820 /* FlowLauf.swift */,
 				176A9EE101E8E0EFDA1C8B44 /* FlowStore.swift */,
+				25320C95E2943537EC6FCE02 /* FlowUebungen.swift */,
 			);
 			path = Flows;
 			sourceTree = "<group>";
@@ -2025,6 +2031,7 @@
 				DE6C4D4EEE79AD471061C1FC /* FlowListeView.swift in Sources */,
 				0C27ADEE6AD086ACCBE9CC0E /* FlowRing.swift in Sources */,
 				7EA80C75713C23C6CDC95B3B /* FlowStore.swift in Sources */,
+				3D4936C4D20A0C74C422CF9B /* FlowUebungen.swift in Sources */,
 				71B2B0D3A98B9A5EE540A4D7 /* FlowsEinstiegZeile.swift in Sources */,
 				BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */,
 				452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */,
@@ -2321,6 +2328,7 @@
 				E2DED68B8C38792C44082457 /* FlowDTOTests.swift in Sources */,
 				03492F29A00C782EC4B7EE11 /* FlowLaufTests.swift in Sources */,
 				75203BC1FC1DB8685CAD15DA /* FlowStoreTests.swift in Sources */,
+				EBA384712797E6E6CC728ADF /* FlowUebungenTests.swift in Sources */,
 				67CB5A92D5A22F772F336E2F /* FortschrittsfensterTests.swift in Sources */,
 				7154595728E9914007ACDBCD /* FortsetzbarkeitTests.swift in Sources */,
 				49188A7C28036BA6E75E3C6E /* GeraetEinstiegTests.swift in Sources */,

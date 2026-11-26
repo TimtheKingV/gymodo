@@ -12,6 +12,8 @@ struct FlowSchritt: Codable, Equatable, Identifiable, Sendable {
     let workS: Int
     let restS: Int
     let istWarmup: Bool
+    /// Katalog-Uebung des Schritts (Video, Kameraangaben); fehlt bei Flows ohne Verweis.
+    var exerciseId: String? = nil
 }
 
 /// Deckt Flow aus flows.ts.
