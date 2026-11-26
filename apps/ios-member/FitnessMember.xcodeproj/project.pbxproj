@@ -42,6 +42,7 @@
 		0F9FCD176416DC8CCC796D68 /* Zirkel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6159FD3FE8D6C00C65AA16 /* Zirkel.swift */; };
 		105A0D19709C373F46B570AB /* Kameraerlaubnis.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DE2541CDE11FAEA50AF610 /* Kameraerlaubnis.swift */; };
 		10F957824659379153EAEFFB /* EinheitKarte.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B69F6411D6E99856220ADA2 /* EinheitKarte.swift */; };
+		1166ED35247CC429E99877D2 /* FlowAnzeigeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4D73B7E61D3B0E9FB227031 /* FlowAnzeigeTests.swift */; };
 		11BA7A3A80B08733F442CDFE /* KursRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC959C8EDB61181E8EEAC8F2 /* KursRoute.swift */; };
 		120D4BD7A240D7DBA6221E74 /* RueckblicknummernTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 914641DACEC466BAB28C8AC9 /* RueckblicknummernTests.swift */; };
 		13225DB0A049D674C72CE73D /* CourseWeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC1E765B0B287F9AC69A3B8 /* CourseWeek.swift */; };
@@ -171,6 +172,7 @@
 		51F0AF4C3DD00C9FF9BD766F /* KurseMeineEinteilung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0146A99A9A62AD4D28BDBB /* KurseMeineEinteilung.swift */; };
 		52463B3ECBEBBBAA5C298496 /* PlanEinheitBearbeitenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B63F523DF208625BDE15D9 /* PlanEinheitBearbeitenView.swift */; };
 		527D42349D44802661130F4F /* ZirkelErweiternTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E80C62D7C18C643E429AA9A /* ZirkelErweiternTests.swift */; };
+		5354664DCE2B785839CAE991 /* FlowVideoSchritt.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28C21BD6D5FA7B7D17D0140 /* FlowVideoSchritt.swift */; };
 		535788FB463D3843006BCB3A /* OnboardingHinweisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E25BD6B14373C1068B24705E /* OnboardingHinweisTests.swift */; };
 		54EBA25506D69F79B963DE52 /* PlanUebungWahlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32F3AB4285E0656AEF982DB2 /* PlanUebungWahlTests.swift */; };
 		55B3BF3DEC193D15E4F6B8A8 /* Resttimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57043EA2F2DFD5D046567083 /* Resttimer.swift */; };
@@ -328,6 +330,7 @@
 		AC4167829725A34A5A191094 /* TestnotizAblage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36E7DA3B2E3971750743AD7C /* TestnotizAblage.swift */; };
 		AD152D48FC554F180FA72F58 /* RastwerteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B1A62413AE0C5835F9E9CA /* RastwerteTests.swift */; };
 		ADF2407DE862FD940232AAE5 /* ZahlformatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40546FF017FE78E2A6823CE /* ZahlformatTests.swift */; };
+		AEE5F33B4A199942A3303FDE /* FlowZeitPille.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150B578DC5B058155D2F9E14 /* FlowZeitPille.swift */; };
 		AF566FE84D48CEC5755E4F5D /* Zeitachse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C6741D2E03280491212701 /* Zeitachse.swift */; };
 		AF8A58018780C07B5E99AA47 /* PlanNamen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F4B265225A09FA6EF146C6E /* PlanNamen.swift */; };
 		AF91775CE064CF7328A2D20D /* UebungsVideos.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC659FC505DCC5B68E33AD7D /* UebungsVideos.swift */; };
@@ -547,6 +550,7 @@
 		124682B7B2E451091CD871EE /* TestnotizMenue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizMenue.swift; sourceTree = "<group>"; };
 		138ED9C458C59851090DA3F5 /* HomeSerieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeSerieView.swift; sourceTree = "<group>"; };
 		13D8C4AC64870FF3423C494F /* InlineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineBanner.swift; sourceTree = "<group>"; };
+		150B578DC5B058155D2F9E14 /* FlowZeitPille.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowZeitPille.swift; sourceTree = "<group>"; };
 		15843762BAFA2910E65B6DD3 /* PlanSchritte.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanSchritte.swift; sourceTree = "<group>"; };
 		15CA8103EC19C3D5C9F742E7 /* TestnotizFenster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestnotizFenster.swift; sourceTree = "<group>"; };
 		176A9EE101E8E0EFDA1C8B44 /* FlowStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowStore.swift; sourceTree = "<group>"; };
@@ -877,6 +881,7 @@
 		B348F9FA951580D3C3D178EF /* ProfilKopf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilKopf.swift; sourceTree = "<group>"; };
 		B35373D3C51509959FCF6FB0 /* MachinePhotosResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MachinePhotosResponse.swift; sourceTree = "<group>"; };
 		B3B500073898DAD86823CE2A /* Uebungsstart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Uebungsstart.swift; sourceTree = "<group>"; };
+		B4D73B7E61D3B0E9FB227031 /* FlowAnzeigeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowAnzeigeTests.swift; sourceTree = "<group>"; };
 		B4F343E35EB2C94664395961 /* Zielkachel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Zielkachel.swift; sourceTree = "<group>"; };
 		B4FAAB72A5306D06981DF67C /* PlanTagBlatt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTagBlatt.swift; sourceTree = "<group>"; };
 		B50DEE042EBB405268BB2F09 /* GeraetegruppeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeraetegruppeTests.swift; sourceTree = "<group>"; };
@@ -895,6 +900,7 @@
 		BDD0B70AC6B9D5C40460B59C /* HomeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRoute.swift; sourceTree = "<group>"; };
 		C1FDC941E94BAAD9B86155BC /* TrainingsplanAblauf.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingsplanAblauf.swift; sourceTree = "<group>"; };
 		C24A6AF8DBFE441551A5A0E9 /* KursTerminZeile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KursTerminZeile.swift; sourceTree = "<group>"; };
+		C28C21BD6D5FA7B7D17D0140 /* FlowVideoSchritt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowVideoSchritt.swift; sourceTree = "<group>"; };
 		C393A29144DBA03B05E97E18 /* Haeufigkeit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haeufigkeit.swift; sourceTree = "<group>"; };
 		C4DDD9F8FCC3E699F6E4F79C /* AuthBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBackend.swift; sourceTree = "<group>"; };
 		C5E7483CA1C69B6D41F866E0 /* PlanRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanRootView.swift; sourceTree = "<group>"; };
@@ -1405,6 +1411,7 @@
 				E4F218E5C5847346A5A03994 /* EinstellungenTests.swift */,
 				9080FBAAFE2BA83283AA40F5 /* EinweisungMedienTests.swift */,
 				A63AF6186EBEDC102F2BE70B /* FlowAblaufTests.swift */,
+				B4D73B7E61D3B0E9FB227031 /* FlowAnzeigeTests.swift */,
 				9F374F25615C0D8FD096C646 /* FlowDTOTests.swift */,
 				24F624033ED18681337E7905 /* FlowLaufTests.swift */,
 				6BEDD10A00964ADA170330D8 /* FlowStoreTests.swift */,
@@ -1616,6 +1623,8 @@
 				74015B6937D49D5F70719F68 /* FlowListeView.swift */,
 				0BF47616568404291DA341CF /* FlowRing.swift */,
 				2FD80C6A94100735AC19B327 /* FlowsEinstiegZeile.swift */,
+				C28C21BD6D5FA7B7D17D0140 /* FlowVideoSchritt.swift */,
+				150B578DC5B058155D2F9E14 /* FlowZeitPille.swift */,
 			);
 			path = Flows;
 			sourceTree = "<group>";
@@ -2032,6 +2041,8 @@
 				0C27ADEE6AD086ACCBE9CC0E /* FlowRing.swift in Sources */,
 				7EA80C75713C23C6CDC95B3B /* FlowStore.swift in Sources */,
 				3D4936C4D20A0C74C422CF9B /* FlowUebungen.swift in Sources */,
+				5354664DCE2B785839CAE991 /* FlowVideoSchritt.swift in Sources */,
+				AEE5F33B4A199942A3303FDE /* FlowZeitPille.swift in Sources */,
 				71B2B0D3A98B9A5EE540A4D7 /* FlowsEinstiegZeile.swift in Sources */,
 				BCCED66A72ECB12C420D30B9 /* Fortschrittsfenster.swift in Sources */,
 				452A79E6EED9352C444F5A90 /* Fortsetzbarkeit.swift in Sources */,
@@ -2325,6 +2336,7 @@
 				0B8F8186023C8395BE77A351 /* EinstellungenTests.swift in Sources */,
 				96F1E25945DAC2FCF7461EE7 /* EinweisungMedienTests.swift in Sources */,
 				05958860FF51909351B952C0 /* FlowAblaufTests.swift in Sources */,
+				1166ED35247CC429E99877D2 /* FlowAnzeigeTests.swift in Sources */,
 				E2DED68B8C38792C44082457 /* FlowDTOTests.swift in Sources */,
 				03492F29A00C782EC4B7EE11 /* FlowLaufTests.swift in Sources */,
 				75203BC1FC1DB8685CAD15DA /* FlowStoreTests.swift in Sources */,

@@ -6,6 +6,12 @@ import SwiftUI
 struct FlowLaufView: View {
     let flow: Flow
     let store: FlowStore
+    let uebungen: FlowUebungen
+    let videos: UebungsVideoVorrat
+
+    /// Erkennt Kamera-Schritte (Blickzeile in der Pause). Die Arbeitsphase eines
+    /// Kamera-Schritts zeigt bis zur Kamera-Ansicht dasselbe wie ein Video-Schritt.
+    private static let mitKamera = true
 
     @Environment(\.dismiss) private var dismiss
     @State private var lauf: FlowLauf
@@ -14,10 +20,14 @@ struct FlowLaufView: View {
     @State private var warPausiert = false
     /// Der Run wird genau einmal gemeldet.
     @State private var beendet = false
+    /// Lokale Videodatei je Uebungs-ID, sobald sie da ist; fehlt sie, bleibt der Ring.
+    @State private var videoURLs: [String: URL] = [:]
 
-    init(flow: Flow, store: FlowStore) {
+    init(flow: Flow, store: FlowStore, uebungen: FlowUebungen, videos: UebungsVideoVorrat) {
         self.flow = flow
         self.store = store
+        self.uebungen = uebungen
+        self.videos = videos
         _lauf = State(initialValue: FlowLauf(flow: flow))
     }
 
@@ -55,6 +65,7 @@ struct FlowLaufView: View {
             lauf.starten()
         }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .task { await videosLaden() }
         .onChange(of: rueckfrage) { _, offen in
             // Waehrend der Rueckfrage steht die Uhr, sonst ginge Zeit verloren.
             if offen {
@@ -79,6 +90,11 @@ struct FlowLaufView: View {
     private func inhalt(_ zustand: FlowZustand) -> some View {
         switch zustand {
         case .countdown(let rest):
+            if let first = flow.schritte.first, let url = videoURL(first) {
+                videoSchritt(first, url: url, ueberschrift: "GLEICH GEHT'S LOS", zeile: "Als Nächstes", restS: rest,
+                             ring: FlowRing(rest: Double(rest) / Double(FlowAblauf.countdownS), beschriftung: "START IN",
+                                            ziffer: "\(rest)", kante: 160))
+            } else {
             VStack(spacing: DesignSystem.Spacing.s24) {
                 ueberschrift("GLEICH GEHT'S LOS")
                 FlowRing(rest: Double(rest) / Double(FlowAblauf.countdownS), beschriftung: "START IN",
@@ -87,8 +103,23 @@ struct FlowLaufView: View {
                     .font(DesignSystem.Typography.uebungsname)
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
+            }
         case .arbeit(let index, let rest):
             let schritt = flow.schritte[min(index, flow.schritte.count - 1)]
+            if let url = videoURL(schritt) {
+                VStack(spacing: DesignSystem.Spacing.s16) {
+                    videoSchritt(schritt, url: url, ueberschrift: "SCHRITT \(index + 1) VON \(flow.schritte.count)",
+                                 zeile: nil, restS: rest, mitBlickzeile: false,
+                                 ring: FlowRing(rest: Double(rest) / Double(max(1, schritt.workS)), beschriftung: "ARBEIT",
+                                                ziffer: "\(rest)", kante: 160))
+                    if index + 1 < flow.schritte.count {
+                        Text("Als Nächstes: \(flow.schritte[index + 1].name)")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(DesignSystem.Color.textMuted)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            } else {
             VStack(spacing: DesignSystem.Spacing.s16) {
                 ueberschrift("SCHRITT \(index + 1) VON \(flow.schritte.count)")
                 Text(schritt.name)
@@ -110,10 +141,16 @@ struct FlowLaufView: View {
                         .multilineTextAlignment(.center)
                 }
             }
+            }
         case .pause(let naechster, let rest):
             // FlowAblauf erzeugt nach dem letzten Schritt nie eine Pause; die
             // Klammer haelt den Zugriff trotzdem im Bereich.
             let schritt = flow.schritte[min(naechster, flow.schritte.count - 1)]
+            if let url = videoURL(schritt) {
+                videoSchritt(schritt, url: url, ueberschrift: "PAUSE", zeile: "Als Nächstes", restS: rest,
+                             ring: FlowRing(rest: Double(rest) / Double(max(1, flow.schritte[max(0, min(naechster, flow.schritte.count) - 1)].restS)),
+                                            beschriftung: "PAUSE", ziffer: "\(rest)", kante: 160))
+            } else {
             VStack(spacing: DesignSystem.Spacing.s24) {
                 ueberschrift("PAUSE")
                 Text("Als Nächstes")
@@ -126,6 +163,7 @@ struct FlowLaufView: View {
                     .multilineTextAlignment(.center)
                 FlowRing(rest: Double(rest) / Double(max(1, flow.schritte[max(0, min(naechster, flow.schritte.count) - 1)].restS)),
                          beschriftung: "PAUSE", ziffer: "\(rest)", kante: 160)
+            }
             }
         case .fertig:
             VStack(spacing: DesignSystem.Spacing.s16) {
@@ -141,6 +179,34 @@ struct FlowLaufView: View {
                     .font(DesignSystem.Typography.fliesstext)
                     .foregroundStyle(DesignSystem.Color.textMuted)
             }
+        }
+    }
+
+    /// Schritt mit Video und der Restzeit oben rechts. Nur aufrufen, wenn die Datei da ist.
+    private func videoSchritt(_ schritt: FlowSchritt, url: URL, ueberschrift: String, zeile: String?, restS: Int,
+                              mitBlickzeile: Bool = true, ring: FlowRing) -> some View {
+        FlowVideoSchritt(
+            ueberschrift: ueberschrift, zeile: zeile, name: schritt.name, beschreibung: schritt.beschreibung,
+            blickzeile: mitBlickzeile
+                ? FlowAnzeige.pausenzeile(ansicht: uebungen.ansicht(schritt, mitKamera: Self.mitKamera)) : nil,
+            videoURL: url, ringErsatz: ring)
+            .overlay(alignment: .topTrailing) { FlowZeitPille(restS: restS) }
+    }
+
+    /// Die Videodatei des Schritts, wenn er ein Video zeigt und es geladen ist; sonst nil (Ring wie bisher).
+    private func videoURL(_ schritt: FlowSchritt) -> URL? {
+        guard let id = schritt.exerciseId,
+              uebungen.ansicht(schritt, mitKamera: Self.mitKamera) != .ring else { return nil }
+        return videoURLs[id]
+    }
+
+    /// Holt die Videos der Reihe nach, der erste Schritt zuerst; die naechsten
+    /// liegen bereit, bevor ihre Pause beginnt. Ein Fehlschlag laesst den Ring stehen.
+    private func videosLaden() async {
+        for schritt in flow.schritte {
+            guard let id = schritt.exerciseId, videoURLs[id] == nil,
+                  uebungen.ansicht(schritt, mitKamera: Self.mitKamera) != .ring else { continue }
+            if let url = await videos.datei(exerciseId: id) { videoURLs[id] = url }
         }
     }
 

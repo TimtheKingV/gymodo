@@ -6,6 +6,8 @@ struct FlowDetailView: View {
     let flow: Flow
     let store: FlowStore
 
+    @Environment(CatalogStore.self) private var katalog
+    @Environment(UebungsVideoVorrat.self) private var videos
     @State private var laeuft = false
 
     var body: some View {
@@ -48,8 +50,16 @@ struct FlowDetailView: View {
                 .background(DesignSystem.Color.bg)
         }
         .fullScreenCover(isPresented: $laeuft) {
-            FlowLaufView(flow: flow, store: store)
+            FlowLaufView(flow: flow, store: store, uebungen: uebungen, videos: videos)
         }
+    }
+
+    private var uebungen: FlowUebungen {
+        #if DEBUG
+        FlowUebungen(bootstrap: katalog.bootstrap, testprofile: KameraTestprofile.aktiv)
+        #else
+        FlowUebungen(bootstrap: katalog.bootstrap, testprofile: false)
+        #endif
     }
 
     private func zeile(_ schritt: FlowSchritt) -> some View {

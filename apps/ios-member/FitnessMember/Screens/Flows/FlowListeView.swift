@@ -26,6 +26,17 @@ enum FlowAnzeige {
     static func uhr(_ sekunden: Int) -> String {
         String(format: "%d:%02d", sekunden / 60, sekunden % 60)
     }
+
+    /// "0:14": Restzeit in der Pille oben rechts.
+    static func uhrKurz(_ s: Int) -> String {
+        uhr(max(0, s))
+    }
+
+    /// Die Zeile unter der naechsten Uebung in der Pause; nur wenn die Kamera zaehlt.
+    static func pausenzeile(ansicht: FlowSchrittAnsicht) -> String? {
+        guard case .kamera(let start) = ansicht else { return nil }
+        return start.vorgabe.profil.blickzeile
+    }
 }
 
 /// Welcher Text die Liste ersetzt, solange es keine Flows gibt.
