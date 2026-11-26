@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { flowDauerS, pruefeFlowRun, type FlowRunEingabe } from "./flows.js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { flowDauerS, listFlows, pruefeFlowRun, type FlowRunEingabe } from "./flows.js";
 
 const basis: FlowRunEingabe = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -49,5 +50,40 @@ describe("pruefeFlowRun", () => {
     ["Stunde 25", { endedAt: "2026-11-26T25:00:00Z" }],
   ])("weist ab: %s", (_n, abw) => {
     expect(() => pruefeFlowRun({ ...basis, ...abw }, 20)).toThrow(expect.objectContaining({ code: "validation_failed" }));
+  });
+});
+
+describe("listFlows", () => {
+  it("bildet exercise_id auf exerciseId ab (null bleibt null) und fragt die Spalte ab", async () => {
+    let auswahl = "";
+    const client = {
+      from: () => ({
+        select: (spalten: string) => {
+          auswahl = spalten;
+          return {
+            order: async () => ({
+              data: [
+                {
+                  id: "f1",
+                  studio_id: "s1",
+                  key: "k",
+                  titel: "T",
+                  beschreibung: null,
+                  level: null,
+                  flow_steps: [
+                    { position: 2, name: "B", beschreibung: null, work_s: 30, rest_s: 0, is_warmup: false, exercise_id: null },
+                    { position: 1, name: "A", beschreibung: null, work_s: 30, rest_s: 10, is_warmup: false, exercise_id: "u1" },
+                  ],
+                },
+              ],
+              error: null,
+            }),
+          };
+        },
+      }),
+    } as unknown as SupabaseClient;
+    const [flow] = await listFlows(client);
+    expect(auswahl).toContain("exercise_id");
+    expect(flow!.schritte.map((s) => s.exerciseId)).toEqual(["u1", null]);
   });
 });

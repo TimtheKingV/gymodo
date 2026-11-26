@@ -8,6 +8,8 @@ export type FlowSchritt = {
   workS: number;
   restS: number;
   istWarmup: boolean;
+  /** Verweis auf eine Katalog-Uebung (deren Video die App zeigen kann); null = kein Verweis. */
+  exerciseId: string | null;
 };
 
 export type Flow = {
@@ -91,6 +93,7 @@ type SchrittZeile = {
   work_s: number;
   rest_s: number;
   is_warmup: boolean;
+  exercise_id: string | null;
 };
 
 type FlowZeile = {
@@ -107,7 +110,7 @@ type FlowZeile = {
 export async function listFlows(client: SupabaseClient): Promise<Flow[]> {
   const { data, error } = await client
     .from("flows")
-    .select("id, studio_id, key, titel, beschreibung, level, flow_steps(position, name, beschreibung, work_s, rest_s, is_warmup)")
+    .select("id, studio_id, key, titel, beschreibung, level, flow_steps(position, name, beschreibung, work_s, rest_s, is_warmup, exercise_id)")
     .order("titel", { ascending: true });
   if (error) throw new DomainError("internal", "Flows konnten nicht geladen werden.");
   return ((data ?? []) as unknown as FlowZeile[]).map((f) => {
@@ -119,6 +122,7 @@ export async function listFlows(client: SupabaseClient): Promise<Flow[]> {
         workS: s.work_s,
         restS: s.rest_s,
         istWarmup: s.is_warmup,
+        exerciseId: s.exercise_id,
       }))
       .sort((a, b) => a.position - b.position);
     return {
