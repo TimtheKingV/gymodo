@@ -9542,7 +9542,10 @@
       "volume_kind": "seconds",
       "target_min": 30,
       "target_max": 60,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_plank.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9798,7 +9801,10 @@
       "volume_kind": "seconds",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_mountain_climber.mp4",
+        "duration_s": 7
+      },
       "grip": "none",
       "muscles": [
         {
@@ -10288,7 +10294,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_russian_twist.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11217,7 +11226,10 @@
       "volume_kind": "seconds",
       "target_min": 30,
       "target_max": 45,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_high_kicks.mp4",
+        "duration_s": 6
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11247,7 +11259,10 @@
       "volume_kind": "reps",
       "target_min": 6,
       "target_max": 10,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_burpee_slow.mp4",
+        "duration_s": 7
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11281,7 +11296,10 @@
       "volume_kind": "reps",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_jumping_jack.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11337,7 +11355,10 @@
       "volume_kind": "seconds",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_scissor_kicks.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11363,7 +11384,10 @@
       "volume_kind": "reps",
       "target_min": 15,
       "target_max": 30,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_squat_pulse.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11423,7 +11447,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_lunge_kick.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11453,7 +11480,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_leg_drop_pull.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11479,7 +11509,10 @@
       "volume_kind": "reps",
       "target_min": 6,
       "target_max": 10,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_broad_jump_touch.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11509,7 +11542,10 @@
       "volume_kind": "reps",
       "target_min": 10,
       "target_max": 15,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_squat_floor_touch.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11539,7 +11575,10 @@
       "volume_kind": "seconds",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_flutter_kicks.mp4",
+        "duration_s": 2
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11565,7 +11604,10 @@
       "volume_kind": "reps",
       "target_min": 10,
       "target_max": 20,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_skater_jump.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11595,7 +11637,10 @@
       "volume_kind": "seconds",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_crunch_hold.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11617,7 +11662,10 @@
       "volume_kind": "reps",
       "target_min": 6,
       "target_max": 10,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_burpee_jump.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {

@@ -15,7 +15,8 @@ export type Plan =
   | { ok: false; fehler: string[] };
 
 /** Rechnet aus Katalog und Dateien die neuen video-Eintraege. Sammelt alle Fehler. */
-export function plane(exercises: KatalogUebung[], dateien: Datei[]): Plan {
+/** `auchZeit`: auch Uebungen mit Zeitvorgabe bekommen das Video (HIIT-Flow). */
+export function plane(exercises: KatalogUebung[], dateien: Datei[], optionen: { auchZeit?: boolean } = {}): Plan {
   const fehler: string[] = [];
   const eintraege = new Map<string, VideoEintrag>();
   const neu: string[] = [];
@@ -28,7 +29,7 @@ export function plane(exercises: KatalogUebung[], dateien: Datei[]): Plan {
       fehler.push(`${d.key}: keine Uebung mit diesem Schluessel im Katalog`);
       continue;
     }
-    if (u.volume_kind !== "reps") {
+    if (u.volume_kind !== "reps" && !optionen.auchZeit) {
       fehler.push(`${d.key}: Uebung mit Zeitvorgabe behaelt ihr Video`);
       continue;
     }
