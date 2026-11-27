@@ -113,7 +113,38 @@ describe("flows/hiit-20-min.json", () => {
     expect(e.schritte.some((s) => s.unsicher)).toBe(false);
     const sql = flowZuSql(e, STUDIO);
     expect(sql).toContain("Squat-Pulse");
-    expect(sql).toContain("Weitsprung mit Bodenberührung");
+    expect(sql).toContain("Strecksprung");
+    expect(sql).not.toContain("Weitsprung mit Bodenberührung");
     expect((sql.match(/insert into public\.flow_steps/g) ?? []).length).toBeGreaterThanOrEqual(1);
+  });
+
+  // Flow vereinfacht (27.11.2026): eine Bewegung je Schritt, fuenf Schritte getauscht.
+  it("fuehrt in den Schritten 4, 9, 11, 13 und 14 die einfachen Uebungen", () => {
+    const e = pruefeFlowEntwurf(roh);
+    const tausch = [4, 9, 11, 13, 14].map((n) => [n, e.schritte[n - 1]!.uebung, e.schritte[n - 1]!.name]);
+    expect(tausch).toEqual([
+      [4, "bw_v_up", "Klappmesser"],
+      [9, "bw_back_extension_floor", "Rückenstrecken"],
+      [11, "bw_reverse_lunge", "Ausfallschritt rückwärts"],
+      [13, "bw_leg_raise_lying", "Beinheben"],
+      [14, "bw_squat_jump", "Strecksprung"],
+    ]);
+    expect(e.schritte.every((s) => s.workS === 40)).toBe(true);
+    expect(e.schritte.map((s) => s.restS)).toEqual([...Array(19).fill(20), 0]);
+  });
+
+  it("nennt nur Schluessel, die der Katalog kennt", () => {
+    const katalog = JSON.parse(readFileSync(join(__dirname, "..", "..", "catalog", "gymtavo.json"), "utf8"));
+    const schluessel = new Set<string>(katalog.exercises.map((u: { key: string }) => u.key));
+    expect(() => flowZuSql(pruefeFlowEntwurf(roh), STUDIO, schluessel)).not.toThrow();
+  });
+
+  // Die Kamera-Schritte (data/koerperbild/flow-zuordnung.json) muessen im Flow vorkommen.
+  it("hat in der Flow-Zuordnung der Kamera nur Uebungen des Flows", () => {
+    const zuordnung = JSON.parse(
+      readFileSync(join(__dirname, "..", "..", "data", "koerperbild", "flow-zuordnung.json"), "utf8"),
+    );
+    const imFlow = new Set(pruefeFlowEntwurf(roh).schritte.map((s) => s.uebung));
+    expect(Object.keys(zuordnung).filter((key) => !imFlow.has(key))).toEqual([]);
   });
 });

@@ -13,9 +13,9 @@ describe("Kamera-Zuordnung", () => {
   // Die HIIT-Flow-Uebungen haben bewusst keine Kameraangabe im Katalog; ihr Profil kommt nur im
   // Debug-Build aus KameraTestprofile.json (Spec Flow mit Kamera). Sie stehen deshalb nicht in der Zuordnung.
   const flowOhneKamera = new Set([
-    "bw_burpee_slow", "bw_jumping_jack", "bw_toe_touch_jackknife", "bw_squat_pulse",
+    "bw_burpee_slow", "bw_jumping_jack", "bw_squat_pulse",
     "bw_lunge_kick", "bw_leg_drop_pull", "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_skater_jump",
-    "bw_burpee_jump",
+    "bw_burpee_jump", "bw_squat_jump",
   ]);
   it("deckt genau die Uebungen mit Wiederholungen ab", () => {
     const reps = katalog.exercises

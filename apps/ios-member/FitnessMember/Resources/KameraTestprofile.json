@@ -180,6 +180,21 @@
     }
   },
   {
+    "name": "Rückenstrecken – liegend",
+    "key": "bw_back_extension_floor",
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
     "name": "Jumping Jack",
     "key": "bw_jumping_jack",
     "kamera": {
@@ -195,13 +210,13 @@
     }
   },
   {
-    "name": "Ausfallschritt mit Kick",
-    "key": "bw_lunge_kick",
+    "name": "Beinheben – liegend",
+    "key": "bw_leg_raise_lying",
     "kamera": {
-      "profil": "ganzkoerper_stehend",
-      "signal": "knie",
+      "profil": "liegend",
+      "signal": "huefte",
       "seite": "beide",
-      "beginnt_mit": "senken"
+      "beginnt_mit": "heben"
     },
     "tempo": {
       "senken_s": 1,
@@ -234,9 +249,9 @@
       "beginnt_mit": "senken"
     },
     "tempo": {
-      "senken_s": 3,
-      "halten_s": 1,
-      "heben_s": 2
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
     }
   },
   {

@@ -1,4 +1,18 @@
 {
+  "bw_back_extension_floor": {
+    "kamera": {
+      "profil": "liegend",
+      "signal": "huefte",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    },
+    "grund": "Flow HIIT 20 Minuten: Rückenstrecken, die Hüfte streckt beim Anheben des Oberkörpers"
+  },
   "bw_jumping_jack": {
     "kamera": {
       "profil": "oberkoerper",
@@ -13,19 +27,19 @@
     },
     "grund": "Flow HIIT 20 Minuten: Jumping Jack, die Arme gehen über den Kopf und zurück (Signal Schulter)"
   },
-  "bw_lunge_kick": {
+  "bw_leg_raise_lying": {
     "kamera": {
-      "profil": "ganzkoerper_stehend",
-      "signal": "knie",
+      "profil": "liegend",
+      "signal": "huefte",
       "seite": "beide",
-      "beginnt_mit": "senken"
+      "beginnt_mit": "heben"
     },
     "tempo": {
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
     },
-    "grund": "Flow HIIT 20 Minuten: Ausfallschritt mit Kick, das Knie beugt im Ausfallschritt"
+    "grund": "Flow HIIT 20 Minuten: Beinheben, die Hüfte beugt beim Heben der Beine"
   },
   "bw_pushup": {
     "kamera": {
@@ -40,6 +54,20 @@
       "heben_s": 1
     },
     "grund": "Flow HIIT 20 Minuten: Liegestütz, der Ellbogen beugt und streckt"
+  },
+  "bw_reverse_lunge": {
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    },
+    "grund": "Flow HIIT 20 Minuten: Ausfallschritt rückwärts, das Knie beugt und streckt"
   },
   "bw_squat_floor_touch": {
     "kamera": {

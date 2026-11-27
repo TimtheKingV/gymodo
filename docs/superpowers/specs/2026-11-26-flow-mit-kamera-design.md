@@ -161,6 +161,18 @@ Ergebnis: 15 neue Katalogübungen, bis zu 18 neue Videos (27.11.2026: von Tim so
 - **Neue Katalogübungen:** Schlüssel `bw_*`, Namen und Beschreibungen in eigenen Worten (die Texte aus `hiit-20-min.json` sind schon eigene), alle Pflichtfelder des Katalogformats (`packages/domain/src/katalog-datei.ts`). `volume_kind`: `seconds` für Halteübungen, sonst `reps`. Tempo für die Kamera-Schritte: schnell, im erlaubten Raster (Vorschlag 1 s / 0 / 1 s); die Welle selbst bleibt unangetastet.
 - **Tim prüft die Liste der neuen Übungen** (Name, Schlüssel), bevor sie in den Katalog und auf Prod gehen.
 
+**Nachtrag 27.11.2026 (Flow vereinfacht, von Tim so entschieden):** Jeder Schritt hat genau eine klare Bewegung; Übungen mit mehreren Teilbewegungen sind schwer zu filmen, zu zählen und zu erfassen. Die Tabelle oben bleibt als ursprünglicher Vorschlag stehen; gültig sind seitdem diese fünf Tausche:
+
+| # | bisher | neu | Name im Flow | Arbeitsphase heute |
+|---|---|---|---|---|
+| 4 | Toe Touches + Jackknifes (`bw_toe_touch_jackknife`) | `bw_v_up` (vorhanden) | Klappmesser | Uhr, bis das Video da ist |
+| 9 | Swimmer (`bw_swimmer`) | `bw_back_extension_floor` (vorhanden) | Rückenstrecken | Kamera (Hüfte), am Video bestanden |
+| 11 | Lunge + Kick (`bw_lunge_kick`) | `bw_reverse_lunge` (vorhanden) | Ausfallschritt rückwärts | Kamera (Knie), am Video bestanden |
+| 13 | Leg Drop & Pull (`bw_leg_drop_pull`) | `bw_leg_raise_lying` (vorhanden) | Beinheben | Kamera (Hüfte), am Video bestanden |
+| 14 | Weitsprung mit Bodenberührung (`bw_broad_jump_touch`) | `bw_squat_jump` (neu) | Strecksprung | Uhr, bis das Video da ist |
+
+Katalog: `bw_squat_jump` „Strecksprung“ kommt neu hinzu (ohne Video, ohne Plan-Block, ohne Kameraangabe); `bw_toe_touch_jackknife` und `bw_swimmer` entfallen; `bw_lunge_kick`, `bw_leg_drop_pull` und `bw_broad_jump_touch` bleiben als normale Körpergewichtsübungen. Damit 14 für den Flow angelegte Übungen statt 15. Kamera-Stand nach der Prüfung gegen die Videos: 7 Schritte mit Kamera (3, 7, 9, 11, 12, 13, 15), 13 auf der Uhr; Einzelheiten in `docs/flows/hiit-20-min-kamera-bericht.md`.
+
 ## 9. Videos
 
 - Erzeugt mit der vorhandenen Serie im Ordner `ki-video-serie`, gleicher Look (Graphit-Figur, schwarzes Shirt mit „G.“, helles Studio), ohne Gerät. Dazu werden die 18 Übungen in `uebungen.json` ergänzt (Szene, Kamera, Bewegung, Prüfpunkte, Ende), Startbild und Video erzeugt, als Loop geschnitten.

@@ -121,6 +121,8 @@
 - [ ] **Step 6:** Commit `feat(katalog): 15 Koerpergewichtsuebungen fuer den HIIT-Flow`.
 - [ ] **Step 7: HALT.** Tim sieht die Liste (Namen, Schlüssel, Dubletten). Änderungen einarbeiten, erst dann Task 4 und Task 10.
 
+**Nachtrag 27.11.2026 (Flow vereinfacht, von Tim so entschieden, umgesetzt in Task 11):** Die Tabelle oben ist der Stand von Task 3. Seitdem gilt: Schritt 4 `bw_v_up` (Klappmesser), 9 `bw_back_extension_floor` (Rückenstrecken), 11 `bw_reverse_lunge` (Ausfallschritt rückwärts), 13 `bw_leg_raise_lying` (Beinheben), 14 `bw_squat_jump` (Strecksprung, neu, `reps`). `bw_toe_touch_jackknife` und `bw_swimmer` sind aus dem Katalog genommen; `bw_lunge_kick`, `bw_leg_drop_pull` und `bw_broad_jump_touch` bleiben im Katalog, sind aber nicht mehr im Flow. 14 statt 15 für den Flow angelegte Übungen.
+
 ### Task 4: Videos erzeugen
 
 Arbeitet im Ordner `~/Documents/gymtavo/3D-Animationen/ki-video-serie/` (kein Git; Protokoll in `progress.md` fortschreiben). Läuft neben Task 5–8.
@@ -315,6 +317,12 @@ Seite `beide`, Tempo 1 / 0 / 1.
 - [ ] **Step 4:** Übungen, die durchfallen: aus `flow-zuordnung.json` entfernen (Schritt läuft mit Uhr), im Bericht mit Grund vermerken. Kein Nachschärfen von `Koerperlage` in diesem Plan.
 - [ ] **Step 5:** `python3 tools/kamera-zuordnung/testprofile.py`, Schaltertext im Profil um „Flow-Übungen“ ergänzen, App-Tests grün.
 - [ ] **Step 6:** Commit `feat(kamera): Testprofile fuer die Flow-Uebungen, Bericht gegen die Videos`.
+
+**Nachtrag 27.11.2026 (Flow vereinfacht, Task 11):** `flow-zuordnung.json` führt jetzt `bw_jumping_jack`, `bw_squat_floor_touch`, `bw_squat_pulse`, `bw_pushup` sowie neu `bw_back_extension_floor` (`liegend` / `huefte` / `heben`), `bw_reverse_lunge` (`ganzkoerper_stehend` / `knie` / `senken`) und `bw_leg_raise_lying` (`liegend` / `huefte` / `heben`), alle drei am Video bestanden. `bw_lunge_kick` ist herausgenommen (nicht mehr im Flow). `bw_v_up` und `bw_squat_jump` werden geprüft, sobald Video und Skelett da sind. Für Task 10 (c) heißt das: `catalog:import` für 14 statt 16 Übungen. Vorher prüfen, ob `bw_toe_touch_jackknife` und `bw_swimmer` schon auf Prod liegen; was der Import mit Übungen macht, die nicht mehr in der Katalogdatei stehen, ist in Task 11 nicht geprüft.
+
+### Task 11: Flow vereinfachen (Nachtrag 27.11.2026)
+
+Von Tim am 27.11.2026 entschieden, nicht im ursprünglichen Plan. Fünf Schritte getauscht (siehe Nachtrag unter Task 3), Katalog, Flow-Datei, `flow-zuordnung.json`, `KameraTestprofile.json`, Tests und die beiden Flow-Dokumente nachgezogen. Commit `feat(flows): HIIT-Flow vereinfacht, eine Bewegung je Schritt`.
 
 ### Task 10: Anleitung, Prod, Gerätetest, PR
 

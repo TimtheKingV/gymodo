@@ -33,9 +33,9 @@
       "istWarmup": true
     },
     {
-      "name": "Toe Touches + Jackknifes",
-      "uebung": "bw_toe_touch_jackknife",
-      "beschreibung": "Im Wechsel die Zehen mit den Händen berühren und Oberkörper und Beine zusammenklappen.",
+      "name": "Klappmesser",
+      "uebung": "bw_v_up",
+      "beschreibung": "Auf dem Rücken Beine und Oberkörper gleichzeitig anheben, die Hände zu den Füßen führen und kontrolliert ablegen.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false
@@ -73,9 +73,9 @@
       "istWarmup": false
     },
     {
-      "name": "Swimmer",
-      "uebung": "bw_swimmer",
-      "beschreibung": "In Bauchlage gegengleich Arme und Beine heben und flatternd bewegen.",
+      "name": "Rückenstrecken",
+      "uebung": "bw_back_extension_floor",
+      "beschreibung": "In Bauchlage den Oberkörper ruhig ein Stück anheben und wieder ablegen, der Blick bleibt am Boden.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false
@@ -89,9 +89,9 @@
       "istWarmup": false
     },
     {
-      "name": "Lunge + Kick",
-      "uebung": "bw_lunge_kick",
-      "beschreibung": "Einen Ausfallschritt machen und beim Aufstehen das hintere Bein nach vorn kicken.",
+      "name": "Ausfallschritt rückwärts",
+      "uebung": "bw_reverse_lunge",
+      "beschreibung": "Ein Bein weit nach hinten setzen, beide Knie beugen und zurück in den Stand drücken, Seiten im Wechsel.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false
@@ -105,17 +105,17 @@
       "istWarmup": false
     },
     {
-      "name": "Leg Drop & Pull",
-      "uebung": "bw_leg_drop_pull",
-      "beschreibung": "Beine gestreckt absenken und danach mit der Bauchkraft wieder zur Brust ziehen.",
+      "name": "Beinheben",
+      "uebung": "bw_leg_raise_lying",
+      "beschreibung": "Auf dem Rücken die gestreckten Beine bis senkrecht anheben und langsam wieder absenken.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false
     },
     {
-      "name": "Weitsprung mit Bodenberührung",
-      "uebung": "bw_broad_jump_touch",
-      "beschreibung": "Nach vorn abspringen, weich landen und mit den Händen den Boden berühren.",
+      "name": "Strecksprung",
+      "uebung": "bw_squat_jump",
+      "beschreibung": "Aus der tiefen Kniebeuge senkrecht hochspringen, weich landen und direkt wieder in die Kniebeuge gehen.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false

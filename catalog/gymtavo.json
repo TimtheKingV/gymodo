@@ -2486,10 +2486,8 @@
         "bw_high_kicks",
         "bw_burpee_slow",
         "bw_jumping_jack",
-        "bw_toe_touch_jackknife",
         "bw_scissor_kicks",
         "bw_squat_pulse",
-        "bw_swimmer",
         "bw_lunge_kick",
         "bw_leg_drop_pull",
         "bw_broad_jump_touch",
@@ -2497,7 +2495,8 @@
         "bw_flutter_kicks",
         "bw_skater_jump",
         "bw_crunch_hold",
-        "bw_burpee_jump"
+        "bw_burpee_jump",
+        "bw_squat_jump"
       ]
     },
     {
@@ -11323,32 +11322,6 @@
       "sources": []
     },
     {
-      "key": "bw_toe_touch_jackknife",
-      "name": "Toe Touch mit Jackknife",
-      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Beine gestreckt senkrecht nach oben, Arme nach oben strecken.\n\nBewegung:\n- Mit den Händen im Wechsel die Zehen berühren und dabei die Schultern vom Boden lösen.\n- Danach Oberkörper und gestreckte Beine zusammenklappen und kontrolliert wieder ablegen.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Die Bewegung kommt aus dem Bauch, nicht aus Schwung.",
-      "volume_kind": "reps",
-      "target_min": 8,
-      "target_max": 12,
-      "video": null,
-      "grip": "none",
-      "muscles": [
-        {
-          "muscle": "abs",
-          "role": "primary"
-        },
-        {
-          "muscle": "hip_flexors",
-          "role": "secondary"
-        },
-        {
-          "muscle": "obliques",
-          "role": "secondary"
-        }
-      ],
-      "review": "draft",
-      "sources": []
-    },
-    {
       "key": "bw_scissor_kicks",
       "name": "Mini Scissor Kicks",
       "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Hände unter das Gesäß schieben, Beine gestreckt knapp über den Boden heben.\n\nBewegung:\n- Die Beine mit kleinen Bewegungen flach über Kreuz führen.\n- Im Wechsel das andere Bein oben kreuzen.\n\nAchte auf:\n- Der untere Rücken drückt in den Boden.\n- Die Beine nur so tief halten, wie der Rücken liegen bleibt.",
@@ -11404,36 +11377,6 @@
         },
         {
           "muscle": "adductors",
-          "role": "secondary"
-        }
-      ],
-      "review": "draft",
-      "sources": []
-    },
-    {
-      "key": "bw_swimmer",
-      "name": "Swimmer",
-      "description": "Einstellen:\n- Auf einer Matte auf den Bauch legen.\n- Arme nach vorn, Beine gestreckt, Stirn nahe am Boden.\n\nBewegung:\n- Gegengleich einen Arm und das andere Bein ein Stück anheben.\n- Im schnellen, kleinen Wechsel flatternd weiterbewegen.\n\nAchte auf:\n- Der Nacken bleibt lang, der Blick geht zum Boden.\n- Die Bewegung kommt aus Rücken und Gesäß, nicht aus dem Hohlkreuz.",
-      "volume_kind": "seconds",
-      "target_min": 20,
-      "target_max": 40,
-      "video": null,
-      "grip": "none",
-      "muscles": [
-        {
-          "muscle": "erectors",
-          "role": "primary"
-        },
-        {
-          "muscle": "glutes",
-          "role": "primary"
-        },
-        {
-          "muscle": "deltoid_posterior",
-          "role": "secondary"
-        },
-        {
-          "muscle": "hamstrings",
           "role": "secondary"
         }
       ],
@@ -11690,6 +11633,36 @@
         },
         {
           "muscle": "abs",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_squat_jump",
+      "name": "Strecksprung",
+      "description": "Einstellen:\n- Hüftbreit stehen, Fußspitzen leicht nach außen.\n\nBewegung:\n- Tief in die Kniebeuge gehen.\n- Aus der Kniebeuge explosiv senkrecht nach oben springen, weich landen und direkt wieder in die Kniebeuge gehen.\n\nAchte auf:\n- Du springst auf der Stelle, nicht nach vorn.\n- Bei der Landung federn die Knie nach, sie zeigen in Richtung der Fußspitzen.",
+      "volume_kind": "reps",
+      "target_min": 10,
+      "target_max": 15,
+      "video": null,
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hamstrings",
           "role": "secondary"
         }
       ],

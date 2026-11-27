@@ -158,13 +158,15 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
     const k = katalog();
     const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
-    // Die 15 Uebungen des HIIT-Flows (Task flow-mit-kamera) haben bewusst keine Plan-Merkmale:
-    // sie laufen nur im Flow und werden nicht von selbst in Plaene aufgenommen.
+    // Die 14 fuer den HIIT-Flow angelegten Uebungen (Task flow-mit-kamera) haben bewusst keine
+    // Plan-Merkmale: sie werden nicht von selbst in Plaene aufgenommen. Seit dem 27.11.2026
+    // (Flow vereinfacht) sind Lunge-Kick, Leg Drop & Pull und Weitsprung nicht mehr im Flow,
+    // bleiben aber als Koerpergewichtsuebungen; Toe Touch mit Jackknife und Swimmer entfallen.
     const flowUebungen = [
-      "bw_high_kicks", "bw_burpee_slow", "bw_jumping_jack", "bw_toe_touch_jackknife", "bw_scissor_kicks",
-      "bw_squat_pulse", "bw_swimmer", "bw_lunge_kick", "bw_leg_drop_pull",
+      "bw_high_kicks", "bw_burpee_slow", "bw_jumping_jack", "bw_scissor_kicks",
+      "bw_squat_pulse", "bw_lunge_kick", "bw_leg_drop_pull",
       "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_flutter_kicks", "bw_skater_jump", "bw_crunch_hold",
-      "bw_burpee_jump",
+      "bw_burpee_jump", "bw_squat_jump",
     ];
     const sekunden = k.exercises
       .filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key) && !flowUebungen.includes(u.key))
@@ -190,7 +192,19 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(64);
+    expect(typen[0]!.exercises).toHaveLength(63);
+  });
+
+  // Flow vereinfacht (27.11.2026): eine Bewegung je Schritt.
+  it("fuehrt den Strecksprung fuer den HIIT-Flow und nicht mehr Toe Touch mit Jackknife und Swimmer", () => {
+    const k = katalog();
+    const sprung = k.exercises.find((u) => u.key === "bw_squat_jump");
+    expect(sprung).toMatchObject({ name: "Strecksprung", volume_kind: "reps", video: null, grip: "none" });
+    expect(k.equipment.find((g) => g.key === "bodyweight")!.exercises).toContain("bw_squat_jump");
+    for (const key of ["bw_toe_touch_jackknife", "bw_swimmer"]) {
+      expect(k.exercises.some((u) => u.key === key), key).toBe(false);
+      expect(k.equipment.some((g) => g.exercises.includes(key)), key).toBe(false);
+    }
   });
 
   // Kettlebells gibt es nur in festen Stufen: 2-kg-Raster ab 4 kg trifft den klassischen

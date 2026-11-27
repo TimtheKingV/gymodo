@@ -34,11 +34,15 @@ final class FlowZaehlerAbspielTests: XCTestCase {
         Fall(key: "bw_jumping_jack", profil: .oberkoerper, signal: .schulter, beginntMit: .heben, wiederholungenImLoop: 1),
         Fall(key: "bw_squat_floor_touch", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
         Fall(key: "bw_squat_pulse", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
-        Fall(key: "bw_lunge_kick", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
         Fall(key: "bw_burpee_slow", profil: .ganzkoerperStehend, signal: .huefte, beginntMit: .senken, wiederholungenImLoop: 1),
         Fall(key: "bw_burpee_jump", profil: .ganzkoerperStehend, signal: .huefte, beginntMit: .senken, wiederholungenImLoop: 1),
         Fall(key: "bw_pushup", profil: .stuetzBoden, signal: .ellbogen, beginntMit: .senken, wiederholungenImLoop: 1),
-        Fall(key: "bw_leg_drop_pull", profil: .liegend, signal: .huefte, beginntMit: .senken, wiederholungenImLoop: 1),
+        // Flow vereinfacht (27.11.2026): Profil, Signal und Beginn aus data/koerperbild/zuordnung.json.
+        // bw_lunge_kick und bw_leg_drop_pull sind nicht mehr im Flow (ihr letzter Stand steht im Bericht);
+        // bw_v_up und bw_squat_jump haben noch kein Video.
+        Fall(key: "bw_back_extension_floor", profil: .liegend, signal: .huefte, beginntMit: .heben, wiederholungenImLoop: 1),
+        Fall(key: "bw_reverse_lunge", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
+        Fall(key: "bw_leg_raise_lying", profil: .liegend, signal: .huefte, beginntMit: .heben, wiederholungenImLoop: 1),
     ]
 
     struct Ergebnis {
