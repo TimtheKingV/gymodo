@@ -35,3 +35,4 @@ Je Video eine Zeile `<key> <Bilder> <Anteil erkannt %>`.
 - Anteil erkannter Bilder: `bw_leg_drop_pull` 36,5 %, `bw_crunch_hold` 82,7 %, die uebrigen 100 %.
 - `FlowZaehlerAbspielTests` zaehlt damit die Kamera-Schritte des Flows nach
   (Bericht: `docs/flows/hiit-20-min-kamera-bericht.md`).
+- Nachgerechnet am 27.11.2026: `bw_v_up` (61,2 %) und `bw_squat_jump` (100 %), gleiche Einstellung.

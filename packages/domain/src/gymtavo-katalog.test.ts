@@ -199,7 +199,10 @@ describe("catalog/gymtavo.json Planuebungen", () => {
   it("fuehrt den Strecksprung fuer den HIIT-Flow und nicht mehr Toe Touch mit Jackknife und Swimmer", () => {
     const k = katalog();
     const sprung = k.exercises.find((u) => u.key === "bw_squat_jump");
-    expect(sprung).toMatchObject({ name: "Strecksprung", volume_kind: "reps", video: null, grip: "none" });
+    expect(sprung).toMatchObject({ name: "Strecksprung", volume_kind: "reps", grip: "none" });
+    // Videos fuer Strecksprung und Klappmesser von Tim am 27.11.2026 abgenommen.
+    expect(sprung!.video?.file).toBe("media/videos/bw_squat_jump.mp4");
+    expect(k.exercises.find((u) => u.key === "bw_v_up")!.video?.file).toBe("media/videos/bw_v_up.mp4");
     expect(k.equipment.find((g) => g.key === "bodyweight")!.exercises).toContain("bw_squat_jump");
     for (const key of ["bw_toe_touch_jackknife", "bw_swimmer"]) {
       expect(k.exercises.some((u) => u.key === key), key).toBe(false);

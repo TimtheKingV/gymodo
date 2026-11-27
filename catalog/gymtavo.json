@@ -10398,7 +10398,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_v_up.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11646,7 +11649,10 @@
       "volume_kind": "reps",
       "target_min": 10,
       "target_max": 15,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_squat_jump.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {

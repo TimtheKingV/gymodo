@@ -39,10 +39,14 @@ final class FlowZaehlerAbspielTests: XCTestCase {
         Fall(key: "bw_pushup", profil: .stuetzBoden, signal: .ellbogen, beginntMit: .senken, wiederholungenImLoop: 1),
         // Flow vereinfacht (27.11.2026): Profil, Signal und Beginn aus data/koerperbild/zuordnung.json.
         // bw_lunge_kick und bw_leg_drop_pull sind nicht mehr im Flow (ihr letzter Stand steht im Bericht);
-        // bw_v_up und bw_squat_jump haben noch kein Video.
         Fall(key: "bw_back_extension_floor", profil: .liegend, signal: .huefte, beginntMit: .heben, wiederholungenImLoop: 1),
         Fall(key: "bw_reverse_lunge", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
         Fall(key: "bw_leg_raise_lying", profil: .liegend, signal: .huefte, beginntMit: .heben, wiederholungenImLoop: 1),
+        // Videos von Tim am 27.11.2026 abgenommen. bw_v_up steht in zuordnung.json ohne Kamera und ohne
+        // Signal; geprueft wird mit den Werten des Beinhebens (liegend / huefte, beginnt mit heben wie dort).
+        // bw_squat_jump hat keinen Eintrag dort; Werte wie bw_squat_floor_touch.
+        Fall(key: "bw_v_up", profil: .liegend, signal: .huefte, beginntMit: .heben, wiederholungenImLoop: 1),
+        Fall(key: "bw_squat_jump", profil: .ganzkoerperStehend, signal: .knie, beginntMit: .senken, wiederholungenImLoop: 1),
     ]
 
     struct Ergebnis {

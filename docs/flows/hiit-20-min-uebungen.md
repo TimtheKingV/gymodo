@@ -13,7 +13,7 @@ Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue �
 | 1 | High Kicks | High Kicks | `bw_high_kicks` | neu | Uhr | Beine wechseln abwechselnd, schnelles Hin und Her |
 | 2 | Burpee | Burpee | `bw_burpee_slow` | neu | Kamera, Versuch | Hüfte geht deutlich hoch und runter |
 | 3 | Jumping Jacks | Jumping Jack | `bw_jumping_jack` | neu | Kamera | Arme gehen klar hoch und runter, Blick von vorn |
-| 4 | Klappmesser | Klappmesser | `bw_v_up` | vorhanden | Uhr, bis das Video da ist | Noch kein Video; danach Kamera, Versuch |
+| 4 | Klappmesser | Klappmesser | `bw_v_up` | vorhanden | Uhr | Kamera am Video durchgefallen: von vorn gefilmt, die Hüfte ist nicht zu sehen |
 | 5 | Mini Scissor Kicks | Mini Scissor Kicks | `bw_scissor_kicks` | neu | Uhr | Kleines Flattern, kein klarer Gelenkwinkel |
 | 6 | Burpee | Burpee | `bw_burpee_slow` | wie Schritt 2 | Kamera, Versuch | Hüfte, wie bei Schritt 2 |
 | 7 | Squat-Pulse | Squat-Pulse | `bw_squat_pulse` | neu | Kamera, Versuch | Knie, aber der Hub ist sehr klein |
@@ -23,7 +23,7 @@ Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue �
 | 11 | Ausfallschritt rückwärts | Ausfallschritt – rückwärts | `bw_reverse_lunge` | vorhanden | Kamera | Knie |
 | 12 | Liegestütze | Liegestütz | `bw_pushup` | vorhanden | Kamera, Versuch | Ellbogen; am Boden, Kamera noch ungeprüft |
 | 13 | Beinheben | Beinheben – liegend | `bw_leg_raise_lying` | vorhanden | Kamera | Hüfte; am Boden |
-| 14 | Strecksprung | Strecksprung | `bw_squat_jump` | neu | Uhr, bis das Video da ist | Noch kein Video; danach Kamera, Versuch (Knie) |
+| 14 | Strecksprung | Strecksprung | `bw_squat_jump` | neu | Kamera | Knie, am Video bestanden |
 | 15 | Squat mit Händen zum Boden | Kniebeuge mit Bodenberührung | `bw_squat_floor_touch` | neu | Kamera | Knie, klare Bewegung |
 | 16 | Plank mit Knie zur Brust | Mountain Climber | `bw_mountain_climber` | vorhanden | Uhr | Beine wechseln abwechselnd |
 | 17 | Flutter Kicks | Flutter Kicks | `bw_flutter_kicks` | neu | Uhr | Flattern in Rückenlage |
@@ -88,3 +88,7 @@ Im Katalog:
 - `bw_v_up` bleibt, wie er ist; das Video kommt später, ebenso das für `bw_squat_jump`.
 
 Damit sind 14 Übungen für den Flow angelegt (vorher 15), von denen 11 im Flow vorkommen.
+
+## Nachtrag 27.11.2026: Videos für Klappmesser und Strecksprung
+
+Von Tim am 27.11.2026 abgenommen und in den Katalog übernommen (`catalog/media/videos/bw_v_up.mp4`, `bw_squat_jump.mp4`, je 3 s). Strecksprung zählt mit der Kamera, Klappmesser läuft auf der Uhr (Grund im Kamera-Bericht).

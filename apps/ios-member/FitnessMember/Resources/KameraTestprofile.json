@@ -285,6 +285,21 @@
     }
   },
   {
+    "name": "Strecksprung",
+    "key": "bw_squat_jump",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
     "name": "Squat-Pulse",
     "key": "bw_squat_pulse",
     "kamera": {
