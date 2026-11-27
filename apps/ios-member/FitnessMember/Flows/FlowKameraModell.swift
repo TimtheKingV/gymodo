@@ -116,6 +116,8 @@ final class FlowKameraModell {
     @ObservationIgnored private var angehalten = false
     @ObservationIgnored private var flowPausiert = false
     @ObservationIgnored private var leerlauf: Task<Void, Never>?
+    /// scenePhase != .active: keine Kamerastarts, keine Fehlersperre.
+    @ObservationIgnored private var nichtAktiv = false
 
     /// `uhr` muss dieselbe Zeitbasis wie die Bilder haben oder wird ueber `versatz` angeglichen;
     /// `leerlaufTakt` nil schaltet den Leerlauf-Takt ab (Tests rufen `leerlaufPruefen()` selbst).
@@ -199,17 +201,30 @@ final class FlowKameraModell {
             await schrittKameraAn(n)
         case .zaehlen(let k):
             zielSchritt = k
-            if aktiverSchritt != k { schrittBeginnen(k) }
+            if aktiverSchritt != k { schrittBeginnen(k) } else if leerlauf == nil { leerlaufStarten() }
             anhaltenAnwenden(pausiert)
             hinweisAktualisieren()
             await schrittKameraAn(k)
         }
     }
 
-    /// Kamera aus (Hintergrund, Abbrechen, Fertig); der Stand der Zaehlung bleibt, der Idle-Timer unberuehrt.
+    /// scenePhase != .active: Kamera aus und zu, auch wenn die Uhr in `.inactive` weiter `folge` ruft;
+    /// ein Ausfall in dieser Zeit sperrt keinen Schritt. Zurueck in `.active` darf `folge` sie wieder starten.
+    func szeneAktiv(_ aktiv: Bool) {
+        nichtAktiv = !aktiv
+        if !aktiv { kameraAus() }
+    }
+
+    /// Kamera aus und Leerlauf-Takt beendet (Abbrechen, Fertig, Verlassen); der Stand der Zaehlung bleibt,
+    /// der Idle-Timer unberuehrt. Ein spaeteres `folge` in einer Arbeitsphase startet beides wieder.
     func schliessen() {
         kameraAus()
+        leerlauf?.cancel()
+        leerlauf = nil
     }
+
+    /// Ob der Leerlauf-Takt laeuft (fuer Tests).
+    var leerlaufLaeuft: Bool { leerlauf != nil }
 
     /// Ohne Bilder (Kamera aus, gescheitert, Bildrate eingebrochen) bekommt der Zaehler die Uhr als leeres Bild:
     /// so laufen Welle und Hinweis weiter. Ruft der Leerlauf-Takt auf.
@@ -225,7 +240,8 @@ final class FlowKameraModell {
 
     private func schrittBeginnen(_ k: Int) {
         guard let start = kameraStarts[k] else { return }
-        var z = vorbereitet?.schritt == k ? vorbereitet!.zaehler : FlowZaehler(vorgabe: start.vorgabe, tempo: start.tempo)
+        var z = FlowZaehler(vorgabe: start.vorgabe, tempo: start.tempo)
+        if let v = vorbereitet, v.schritt == k { z = v.zaehler }
         vorbereitet = nil
         z.start(t: uhr())
         zaehler = z
@@ -258,8 +274,8 @@ final class FlowKameraModell {
         leerlauf = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: takt)
-                guard !Task.isCancelled else { return }
-                self?.leerlaufPruefen()
+                guard !Task.isCancelled, let self else { return }
+                self.leerlaufPruefen()
             }
         }
     }
@@ -280,6 +296,7 @@ final class FlowKameraModell {
     /// Eine andere Uebung bekommt eine eigene Quelle (die Abspielquelle zeigt die Uebung des Schritts).
     private func kameraAn(_ neu: Einsatz, start: KameraStart) async {
         if kameraLaeuft, einsatz == neu { return }
+        guard !nichtAktiv else { return }
         kameraAus()
         startNummer += 1
         let nummer = startNummer
@@ -324,6 +341,8 @@ final class FlowKameraModell {
     }
 
     private func gescheitert(_ betroffen: Einsatz, nichtErlaubt: Bool) {
+        // Ausserhalb von .active beendet das System die Kamera; das ist kein Fehler des Schritts.
+        guard !nichtAktiv else { return }
         switch betroffen {
         case .aufstellen:
             if start == .aufstellen { start = nichtErlaubt ? .erlaubnisFehlt : .kameraFehlt }

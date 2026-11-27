@@ -138,10 +138,8 @@ struct FlowLaufView: View {
 
     /// Im Hintergrund ist die Kamera aus; zurueck geht es mit dem aktuellen Zustand weiter.
     private func szeneGewechselt(aktiv: Bool) {
-        guard aktiv else {
-            kamera.schliessen()
-            return
-        }
+        kamera.szeneAktiv(aktiv)
+        guard aktiv else { return }
         if kamera.vorDemStart {
             Task { await kamera.aufstellenBeginnen() }
         } else if !beendet {

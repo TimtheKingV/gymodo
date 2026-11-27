@@ -77,7 +77,7 @@ struct FlowKameraModellTests {
         var t = 100.0
         var modell: FlowKameraModell!
 
-        init(flow: Flow = FlowKameraModellTests.flowMitKamera) {
+        init(flow: Flow = FlowKameraModellTests.flowMitKamera, leerlaufTakt: Duration? = nil) {
             modell = FlowKameraModell(
                 flow: flow, uebungen: FlowKameraModellTests.uebungen,
                 quelle: { [unowned self] start in
@@ -91,7 +91,7 @@ struct FlowKameraModellTests {
                     return antwortAufAnfrage
                 },
                 uhr: { [unowned self] in t },
-                leerlaufTakt: nil)
+                leerlaufTakt: leerlaufTakt)
         }
 
         /// Bilder fuer `sekunden`; `winkel` nil heisst: kein Skelett.
@@ -463,6 +463,73 @@ struct FlowKameraModellTests {
         #expect(a.quelle.laeuft)
         #expect(a.quelle.startAufrufe == startsVorher + 1)
         #expect(a.modell.zaehler?.wiederholungen == zahl)
+    }
+
+    /// Fix-Runde 1: In `.inactive` tickt die Uhr weiter; `folge` darf die Kamera dann nicht wieder starten.
+    @Test func nichtAktivStartetDieKameraNichtUndRueckkehrStartetSieOhneSperre() async {
+        let a = Aufbau()
+        await a.bereitMitKamera()
+        await a.folge(.pause(naechster: 0, restS: 5))
+        #expect(a.quelle.laeuft)
+        let startsVorher = a.quelle.startAufrufe
+
+        a.modell.szeneAktiv(false)
+        #expect(!a.quelle.laeuft)
+        await a.folge(.pause(naechster: 0, restS: 4))
+        await a.folge(.arbeit(schritt: 0, restS: 40))
+        #expect(!a.quelle.laeuft)
+        #expect(a.quelle.startAufrufe == startsVorher)
+        // Ein Ausfall, der waehrend des Hintergrunds eintrifft, sperrt den Schritt nicht.
+        a.quelle.beiFehler?()
+
+        a.modell.szeneAktiv(true)
+        await a.folge(.arbeit(schritt: 0, restS: 39))
+        #expect(a.quelle.laeuft)
+        #expect(a.quelle.startAufrufe == startsVorher + 1)
+        #expect(a.modell.hinweis == nil)
+        a.steht(sekunden: 1.5)
+        a.kniebeugen(sekunden: 7)
+        #expect((a.modell.zaehler?.wiederholungen ?? 0) >= 1)
+    }
+
+    /// Fix-Runde 1: Ein Start, der in `.inactive` mit Fehler zurueckkommt, sperrt den Schritt nicht.
+    @Test func fehlerWaehrendNichtAktivSperrtDenSchrittNicht() async {
+        let a = Aufbau()
+        await a.bereitMitKamera()
+        await a.folge(.pause(naechster: 0, restS: 5))
+        a.modell.szeneAktiv(false)
+        a.quelle.startFehler = BildquellenFehler.nichtVerfuegbar
+        await a.folge(.arbeit(schritt: 0, restS: 40))
+        #expect(a.modell.hinweis == nil)
+        a.quelle.startFehler = nil
+        a.modell.szeneAktiv(true)
+        await a.folge(.arbeit(schritt: 0, restS: 39))
+        #expect(a.quelle.laeuft)
+    }
+
+    @Test func aufstellenStartetNichtWaehrendNichtAktiv() async {
+        let a = Aufbau()
+        a.modell.szeneAktiv(false)
+        await a.modell.aufstellenBeginnen()
+        #expect(a.quelle.startAufrufe == 0)
+        #expect(a.modell.start == .aufstellen)
+        a.modell.szeneAktiv(true)
+        await a.modell.aufstellenBeginnen()
+        #expect(a.quelle.laeuft)
+    }
+
+    /// Fix-Runde 1: `schliessen()` beendet den Leerlauf-Takt; die naechste Arbeitsphase startet ihn wieder.
+    @Test func schliessenBeendetDenLeerlaufUndFolgeStartetIhnWieder() async {
+        let a = Aufbau(leerlaufTakt: .seconds(60))
+        await a.bereitMitKamera()
+        await a.zaehleKniebeugen(schritt: 0, sekunden: 2)
+        #expect(a.modell.leerlaufLaeuft)
+        a.modell.schliessen()
+        #expect(!a.modell.leerlaufLaeuft)
+        await a.folge(.arbeit(schritt: 0, restS: 30))
+        #expect(a.modell.leerlaufLaeuft)
+        await a.folge(.pause(naechster: 1, restS: 20))
+        #expect(!a.modell.leerlaufLaeuft)
     }
 
     @Test func fertigStopptDieKamera() async {
