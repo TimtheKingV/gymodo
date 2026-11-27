@@ -88,16 +88,16 @@
 - Create: `docs/flows/hiit-20-min-uebungen.md` (Liste für Tim)
 
 **Interfaces:**
-- Produces: 16 neue Übungen am Gerätetyp `bodyweight`, ohne `plan`, ohne `kamera`, ohne `video` (kommt in Task 4). Schlüssel und Zuordnung:
+- Produces: 15 neue Übungen (Stand 27.11.2026: von Tim so entschieden, vorher 16; `bw_burpee_thigh_tap` entfällt, `bw_burpee_slow` heißt nur „Burpee“) am Gerätetyp `bodyweight`, ohne `plan`, ohne `kamera`, ohne `video` (kommt in Task 4). Schlüssel und Zuordnung:
 
 | Schritt | Schlüssel | neu | `volume_kind` |
 |---|---|---|---|
 | 1 High Kicks | `bw_high_kicks` | ja | seconds |
-| 2 Slow Burpees | `bw_burpee_slow` | ja | reps |
+| 2 Burpee | `bw_burpee_slow` | ja | reps |
 | 3 Jumping Jacks | `bw_jumping_jack` | ja | reps |
 | 4 Toe Touches + Jackknifes | `bw_toe_touch_jackknife` | ja | reps |
 | 5 Mini Scissor Kicks | `bw_scissor_kicks` | ja | seconds |
-| 6 Burpees mit Oberschenkel-Berührung | `bw_burpee_thigh_tap` | ja | reps |
+| 6 Burpee | `bw_burpee_slow` | nein (wie Schritt 2) | reps |
 | 7 Squat-Pulse | `bw_squat_pulse` | ja | reps |
 | 8 Plank | `bw_plank` | nein | – |
 | 9 Swimmer | `bw_swimmer` | ja | seconds |
@@ -114,11 +114,11 @@
 | 20 Burpees mit Streckung | `bw_burpee_jump` | ja | reps |
 
 - [ ] **Step 1:** Vor dem Anlegen im Katalog nach jedem neuen Schlüssel und Namen suchen (auch ähnliche Namen); Treffer in die Liste für Tim aufnehmen statt doppelt anzulegen.
-- [ ] **Step 2:** Die 16 Übungen nach dem Muster der vorhandenen `bw_*` anlegen: deutscher Name eindeutig im ganzen Katalog (wichtig für `KameraTestprofile`, das nach Namen schlüsselt), `description` in eigenen Worten (Ausgangspunkt: Texte aus `hiit-20-min.json`), `muscles`, `sources`, `review` wie dort üblich, `target_min`/`target_max` passend zu `volume_kind`. Am Gerätetyp `bodyweight` eintragen.
+- [ ] **Step 2:** Die 15 Übungen nach dem Muster der vorhandenen `bw_*` anlegen: deutscher Name eindeutig im ganzen Katalog (wichtig für `KameraTestprofile`, das nach Namen schlüsselt), `description` in eigenen Worten (Ausgangspunkt: Texte aus `hiit-20-min.json`), `muscles`, `sources`, `review` wie dort üblich, `target_min`/`target_max` passend zu `volume_kind`. Am Gerätetyp `bodyweight` eintragen.
 - [ ] **Step 3:** Katalogprüfung laufen lassen (`pnpm vitest run packages/domain/src/katalog-datei.test.ts` und der Trockenlauf von `catalog:import`, wie in `scripts/catalog-import.ts` beschrieben) → grün.
 - [ ] **Step 4:** `hiit-20-min.json`: jedem der 20 Schritte `uebung` laut Tabelle geben. `pnpm --silent flow:sql tools/flow-import/flows/hiit-20-min.json --studio 00000000-0000-4000-8000-000000000001 > /dev/null` → Exit 0.
 - [ ] **Step 5:** `docs/flows/hiit-20-min-uebungen.md` schreiben: Tabelle Schritt, Name, Schlüssel, neu/vorhanden, Kamera oder Uhr mit Grund (Spec Abschnitt 8), und ausdrücklich die Nähe zu `bw_v_up`, `bw_squat`, `bw_crunch`.
-- [ ] **Step 6:** Commit `feat(katalog): 16 Koerpergewichtsuebungen fuer den HIIT-Flow`.
+- [ ] **Step 6:** Commit `feat(katalog): 15 Koerpergewichtsuebungen fuer den HIIT-Flow`.
 - [ ] **Step 7: HALT.** Tim sieht die Liste (Namen, Schlüssel, Dubletten). Änderungen einarbeiten, erst dann Task 4 und Task 10.
 
 ### Task 4: Videos erzeugen
@@ -130,7 +130,7 @@ Arbeitet im Ordner `~/Documents/gymtavo/3D-Animationen/ki-video-serie/` (kein Gi
 - Create (Repo): `catalog/media/videos/<key>.mp4` für jede abgenommene Übung; `video`-Feld im Katalogeintrag
 
 **Interfaces:**
-- Consumes: Schlüssel aus Task 3. Zu erzeugen: alle 16 neuen plus `bw_plank`, `bw_russian_twist`, `bw_mountain_climber` (haben kein Video) = 19.
+- Consumes: Schlüssel aus Task 3. Zu erzeugen: alle 15 neuen plus `bw_plank`, `bw_russian_twist`, `bw_mountain_climber` (haben kein Video) = 18 (27.11.2026: vorher 16 und 19).
 - Produces: Loops im Format der vorhandenen Katalogvideos (640×640, 24 Bilder/s); Dateiname und `video`-Feld wie bei `bw_pushup`.
 
 - [ ] **Step 1:** Guthaben bei OpenRouter abfragen (über `api.py`, ohne den Schlüssel auszugeben). Unter 10 $: Tim sagen, nicht starten.
@@ -297,20 +297,20 @@ Braucht die Videos aus Task 4.
 - Create: `docs/flows/hiit-20-min-kamera-bericht.md`
 
 **Interfaces:**
-- Produces: `flow-zuordnung.json`, gleiche Form wie `zuordnung.json`, mit den neun Kamera-Schritten:
+- Produces: `flow-zuordnung.json`, gleiche Form wie `zuordnung.json`, mit den neun Kamera-Schritten (acht Übungen, `bw_burpee_slow` in Schritt 2 und 6):
 
 | Schlüssel | Profil | Signal | beginnt mit |
 |---|---|---|---|
 | `bw_jumping_jack` | `oberkoerper` | `schulter` | `heben` |
 | `bw_squat_floor_touch`, `bw_squat_pulse`, `bw_lunge_kick` | `ganzkoerper_stehend` | `knie` | `senken` |
-| `bw_burpee_slow`, `bw_burpee_thigh_tap`, `bw_burpee_jump` | `ganzkoerper_stehend` | `huefte` | `senken` |
+| `bw_burpee_slow`, `bw_burpee_jump` | `ganzkoerper_stehend` | `huefte` | `senken` |
 | `bw_pushup` | `stuetz_boden` | `ellbogen` | `senken` |
 | `bw_leg_drop_pull` | `liegend` | `huefte` | `senken` |
 
 Seite `beide`, Tempo 1 / 0 / 1.
 
 - [ ] **Step 1:** `testprofile.py`: liest zusätzlich `flow-zuordnung.json`; deren Einträge werden unabhängig vom Profil-Filter aufgenommen und überschreiben gleiche Schlüssel. Test in `KameraTestprofileTests`: „Liegestütz“ und „Jumping Jacks“ (bzw. die Namen aus Task 3) haben einen Eintrag mit dem Profil aus der Tabelle; die bisherigen Einträge bleiben.
-- [ ] **Step 2:** Skelette der neun Videos vorrechnen (Werkzeug `loops-pruefen` mit `SKELETTE=<Ordner>`, siehe Plan `2026-11-24-kamera-tempo-kern-katalog.md`, Abschnitt „Stand nach der Umsetzung“), Ablage wie die vorhandenen Skelette, damit `AbspielQuelle` sie findet.
+- [ ] **Step 2:** Skelette der acht Videos vorrechnen (Werkzeug `loops-pruefen` mit `SKELETTE=<Ordner>`, siehe Plan `2026-11-24-kamera-tempo-kern-katalog.md`, Abschnitt „Stand nach der Umsetzung“), Ablage wie die vorhandenen Skelette, damit `AbspielQuelle` sie findet.
 - [ ] **Step 3:** Package-Test `FlowZaehlerAbspielTests`: je Video `FlowZaehler` über die Skelettfolge (Start bei t = 0, Schleife so oft, bis 40 s erreicht sind), erwartete Zahl = Wiederholungen im Loop × Durchläufe, Toleranz ± 1 je Durchlauf. Ergebnis je Übung in `hiit-20-min-kamera-bericht.md` (gezählt, erwartet, erkannt-Anteil).
 - [ ] **Step 4:** Übungen, die durchfallen: aus `flow-zuordnung.json` entfernen (Schritt läuft mit Uhr), im Bericht mit Grund vermerken. Kein Nachschärfen von `Koerperlage` in diesem Plan.
 - [ ] **Step 5:** `python3 tools/kamera-zuordnung/testprofile.py`, Schaltertext im Profil um „Flow-Übungen“ ergänzen, App-Tests grün.

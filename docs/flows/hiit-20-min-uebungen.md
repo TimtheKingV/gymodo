@@ -1,6 +1,6 @@
 # HIIT 20 Minuten: Übungen für den Katalog
 
-Zur Durchsicht durch Tim, bevor die Übungen auf Prod gehen. Der Flow hat 20 Schritte. 16 davon sind neue Katalogübungen, 4 gibt es schon. Alle neuen hängen am Gerätetyp „Körpergewicht“ (`bodyweight`), haben noch kein Video, keine Kameraangabe und keinen Plan-Block.
+Zur Durchsicht durch Tim, bevor die Übungen auf Prod gehen. Der Flow hat 20 Schritte. 15 davon sind neue Katalogübungen, 4 gibt es schon. Alle neuen hängen am Gerätetyp „Körpergewicht“ (`bodyweight`), haben noch kein Video, keine Kameraangabe und keinen Plan-Block.
 
 Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue Übung einer vorhandenen sehr nah ist.
 
@@ -11,11 +11,11 @@ Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue �
 | # | Schritt im Flow | Name im Katalog | Schlüssel | Neu / vorhanden | Zählung | Grund |
 |---|---|---|---|---|---|---|
 | 1 | High Kicks | High Kicks | `bw_high_kicks` | neu | Uhr | Beine wechseln abwechselnd, schnelles Hin und Her |
-| 2 | Slow Burpees | Burpee – langsam | `bw_burpee_slow` | neu | Kamera, Versuch | Hüfte geht deutlich hoch und runter |
+| 2 | Burpee | Burpee | `bw_burpee_slow` | neu | Kamera, Versuch | Hüfte geht deutlich hoch und runter |
 | 3 | Jumping Jacks | Jumping Jack | `bw_jumping_jack` | neu | Kamera | Arme gehen klar hoch und runter, Blick von vorn |
 | 4 | Toe Touches + Jackknifes | Toe Touch mit Jackknife | `bw_toe_touch_jackknife` | neu | Uhr | Zwei Bewegungen im Wechsel |
 | 5 | Mini Scissor Kicks | Mini Scissor Kicks | `bw_scissor_kicks` | neu | Uhr | Kleines Flattern, kein klarer Gelenkwinkel |
-| 6 | Burpees mit Oberschenkel-Berührung | Burpee mit Oberschenkel-Tap | `bw_burpee_thigh_tap` | neu | Kamera, Versuch | Hüfte, wie bei Burpee |
+| 6 | Burpee | Burpee | `bw_burpee_slow` | wie Schritt 2 | Kamera, Versuch | Hüfte, wie bei Schritt 2 |
 | 7 | Squat-Pulse | Squat-Pulse | `bw_squat_pulse` | neu | Kamera, Versuch | Knie, aber der Hub ist sehr klein |
 | 8 | Plank | Plank | `bw_plank` | vorhanden | Uhr | Halten, nichts zu zählen |
 | 9 | Swimmer | Swimmer | `bw_swimmer` | neu | Uhr | Flattern in Bauchlage |
@@ -31,14 +31,14 @@ Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue �
 | 19 | Crunch-Halten | Crunch-Halten | `bw_crunch_hold` | neu | Uhr | Halten |
 | 20 | Burpees mit Streckung | Burpee mit Strecksprung | `bw_burpee_jump` | neu | Kamera, Versuch | Hüfte |
 
-Die Schritt-Namen im Flow bleiben, wie sie sind. Die Namen im Katalog dürfen davon abweichen, weil jeder Name im ganzen Katalog nur einmal vorkommen soll (eine spätere Zuordnung der Kameraangaben läuft über den Namen).
+Die Schritt-Namen im Flow bleiben, wie sie sind (außer den Burpee-Schritten 2 und 6, siehe Vermerk unten). Die Namen im Katalog dürfen davon abweichen, weil jeder Name im ganzen Katalog nur einmal vorkommen soll (eine spätere Zuordnung der Kameraangaben läuft über den Namen).
 
 ## Wiederholungen oder Sekunden
 
 Halteübungen und Flattern zählen Sekunden (`seconds`), alle anderen Wiederholungen (`reps`).
 
 - Sekunden: High Kicks, Mini Scissor Kicks, Swimmer, Flutter Kicks, Crunch-Halten.
-- Wiederholungen: die übrigen 11 neuen Übungen.
+- Wiederholungen: die übrigen 10 neuen Übungen.
 
 ## Nähe zu vorhandenen Übungen
 
@@ -52,7 +52,7 @@ Diese drei neuen Übungen sind Varianten von Übungen, die es schon gibt. Ich ha
 
 Weitere Namensnähe, ohne gleiche Bewegung:
 
-- Burpee – langsam, Burpee mit Oberschenkel-Tap, Burpee mit Strecksprung: drei Burpee-Varianten, die sich in Tempo und Abschluss unterscheiden.
+- Burpee und Burpee mit Strecksprung: zwei Burpee-Varianten, die sich im Abschluss unterscheiden (ohne und mit Sprung).
 - Mini Scissor Kicks und Flutter Kicks: beide in Rückenlage mit kleinen Beinbewegungen, die eine über Kreuz, die andere auf und ab.
 - Squat-Pulse und Kniebeuge mit Bodenberührung: beide aus der Kniebeuge, Pulse federt klein in der Tiefe.
 
@@ -61,3 +61,7 @@ Mountain Climber (Schritt 16) wird nicht neu angelegt. Im Katalog zählt er Seku
 ## Sichtbarkeit
 
 Die neuen Übungen erscheinen in jedem Studio im Freien Training unter „Körpergewicht“. In Trainingspläne gelangen sie nicht, weil sie keinen Plan-Block haben. Ein Ausblenden ist nicht vorgesehen.
+
+## Änderung vom 27.11.2026
+
+27.11.2026: von Tim so entschieden (Videoabnahme). `bw_burpee_slow` heißt jetzt nur „Burpee“ (ohne Sprung); der Schlüssel bleibt. `bw_burpee_thigh_tap` (Burpee mit Oberschenkel-Tap) entfällt, Schritt 6 nutzt ebenfalls `bw_burpee_slow`. Damit sind es 15 neue Übungen statt 16, und die Schritte 2 und 6 teilen sich eine Übung.

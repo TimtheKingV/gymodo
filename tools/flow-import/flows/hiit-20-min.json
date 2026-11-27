@@ -17,9 +17,9 @@
       "istWarmup": true
     },
     {
-      "name": "Slow Burpees",
+      "name": "Burpee",
       "uebung": "bw_burpee_slow",
-      "beschreibung": "Kontrolliert in die Hocke, zum Liegestütz zurück und ruhig wieder aufrichten.",
+      "beschreibung": "Im ruhigen Tempo in die Hocke, die Füße zum Liegestütz zurück, wieder heran und aufrichten, ohne Sprung.",
       "workS": 40,
       "restS": 20,
       "istWarmup": true
@@ -49,9 +49,9 @@
       "istWarmup": false
     },
     {
-      "name": "Burpees mit Oberschenkel-Berührung",
-      "uebung": "bw_burpee_thigh_tap",
-      "beschreibung": "Nach jedem Burpee im Stand kurz die Oberschenkel abklatschen.",
+      "name": "Burpee",
+      "uebung": "bw_burpee_slow",
+      "beschreibung": "Hände aufsetzen, Füße nach hinten in den Liegestütz, wieder heranholen und aufrichten, ohne Sprung.",
       "workS": 40,
       "restS": 20,
       "istWarmup": false

@@ -132,11 +132,11 @@ Vorschlag von Claude, von Tim zu prüfen. „Kamera“ heißt: bekommt ein Testp
 | # | Schritt | Katalog | Video | Arbeitsphase | Signal (Vorschlag) |
 |---|---|---|---|---|---|
 | 1 | High Kicks | neu | neu | Uhr (abwechselnd) | – |
-| 2 | Slow Burpees | neu | neu | Kamera, Versuch | Hüfte |
+| 2 | Burpee | neu | neu | Kamera, Versuch | Hüfte |
 | 3 | Jumping Jacks | neu | neu | Kamera | Schulter |
 | 4 | Toe Touches + Jackknifes | neu | neu | Uhr (zwei Bewegungen im Wechsel) | – |
 | 5 | Mini Scissor Kicks | neu | neu | Uhr (Flattern) | – |
-| 6 | Burpees mit Oberschenkel-Berührung | neu | neu | Kamera, Versuch | Hüfte |
+| 6 | Burpee (wie Schritt 2, `bw_burpee_slow`) | `bw_burpee_slow` | von Schritt 2 | Kamera, Versuch | Hüfte |
 | 7 | Squat-Pulse | neu | neu | Kamera, Versuch (kleiner Hub) | Knie |
 | 8 | Plank | `bw_plank` | neu | Uhr (Halten) | – |
 | 9 | Swimmer | neu | neu | Uhr (Flattern) | – |
@@ -152,18 +152,18 @@ Vorschlag von Claude, von Tim zu prüfen. „Kamera“ heißt: bekommt ein Testp
 | 19 | Crunch-Halten | neu | neu | Uhr (Halten) | – |
 | 20 | Burpees mit Streckung | neu | neu | Kamera, Versuch | Hüfte |
 
-Ergebnis: 16 neue Katalogübungen, bis zu 19 neue Videos, 2 Schritte sicher mit Kamera (Jumping Jacks, Squat mit Händen zum Boden), 7 als Versuch, 11 mit Uhr.
+Ergebnis: 15 neue Katalogübungen, bis zu 18 neue Videos (27.11.2026: von Tim so entschieden: `bw_burpee_slow` heißt nur „Burpee“, `bw_burpee_thigh_tap` entfällt, Schritt 6 nutzt `bw_burpee_slow`; vorher 16 und 19), 2 Schritte sicher mit Kamera (Jumping Jacks, Squat mit Händen zum Boden), 7 als Versuch, 11 mit Uhr.
 
 - **Nah an Vorhandenem:** Der Katalog hat `bw_v_up` (Klappmesser), `bw_squat` (Kniebeuge) und `bw_crunch` (Crunch). Die Schritte 4, 15 und 19 sind Varianten davon (Wechsel mit Toe Touches, Hände zum Boden, Halten) und werden als eigene Übungen angelegt. Tim sieht das bei der Listenprüfung ausdrücklich.
 - **Die Prüfung am Mac beweist die Blickrichtung nicht:** Jedes erzeugte Video hat seinen eigenen passenden Kamerawinkel. Ob ein Schritt am iPhone mit einem einzigen Aufstellort zählt, zeigt erst Tims Test. Die neuen Videos der Kamera-Schritte werden in der Blickrichtung ihres Profils erzeugt.
-- **Testprofile:** `KameraTestprofile` schlüsselt nach Übungsname und lässt die Bodenprofile bisher aus (`testprofile.py`). Für den Flow werden die neun Kamera-Übungen dort aufgenommen, einschließlich `stuetz_boden` und `liegend`; die neuen Namen müssen eindeutig sein. Das Profil wirkt bisher nur in `GeraetModel`, der Flow braucht denselben Zugriff.
+- **Testprofile:** `KameraTestprofile` schlüsselt nach Übungsname und lässt die Bodenprofile bisher aus (`testprofile.py`). Für den Flow werden die acht Kamera-Übungen (neun Schritte, Burpee doppelt) dort aufgenommen, einschließlich `stuetz_boden` und `liegend`; die neuen Namen müssen eindeutig sein. Das Profil wirkt bisher nur in `GeraetModel`, der Flow braucht denselben Zugriff.
 
 - **Neue Katalogübungen:** Schlüssel `bw_*`, Namen und Beschreibungen in eigenen Worten (die Texte aus `hiit-20-min.json` sind schon eigene), alle Pflichtfelder des Katalogformats (`packages/domain/src/katalog-datei.ts`). `volume_kind`: `seconds` für Halteübungen, sonst `reps`. Tempo für die Kamera-Schritte: schnell, im erlaubten Raster (Vorschlag 1 s / 0 / 1 s); die Welle selbst bleibt unangetastet.
 - **Tim prüft die Liste der neuen Übungen** (Name, Schlüssel), bevor sie in den Katalog und auf Prod gehen.
 
 ## 9. Videos
 
-- Erzeugt mit der vorhandenen Serie im Ordner `ki-video-serie`, gleicher Look (Graphit-Figur, schwarzes Shirt mit „G.“, helles Studio), ohne Gerät. Dazu werden die 19 Übungen in `uebungen.json` ergänzt (Szene, Kamera, Bewegung, Prüfpunkte, Ende), Startbild und Video erzeugt, als Loop geschnitten.
+- Erzeugt mit der vorhandenen Serie im Ordner `ki-video-serie`, gleicher Look (Graphit-Figur, schwarzes Shirt mit „G.“, helles Studio), ohne Gerät. Dazu werden die 18 Übungen in `uebungen.json` ergänzt (Szene, Kamera, Bewegung, Prüfpunkte, Ende), Startbild und Video erzeugt, als Loop geschnitten.
 - Abwechselnde und zusammengesetzte Übungen nutzen die Loop-Arten `wechsel` und `ganz` der Serie.
 - **Halt:** Claude sieht Videos nur als Standbilder. Tim nimmt die Bewegung auf einer Prüfseite ab (`seiten/…html`). Höchstens 3 Anläufe je Übung; was dann nicht passt, bleibt ohne Video und der Schritt zeigt den Ring.
 - Kostengrenze 10 $ (Entscheidung 15), erwartet 4–6 $. Vor dem Start wird das Guthaben bei OpenRouter geprüft.
@@ -192,7 +192,7 @@ Ergebnis: 16 neue Katalogübungen, bis zu 19 neue Videos, 2 Schritte sicher mit 
 |---|---|---|
 | E0 | `origin/master` in `claude/flow-kamera` mergen, Xcode-Projekt neu erzeugen, alle Tests grün | App baut mit Flows und Kamera-Ablauf |
 | E1 | Daten: Migration 0080 lokal, Domäne, API, DTO, `uebung` in Flow-Datei und `flow:sql` | Tests grün, lokaler Flow liefert `exerciseId` |
-| E2 | Katalog: 16 neue Übungen, Flow-Datei mit 20 Verweisen | Tim hat die Liste gesehen |
+| E2 | Katalog: 15 neue Übungen, Flow-Datei mit 20 Verweisen | Tim hat die Liste gesehen |
 | E3 | Videos: Beschreibungen, Erzeugen, Prüfseite | Tim hat die Videos abgenommen, Loops im Katalog |
 | E4 | App: Pause und Uhr-Schritt mit Video und Zeit oben rechts | Im Simulator sichtbar |
 | E5 | App: Aufstellen vor dem Start, Kamera-Phase, Fertig mit Zahlen; Testprofile für die Flow-Übungen, Prüfung am Mac gegen die Videos | Im Simulator mit `AbspielQuelle` zählt ein Schritt; Bericht je Kamera-Schritt liegt vor |

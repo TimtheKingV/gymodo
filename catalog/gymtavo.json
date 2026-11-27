@@ -2488,7 +2488,6 @@
         "bw_jumping_jack",
         "bw_toe_touch_jackknife",
         "bw_scissor_kicks",
-        "bw_burpee_thigh_tap",
         "bw_squat_pulse",
         "bw_swimmer",
         "bw_lunge_kick",
@@ -11243,8 +11242,8 @@
     },
     {
       "key": "bw_burpee_slow",
-      "name": "Burpee – langsam",
-      "description": "Einstellen:\n- Hüftbreit stehen, Arme locker hängen lassen.\n\nBewegung:\n- In die Hocke gehen und die Hände aufsetzen.\n- Die Füße nach hinten in den Liegestütz stellen.\n- Die Füße wieder heranholen und ruhig aufrichten.\n\nAchte auf:\n- Jede Phase läuft kontrolliert, ohne Schwung.\n- Im Liegestütz bleibt der Rücken gerade.",
+      "name": "Burpee",
+      "description": "Einstellen:\n- Hüftbreit stehen, Arme locker hängen lassen.\n\nBewegung:\n- In die Hocke gehen und die Hände aufsetzen.\n- Die Füße nach hinten in den Liegestütz stellen.\n- Die Füße wieder heranholen und aufrichten, ohne Sprung.\n\nAchte auf:\n- Jede Phase läuft kontrolliert, ohne Schwung und ohne Sprung.\n- Im Liegestütz bleibt der Rücken gerade.",
       "volume_kind": "reps",
       "target_min": 6,
       "target_max": 10,
@@ -11351,40 +11350,6 @@
         },
         {
           "muscle": "adductors",
-          "role": "secondary"
-        }
-      ],
-      "review": "draft",
-      "sources": []
-    },
-    {
-      "key": "bw_burpee_thigh_tap",
-      "name": "Burpee mit Oberschenkel-Tap",
-      "description": "Einstellen:\n- Hüftbreit stehen, Arme locker hängen lassen.\n\nBewegung:\n- In die Hocke gehen, die Füße nach hinten in den Liegestütz stellen und zurückholen.\n- Aufrichten und im Stand kurz mit beiden Händen auf die Oberschenkel klatschen.\n\nAchte auf:\n- Im Liegestütz bleibt der Rücken gerade.\n- Nach dem Aufrichten stehst du stabil, bevor der nächste Burpee beginnt.",
-      "volume_kind": "reps",
-      "target_min": 6,
-      "target_max": 10,
-      "video": null,
-      "grip": "none",
-      "muscles": [
-        {
-          "muscle": "quads",
-          "role": "primary"
-        },
-        {
-          "muscle": "glutes",
-          "role": "primary"
-        },
-        {
-          "muscle": "pectorals",
-          "role": "secondary"
-        },
-        {
-          "muscle": "triceps",
-          "role": "secondary"
-        },
-        {
-          "muscle": "abs",
           "role": "secondary"
         }
       ],

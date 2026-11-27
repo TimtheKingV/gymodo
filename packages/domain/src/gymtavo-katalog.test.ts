@@ -158,11 +158,11 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
     const k = katalog();
     const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
-    // Die 16 Uebungen des HIIT-Flows (Task flow-mit-kamera) haben bewusst keine Plan-Merkmale:
+    // Die 15 Uebungen des HIIT-Flows (Task flow-mit-kamera) haben bewusst keine Plan-Merkmale:
     // sie laufen nur im Flow und werden nicht von selbst in Plaene aufgenommen.
     const flowUebungen = [
       "bw_high_kicks", "bw_burpee_slow", "bw_jumping_jack", "bw_toe_touch_jackknife", "bw_scissor_kicks",
-      "bw_burpee_thigh_tap", "bw_squat_pulse", "bw_swimmer", "bw_lunge_kick", "bw_leg_drop_pull",
+      "bw_squat_pulse", "bw_swimmer", "bw_lunge_kick", "bw_leg_drop_pull",
       "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_flutter_kicks", "bw_skater_jump", "bw_crunch_hold",
       "bw_burpee_jump",
     ];
@@ -190,7 +190,7 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(65);
+    expect(typen[0]!.exercises).toHaveLength(64);
   });
 
   // Kettlebells gibt es nur in festen Stufen: 2-kg-Raster ab 4 kg trifft den klassischen
