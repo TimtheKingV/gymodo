@@ -180,6 +180,51 @@
     }
   },
   {
+    "name": "Jumping Jack",
+    "key": "bw_jumping_jack",
+    "kamera": {
+      "profil": "oberkoerper",
+      "signal": "schulter",
+      "seite": "beide",
+      "beginnt_mit": "heben"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
+    "name": "Ausfallschritt mit Kick",
+    "key": "bw_lunge_kick",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
+    "name": "Liegestütz",
+    "key": "bw_pushup",
+    "kamera": {
+      "profil": "stuetz_boden",
+      "signal": "ellbogen",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
     "name": "Ausfallschritt – rückwärts",
     "key": "bw_reverse_lunge",
     "kamera": {
@@ -207,6 +252,36 @@
       "senken_s": 3,
       "halten_s": 1,
       "heben_s": 2
+    }
+  },
+  {
+    "name": "Kniebeuge mit Bodenberührung",
+    "key": "bw_squat_floor_touch",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
+    }
+  },
+  {
+    "name": "Squat-Pulse",
+    "key": "bw_squat_pulse",
+    "kamera": {
+      "profil": "ganzkoerper_stehend",
+      "signal": "knie",
+      "seite": "beide",
+      "beginnt_mit": "senken"
+    },
+    "tempo": {
+      "senken_s": 1,
+      "halten_s": 0,
+      "heben_s": 1
     }
   },
   {

@@ -305,7 +305,7 @@ struct ProfilRootView: View {
             Toggle(isOn: $kameraTestprofile) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kamera-Testprofile")
-                    Text("Profile aus dem Zuordnungsvorschlag (Ganzkörper stehend, Oberkörper)")
+                    Text("Profile aus dem Zuordnungsvorschlag (Ganzkörper stehend, Oberkörper) und Flow-Übungen")
                         .font(DesignSystem.Typography.fliesstext)
                         .foregroundStyle(DesignSystem.Color.textMuted)
                 }

@@ -27,6 +27,25 @@ struct KameraTestprofileTests {
         #expect(KameraTestprofile.katalogKey(name: "Dips") == "assisted_dip")
     }
 
+    /// Die Flow-Uebungen (data/koerperbild/flow-zuordnung.json) kommen unabhaengig
+    /// vom Profil-Filter hinzu; die Eintraege aus dem Zuordnungsvorschlag bleiben.
+    @Test func flowUebungenHabenEinTestprofil() {
+        let liegestuetz = KameraTestprofile.eintraege["Liegestütz"]
+        #expect(liegestuetz?.key == "bw_pushup")
+        #expect(liegestuetz?.kamera.profil == "stuetz_boden")
+        #expect(liegestuetz?.kamera.signal == "ellbogen")
+        #expect(liegestuetz?.tempo.senkenS == 1)
+        #expect(liegestuetz?.tempo.haltenS == 0)
+        #expect(liegestuetz?.tempo.hebenS == 1)
+        let jack = KameraTestprofile.eintraege["Jumping Jack"]
+        #expect(jack?.key == "bw_jumping_jack")
+        #expect(jack?.kamera.profil == "oberkoerper")
+        #expect(jack?.kamera.signal == "schulter")
+        #expect(jack?.kamera.beginntMit == "heben")
+        #expect(KameraTestprofile.eintraege["Dips"]?.key == "assisted_dip")
+        #expect(KameraTestprofile.eintraege["Bizepscurl"]?.key == "bb_curl")
+    }
+
     @Test func testprofilErgaenztBekannteUebung() {
         Self.mitSchalter(true) {
             let ergebnis = KameraTestprofile.ergaenzt(Self.uebung(name: "Dips"))
