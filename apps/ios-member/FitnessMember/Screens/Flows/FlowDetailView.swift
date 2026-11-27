@@ -61,14 +61,14 @@ struct FlowDetailView: View {
     }
 
     private func bereit() -> FlowUebungen {
-        if let uebungen { return uebungen }
         #if DEBUG
-        let neu = FlowUebungen(bootstrap: katalog.bootstrap, testprofile: KameraTestprofile.aktiv)
+        let testprofile = KameraTestprofile.aktiv
         #else
-        let neu = FlowUebungen(bootstrap: katalog.bootstrap, testprofile: false)
+        let testprofile = false
         #endif
-        uebungen = neu
-        return neu
+        let ergebnis = FlowUebungen.bereit(vorhanden: uebungen, bootstrap: katalog.bootstrap, testprofile: testprofile)
+        if ergebnis.merken { uebungen = ergebnis.uebungen }
+        return ergebnis.uebungen
     }
 
     /// Bereitet die Videos von Countdown und erstem Schritt vor, solange das

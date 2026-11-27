@@ -3,7 +3,7 @@ import XCTest
 
 /// Spielt die vorgerechneten Skelette der Uebungsvideos aus dem Flow "HIIT 20 Minuten" durch den
 /// `FlowZaehler`: Start bei t = 0, das Video laeuft in Schleife, bis 40 s erreicht sind.
-/// Erwartet sind die Wiederholungen im Loop mal die Durchlaeufe, Toleranz unter 1 je Durchlauf.
+/// Erwartet sind die Wiederholungen im Loop mal die Durchlaeufe, Toleranz hoechstens 1 oder ein Zehntel.
 /// Eine Uebung steht genau dann in `data/koerperbild/flow-zuordnung.json`, wenn sie so zaehlt;
 /// durchgefallene Uebungen laufen im Flow mit der Uhr (Bericht: docs/flows/hiit-20-min-kamera-bericht.md).
 final class FlowZaehlerAbspielTests: XCTestCase {
@@ -57,9 +57,9 @@ final class FlowZaehlerAbspielTests: XCTestCase {
         let erkanntAnteil: Double
         /// Anteil der Videobilder, in denen ueberhaupt ein Skelett erkannt wurde.
         let skelettAnteil: Double
-        /// Toleranz 1 je Durchlauf, die Grenze selbst ausgenommen: Bei einer Wiederholung im Loop
-        /// liesse die eingeschlossene Grenze sonst 0 und die doppelte Zahl als richtig durchgehen.
-        var bestanden: Bool { abs(gezaehlt - erwartet) < durchlaeufe }
+        /// Toleranz: hoechstens 1 daneben, ab 20 erwarteten Wiederholungen hoechstens ein Zehntel.
+        /// (Vorher „unter 1 je Durchlauf“: bei einer Wiederholung je Loop liess das fast jede Zahl durch.)
+        var bestanden: Bool { abs(gezaehlt - erwartet) <= max(1, erwartet / 10) }
     }
 
     private func spiele(_ fall: Fall) throws -> Ergebnis {
@@ -104,6 +104,24 @@ final class FlowZaehlerAbspielTests: XCTestCase {
             XCTAssertEqual(zuordnung[fall.key] != nil, e.bestanden,
                            "\(fall.key): gezaehlt \(e.gezaehlt), erwartet \(e.erwartet), Abweichung unter \(e.durchlaeufe) noetig")
         }
+    }
+
+    /// Die Toleranz laesst grobe Fehlzaehlungen nicht durch, auch bei einer Wiederholung je Loop.
+    func testToleranzLaesstNurKleineAbweichungenDurch() {
+        func ergebnis(_ gezaehlt: Int, _ erwartet: Int, _ durchlaeufe: Int) -> Ergebnis {
+            Ergebnis(gezaehlt: gezaehlt, erwartet: erwartet, durchlaeufe: durchlaeufe, erkanntAnteil: 1, skelettAnteil: 1)
+        }
+        XCTAssertTrue(ergebnis(13, 13, 13).bestanden)
+        XCTAssertTrue(ergebnis(12, 13, 13).bestanden)
+        XCTAssertTrue(ergebnis(17, 18, 18).bestanden)
+        XCTAssertFalse(ergebnis(11, 13, 13).bestanden)
+        XCTAssertFalse(ergebnis(1, 13, 13).bestanden)
+        XCTAssertFalse(ergebnis(24, 13, 13).bestanden)
+        XCTAssertFalse(ergebnis(12, 6, 6).bestanden)
+        XCTAssertFalse(ergebnis(0, 15, 15).bestanden)
+        // Ab 20 erwarteten Wiederholungen ein Zehntel.
+        XCTAssertTrue(ergebnis(36, 40, 40).bestanden)
+        XCTAssertFalse(ergebnis(35, 40, 40).bestanden)
     }
 
     /// Die verbliebenen Eintraege tragen die Werte, mit denen hier gezaehlt wurde.

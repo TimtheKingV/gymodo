@@ -61,14 +61,33 @@ struct KameraTestprofileTests {
 
     /// Jede Übung aus data/koerperbild/flow-zuordnung.json löst im Flow auf ihren
     /// eigenen Schlüssel auf, auch wenn ihr Name im Katalog mehrfach vorkommt.
-    @Test func jedeFlowZuordnungLoestAufIhrenSchluesselAuf() {
+    /// Liest data/koerperbild/flow-zuordnung.json aus dem Repo (wie FlowZaehlerAbspielTests):
+    /// `"flow": true` steht genau bei diesen Schluesseln.
+    @Test func jedeFlowZuordnungLoestAufIhrenSchluesselAuf() throws {
+        let wurzel = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // FitnessMemberTests
+            .deletingLastPathComponent() // ios-member
+            .deletingLastPathComponent() // apps
+            .deletingLastPathComponent() // Repo
+        let daten = try Data(contentsOf: wurzel.appendingPathComponent("data/koerperbild/flow-zuordnung.json"))
+        let zuordnung = try #require(try JSONSerialization.jsonObject(with: daten) as? [String: Any])
         let flow = KameraTestprofile.alle.filter { $0.flow == true }
-        #expect(Set(flow.map(\.key)) == ["bw_back_extension_floor", "bw_jumping_jack", "bw_leg_raise_lying",
-                                         "bw_pushup", "bw_reverse_lunge", "bw_squat_floor_touch",
-                                         "bw_squat_jump", "bw_squat_pulse"])
+        #expect(Set(flow.map(\.key)) == Set(zuordnung.keys))
+        #expect(flow.count == zuordnung.count)
         for eintrag in flow {
             #expect(KameraTestprofile.flowKatalogKey(name: eintrag.name) == eintrag.key, "\(eintrag.key)")
         }
+    }
+
+    /// Im Flow nur die am Video geprueften Eintraege: ein normales Testprofil
+    /// (Dips) ergaenzt dort nichts, ausserhalb des Flows weiter wie bisher.
+    @Test func imFlowNurEintraegeDerFlowZuordnung() {
+        let flow = KameraTestprofile.ergaenzt(Self.uebung(name: "Dips"), eingeschaltet: true, imFlow: true)
+        #expect(flow.kamera == nil)
+        #expect(flow.tempo == nil)
+        #expect(KameraTestprofile.flowKatalogKey(name: "Dips") == nil)
+        let normal = KameraTestprofile.ergaenzt(Self.uebung(name: "Dips"), eingeschaltet: true)
+        #expect(normal.kameravorgabe?.profil == .oberkoerper)
     }
 
     @Test func testprofilErgaenztBekannteUebung() {

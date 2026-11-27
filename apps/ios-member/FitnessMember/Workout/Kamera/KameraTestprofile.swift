@@ -67,12 +67,13 @@ enum KameraTestprofile {
     /// Nur wenn `aktiv` und die Uebung kein Serverprofil hat; studioeigene
     /// Uebungen (unbekannter Name) bleiben ohne.
     /// `eingeschaltet` laesst Tests den Schalter vorgeben, ohne UserDefaults anzufassen.
-    /// `imFlow`: zuerst der Eintrag der Flow-Zuordnung, sonst wie im normalen Training.
+    /// `imFlow`: nur die Eintraege der Flow-Zuordnung (am Video geprueft), kein Rueckfall
+    /// auf die Vorschlagsprofile des normalen Trainings.
     static func ergaenzt(_ uebung: BootstrapResponse.Exercise,
                          eingeschaltet: Bool = KameraTestprofile.aktiv,
                          imFlow: Bool = false) -> BootstrapResponse.Exercise {
         guard eingeschaltet, uebung.kamera == nil,
-              let eintrag = (imFlow ? flowEintraege[uebung.name] : nil) ?? eintraege[uebung.name] else { return uebung }
+              let eintrag = imFlow ? flowEintraege[uebung.name] : eintraege[uebung.name] else { return uebung }
         var ergebnis = uebung
         ergebnis.kamera = KameraDTO(profil: eintrag.kamera.profil, signal: eintrag.kamera.signal,
                                     seite: eintrag.kamera.seite, beginntMit: eintrag.kamera.beginntMit)
@@ -86,9 +87,9 @@ enum KameraTestprofile {
         eintraege[name]?.key
     }
 
-    /// Katalogschluessel im Flow: der Eintrag der Flow-Zuordnung, sonst wie oben.
+    /// Katalogschluessel im Flow: nur aus der Flow-Zuordnung.
     static func flowKatalogKey(name: String) -> String? {
-        flowEintraege[name]?.key ?? katalogKey(name: name)
+        flowEintraege[name]?.key
     }
 }
 #endif

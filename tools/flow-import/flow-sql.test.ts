@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { flowDauerS } from "@fitretro/domain";
 import { describe, expect, it } from "vitest";
@@ -137,6 +137,20 @@ describe("flows/hiit-20-min.json", () => {
     const katalog = JSON.parse(readFileSync(join(__dirname, "..", "..", "catalog", "gymtavo.json"), "utf8"));
     const schluessel = new Set<string>(katalog.exercises.map((u: { key: string }) => u.key));
     expect(() => flowZuSql(pruefeFlowEntwurf(roh), STUDIO, schluessel)).not.toThrow();
+  });
+
+  it("hat fuer jede Uebung eines Schritts ein Video im Katalog, dessen Datei existiert", () => {
+    const katalog = JSON.parse(readFileSync(join(__dirname, "..", "..", "catalog", "gymtavo.json"), "utf8"));
+    const jeKey = new Map<string, { video: { file: string } | null }>(
+      katalog.exercises.map((u: { key: string; video: { file: string } | null }) => [u.key, u]),
+    );
+    const ohne = pruefeFlowEntwurf(roh)
+      .schritte.map((s) => s.uebung!)
+      .filter((key) => {
+        const video = jeKey.get(key)?.video;
+        return !video || !existsSync(join(__dirname, "..", "..", "catalog", video.file));
+      });
+    expect(ohne).toEqual([]);
   });
 
   // Die Kamera-Schritte (data/koerperbild/flow-zuordnung.json) muessen im Flow vorkommen.

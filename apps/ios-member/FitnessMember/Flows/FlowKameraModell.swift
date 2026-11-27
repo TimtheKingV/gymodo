@@ -174,7 +174,7 @@ final class FlowKameraModell {
         return KameraStart(exerciseId: erster?.exerciseId ?? "aufstellen", name: erster?.name ?? "Aufstellen",
                            geraet: nil, vorgabe: Self.aufstellVorgabe,
                            tempo: erster?.tempo ?? .standard(beginntMit: .senken),
-                           sollWiederholungen: nil, satzZiel: 1)
+                           sollWiederholungen: nil, satzZiel: 1, katalogKey: erster?.katalogKey)
     }
 
     // MARK: Waehrend des Flows

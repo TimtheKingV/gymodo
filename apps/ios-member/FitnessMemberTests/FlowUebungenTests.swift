@@ -100,11 +100,20 @@ struct FlowUebungenTests {
     #if DEBUG
     @Test func testprofileErgaenzenKameraangabenNurWennAn() {
         let bootstrap = Self.bootstrap(maschinenUebungen: [],
-                                       katalogUebungen: [Self.uebung(id: "dips", name: "Dips")])
+                                       katalogUebungen: [Self.uebung(id: "push", name: "Liegestütz")])
         let an = FlowUebungen(bootstrap: bootstrap, testprofile: true)
         let aus = FlowUebungen(bootstrap: bootstrap, testprofile: false)
-        if case .kamera = an.ansicht(Self.schritt("dips"), mitKamera: true) {} else { Issue.record("erwartet .kamera") }
-        #expect(aus.ansicht(Self.schritt("dips"), mitKamera: true) == .video(exerciseId: "dips"))
+        if case .kamera = an.ansicht(Self.schritt("push"), mitKamera: true) {} else { Issue.record("erwartet .kamera") }
+        #expect(aus.ansicht(Self.schritt("push"), mitKamera: true) == .video(exerciseId: "push"))
+    }
+
+    /// Ein Testprofil ohne Flow-Eintrag (Dips) gibt im Flow keine Kamera:
+    /// gezaehlt wird nur, was am Video geprueft wurde.
+    @Test func testprofilOhneFlowEintragGibtImFlowKeineKamera() {
+        let bootstrap = Self.bootstrap(maschinenUebungen: [],
+                                       katalogUebungen: [Self.uebung(id: "dips", name: "Dips")])
+        let an = FlowUebungen(bootstrap: bootstrap, testprofile: true)
+        #expect(an.ansicht(Self.schritt("dips"), mitKamera: true) == .video(exerciseId: "dips"))
     }
 
     /// Schritt 11 des HIIT-Flows: der Name ist viermal im Katalog, der Flow nimmt
@@ -122,6 +131,19 @@ struct FlowUebungenTests {
         #expect(start.katalogKey == "bw_reverse_lunge")
     }
     #endif
+
+    /// Fehlt der Bootstrap noch, wird der leere Aufloeser nicht gemerkt.
+    @Test func ohneBootstrapWirdNichtGemerkt() {
+        let ohne = FlowUebungen.bereit(vorhanden: nil, bootstrap: nil, testprofile: false)
+        #expect(!ohne.merken)
+        #expect(ohne.uebungen.uebung(Self.schritt("k-ex")) == nil)
+        let bootstrap = Self.bootstrap(maschinenUebungen: [], katalogUebungen: [Self.uebung(id: "k-ex", name: "Kniebeuge")])
+        let mit = FlowUebungen.bereit(vorhanden: nil, bootstrap: bootstrap, testprofile: false)
+        #expect(mit.merken)
+        #expect(mit.uebungen.uebung(Self.schritt("k-ex"))?.name == "Kniebeuge")
+        let wieder = FlowUebungen.bereit(vorhanden: mit.uebungen, bootstrap: nil, testprofile: false)
+        #expect(wieder.uebungen.uebung(Self.schritt("k-ex"))?.name == "Kniebeuge")
+    }
 
     @Test func blickzeileJeProfil() {
         let seitlich = "Stell dich seitlich zur Kamera"

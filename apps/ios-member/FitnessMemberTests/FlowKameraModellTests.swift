@@ -77,9 +77,10 @@ struct FlowKameraModellTests {
         var t = 100.0
         var modell: FlowKameraModell!
 
-        init(flow: Flow = FlowKameraModellTests.flowMitKamera, leerlaufTakt: Duration? = nil) {
+        init(flow: Flow = FlowKameraModellTests.flowMitKamera,
+             uebungen: FlowUebungen = FlowKameraModellTests.uebungen, leerlaufTakt: Duration? = nil) {
             modell = FlowKameraModell(
-                flow: flow, uebungen: FlowKameraModellTests.uebungen,
+                flow: flow, uebungen: uebungen,
                 quelle: { [unowned self] start in
                     gebautFuer.append(start)
                     return quelle
@@ -210,6 +211,31 @@ struct FlowKameraModellTests {
         #expect(a.modell.start == .ohneKamera)
         #expect(!a.quelle.laeuft)
     }
+
+    #if DEBUG
+    /// Mit Testprofilen kennt der erste Kamera-Schritt seinen Katalogschluessel; das Aufstellen
+    /// baut die Quelle schon damit, und der erste Kamera-Schritt nutzt dieselbe Quelle weiter.
+    @Test func aufstellenGibtDerQuelleDenKatalogschluesselDesErstenKameraSchritts() async {
+        let bootstrap: BootstrapResponse = GeraetTestdaten.dekodiere("""
+        {"member":{"displayName":null,"goals":{"weeklyDays":null,"targetWeight":null}},
+         "studios":[{"id":"s1","name":"Keller-Gym","timezone":"Europe/Berlin"}],
+         "machines":[],"calibrations":[],"lastSets":[],
+         "catalog":{"studioId":"s1","equipmentTypes":[
+           {"id":"em2","name":"Eigengewicht","manufacturer":null,"photoPath":null,"category":"kraft","loadUnit":"kg",
+            "loadStep":1,"loadMin":0,"loadMax":null,"settingDefinitions":[],
+            "exercises":[\(Self.uebung(id: "lunge", name: "Ausfallschritt – rückwärts"))]}]}}
+        """)
+        let flow = Flow(id: "f3", studioId: "s1", key: "k3", titel: "Lunge", beschreibung: nil, level: nil,
+                        schritte: [Self.schritt(1, "lunge", name: "Ausfallschritt rückwärts")], dauerS: 60)
+        let a = Aufbau(flow: flow, uebungen: FlowUebungen(bootstrap: bootstrap, testprofile: true))
+        await a.modell.aufstellenBeginnen()
+        #expect(a.gebautFuer.count == 1)
+        #expect(a.gebautFuer.first?.katalogKey == "bw_reverse_lunge")
+        a.steht(sekunden: 1.1)
+        await a.folge(.pause(naechster: 0, restS: 5))
+        #expect(a.gebautFuer.count == 1)
+    }
+    #endif
 
     @Test func quelleWirftBeimAufstellenIstKameraFehlt() async {
         let a = Aufbau()

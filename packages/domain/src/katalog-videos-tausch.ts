@@ -14,8 +14,10 @@ export type Plan =
   | { ok: true; eintraege: Map<string, VideoEintrag>; neu: string[]; ersetzt: string[] }
   | { ok: false; fehler: string[] };
 
-/** Rechnet aus Katalog und Dateien die neuen video-Eintraege. Sammelt alle Fehler. */
-/** `auchZeit`: auch Uebungen mit Zeitvorgabe bekommen das Video (HIIT-Flow). */
+/**
+ * Rechnet aus Katalog und Dateien die neuen video-Eintraege. Sammelt alle Fehler.
+ * `auchZeit`: auch Uebungen mit Zeitvorgabe bekommen das Video (HIIT-Flow).
+ */
 export function plane(exercises: KatalogUebung[], dateien: Datei[], optionen: { auchZeit?: boolean } = {}): Plan {
   const fehler: string[] = [];
   const eintraege = new Map<string, VideoEintrag>();

@@ -46,6 +46,15 @@ struct FlowUebungen {
         #endif
     }
 
+    /// Der Aufloeser fuer die Ansicht: ein vorhandener bleibt; ein neuer wird nur
+    /// gemerkt (`merken`), wenn der Bootstrap schon da ist. Sonst blieben alle
+    /// Schritte am Ring, bis die Ansicht neu geoeffnet wird.
+    static func bereit(vorhanden: FlowUebungen?, bootstrap: BootstrapResponse?,
+                       testprofile: Bool) -> (uebungen: FlowUebungen, merken: Bool) {
+        if let vorhanden { return (vorhanden, false) }
+        return (FlowUebungen(bootstrap: bootstrap, testprofile: testprofile), bootstrap != nil)
+    }
+
     func uebung(_ schritt: FlowSchritt) -> BootstrapResponse.Exercise? {
         schritt.exerciseId.flatMap { jeId[$0] }
     }
