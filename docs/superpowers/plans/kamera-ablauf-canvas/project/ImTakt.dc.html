@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Satz läuft: im Takt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #1D2026; color: #F2F4F7; font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif">
+<svg width="390" height="844" viewBox="0 0 390 844" style="position: absolute; left: 0; top: 0" role="img" aria-label="Live-Kamerabild: Person in der Kniebeuge, Skelett erkannt">
+<g transform="translate(19.5,-70) scale(0.9)">
+<g fill="none" stroke="#2A2E36" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+<path d="M195,298 L195,330 M150,330 L240,330 L222,474 L168,474 Z M150,330 L126,394 L140,338 M240,330 L264,394 L250,338 M168,474 L146,566 L160,668 M222,474 L244,566 L230,668"/>
+</g>
+<circle cx="195" cy="270" r="30" fill="#2A2E36"/>
+<g fill="none" stroke="#D4FF3F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M195,298 L195,330 M150,330 L240,330 L222,474 L168,474 Z M150,330 L126,394 L140,338 M240,330 L264,394 L250,338 M168,474 L146,566 L160,668 M222,474 L244,566 L230,668"/>
+</g>
+<g fill="#D4FF3F">
+<circle cx="150" cy="330" r="6"/><circle cx="240" cy="330" r="6"/><circle cx="126" cy="394" r="6"/><circle cx="264" cy="394" r="6"/><circle cx="168" cy="474" r="6"/><circle cx="222" cy="474" r="6"/><circle cx="146" cy="566" r="6"/><circle cx="244" cy="566" r="6"/><circle cx="160" cy="668" r="6"/><circle cx="230" cy="668" r="6"/>
+</g>
+</g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; top: 0; box-sizing: border-box; padding: 56px 16px 12px; background: rgba(10,11,13,0.82); display: flex; justify-content: space-between; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #9BA3AF">SATZ 2 VON 3</div>
+<div style="font-size: 19px; font-weight: 800">KNIEBEUGE</div>
+</div>
+<button aria-label="Übungsvideo noch einmal ansehen" style="width: 56px; height: 56px; border: 1px solid #2A2E36; border-radius: 12px; background: #14161A; color: #F2F4F7; display: flex; align-items: center; justify-content: center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M8 5 L19 12 L8 19 Z"/></svg>
+</button>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 540px; height: 160px; box-sizing: border-box; padding-top: 12px; background: rgba(10,11,13,0.78); display: flex; flex-direction: column; gap: 6px">
+<div style="padding: 0 16px; display: flex; justify-content: space-between; align-items: center">
+<div style="font-size: 19px; font-weight: 900; letter-spacing: 0.02em">SENKEN</div>
+<div style="height: 28px; padding: 0 12px; border-radius: 999px; background: #D4FF3F; color: #0A0B0D; font-size: 13px; font-weight: 800; display: flex; align-items: center">Im Takt</div>
+</div>
+<svg width="390" height="110" viewBox="0 0 390 140" role="img" aria-label="Tempo-Welle: dein Punkt liegt auf der Soll-Linie">
+<path d="M0,30 C28,30 42,110 70,110 L85,110 C103,110 112,30 130,30 C158,30 172,110 200,110 L215,110 C233,110 242,30 260,30 C288,30 302,110 330,110 L345,110 C363,110 372,30 390,30" fill="none" stroke="#F2F4F7" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round"/>
+<path d="M165,6 L165,134" stroke="#9BA3AF" stroke-width="1.5" stroke-dasharray="4 5"/>
+<path d="M0,31 C28,31 43,108 70,111 L85,111 C103,111 112,33 130,31 C144,31 152,48 165,70" fill="none" stroke="#D4FF3F" stroke-width="5" stroke-linecap="round"/>
+<circle cx="165" cy="70" r="11" fill="#D4FF3F" stroke="#0A0B0D" stroke-width="3"/>
+</svg>
+</div>
+<div style="position: absolute; left: 0; right: 0; top: 700px; bottom: 0; box-sizing: border-box; padding: 16px 16px 32px; background: #0A0B0D; display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; align-items: baseline; gap: 8px">
+<div style="font-size: 64px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums">5</div>
+<div style="font-size: 19px; font-weight: 800; color: #9BA3AF">von 8 Wdh.</div>
+</div>
+<button style="height: 48px; padding: 0 20px; border: 1px solid #F2F4F7; border-radius: 14px; background: transparent; color: #F2F4F7; font: inherit; font-size: 16px; font-weight: 700">Satz beenden</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

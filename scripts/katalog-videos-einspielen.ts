@@ -5,17 +5,18 @@ import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { plane, setzeVideos } from "@fitretro/domain/katalog-videos-tausch";
 
-const HILFE = `Aufruf: pnpm catalog:videos <ordner> [--ja]
+const HILFE = `Aufruf: pnpm catalog:videos <ordner> [--ja] [--auch-zeit]
 
 Spielt die abgenommenen Loops (<schluessel>.mp4) in den Katalog ein:
 kopiert sie nach catalog/media/videos/ und setzt video.file und
 video.duration_s in catalog/gymtavo.json. Sonst bleibt die Datei
-zeichengleich. Ohne --ja nur Bericht, es wird nichts geschrieben.`;
+zeichengleich. Ohne --ja nur Bericht, es wird nichts geschrieben.
+Uebungen mit Zeitvorgabe behalten ihr Video, ausser mit --auch-zeit.`;
 
 const KATALOG = "catalog/gymtavo.json";
 const ZIEL = "catalog/media/videos";
 
-const { values, positionals } = parseArgs({ allowPositionals: true, options: { ja: { type: "boolean", default: false }, help: { type: "boolean", default: false } } });
+const { values, positionals } = parseArgs({ allowPositionals: true, options: { ja: { type: "boolean", default: false }, "auch-zeit": { type: "boolean", default: false }, help: { type: "boolean", default: false } } });
 if (values.help || positionals.length !== 1) {
   console.log(HILFE);
   process.exit(values.help ? 0 : 1);
@@ -41,7 +42,7 @@ const formatFehlerListe = namen.flatMap((n) => {
   const f = formatFehler(join(ordner, n));
   return f ? [`${n}: ${f}`] : [];
 });
-const plan = plane(katalog.exercises, dateien);
+const plan = plane(katalog.exercises, dateien, { auchZeit: values["auch-zeit"] });
 if (!plan.ok || formatFehlerListe.length > 0) {
   console.error(["Abbruch, nichts geschrieben:", ...(plan.ok ? [] : plan.fehler), ...formatFehlerListe].join("\n  "));
   process.exit(1);

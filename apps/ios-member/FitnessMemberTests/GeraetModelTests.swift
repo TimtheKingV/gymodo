@@ -7,7 +7,7 @@ import Testing
 /// Spec Abschnitt 10 manuell gegen die Artboards abgenommen.
 @MainActor
 struct GeraetModelTests {
-    private func modell(
+    func modell(
         maschine: BootstrapResponse.Machine,
         bootstrap: BootstrapResponse,
         sessions: WorkoutSessionStore? = nil,
@@ -2543,7 +2543,7 @@ final class MitschnittSpion: SatzMitschnitt {
 /// still geloeschter enqueue-Aufruf in einem Test auffaellt statt
 /// unbemerkt durchzugehen.
 @MainActor
-private final class Erfassungswarteschlange {
+final class Erfassungswarteschlange {
     var geschriebene: [PendingSetWrite] = []
 }
 

@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// Der Weg zurueck in den Kamera-Ablauf, solange eine Pause laeuft.
+struct PausenKameraKnopf {
+    let titel: String
+    let aktion: () -> Void
+}
+
 /// Der eine Pausen-Screen fuer freies Training, Plan und Mini-Zirkel
 /// (UX-Paket 2, Abschnitt 2.1; Boards "Pause · Plan", "Pause · Zirkel").
 /// Ersetzt das fruehere Pausen-Rad am Geraet und den Koerper der Zirkel-Pause.
@@ -35,6 +41,8 @@ struct PausenScreen: View {
     let beiZirkelBeginnen: () -> Void
     let beiErweitern: () -> Void
     let beiZirkelBeenden: () -> Void
+    /// Nur am Geraet, wenn der Satz mit Kamera gezaehlt wird oder werden kann.
+    let kameraKnopf: PausenKameraKnopf?
 
     /// "Alle anzeigen" klappt die Liste aus; nur Ansicht (E6).
     @State private var ausgeklappt = false
@@ -53,7 +61,8 @@ struct PausenScreen: View {
          beiUeberspringen: @escaping () -> Void = {},
          beiZirkelBeginnen: @escaping () -> Void = {},
          beiErweitern: @escaping () -> Void = {},
-         beiZirkelBeenden: @escaping () -> Void = {}) {
+         beiZirkelBeenden: @escaping () -> Void = {},
+         kameraKnopf: PausenKameraKnopf? = nil) {
         self.ort = ort
         self.ueberschrift = ueberschrift
         self.ablaufzeile = ablaufzeile
@@ -70,6 +79,7 @@ struct PausenScreen: View {
         self.beiZirkelBeginnen = beiZirkelBeginnen
         self.beiErweitern = beiErweitern
         self.beiZirkelBeenden = beiZirkelBeenden
+        self.kameraKnopf = kameraKnopf
         _ansage = State(initialValue: timer.gesprochen())
     }
 
@@ -188,6 +198,10 @@ struct PausenScreen: View {
                 .testnotizElement(imZirkel ? "zirkel.pause.starten" : "geraet.naechster-satz",
                                   typ: "PrimaryButton")
             nebenknoepfe
+            if let kameraKnopf {
+                SecondaryButton(title: kameraKnopf.titel, action: kameraKnopf.aktion)
+                    .testnotizElement("geraet.pause-kamera", typ: "SecondaryButton")
+            }
             textknoepfe
         }
     }

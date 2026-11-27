@@ -136,6 +136,43 @@ describe("flows RLS", () => {
   });
 });
 
+describe("Flow-Schritt verweist auf Uebung (0080)", () => {
+  async function neueUebung(): Promise<string> {
+    const { data, error } = await serviceClient()
+      .from("exercises")
+      .insert({ studio_id: studioA, name: `Verweis ${crypto.randomUUID().slice(0, 8)}`, target_min: 8, target_max: 12 })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data!.id;
+  }
+
+  it("(m) Schritt mit exercise_id einer Katalog-Uebung ist einfuegbar", async () => {
+    const uebung = await neueUebung();
+    const { data, error } = await serviceClient()
+      .from("flow_steps")
+      .insert({ flow_id: flowA, position: 7, name: "Mit Verweis", work_s: 30, rest_s: 10, exercise_id: uebung })
+      .select("exercise_id")
+      .single();
+    expect(error).toBeNull();
+    expect(data!.exercise_id).toBe(uebung);
+  });
+
+  it("(n) Loeschen der Uebung setzt exercise_id auf null, der Schritt bleibt", async () => {
+    const admin = serviceClient();
+    const uebung = await neueUebung();
+    const { error } = await admin
+      .from("flow_steps")
+      .insert({ flow_id: flowA, position: 8, name: "Verweis geht verloren", work_s: 30, rest_s: 10, exercise_id: uebung });
+    expect(error).toBeNull();
+    const del = await admin.from("exercises").delete().eq("id", uebung);
+    expect(del.error).toBeNull();
+    const { data } = await admin.from("flow_steps").select("exercise_id").eq("flow_id", flowA).eq("position", 8);
+    expect(data).toHaveLength(1);
+    expect(data![0]!.exercise_id).toBeNull();
+  });
+});
+
 // Festes Katalog-Studio aus Migration 0047: jeder Angemeldete liest es, Mitglieder hat es nie.
 const KATALOG_STUDIO = "00000000-0000-4000-8000-000000000001";
 

@@ -30,6 +30,15 @@ struct FlowDTOTests {
         #expect(flow.schritte[1].beschreibung == nil)
     }
 
+    @Test func exerciseIdFehltAlsNilUndWirdUebernommen() throws {
+        let flow = try JSONDecoder().decode(Antwort.self, from: Data(json.utf8)).flows[0]
+        #expect(flow.schritte.allSatisfy { $0.exerciseId == nil })
+        let mit = json.replacingOccurrences(of: #""name":"Plank","#, with: #""name":"Plank","exerciseId":"ex9","#)
+        let flowMit = try JSONDecoder().decode(Antwort.self, from: Data(mit.utf8)).flows[0]
+        #expect(flowMit.schritte[0].exerciseId == nil)
+        #expect(flowMit.schritte[1].exerciseId == "ex9")
+    }
+
     @Test func runEingabeKodiertMitDenFeldnamenDerApi() throws {
         let run = FlowRunEingabe(id: "r1", flowId: "f1", startedAt: "2026-11-26T10:00:00Z",
                                  endedAt: "2026-11-26T10:20:00Z", lastStep: 20, outcome: "finished")

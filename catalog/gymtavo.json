@@ -2482,7 +2482,21 @@
         "bw_y_raise_prone",
         "bw_reverse_fly_prone",
         "bw_scapula_pushup",
-        "bw_tibialis_raise"
+        "bw_tibialis_raise",
+        "bw_high_kicks",
+        "bw_burpee_slow",
+        "bw_jumping_jack",
+        "bw_scissor_kicks",
+        "bw_squat_pulse",
+        "bw_lunge_kick",
+        "bw_leg_drop_pull",
+        "bw_broad_jump_touch",
+        "bw_squat_floor_touch",
+        "bw_flutter_kicks",
+        "bw_skater_jump",
+        "bw_crunch_hold",
+        "bw_burpee_jump",
+        "bw_squat_jump"
       ]
     },
     {
@@ -9527,7 +9541,10 @@
       "volume_kind": "seconds",
       "target_min": 30,
       "target_max": 60,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_plank.mp4",
+        "duration_s": 4
+      },
       "grip": "none",
       "muscles": [
         {
@@ -9783,7 +9800,10 @@
       "volume_kind": "seconds",
       "target_min": 20,
       "target_max": 40,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_mountain_climber.mp4",
+        "duration_s": 7
+      },
       "grip": "none",
       "muscles": [
         {
@@ -10273,7 +10293,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_russian_twist.mp4",
+        "duration_s": 8
+      },
       "grip": "none",
       "muscles": [
         {
@@ -10375,7 +10398,10 @@
       "volume_kind": "reps",
       "target_min": 8,
       "target_max": 12,
-      "video": null,
+      "video": {
+        "file": "media/videos/bw_v_up.mp4",
+        "duration_s": 3
+      },
       "grip": "none",
       "muscles": [
         {
@@ -11192,6 +11218,460 @@
         "bereiche": [],
         "vorschlag": false
       },
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_high_kicks",
+      "name": "High Kicks",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße hüftbreit.\n- Arme locker vor den Körper halten.\n\nBewegung:\n- Abwechselnd ein gestrecktes Bein nach vorn hochschwingen.\n- Zügig das Bein wechseln, im Rhythmus bleiben.\n\nAchte auf:\n- Der Oberkörper bleibt aufrecht, das Becken locker.\n- Das Standbein bleibt leicht gebeugt.",
+      "volume_kind": "seconds",
+      "target_min": 30,
+      "target_max": 45,
+      "video": {
+        "file": "media/videos/bw_high_kicks.mp4",
+        "duration_s": 6
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "hip_flexors",
+          "role": "primary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_burpee_slow",
+      "name": "Burpee",
+      "description": "Einstellen:\n- Hüftbreit stehen, Arme locker hängen lassen.\n\nBewegung:\n- In die Hocke gehen und die Hände aufsetzen.\n- Die Füße nach hinten in den Liegestütz stellen.\n- Die Füße wieder heranholen und aufrichten, ohne Sprung.\n\nAchte auf:\n- Jede Phase läuft kontrolliert, ohne Schwung und ohne Sprung.\n- Im Liegestütz bleibt der Rücken gerade.",
+      "volume_kind": "reps",
+      "target_min": 6,
+      "target_max": 10,
+      "video": {
+        "file": "media/videos/bw_burpee_slow.mp4",
+        "duration_s": 7
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "pectorals",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_jumping_jack",
+      "name": "Jumping Jack",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße zusammen, Arme am Körper.\n\nBewegung:\n- Mit einem kleinen Sprung die Beine öffnen und gleichzeitig die Arme seitlich nach oben führen.\n- Mit dem nächsten Sprung beides wieder schließen.\n\nAchte auf:\n- Weich auf den Fußballen landen.\n- Der Bauch bleibt leicht angespannt.",
+      "volume_kind": "reps",
+      "target_min": 20,
+      "target_max": 40,
+      "video": {
+        "file": "media/videos/bw_jumping_jack.mp4",
+        "duration_s": 3
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "calves",
+          "role": "primary"
+        },
+        {
+          "muscle": "deltoid_lateral",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_scissor_kicks",
+      "name": "Mini Scissor Kicks",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Hände unter das Gesäß schieben, Beine gestreckt knapp über den Boden heben.\n\nBewegung:\n- Die Beine mit kleinen Bewegungen flach über Kreuz führen.\n- Im Wechsel das andere Bein oben kreuzen.\n\nAchte auf:\n- Der untere Rücken drückt in den Boden.\n- Die Beine nur so tief halten, wie der Rücken liegen bleibt.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 40,
+      "video": {
+        "file": "media/videos/bw_scissor_kicks.mp4",
+        "duration_s": 3
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_squat_pulse",
+      "name": "Squat-Pulse",
+      "description": "Einstellen:\n- Etwas mehr als hüftbreit stehen, Fußspitzen leicht nach außen.\n- Hände vor der Brust falten.\n\nBewegung:\n- In die tiefe Kniebeuge gehen und dort bleiben.\n- Mit kleinen Bewegungen auf und ab federn, ohne ganz aufzustehen.\n\nAchte auf:\n- Die Knie zeigen in Richtung der Fußspitzen.\n- Der Rücken bleibt lang, das Gewicht auf den Fersen.",
+      "volume_kind": "reps",
+      "target_min": 15,
+      "target_max": 30,
+      "video": {
+        "file": "media/videos/bw_squat_pulse.mp4",
+        "duration_s": 3
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "adductors",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_lunge_kick",
+      "name": "Ausfallschritt mit Kick",
+      "description": "Einstellen:\n- Aufrecht stehen, Füße hüftbreit.\n- Hände vor der Brust oder an der Hüfte.\n\nBewegung:\n- Mit einem Bein einen Schritt nach hinten machen und in den Ausfallschritt gehen.\n- Beim Aufstehen das hintere Bein gestreckt nach vorn kicken und danach die Seite wechseln.\n\nAchte auf:\n- Das vordere Knie bleibt über dem Fuß.\n- Der Oberkörper bleibt aufrecht, das Standbein stabil.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": {
+        "file": "media/videos/bw_lunge_kick.mp4",
+        "duration_s": 8
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_leg_drop_pull",
+      "name": "Leg Drop & Pull",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Beine gestreckt senkrecht nach oben, Hände neben dem Körper.\n\nBewegung:\n- Die gestreckten Beine kontrolliert Richtung Boden absenken.\n- Mit der Kraft aus dem Bauch die Knie zur Brust heranziehen und die Beine wieder nach oben strecken.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Die Beine nur so tief senken, wie der Rücken liegen bleibt.",
+      "volume_kind": "reps",
+      "target_min": 8,
+      "target_max": 12,
+      "video": {
+        "file": "media/videos/bw_leg_drop_pull.mp4",
+        "duration_s": 8
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "primary"
+        },
+        {
+          "muscle": "deep_core",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_broad_jump_touch",
+      "name": "Weitsprung mit Bodenberührung",
+      "description": "Einstellen:\n- Hüftbreit stehen, Knie leicht gebeugt.\n\nBewegung:\n- Mit beiden Beinen kräftig nach vorn abspringen.\n- Weich landen, in die Hocke gehen und mit den Händen den Boden berühren.\n- Aufrichten und für den nächsten Sprung zurückgehen oder zurückspringen.\n\nAchte auf:\n- Beim Landen bleiben die Knie weich und zeigen nach vorn.\n- Der Rücken bleibt lang.",
+      "volume_kind": "reps",
+      "target_min": 6,
+      "target_max": 10,
+      "video": {
+        "file": "media/videos/bw_broad_jump_touch.mp4",
+        "duration_s": 8
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_squat_floor_touch",
+      "name": "Kniebeuge mit Bodenberührung",
+      "description": "Einstellen:\n- Etwas mehr als hüftbreit stehen, Fußspitzen leicht nach außen.\n\nBewegung:\n- Hüfte nach hinten schieben und tief in die Kniebeuge gehen.\n- Mit den Händen den Boden berühren, dann kräftig aufrichten.\n\nAchte auf:\n- Die Fersen bleiben am Boden, die Knie zeigen in Richtung der Fußspitzen.\n- Der Rücken bleibt lang, die Arme geben keinen Schwung vor.",
+      "volume_kind": "reps",
+      "target_min": 10,
+      "target_max": 15,
+      "video": {
+        "file": "media/videos/bw_squat_floor_touch.mp4",
+        "duration_s": 4
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        },
+        {
+          "muscle": "erectors",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_flutter_kicks",
+      "name": "Flutter Kicks",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen.\n- Hände unter das Gesäß schieben, Beine gestreckt knapp über den Boden heben.\n\nBewegung:\n- Die gestreckten Beine schnell und klein im Wechsel auf und ab bewegen.\n- Dabei ruhig weiteratmen.\n\nAchte auf:\n- Der untere Rücken drückt in den Boden.\n- Die Beine bleiben gestreckt, der Nacken entspannt.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 40,
+      "video": {
+        "file": "media/videos/bw_flutter_kicks.mp4",
+        "duration_s": 2
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "hip_flexors",
+          "role": "primary"
+        },
+        {
+          "muscle": "quads",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_skater_jump",
+      "name": "Skater Jump",
+      "description": "Einstellen:\n- Auf einem Bein stehen, das andere Bein leicht nach hinten abgehoben.\n\nBewegung:\n- Seitlich von Bein zu Bein springen, so als würdest du über Eis gleiten.\n- Mit dem anderen Bein weich landen und kurz das Gleichgewicht halten.\n\nAchte auf:\n- Das Knie des Standbeins bleibt weich und über dem Fuß.\n- Der Oberkörper neigt sich leicht nach vorn, die Arme pendeln mit.",
+      "volume_kind": "reps",
+      "target_min": 10,
+      "target_max": 20,
+      "video": {
+        "file": "media/videos/bw_skater_jump.mp4",
+        "duration_s": 4
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "abductors",
+          "role": "secondary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_crunch_hold",
+      "name": "Crunch-Halten",
+      "description": "Einstellen:\n- Auf einer Matte auf den Rücken legen, Knie beugen, Füße aufstellen.\n- Hände locker an die Schläfen legen.\n\nBewegung:\n- Kopf und Schulterblätter einrollen und vom Boden lösen.\n- In dieser oberen Position die Spannung halten und ruhig weiteratmen.\n\nAchte auf:\n- Der untere Rücken bleibt am Boden.\n- Das Kinn bleibt frei, die Hände ziehen nicht am Kopf.",
+      "volume_kind": "seconds",
+      "target_min": 20,
+      "target_max": 40,
+      "video": {
+        "file": "media/videos/bw_crunch_hold.mp4",
+        "duration_s": 4
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "abs",
+          "role": "primary"
+        },
+        {
+          "muscle": "obliques",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_burpee_jump",
+      "name": "Burpee mit Strecksprung",
+      "description": "Einstellen:\n- Hüftbreit stehen, Arme locker hängen lassen.\n\nBewegung:\n- In die Hocke gehen, die Füße nach hinten in den Liegestütz stellen und zurückholen.\n- Aus der Hocke kräftig nach oben springen und die Arme nach oben strecken.\n\nAchte auf:\n- Im Liegestütz bleibt der Rücken gerade.\n- Weich landen und die Knie beugen.",
+      "volume_kind": "reps",
+      "target_min": 6,
+      "target_max": 10,
+      "video": {
+        "file": "media/videos/bw_burpee_jump.mp4",
+        "duration_s": 8
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        },
+        {
+          "muscle": "pectorals",
+          "role": "secondary"
+        },
+        {
+          "muscle": "triceps",
+          "role": "secondary"
+        },
+        {
+          "muscle": "abs",
+          "role": "secondary"
+        }
+      ],
+      "review": "draft",
+      "sources": []
+    },
+    {
+      "key": "bw_squat_jump",
+      "name": "Strecksprung",
+      "description": "Einstellen:\n- Hüftbreit stehen, Fußspitzen leicht nach außen.\n\nBewegung:\n- Tief in die Kniebeuge gehen.\n- Aus der Kniebeuge explosiv senkrecht nach oben springen, weich landen und direkt wieder in die Kniebeuge gehen.\n\nAchte auf:\n- Du springst auf der Stelle, nicht nach vorn.\n- Bei der Landung federn die Knie nach, sie zeigen in Richtung der Fußspitzen.",
+      "volume_kind": "reps",
+      "target_min": 10,
+      "target_max": 15,
+      "video": {
+        "file": "media/videos/bw_squat_jump.mp4",
+        "duration_s": 3
+      },
+      "grip": "none",
+      "muscles": [
+        {
+          "muscle": "quads",
+          "role": "primary"
+        },
+        {
+          "muscle": "glutes",
+          "role": "primary"
+        },
+        {
+          "muscle": "calves",
+          "role": "secondary"
+        },
+        {
+          "muscle": "hamstrings",
+          "role": "secondary"
+        }
+      ],
       "review": "draft",
       "sources": []
     },

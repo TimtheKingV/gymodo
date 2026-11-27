@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { flowDauerS } from "@fitretro/domain";
 import { describe, expect, it } from "vitest";
@@ -53,6 +53,51 @@ describe("flowZuSql", () => {
   });
 });
 
+describe("flowZuSql mit uebung", () => {
+  const KATALOG = "00000000-0000-4000-8000-000000000001";
+
+  function mitUebung(): FlowEntwurf {
+    const e = entwurf();
+    e.schritte[1]!.uebung = "bw_pushup";
+    return e;
+  }
+
+  it("ohne uebung entsteht kein exercise_id und keine Sicherung", () => {
+    const sql = flowZuSql(entwurf(), STUDIO);
+    expect(sql).not.toContain("exercise_id");
+    expect(sql).not.toContain("raise exception");
+  });
+
+  it("loest den Schluessel im Katalogstudio auf, unabhaengig vom Ziel-Studio", () => {
+    const sql = flowZuSql(mitUebung(), STUDIO);
+    expect(sql).toContain("exercise_id");
+    expect(sql).toContain(
+      `(select id from public.exercises where studio_id = '${KATALOG}' and catalog_key = 'bw_pushup')`,
+    );
+    const inserts = sql.split("insert into public.flow_steps").slice(1);
+    expect(inserts[0]).not.toContain("exercise_id");
+    expect(inserts[1]).toContain("exercise_id");
+  });
+
+  it("bricht die Transaktion ab, wenn nicht jeder Schluessel aufgeloest wurde", () => {
+    const sql = flowZuSql(mitUebung(), STUDIO);
+    expect(sql).toContain("raise exception");
+    expect(sql).toMatch(/<> 1 then/);
+    expect(sql.indexOf("raise exception")).toBeLessThan(sql.lastIndexOf("commit;"));
+    expect(sql.indexOf("raise exception")).toBeGreaterThan(sql.lastIndexOf("insert into public.flow_steps"));
+  });
+
+  it("wirft bei Schluesseln, die der Katalog nicht kennt", () => {
+    const e = entwurf();
+    e.schritte[1]!.uebung = "bw_gibtsnicht";
+    expect(() => flowZuSql(e, STUDIO, new Set(["bw_pushup"]))).toThrow("Unbekannte Katalogschluessel: 2 (bw_gibtsnicht).");
+  });
+
+  it("akzeptiert Schluessel, die der Katalog kennt", () => {
+    expect(() => flowZuSql(mitUebung(), STUDIO, new Set(["bw_pushup"]))).not.toThrow();
+  });
+});
+
 describe("flows/hiit-20-min.json", () => {
   const roh: unknown = JSON.parse(readFileSync(join(__dirname, "flows", "hiit-20-min.json"), "utf8"));
 
@@ -68,7 +113,52 @@ describe("flows/hiit-20-min.json", () => {
     expect(e.schritte.some((s) => s.unsicher)).toBe(false);
     const sql = flowZuSql(e, STUDIO);
     expect(sql).toContain("Squat-Pulse");
-    expect(sql).toContain("Weitsprung mit Bodenberührung");
+    expect(sql).toContain("Strecksprung");
+    expect(sql).not.toContain("Weitsprung mit Bodenberührung");
     expect((sql.match(/insert into public\.flow_steps/g) ?? []).length).toBeGreaterThanOrEqual(1);
+  });
+
+  // Flow vereinfacht (27.11.2026): eine Bewegung je Schritt, fuenf Schritte getauscht.
+  it("fuehrt in den Schritten 4, 9, 11, 13 und 14 die einfachen Uebungen", () => {
+    const e = pruefeFlowEntwurf(roh);
+    const tausch = [4, 9, 11, 13, 14].map((n) => [n, e.schritte[n - 1]!.uebung, e.schritte[n - 1]!.name]);
+    expect(tausch).toEqual([
+      [4, "bw_v_up", "Klappmesser"],
+      [9, "bw_back_extension_floor", "Rückenstrecken"],
+      [11, "bw_reverse_lunge", "Ausfallschritt rückwärts"],
+      [13, "bw_leg_raise_lying", "Beinheben"],
+      [14, "bw_squat_jump", "Strecksprung"],
+    ]);
+    expect(e.schritte.every((s) => s.workS === 40)).toBe(true);
+    expect(e.schritte.map((s) => s.restS)).toEqual([...Array(19).fill(20), 0]);
+  });
+
+  it("nennt nur Schluessel, die der Katalog kennt", () => {
+    const katalog = JSON.parse(readFileSync(join(__dirname, "..", "..", "catalog", "gymtavo.json"), "utf8"));
+    const schluessel = new Set<string>(katalog.exercises.map((u: { key: string }) => u.key));
+    expect(() => flowZuSql(pruefeFlowEntwurf(roh), STUDIO, schluessel)).not.toThrow();
+  });
+
+  it("hat fuer jede Uebung eines Schritts ein Video im Katalog, dessen Datei existiert", () => {
+    const katalog = JSON.parse(readFileSync(join(__dirname, "..", "..", "catalog", "gymtavo.json"), "utf8"));
+    const jeKey = new Map<string, { video: { file: string } | null }>(
+      katalog.exercises.map((u: { key: string; video: { file: string } | null }) => [u.key, u]),
+    );
+    const ohne = pruefeFlowEntwurf(roh)
+      .schritte.map((s) => s.uebung!)
+      .filter((key) => {
+        const video = jeKey.get(key)?.video;
+        return !video || !existsSync(join(__dirname, "..", "..", "catalog", video.file));
+      });
+    expect(ohne).toEqual([]);
+  });
+
+  // Die Kamera-Schritte (data/koerperbild/flow-zuordnung.json) muessen im Flow vorkommen.
+  it("hat in der Flow-Zuordnung der Kamera nur Uebungen des Flows", () => {
+    const zuordnung = JSON.parse(
+      readFileSync(join(__dirname, "..", "..", "data", "koerperbild", "flow-zuordnung.json"), "utf8"),
+    );
+    const imFlow = new Set(pruefeFlowEntwurf(roh).schritte.map((s) => s.uebung));
+    expect(Object.keys(zuordnung).filter((key) => !imFlow.has(key))).toEqual([]);
   });
 });

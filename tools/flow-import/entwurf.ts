@@ -13,6 +13,8 @@ export type FlowSchritt = {
   restS: number;
   istWarmup: boolean;
   unsicher?: boolean;
+  /** Katalogschluessel (exercises.catalog_key) der Uebung, die der Schritt zeigt. */
+  uebung?: string;
 };
 
 export type FlowEntwurf = {
@@ -25,6 +27,7 @@ export type FlowEntwurf = {
 };
 
 const KEY_MUSTER = /^[a-z0-9-]+$/;
+const UEBUNG_MUSTER = /^[a-z0-9_]+$/;
 const LEVELS = ["einsteiger", "mittel", "fortgeschritten"];
 
 function istObjekt(v: unknown): v is Record<string, unknown> {
@@ -63,6 +66,9 @@ export function pruefeFlowEntwurf(e: unknown): FlowEntwurf {
     if (!text(s.name)) throw new Error(`${nr}: Name darf nicht leer sein.`);
     textOderNull(s.beschreibung, `${nr}: Beschreibung`);
     if (typeof s.istWarmup !== "boolean") throw new Error(`${nr}: istWarmup muss boolean sein.`);
+    if (s.uebung !== undefined && !(typeof s.uebung === "string" && UEBUNG_MUSTER.test(s.uebung))) {
+      throw new Error(`${nr}: uebung muss ein Katalogschluessel sein.`);
+    }
     if (!Number.isInteger(s.workS)) throw new Error(`${nr}: workS muss ganzzahlig sein.`);
     if (!Number.isInteger(s.restS)) throw new Error(`${nr}: restS muss ganzzahlig sein.`);
     if ((s.workS as number) <= 0) throw new Error(`${nr}: workS muss groesser als 0 sein.`);

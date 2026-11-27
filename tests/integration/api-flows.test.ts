@@ -98,6 +98,26 @@ describe("/me/flows", () => {
   });
 });
 
+describe("/me/flows exerciseId", () => {
+  it("liefert die Uebungs-ID beim verknuepften und null beim unverknuepften Schritt", async () => {
+    const admin = serviceClient();
+    const { data: uebung, error } = await admin
+      .from("exercises")
+      .insert({ studio_id: studioA, name: `API Verweis ${crypto.randomUUID().slice(0, 8)}`, target_min: 8, target_max: 12 })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { error: e2 } = await admin.from("flow_steps").update({ exercise_id: uebung!.id }).eq("flow_id", flowA).eq("position", 2);
+    if (e2) throw e2;
+    const { flows } = (await (await GET(get(tokenA))).json()) as {
+      flows: { id: string; schritte: { position: number; exerciseId: string | null }[] }[];
+    };
+    const schritte = flows.find((f) => f.id === flowA)!.schritte;
+    expect(schritte.find((s) => s.position === 2)!.exerciseId).toBe(uebung!.id);
+    expect(schritte.find((s) => s.position === 1)!.exerciseId).toBeNull();
+  });
+});
+
 describe("/me/flow-runs/{runId}", () => {
   it("PUT zweimal mit gleicher runId: beide 204, eine Zeile", async () => {
     const runId = crypto.randomUUID();

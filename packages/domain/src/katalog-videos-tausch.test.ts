@@ -56,6 +56,14 @@ describe("plane", () => {
     if (!plan.ok) expect(plan.fehler.join()).toContain("lauf");
   });
 
+  it("nimmt eine Zeituebung nur mit auchZeit", () => {
+    const u = [uebung("lauf", "seconds", null)];
+    const plan = plane(u, [datei("lauf", 3000)], { auchZeit: true });
+    if (!plan.ok) throw new Error(plan.fehler.join());
+    expect(plan.eintraege.get("lauf")).toEqual({ file: "media/videos/lauf.mp4", duration_s: 3 });
+    expect(plan.neu).toEqual(["lauf"]);
+  });
+
   it("bricht ab, wenn die Laenge nicht lesbar ist", () => {
     const plan = plane([uebung("a", "reps", null)], [{ key: "a", bytes: new Uint8Array([1, 2, 3]) }]);
     expect(plan.ok).toBe(false);

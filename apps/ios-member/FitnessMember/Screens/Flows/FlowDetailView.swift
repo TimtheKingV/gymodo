@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 
 /// Titel, Eckdaten und die Schrittliste eines Flows; "Starten" oeffnet den
@@ -6,7 +7,13 @@ struct FlowDetailView: View {
     let flow: Flow
     let store: FlowStore
 
+    @Environment(CatalogStore.self) private var katalog
+    @Environment(UebungsVideoVorrat.self) private var videos
     @State private var laeuft = false
+    /// Einmal gebaut (der Katalog wird dabei durchlaufen), nicht je Auswertung der View.
+    @State private var uebungen: FlowUebungen?
+    /// Videos der ersten Schritte, schon vor dem Start vorbereitet.
+    @State private var vorgeladen: [String: AVAsset] = [:]
 
     var body: some View {
         ScrollView {
@@ -42,13 +49,38 @@ struct FlowDetailView: View {
         .background(DesignSystem.Color.bg)
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            PrimaryButton(title: "Starten") { laeuft = true }
+            PrimaryButton(title: "Starten") { _ = bereit(); laeuft = true }
                 .padding(.horizontal, 20)
                 .padding(.vertical, DesignSystem.Spacing.s8)
                 .background(DesignSystem.Color.bg)
         }
         .fullScreenCover(isPresented: $laeuft) {
-            FlowLaufView(flow: flow, store: store)
+            FlowLaufView(flow: flow, store: store, uebungen: bereit(), videos: videos, vorgeladen: vorgeladen)
+        }
+        .task { await vorladen() }
+    }
+
+    private func bereit() -> FlowUebungen {
+        #if DEBUG
+        let testprofile = KameraTestprofile.aktiv
+        #else
+        let testprofile = false
+        #endif
+        let ergebnis = FlowUebungen.bereit(vorhanden: uebungen, bootstrap: katalog.bootstrap, testprofile: testprofile)
+        if ergebnis.merken { uebungen = ergebnis.uebungen }
+        return ergebnis.uebungen
+    }
+
+    /// Bereitet die Videos von Countdown und erstem Schritt vor, solange das
+    /// Mitglied noch die Liste ansieht; der Lauf zeigt sie dann von Anfang an.
+    private func vorladen() async {
+        let uebungen = bereit()
+        for i in FlowVideoPlan.benoetigteSchritte(phase: .countdown, anzahl: flow.schritte.count) {
+            let schritt = flow.schritte[i]
+            guard let id = schritt.exerciseId, vorgeladen[id] == nil,
+                  uebungen.ansicht(schritt, mitKamera: true) != .ring else { continue }
+            if Task.isCancelled { return }
+            if let asset = await FlowVideoStand.laden(exerciseId: id, videos: videos) { vorgeladen[id] = asset }
         }
     }
 

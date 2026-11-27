@@ -1,0 +1,108 @@
+# HIIT 20 Minuten: Kamera-Zählung gegen die Übungsvideos
+
+Stand 27.11.2026, nachgezogen nach „Flow vereinfacht“ (Abschnitt unten). Geprüft am Mac, ohne Simulator: Die Skelette der Übungsvideos laufen durch den `FlowZaehler` des Packages `Koerperbild`, so wie im Flow eine Arbeitsphase von 40 s. Test: `FlowZaehlerAbspielTests` (`apps/ios-member/Packages/Koerperbild`).
+
+## Ablauf der Prüfung
+
+- Skelette: `skelette-rechnen` (Apples Vision, `VNDetectHumanBodyPoseRequest`) über die Videos aus `catalog/media/videos`, abgelegt in `data/koerperbild/skelette/<key>.skelett.json`.
+- Zähler: `FlowZaehler`, Start bei t = 0 ohne Bilder davor, dann das Video in Schleife, bis 40 s erreicht sind (nur ganze Durchläufe). Profil, Signal und „beginnt mit“ wie in der Tabelle unten, Seite `beide`, Tempo 1 s senken / 0 s halten / 1 s heben.
+- Erwartet: Wiederholungen im Loop × Durchläufe. Bestanden, wenn die Abweichung höchstens 1 beträgt, ab 20 erwarteten Wiederholungen höchstens ein Zehntel (siehe „Toleranz“).
+- Wiederholungen im Loop: Jedes der geprüften Videos zeigt genau eine Wiederholung. Bestimmt unabhängig vom Zähler aus dem Verlauf des Signalwinkels (Umkehrpunkte, selbst aus den Skelettdateien gerechnet) und aus einem Kontaktbogen je Video (3 bis 4 Bilder je Sekunde), Bild für Bild angesehen.
+- Erkannt: Anteil der Bilder ab Start, in denen der Zähler die Person als erkannt führt (kein Hinweis „Kamera sieht dich gerade nicht“). Skelett: Anteil der Videobilder, in denen Vision überhaupt eine Person fand.
+
+## Ergebnis
+
+| Schritt | Übung | Schlüssel | Profil / Signal / beginnt mit | Video | Durchläufe | Erwartet | Gezählt | Erkannt | Skelett | Ergebnis |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 3 | Jumping Jack | `bw_jumping_jack` | oberkoerper / schulter / heben | 2,4 s | 17 | 17 | 17 | 100 % | 100 % | bestanden |
+| 15 | Kniebeuge mit Bodenberührung | `bw_squat_floor_touch` | ganzkoerper_stehend / knie / senken | 3,5 s | 12 | 12 | 12 | 100 % | 100 % | bestanden |
+| 7 | Squat-Pulse | `bw_squat_pulse` | ganzkoerper_stehend / knie / senken | 2,75 s | 15 | 15 | 15 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 12 | Liegestütz | `bw_pushup` | stuetz_boden / ellbogen / senken | 3,7 s | 11 | 11 | 11 | 100 % | 100 % | bestanden |
+| 9 | Rückenstrecken – liegend | `bw_back_extension_floor` | liegend / huefte / heben | 3,2 s | 13 | 13 | 13 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 11 | Ausfallschritt – rückwärts | `bw_reverse_lunge` | ganzkoerper_stehend / knie / senken | 2,9 s | 14 | 14 | 14 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 13 | Beinheben – liegend | `bw_leg_raise_lying` | liegend / huefte / heben | 3,1 s | 13 | 13 | 12 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 2, 6 | Burpee | `bw_burpee_slow` | ganzkoerper_stehend / huefte / senken | 6,9 s | 6 | 6 | 12 | 100 % | 100 % | durchgefallen |
+| 20 | Burpee mit Strecksprung | `bw_burpee_jump` | ganzkoerper_stehend / huefte / senken | 7,7 s | 6 | 6 | 13 | 100 % | 100 % | durchgefallen |
+| 14 | Strecksprung | `bw_squat_jump` | ganzkoerper_stehend / knie / senken | 2,3 s | 18 | 18 | 17 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 4 | Klappmesser | `bw_v_up` | liegend / huefte / heben (Prüfwert, siehe unten) | 2,8 s | 15 | 15 | 0 | 7,3 % | 61,2 % | durchgefallen |
+
+Nicht mehr im Flow (seit 27.11.2026, Stand ihrer letzten Prüfung; nicht mehr in `flow-zuordnung.json` und nicht mehr in `FlowZaehlerAbspielTests`):
+
+| bisher Schritt | Übung | Schlüssel | Profil / Signal / beginnt mit | Video | Durchläufe | Erwartet | Gezählt | Erkannt | Skelett | Ergebnis damals |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 11 | Ausfallschritt mit Kick | `bw_lunge_kick` | ganzkoerper_stehend / knie / senken | 7,1 s | 6 | 6 | 6 | 100 % | 100 % | bestanden (Vorbehalt) |
+| 13 | Leg Drop & Pull | `bw_leg_drop_pull` | liegend / huefte / senken | 8,0 s | 5 | 5 | 0 | 7,6 % | 36,5 % | durchgefallen |
+
+Acht Übungen (Schritte 3, 7, 9, 11, 12, 13, 14, 15) stehen in `data/koerperbild/flow-zuordnung.json` und bekommen im Debug-Build ein Kamera-Testprofil. Die Schritte 2, 4, 6 und 20 laufen auf der Uhr, weil die Kamera falsch oder nichts zählt.
+
+## Welcher der 20 Schritte zählt mit Kamera
+
+| # | Schritt im Flow | Schlüssel | Arbeitsphase | Grund |
+|---|---|---|---|---|
+| 1 | High Kicks | `bw_high_kicks` | Uhr | abwechselnd, kein Kamera-Schritt |
+| 2 | Burpee | `bw_burpee_slow` | Uhr | durchgefallen (doppelt gezählt) |
+| 3 | Jumping Jacks | `bw_jumping_jack` | Kamera | bestanden |
+| 4 | Klappmesser | `bw_v_up` | Uhr | durchgefallen (Hüfte nicht zu sehen) |
+| 5 | Mini Scissor Kicks | `bw_scissor_kicks` | Uhr | Flattern, kein Kamera-Schritt |
+| 6 | Burpee | `bw_burpee_slow` | Uhr | durchgefallen (doppelt gezählt) |
+| 7 | Squat-Pulse | `bw_squat_pulse` | Kamera | bestanden (Vorbehalt) |
+| 8 | Plank | `bw_plank` | Uhr | Halten |
+| 9 | Rückenstrecken | `bw_back_extension_floor` | Kamera | bestanden (Vorbehalt) |
+| 10 | Russian Twist | `bw_russian_twist` | Uhr | Drehung, kein Gelenkwinkel |
+| 11 | Ausfallschritt rückwärts | `bw_reverse_lunge` | Kamera | bestanden (Vorbehalt) |
+| 12 | Liegestütze | `bw_pushup` | Kamera | bestanden |
+| 13 | Beinheben | `bw_leg_raise_lying` | Kamera | bestanden (Vorbehalt) |
+| 14 | Strecksprung | `bw_squat_jump` | Kamera | bestanden (Vorbehalt) |
+| 15 | Squat mit Händen zum Boden | `bw_squat_floor_touch` | Kamera | bestanden |
+| 16 | Plank mit Knie zur Brust | `bw_mountain_climber` | Uhr | abwechselnd |
+| 17 | Flutter Kicks | `bw_flutter_kicks` | Uhr | Flattern |
+| 18 | Skater Jumps | `bw_skater_jump` | Uhr | abwechselnd |
+| 19 | Crunch-Halten | `bw_crunch_hold` | Uhr | Halten |
+| 20 | Burpees mit Streckung | `bw_burpee_jump` | Uhr | durchgefallen (doppelt gezählt) |
+
+8 Schritte mit Kamera, 12 auf der Uhr.
+
+## Durchgefallen, mit Grund
+
+- **Burpee (`bw_burpee_slow`, Schritte 2 und 6): doppelt gezählt.** Das Signal ist der Hüftwinkel (Schulter–Hüfte–Knie). In einem Burpee beugt die Hüfte zweimal tief: beim Absetzen in die Hocke (bis etwa 32°) und beim Zurückkommen aus der Stütze in die Hocke (wieder etwa 32°). Dazwischen ist die Hüfte in der Stütze gestreckt (etwa 170°), genau wie im Stand. Für den Zähler sind das zwei vollständige Wiederholungen. Das liegt an der Übung, nicht an der Erkennung (Skelett in 100 % der Bilder). Dass das Video 15 % schneller läuft als erzeugt, spielt dafür keine Rolle.
+- **Burpee mit Strecksprung (`bw_burpee_jump`, Schritt 20): doppelt gezählt, dazu eine Wiederholung mehr.** Gleicher Grund wie beim Burpee; zusätzlich beugt die Hüfte bei der Landung nach dem Sprung leicht (bis etwa 136°), was über alle Durchläufe einmal mehr zählt.
+- **Klappmesser (`bw_v_up`, Schritt 4): nichts gezählt.** Das Video zeigt die Figur vom Kopfende; Hüften findet Vision in keinem der 67 Bilder sicher genug (Sicherheit ab 0,3), Schultern in 13 bzw. 22, das rechte Knie in 14. Ohne Hüfte gibt es keinen Hüftwinkel; der Zähler führt die Person nur 7,3 % der Zeit als erkannt. In `zuordnung.json` steht der Klappmesser ohne Kamera und ohne Signal; geprüft wurde mit den Werten des Beinhebens (liegend / huefte / beginnt mit heben). Aus dieser Blickrichtung zählt auch kein anderes Hüft-Signal.
+- **Leg Drop & Pull (`bw_leg_drop_pull`, bis 27.11.2026 Schritt 13, nicht mehr im Flow): nichts gezählt.** Vision findet die liegende Figur nur in 36,5 % der Bilder, und in keinem Bild sind Schulter, Hüfte und Knie zugleich sicher genug (Sicherheit ab 0,3) für den Hüftwinkel. Der Zähler führt die Person nur 7,6 % der Zeit als erkannt.
+
+Nach Vorgabe des Plans ist die Erkennung (`Koerperlage`) dafür nicht nachgeschärft worden. Ein anderes Signal (beim Burpee etwa das Knie, bei Leg Drop & Pull die Kniebeugung) wäre eine eigene Entscheidung.
+
+## Vorbehalte bei den bestandenen
+
+- **Squat-Pulse:** Im Video richtet sich die Figur halb auf (Kniewinkel 96° bis 153°) statt klein zu federn. Am Video zählt es deshalb richtig. Federt jemand in Wirklichkeit nur wenige Grad, liegt der Hub unter der Untergrenze von 20° und es wird nichts gezählt. Im Studio prüfen.
+- **Rückenstrecken – liegend:** Der Hüftwinkel ändert sich im Video nur um etwa 22° (von etwa 175° auf 153° und zurück), knapp über der Untergrenze von 20°. Hebt jemand den Oberkörper flacher an, wird nichts gezählt. Vision sieht nur die rechte, der Kamera zugewandte Körperseite. Im Studio prüfen.
+- **Ausfallschritt – rückwärts:** Das Video zeigt nur eine Seite (ein Bein geht nach hinten), von der Seite gefilmt; beide Knie beugen bis etwa 90°. Wechselt jemand die Seiten, ist das am Video nicht geprüft.
+- **Strecksprung:** Eine Wiederholung zu wenig (17 statt 18), innerhalb der Toleranz. Der Loop beginnt und endet in der Hocke (Kniewinkel etwa 80°, im Sprung 178°); warum genau eine fehlt, ist nicht weiter untersucht. Im Studio prüfen, auch weil man beim Sprung oben aus dem Bild kommen kann.
+- **Beinheben – liegend:** Eine Wiederholung zu wenig (12 statt 13), innerhalb der Toleranz. Am Anfang jedes Durchlaufs (etwa 0,5 s, Beine flach am Boden) findet Vision Schulter, Hüfte und Knie nicht sicher genug; der Hüftwinkel geht von etwa 160° auf etwa 111°, obwohl die Beine im Bild fast senkrecht stehen. Warum genau eine fehlt, ist nicht weiter untersucht. Im Studio prüfen.
+- **Ausfallschritt mit Kick (nicht mehr im Flow):** Im Video dreht der Oberkörper zur Kamera, und es ist nur eine Seite zu sehen (ein Ausfallschritt, ein Kick). Gezählt wird der Ausfallschritt; der Kick beugt das Knie nur um etwa 30° und zählte hier nicht mit. Wechselt jemand die Seiten, ist das am Video nicht geprüft.
+- **Liegestütz:** Die linke Körperseite ist in der tiefen Position verdeckt (Ellbogenwinkel nur in 61 von 89 Bildern), die rechte Seite trägt die Zählung. Die Kamera steht im Flow vorn, das Video zeigt die Figur von der Seite.
+
+## Toleranz
+
+Die Planvorgabe ist „± 1 je Durchlauf“. Jedes Video zeigt genau eine Wiederholung; mit eingeschlossener Grenze ginge dann sowohl „nichts gezählt“ (Leg Drop & Pull: 0 statt 5) als auch „doppelt gezählt“ (Burpee: 12 statt 6) als bestanden durch. Der Test nahm deshalb zuerst die Grenze selbst aus (Abweichung unter 1 je Durchlauf). Auch das blieb zu locker: bei 13 Durchläufen ging noch 1 statt 13 durch.
+
+Seit der Schlussprüfung am 27.11.2026 gilt: **Abweichung höchstens `max(1, erwartet / 10)`**, also höchstens 1, ab 20 erwarteten Wiederholungen höchstens ein Zehntel (ganzzahlig abgerundet). Ergebnis unverändert: Die acht bestandenen liegen alle innerhalb 1 (17/17, 15/15, 13/13, 14/14, 11/11, 12/13, 17/18, 12/12); beide Burpees (12 statt 6, 13 statt 6) und das Klappmesser (0 statt 15) fallen weiter durch. Ein eigener Test (`testToleranzLaesstNurKleineAbweichungenDurch`) hält die Grenze fest.
+
+## Wiederholen
+
+    cd apps/ios-member/Packages/Koerperbild
+    swift run skelette-rechnen <Ordner mit den mp4> ../../../../data/koerperbild/skelette
+    swift test --filter FlowZaehlerAbspielTests
+
+Die Testausgabe enthält je Übung eine Zeile `FlowZaehlerAbspiel <key> gezaehlt … erwartet … erkannt … Skelett …`.
+
+## Nachtrag 27.11.2026: Flow vereinfacht
+
+Von Tim am 27.11.2026 entschieden: eine Bewegung je Schritt (`docs/flows/hiit-20-min-uebungen.md`, „Änderung vom 27.11.2026 (Flow vereinfacht)“). Neu gegen ihre Videos geprüft, mit den Ausgangswerten aus `data/koerperbild/zuordnung.json` und Tempo 1 / 0 / 1: `bw_back_extension_floor`, `bw_reverse_lunge`, `bw_leg_raise_lying`. Alle drei bestanden und stehen in `flow-zuordnung.json`. `bw_lunge_kick` ist aus dem Flow und aus `flow-zuordnung.json` genommen; `bw_leg_drop_pull` ist ebenfalls nicht mehr im Flow. `bw_v_up` und `bw_squat_jump` haben noch kein Video und sind nicht in `flow-zuordnung.json`; sie werden geprüft, sobald Video und Skelett da sind.
+
+Korrektur 27.11.2026 (Fix-Runde): Hier stand zuerst, `bw_reverse_lunge` bekomme im Debug-Build auch außerhalb des Flows das Flow-Tempo. Das war falsch. `KameraTestprofile` schlüsselt nach dem Übungsnamen und nimmt den ersten Eintrag; „Ausfallschritt – rückwärts“ heißt im Katalog viermal, davon stehen `bb_reverse_lunge`, `bw_reverse_lunge` und `db_reverse_lunge` in der Datei, `bb_reverse_lunge` (3 / 1 / 2) zuerst. Dadurch bekam auch Flow-Schritt 11 den Langhantel-Eintrag (falsches Tempo, im Simulator das falsche Video und Skelett).
+
+Behoben: Einträge aus `flow-zuordnung.json` tragen in `KameraTestprofile.json` `"flow": true`; im Flow gewinnen sie bei gleichem Namen, und der Flow gibt der Abspielquelle ihren Katalogschlüssel mit. Das normale Debug-Training bleibt, wie es war: alle Übungen namens „Ausfallschritt – rückwärts“ bekommen dort weiter den Eintrag von `bb_reverse_lunge` (3 / 1 / 2, Video und Skelett `bb_reverse_lunge`). Die übrigen sieben Flow-Übungen haben im Katalog einen eindeutigen Namen; ein App-Test prüft, dass jede Flow-Zuordnung auf ihren eigenen Schlüssel auflöst.
+
+## Nachtrag 27.11.2026: Klappmesser und Strecksprung
+
+Videos von Tim am 27.11.2026 abgenommen, mit `pnpm catalog:videos` übernommen, Skelette mit `skelette-rechnen` gerechnet (Strecksprung 55 Bilder, 100 % erkannt; Klappmesser 67 Bilder, 61,2 %). Wiederholungen im Loop je 1, bestimmt wie oben (Winkelverlauf aus den Skelettdateien, Kontaktbogen mit 6 Bildern je Sekunde). Strecksprung bestanden und in `flow-zuordnung.json` (Werte wie `bw_squat_floor_touch`); Klappmesser durchgefallen, läuft auf der Uhr.

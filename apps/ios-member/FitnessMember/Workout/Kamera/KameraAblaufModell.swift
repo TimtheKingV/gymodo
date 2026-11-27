@@ -1,0 +1,317 @@
+import Foundation
+import Koerperbild
+import Observation
+import UIKit
+
+/// Verbindet Bildquelle, Zustandsmaschine und Geraete-Naht fuer die Vollbild-Ansichten des
+/// Kamera-Ablaufs. Gesichert wird ausschliesslich ueber die Naht, sofort am Satzende; ein
+/// Kamerafehler verliert nie einen Satz (die Maschine bleibt, `ohneKamera()` nimmt die Zahl mit).
+@MainActor @Observable
+final class KameraAblaufModell {
+    enum Ansicht: Equatable {
+        /// 7.1 mit Weg in die Einstellungen.
+        case erlaubnisFehlt
+        /// Kamera nicht verfuegbar oder ausgefallen.
+        case kameraFehlt
+        /// Der Schritt steht in `ablauf.schritt`.
+        case ablauf
+        /// Nach dem Sichern.
+        case rueckblick(Rueckblickdaten)
+    }
+
+    struct Rueckblickdaten: Equatable {
+        let wiederholungen: Int
+        let rueckblick: Koerperbild.Rueckblick?
+        /// Grund, wenn das Sichern abgelehnt wurde; der Rueckblick erscheint trotzdem.
+        let abgelehnt: String?
+        let letzterSatz: Bool
+        let tempo: Uebungstempo
+    }
+
+    private(set) var ansicht: Ansicht = .ablauf
+    private(set) var ablauf: KameraSatzAblauf?
+    var videoOffen = false
+    /// Das zuletzt erkannte Skelett fuer die Strichfigur; nil ohne laufende Kamera.
+    private(set) var letztesSkelett: Skelett?
+    var quelle: (any Bildquelle)? { aktiveQuelle }
+    /// Ende der laufenden Pause fuer die Uhr im Rueckblick.
+    var pauseEnde: Date? { naht.laufendePause?.endetAm }
+
+    private let naht: any KameraNaht
+    private let quellenFabrik: @MainActor (KameraStart) -> any Bildquelle
+    private let hub: Hubspeicher
+    private let erlaubnis: () -> Kameraerlaubnis
+    private let anfragen: () async -> Kameraerlaubnis
+    private let idleTimer: @MainActor (Bool) -> Void
+    private let idleTimerStand: @MainActor () -> Bool
+    /// Der Wert vor dem Oeffnen, den das Schliessen zurueckgibt (statt blind `false`).
+    private var idleTimerVorher: Bool?
+
+    private var start: KameraStart?
+    private var aktiveQuelle: (any Bildquelle)?
+    private var kameraLaeuft = false
+    /// Zaehlt Starts und Stopps; ein Start, der nach einem Stopp zurueckkehrt, gilt nicht mehr.
+    private var startNummer = 0
+    /// Wahr, sobald das Satzende der aktuellen Maschine behandelt wird (genau einmal sichern).
+    private var satzendeBehandelt = false
+    private var pausenwaechter: Task<Void, Never>?
+
+    init(naht: any KameraNaht,
+         quelle: @escaping @MainActor (KameraStart) -> any Bildquelle = Bildquellen.fuer,
+         hub: Hubspeicher = .standard,
+         erlaubnis: @escaping () -> Kameraerlaubnis = { .aktuell },
+         anfragen: @escaping () async -> Kameraerlaubnis = Kameraerlaubnis.anfragen,
+         idleTimer: @escaping @MainActor (Bool) -> Void = { UIApplication.shared.isIdleTimerDisabled = $0 },
+         idleTimerStand: @escaping @MainActor () -> Bool = { UIApplication.shared.isIdleTimerDisabled }) {
+        self.naht = naht
+        self.quellenFabrik = quelle
+        self.hub = hub
+        self.erlaubnis = erlaubnis
+        self.anfragen = anfragen
+        self.idleTimer = idleTimer
+        self.idleTimerStand = idleTimerStand
+    }
+
+    // MARK: Einstieg
+
+    func erscheint() async {
+        guard let start = naht.kameraStart else {
+            naht.kameraVerlassen(gezaehlt: nil)
+            return
+        }
+        if idleTimerVorher == nil { idleTimerVorher = idleTimerStand() }
+        idleTimer(true)
+        // Wiederkehr der Ansicht (oder Sichern laeuft): der Stand bleibt, hoechstens startet die Kamera wieder.
+        if let schritt = ablauf?.schritt {
+            if ansicht == .ablauf, Self.bildSchritt(schritt) { await kameraStarten() }
+            return
+        }
+        self.start = start
+        let mitVideo = naht.kameraEinstieg == .video
+        neuerAblauf(mitVideo: mitVideo)
+        videoOffen = mitVideo
+        ansicht = .ablauf
+        if mitVideo {
+            // Schon verweigert: gleich der Weg in die Einstellungen statt "Handy aufstellen" (Spec 11).
+            if erlaubnis() == .verweigert { ansicht = .erlaubnisFehlt }
+        } else {
+            await kameraStarten()
+        }
+    }
+
+    func handyAufstellen() async {
+        ablauf?.handyAufstellen()
+        videoOffen = false
+        await kameraStarten()
+    }
+
+    func ohneKamera() {
+        ablauf?.ohneKamera()
+        satzendePruefen()
+    }
+
+    func satzBeenden() async {
+        ablauf?.satzBeenden()
+        await satzendeAbarbeiten()
+    }
+
+    func abbrechen() { ablauf?.abbrechen() }
+
+    func neuStarten() { ablauf?.neuStarten() }
+
+    // MARK: Rueckblick
+
+    func naechsterSatz() async {
+        guard case .rueckblick(let daten) = ansicht else { return }
+        if daten.letzterSatz {
+            naht.weitererSatz()
+            // "Weiterer Satz" oeffnet eine neue Pause, in der nichts gesichert wird: gleich beenden.
+            if naht.laufendePause != nil { naht.pauseBeenden() }
+        } else {
+            naht.pauseBeenden()
+        }
+        await naechstenSatzBeginnen()
+    }
+
+    func rueckblickSchliessen() { naht.kameraAblaufSchliessen() }
+
+    func umfangKorrigieren(_ n: Int) {
+        naht.umfangNachtragen(n)
+        guard case .rueckblick(let d) = ansicht else { return }
+        ansicht = .rueckblick(Rueckblickdaten(wiederholungen: n, rueckblick: d.rueckblick, abgelehnt: d.abgelehnt,
+                                              letzterSatz: d.letzterSatz, tempo: d.tempo))
+    }
+
+    // MARK: Lebenszyklus
+
+    func szene(aktiv: Bool) {
+        if !aktiv {
+            ablauf?.unterbrechen()
+            kameraStoppen()
+        } else if ansicht == .ablauf, !kameraLaeuft, let schritt = ablauf?.schritt, Self.bildSchritt(schritt) {
+            Task { await kameraStarten() }
+        } else if ansicht == .erlaubnisFehlt, erlaubnis() == .erlaubt {
+            // Zurueck aus den Einstellungen mit erteilter Erlaubnis.
+            ansicht = .ablauf
+            // Im Video-Schritt startet die Kamera erst mit "Handy aufstellen".
+            if let schritt = ablauf?.schritt, Self.bildSchritt(schritt) { Task { await kameraStarten() } }
+        }
+    }
+
+    func verschwindet() {
+        pausenwaechter?.cancel()
+        pausenwaechter = nil
+        kameraStoppen()
+        if let vorher = idleTimerVorher { idleTimer(vorher) }
+        idleTimerVorher = nil
+    }
+
+    // MARK: Kamera
+
+    /// Die Schritte, in denen die Kamera laeuft.
+    private static func bildSchritt(_ schritt: KameraSatzAblauf.Schritt) -> Bool {
+        switch schritt {
+        case .aufstellen, .countdown, .satz, .verloren, .vorlauf, .keineBewegung: true
+        case .video, .bewegungZuKlein, .fertig: false
+        }
+    }
+
+    private func kameraStarten() async {
+        guard let start, !kameraLaeuft else { return }
+        // Ein spaeterer Start oder Stopp (Szenenwechsel durch den Erlaubnis-Dialog, Schliessen) entwertet diesen.
+        startNummer += 1
+        let nummer = startNummer
+        var stand = erlaubnis()
+        if stand == .offen {
+            stand = await anfragen()
+            guard nummer == startNummer, ansicht == .ablauf, !kameraLaeuft,
+                  let schritt = ablauf?.schritt, Self.bildSchritt(schritt) else { return }
+        }
+        guard stand == .erlaubt else {
+            ansicht = .erlaubnisFehlt
+            return
+        }
+        let quelle = aktiveQuelle ?? quellenFabrik(start)
+        aktiveQuelle = quelle
+        quelle.beiFehler = { [weak self] in self?.kameraAusgefallen() }
+        kameraLaeuft = true
+        do {
+            try await quelle.starten { [weak self] bild in self?.bildEmpfangen(bild) }
+        } catch is CancellationError {
+            // Ein Stopp kam dazwischen; der Zustand gehoert dem, der gestoppt hat.
+            return
+        } catch let fehler as BildquellenFehler {
+            guard nummer == startNummer else { return }
+            kameraLaeuft = false
+            ansicht = fehler == .nichtErlaubt ? .erlaubnisFehlt : .kameraFehlt
+        } catch {
+            guard nummer == startNummer else { return }
+            kameraLaeuft = false
+            ansicht = .kameraFehlt
+        }
+    }
+
+    private func kameraStoppen() {
+        startNummer += 1
+        kameraLaeuft = false
+        aktiveQuelle?.stoppen()
+        letztesSkelett = nil
+    }
+
+    /// Kann fuer einen Ausfall zweimal kommen; das zweite Mal ist wirkungslos.
+    private func kameraAusgefallen() {
+        guard ansicht == .ablauf, kameraLaeuft else { return }
+        kameraStoppen()
+        ansicht = .kameraFehlt
+    }
+
+    // MARK: Bilder und Satzende
+
+    private func bildEmpfangen(_ bild: Kamerabild) {
+        guard ansicht == .ablauf, kameraLaeuft, var maschine = ablauf else { return }
+        if case .fertig = maschine.schritt { return }
+        letztesSkelett = bild.skelett
+        maschine.bild(t: bild.t, skelett: bild.skelett)
+        ablauf = maschine
+        satzendePruefen()
+    }
+
+    /// Reagiert auf den neuen Schritt: Kamera aus ausserhalb der Bild-Schritte, Satzende abarbeiten.
+    private func satzendePruefen() {
+        guard let schritt = ablauf?.schritt else { return }
+        if !Self.bildSchritt(schritt), kameraLaeuft { kameraStoppen() }
+        if case .fertig = schritt { Task { await satzendeAbarbeiten() } }
+    }
+
+    private func satzendeAbarbeiten() async {
+        guard case .fertig(let ende)? = ablauf?.schritt, !satzendeBehandelt, let start else { return }
+        satzendeBehandelt = true
+        kameraStoppen()
+        switch ende {
+        case .ohneKamera(let gezaehlt):
+            naht.kameraVerlassen(gezaehlt: gezaehlt)
+        case .beendet(let ergebnis):
+            if let grad = ergebnis.hubGrad { hub.merken(grad, fuer: start.exerciseId) }
+            let sichern = await naht.kameraSatzSichern(wiederholungen: ergebnis.wiederholungen)
+            var abgelehnt: String?
+            var letzterSatz = false
+            switch sichern {
+            case .gesichert(let letzter): letzterSatz = letzter
+            case .abgelehnt(let grund): abgelehnt = grund
+            }
+            ansicht = .rueckblick(Rueckblickdaten(wiederholungen: ergebnis.wiederholungen, rueckblick: ergebnis.rueckblick,
+                                                  abgelehnt: abgelehnt, letzterSatz: letzterSatz, tempo: start.tempo))
+            pauseBeobachten()
+        }
+    }
+
+    // MARK: Naechster Satz
+
+    /// Laeuft die Pause ab, beginnt der naechste Satz von selbst; verlaengert sie sich, wartet der Task weiter.
+    private func pauseBeobachten() {
+        pausenwaechter?.cancel()
+        pausenwaechter = Task { [weak self] in
+            var letzteEnde: Date?
+            while !Task.isCancelled {
+                // self nur kurz halten, nicht ueber den Schlaf.
+                guard let rest = self?.restDerPause(letzteEnde: &letzteEnde) else { return }
+                if rest > 0 {
+                    try? await Task.sleep(for: .seconds(rest))
+                    continue
+                }
+                await self?.pauseIstAbgelaufen()
+                return
+            }
+        }
+    }
+
+    /// Restzeit der Pause; die Naht meldet eine abgelaufene Pause nicht mehr, darum gilt dann das gemerkte Ende.
+    private func restDerPause(letzteEnde: inout Date?) -> TimeInterval? {
+        guard case .rueckblick = ansicht, let ende = naht.laufendePause?.endetAm ?? letzteEnde else { return nil }
+        letzteEnde = ende
+        return ende.timeIntervalSinceNow
+    }
+
+    private func pauseIstAbgelaufen() async {
+        guard case .rueckblick = ansicht else { return }
+        naht.pauseBeenden()
+        await naechstenSatzBeginnen()
+    }
+
+    private func naechstenSatzBeginnen() async {
+        // Zweiter Aufruf (Tippen und Pausenende zugleich) ist wirkungslos: die Ansicht wechselt vor dem ersten await.
+        guard case .rueckblick = ansicht else { return }
+        pausenwaechter?.cancel()
+        pausenwaechter = nil
+        neuerAblauf(mitVideo: false)
+        ansicht = .ablauf
+        await kameraStarten()
+    }
+
+    private func neuerAblauf(mitVideo: Bool) {
+        guard let start else { return }
+        ablauf = KameraSatzAblauf(vorgabe: start.vorgabe, tempo: start.tempo,
+                                  gemerkterHub: hub.hub(start.exerciseId), mitVideo: mitVideo)
+        satzendeBehandelt = false
+    }
+}

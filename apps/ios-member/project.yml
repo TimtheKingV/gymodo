@@ -35,7 +35,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: Gymtavo
-        INFOPLIST_KEY_NSCameraUsageDescription: "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen."
+        INFOPLIST_KEY_NSCameraUsageDescription: "Gymtavo braucht die Kamera, um den QR-Code am Gerät oder am Studioeingang zu scannen und beim Training deine Bewegung zu erkennen. Die Bilder bleiben auf deinem iPhone."
         INFOPLIST_KEY_NFCReaderUsageDescription: "Gymtavo liest den NFC-Aufkleber am Gerät, um dich direkt zu diesem Gerät zu bringen."
         # Gilt je Target und steht damit auch im Release-Build, obwohl der
         # Code dahinter nur im Debug-Build existiert. Ohne den Schluessel
@@ -56,6 +56,8 @@ targets:
         product: Auth
       - package: Sensorik
       - package: Koerperbild
+      - package: Koerperbild
+        product: KoerperErkennung
     entitlements:
       path: FitnessMember/FitnessMember.entitlements
       properties:

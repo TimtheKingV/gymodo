@@ -59,4 +59,16 @@ describe("pruefeFlowEntwurf", () => {
     e.schritte[1]!.restS = 5;
     expect(() => pruefeFlowEntwurf(e)).toThrow(/letzte/);
   });
+
+  it("akzeptiert einen Katalogschluessel als uebung", () => {
+    const e = gueltig() as { schritte: Array<Record<string, unknown>> };
+    e.schritte[0]!.uebung = "bw_pushup";
+    expect(pruefeFlowEntwurf(e).schritte[0]).toMatchObject({ uebung: "bw_pushup" });
+  });
+
+  it.each([[""], [5], ["Bw Pushup"]])("wirft bei uebung %j", (wert) => {
+    const e = gueltig() as { schritte: Array<Record<string, unknown>> };
+    e.schritte[0]!.uebung = wert;
+    expect(() => pruefeFlowEntwurf(e)).toThrow("Schritt 1: uebung muss ein Katalogschluessel sein.");
+  });
 });

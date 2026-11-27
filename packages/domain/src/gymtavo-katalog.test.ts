@@ -158,13 +158,27 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     // Halteuebungen zaehlen Sekunden; Planpositionen ausser Cardio kennen nur Wiederholungen.
     const k = katalog();
     const cardio = new Set(k.equipment.filter((g) => g.category === "cardio").flatMap((g) => g.exercises));
-    const sekunden = k.exercises.filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key)).map((u) => u.key);
+    // Die 14 fuer den HIIT-Flow angelegten Uebungen (Task flow-mit-kamera) haben bewusst keine
+    // Plan-Merkmale: sie werden nicht von selbst in Plaene aufgenommen. Seit dem 27.11.2026
+    // (Flow vereinfacht) sind Lunge-Kick, Leg Drop & Pull und Weitsprung nicht mehr im Flow,
+    // bleiben aber als Koerpergewichtsuebungen; Toe Touch mit Jackknife und Swimmer entfallen.
+    const flowUebungen = [
+      "bw_high_kicks", "bw_burpee_slow", "bw_jumping_jack", "bw_scissor_kicks",
+      "bw_squat_pulse", "bw_lunge_kick", "bw_leg_drop_pull",
+      "bw_broad_jump_touch", "bw_squat_floor_touch", "bw_flutter_kicks", "bw_skater_jump", "bw_crunch_hold",
+      "bw_burpee_jump", "bw_squat_jump",
+    ];
+    const sekunden = k.exercises
+      .filter((u) => u.volume_kind === "seconds" && !cardio.has(u.key) && !flowUebungen.includes(u.key))
+      .map((u) => u.key);
     expect(sekunden).toEqual([
       "db_farmers_walk", "bw_plank", "bw_side_plank", "bw_hollow_hold", "bw_mountain_climber", "bw_wall_sit",
       "bw_plank_knee", "bw_side_plank_knee",
       "kb_farmers_walk", "kb_suitcase_carry", "kb_overhead_carry",
     ]);
-    expect(k.exercises.filter((u) => !u.plan).map((u) => u.key)).toEqual(sekunden);
+    const ohnePlan = k.exercises.filter((u) => !u.plan).map((u) => u.key);
+    expect(ohnePlan.filter((key) => !flowUebungen.includes(key))).toEqual(sekunden);
+    expect(ohnePlan.filter((key) => flowUebungen.includes(key))).toEqual(flowUebungen);
   });
 
   // Ohne Video und ohne Tims Durchsicht waehlt der Generator eine Uebung nicht von selbst.
@@ -178,7 +192,22 @@ describe("catalog/gymtavo.json Planuebungen", () => {
     const typen = katalog().equipment.filter((g) => g.group === "eigengewicht");
     expect(typen.map((g) => [g.key, g.label, g.load_start])).toEqual([["bodyweight", "Körpergewicht", 0]]);
     expect(typen[0]!.exercises.every((u) => u.startsWith("bw_"))).toBe(true);
-    expect(typen[0]!.exercises).toHaveLength(49);
+    expect(typen[0]!.exercises).toHaveLength(63);
+  });
+
+  // Flow vereinfacht (27.11.2026): eine Bewegung je Schritt.
+  it("fuehrt den Strecksprung fuer den HIIT-Flow und nicht mehr Toe Touch mit Jackknife und Swimmer", () => {
+    const k = katalog();
+    const sprung = k.exercises.find((u) => u.key === "bw_squat_jump");
+    expect(sprung).toMatchObject({ name: "Strecksprung", volume_kind: "reps", grip: "none" });
+    // Videos fuer Strecksprung und Klappmesser von Tim am 27.11.2026 abgenommen.
+    expect(sprung!.video?.file).toBe("media/videos/bw_squat_jump.mp4");
+    expect(k.exercises.find((u) => u.key === "bw_v_up")!.video?.file).toBe("media/videos/bw_v_up.mp4");
+    expect(k.equipment.find((g) => g.key === "bodyweight")!.exercises).toContain("bw_squat_jump");
+    for (const key of ["bw_toe_touch_jackknife", "bw_swimmer"]) {
+      expect(k.exercises.some((u) => u.key === key), key).toBe(false);
+      expect(k.equipment.some((g) => g.exercises.includes(key)), key).toBe(false);
+    }
   });
 
   // Kettlebells gibt es nur in festen Stufen: 2-kg-Raster ab 4 kg trifft den klassischen
