@@ -1,5 +1,7 @@
 # HIIT 20 Minuten: Übungen für den Katalog
 
+So entsteht ein solcher Flow aus einem Video-Link: `docs/flows/flow-aus-video.md`.
+
 Zur Durchsicht durch Tim, bevor die Übungen auf Prod gehen. Der Flow hat 20 Schritte mit 19 verschiedenen Übungen (Burpee in Schritt 2 und 6). 11 davon sind neue Katalogübungen, 8 gibt es schon. Für den Flow angelegt sind 14 neue Übungen; drei davon (`bw_lunge_kick`, `bw_leg_drop_pull`, `bw_broad_jump_touch`) sind seit dem 27.11.2026 nicht mehr im Flow und bleiben als normale Körpergewichtsübungen (siehe „Änderung vom 27.11.2026 (Flow vereinfacht)“). Alle neuen hängen am Gerätetyp „Körpergewicht“ (`bodyweight`), haben noch kein Video, keine Kameraangabe und keinen Plan-Block.
 
 Bitte prüfen: Namen, Schlüssel und die drei Fälle unten, in denen eine neue Übung einer vorhandenen sehr nah ist.
