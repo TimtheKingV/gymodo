@@ -15,6 +15,9 @@ struct KameraStart: Equatable {
     /// Die Wiederholungen, die im Drawer eingestellt wurden; nil ohne Drawer.
     let sollWiederholungen: Int?
     let satzZiel: Int
+    /// Nur Debug (Testprofile im Flow): Katalogschluessel fuer Video und Skelett der
+    /// Abspielquelle, wenn der Name allein mehrdeutig ist. nil: ueber den Namen.
+    var katalogKey: String? = nil
 }
 
 /// Ob das Mitglied diese Uebung mit der Kamera zaehlt.

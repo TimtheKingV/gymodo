@@ -13,24 +13,37 @@ enum FlowSchrittAnsicht: Equatable {
 /// auf und bestimmt daraus die Ansicht. Reine Logik, ohne Kamera und Uhr.
 struct FlowUebungen {
     private let jeId: [String: BootstrapResponse.Exercise]
+    /// Nur Debug mit Testprofilen: Katalogschluessel je exerciseId fuer die Abspielquelle.
+    private let katalogKeys: [String: String]
 
     /// `testprofile`: Kameraangaben aus `KameraTestprofile` ergaenzen, nur im
     /// Debug-Build; im Release-Build ohne Wirkung.
     init(bootstrap: BootstrapResponse?, testprofile: Bool) {
         var uebungen: [String: BootstrapResponse.Exercise] = [:]
+        #if DEBUG
+        var keys: [String: String] = [:]
+        #endif
         if let bootstrap {
             let alle = bootstrap.machines.flatMap(\.exercises)
                 + (bootstrap.catalog?.equipmentTypes.flatMap(\.exercises) ?? [])
             for uebung in alle where uebungen[uebung.id] == nil {
                 #if DEBUG
                 uebungen[uebung.id] = testprofile
-                    ? KameraTestprofile.ergaenzt(uebung, eingeschaltet: true) : uebung
+                    ? KameraTestprofile.ergaenzt(uebung, eingeschaltet: true, imFlow: true) : uebung
+                if testprofile, uebung.kamera == nil, let key = KameraTestprofile.flowKatalogKey(name: uebung.name) {
+                    keys[uebung.id] = key
+                }
                 #else
                 uebungen[uebung.id] = uebung
                 #endif
             }
         }
         jeId = uebungen
+        #if DEBUG
+        katalogKeys = keys
+        #else
+        katalogKeys = [:]
+        #endif
     }
 
     func uebung(_ schritt: FlowSchritt) -> BootstrapResponse.Exercise? {
@@ -39,7 +52,8 @@ struct FlowUebungen {
 
     func ansicht(_ schritt: FlowSchritt, mitKamera: Bool) -> FlowSchrittAnsicht {
         guard let id = schritt.exerciseId, let uebung = uebung(schritt) else { return .ring }
-        if mitKamera, let start = uebung.kameraStart(satzZiel: 1, sollWiederholungen: nil) {
+        if mitKamera, var start = uebung.kameraStart(satzZiel: 1, sollWiederholungen: nil) {
+            start.katalogKey = katalogKeys[id]
             return .kamera(start)
         }
         return .video(exerciseId: id)

@@ -97,7 +97,9 @@ Die Testausgabe enthält je Übung eine Zeile `FlowZaehlerAbspiel <key> gezaehlt
 
 Von Tim am 27.11.2026 entschieden: eine Bewegung je Schritt (`docs/flows/hiit-20-min-uebungen.md`, „Änderung vom 27.11.2026 (Flow vereinfacht)“). Neu gegen ihre Videos geprüft, mit den Ausgangswerten aus `data/koerperbild/zuordnung.json` und Tempo 1 / 0 / 1: `bw_back_extension_floor`, `bw_reverse_lunge`, `bw_leg_raise_lying`. Alle drei bestanden und stehen in `flow-zuordnung.json`. `bw_lunge_kick` ist aus dem Flow und aus `flow-zuordnung.json` genommen; `bw_leg_drop_pull` ist ebenfalls nicht mehr im Flow. `bw_v_up` und `bw_squat_jump` haben noch kein Video und sind nicht in `flow-zuordnung.json`; sie werden geprüft, sobald Video und Skelett da sind.
 
-Folge im Debug-Build: `KameraTestprofile.json` führt `bw_reverse_lunge` jetzt mit dem Flow-Tempo 1 / 0 / 1 statt 3 / 1 / 2 aus dem Zuordnungsvorschlag, auch außerhalb des Flows (die Flow-Zuordnung ersetzt gleiche Schlüssel, wie in Task 9 festgelegt).
+Korrektur 27.11.2026 (Fix-Runde): Hier stand zuerst, `bw_reverse_lunge` bekomme im Debug-Build auch außerhalb des Flows das Flow-Tempo. Das war falsch. `KameraTestprofile` schlüsselt nach dem Übungsnamen und nimmt den ersten Eintrag; „Ausfallschritt – rückwärts“ heißt im Katalog viermal, davon stehen `bb_reverse_lunge`, `bw_reverse_lunge` und `db_reverse_lunge` in der Datei, `bb_reverse_lunge` (3 / 1 / 2) zuerst. Dadurch bekam auch Flow-Schritt 11 den Langhantel-Eintrag (falsches Tempo, im Simulator das falsche Video und Skelett).
+
+Behoben: Einträge aus `flow-zuordnung.json` tragen in `KameraTestprofile.json` `"flow": true`; im Flow gewinnen sie bei gleichem Namen, und der Flow gibt der Abspielquelle ihren Katalogschlüssel mit. Das normale Debug-Training bleibt, wie es war: alle Übungen namens „Ausfallschritt – rückwärts“ bekommen dort weiter den Eintrag von `bb_reverse_lunge` (3 / 1 / 2, Video und Skelett `bb_reverse_lunge`). Die übrigen sieben Flow-Übungen haben im Katalog einen eindeutigen Namen; ein App-Test prüft, dass jede Flow-Zuordnung auf ihren eigenen Schlüssel auflöst.
 
 ## Nachtrag 27.11.2026: Klappmesser und Strecksprung
 

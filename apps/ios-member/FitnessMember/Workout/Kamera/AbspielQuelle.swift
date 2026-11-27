@@ -12,19 +12,21 @@ final class AbspielQuelle: Bildquelle {
     var beiFehler: (@MainActor () -> Void)?
     private let wurzel: String
     private let name: String
+    private let katalogKey: String?
     private var lauf: Lauf?
     private var laufNummer = 0
 
     init(wurzel: String, start: KameraStart) {
         self.wurzel = wurzel
         self.name = start.name
+        self.katalogKey = start.katalogKey
         anzeige.videoGravity = .resizeAspectFill
     }
 
     func starten(beiBild: @escaping @MainActor (Kamerabild) -> Void) async throws {
         stoppen()
         let nummer = laufNummer
-        guard let key = KameraTestprofile.katalogKey(name: name) else { throw BildquellenFehler.nichtVerfuegbar }
+        guard let key = katalogKey ?? KameraTestprofile.katalogKey(name: name) else { throw BildquellenFehler.nichtVerfuegbar }
         let videoUrl = URL(fileURLWithPath: wurzel).appendingPathComponent("catalog/media/videos/\(key).mp4")
         let skelettUrl = URL(fileURLWithPath: wurzel).appendingPathComponent("data/koerperbild/skelette/\(key).skelett.json")
         guard let daten = try? Data(contentsOf: skelettUrl),

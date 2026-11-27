@@ -106,6 +106,21 @@ struct FlowUebungenTests {
         if case .kamera = an.ansicht(Self.schritt("dips"), mitKamera: true) {} else { Issue.record("erwartet .kamera") }
         #expect(aus.ansicht(Self.schritt("dips"), mitKamera: true) == .video(exerciseId: "dips"))
     }
+
+    /// Schritt 11 des HIIT-Flows: der Name ist viermal im Katalog, der Flow nimmt
+    /// den Eintrag aus der Flow-Zuordnung (Tempo 1 / 0 / 1, Video bw_reverse_lunge).
+    @Test func testprofilDesFlowsGewinntBeiGleichemNamen() {
+        let bootstrap = Self.bootstrap(maschinenUebungen: [],
+                                       katalogUebungen: [Self.uebung(id: "lunge", name: "Ausfallschritt – rückwärts")])
+        let an = FlowUebungen(bootstrap: bootstrap, testprofile: true)
+        guard case .kamera(let start) = an.ansicht(Self.schritt("lunge"), mitKamera: true) else {
+            Issue.record("erwartet .kamera"); return
+        }
+        #expect(start.tempo.senken == 1)
+        #expect(start.tempo.halten == 0)
+        #expect(start.tempo.heben == 1)
+        #expect(start.katalogKey == "bw_reverse_lunge")
+    }
     #endif
 
     @Test func blickzeileJeProfil() {

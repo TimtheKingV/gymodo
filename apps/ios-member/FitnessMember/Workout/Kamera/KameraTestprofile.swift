@@ -20,6 +20,8 @@ enum KameraTestprofile {
         let key: String
         let kamera: Kamera
         let tempo: Tempo
+        /// true fuer Eintraege aus data/koerperbild/flow-zuordnung.json.
+        let flow: Bool?
 
         struct Kamera: Decodable {
             let profil: String
@@ -45,19 +47,32 @@ enum KameraTestprofile {
     /// Je Name der erste Eintrag nach Schluessel (die Datei ist danach sortiert):
     /// mehrere Katalogschluessel teilen sich einen Namen, die Profile sind dort
     /// gleich oder nahezu gleich.
-    static let eintraege: [String: Eintrag] = {
+    static let eintraege: [String: Eintrag] =
+        Dictionary(alle.map { ($0.name, $0) }, uniquingKeysWith: { erster, _ in erster })
+
+    /// Nur die Eintraege der Flow-Zuordnung, je Name. Im Flow gewinnen sie: ein Name
+    /// kann im Katalog mehrfach vorkommen („Ausfallschritt – rückwärts“ viermal), der
+    /// Flow meint aber genau die Uebung, die gegen ihr Video geprueft wurde.
+    static let flowEintraege: [String: Eintrag] =
+        Dictionary(alle.filter { $0.flow == true }.map { ($0.name, $0) }, uniquingKeysWith: { erster, _ in erster })
+
+    /// Alle Eintraege der Datei in ihrer Reihenfolge.
+    static let alle: [Eintrag] = {
         guard let url = Bundle.main.url(forResource: "KameraTestprofile", withExtension: "json"),
               let daten = try? Data(contentsOf: url),
-              let liste = try? JSONDecoder().decode([Eintrag].self, from: daten) else { return [:] }
-        return Dictionary(liste.map { ($0.name, $0) }, uniquingKeysWith: { erster, _ in erster })
+              let liste = try? JSONDecoder().decode([Eintrag].self, from: daten) else { return [] }
+        return liste
     }()
 
     /// Nur wenn `aktiv` und die Uebung kein Serverprofil hat; studioeigene
     /// Uebungen (unbekannter Name) bleiben ohne.
     /// `eingeschaltet` laesst Tests den Schalter vorgeben, ohne UserDefaults anzufassen.
+    /// `imFlow`: zuerst der Eintrag der Flow-Zuordnung, sonst wie im normalen Training.
     static func ergaenzt(_ uebung: BootstrapResponse.Exercise,
-                         eingeschaltet: Bool = KameraTestprofile.aktiv) -> BootstrapResponse.Exercise {
-        guard eingeschaltet, uebung.kamera == nil, let eintrag = eintraege[uebung.name] else { return uebung }
+                         eingeschaltet: Bool = KameraTestprofile.aktiv,
+                         imFlow: Bool = false) -> BootstrapResponse.Exercise {
+        guard eingeschaltet, uebung.kamera == nil,
+              let eintrag = (imFlow ? flowEintraege[uebung.name] : nil) ?? eintraege[uebung.name] else { return uebung }
         var ergebnis = uebung
         ergebnis.kamera = KameraDTO(profil: eintrag.kamera.profil, signal: eintrag.kamera.signal,
                                     seite: eintrag.kamera.seite, beginntMit: eintrag.kamera.beginntMit)
@@ -69,6 +84,11 @@ enum KameraTestprofile {
     /// Katalogschluessel zu einem Uebungsnamen (fuer die Abspielquelle).
     static func katalogKey(name: String) -> String? {
         eintraege[name]?.key
+    }
+
+    /// Katalogschluessel im Flow: der Eintrag der Flow-Zuordnung, sonst wie oben.
+    static func flowKatalogKey(name: String) -> String? {
+        flowEintraege[name]?.key ?? katalogKey(name: name)
     }
 }
 #endif

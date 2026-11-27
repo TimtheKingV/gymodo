@@ -46,6 +46,31 @@ struct KameraTestprofileTests {
         #expect(KameraTestprofile.eintraege["Bizepscurl"]?.key == "bb_curl")
     }
 
+    /// Vier Katalogübungen heißen „Ausfallschritt – rückwärts“. Der Flow nutzt
+    /// `bw_reverse_lunge` mit dem Flow-Tempo; das normale Training behält den
+    /// ersten Eintrag nach Schlüssel (`bb_reverse_lunge`, 3 / 1 / 2).
+    @Test func flowLoestGleichnamigeUebungAufIhrenFlowEintragAuf() {
+        let flow = KameraTestprofile.ergaenzt(Self.uebung(name: "Ausfallschritt – rückwärts"),
+                                              eingeschaltet: true, imFlow: true)
+        #expect(flow.tempo == TempoDTO(senkenS: 1, haltenS: 0, hebenS: 1))
+        #expect(KameraTestprofile.flowKatalogKey(name: "Ausfallschritt – rückwärts") == "bw_reverse_lunge")
+        let normal = KameraTestprofile.ergaenzt(Self.uebung(name: "Ausfallschritt – rückwärts"), eingeschaltet: true)
+        #expect(normal.tempo == TempoDTO(senkenS: 3, haltenS: 1, hebenS: 2))
+        #expect(KameraTestprofile.katalogKey(name: "Ausfallschritt – rückwärts") == "bb_reverse_lunge")
+    }
+
+    /// Jede Übung aus data/koerperbild/flow-zuordnung.json löst im Flow auf ihren
+    /// eigenen Schlüssel auf, auch wenn ihr Name im Katalog mehrfach vorkommt.
+    @Test func jedeFlowZuordnungLoestAufIhrenSchluesselAuf() {
+        let flow = KameraTestprofile.alle.filter { $0.flow == true }
+        #expect(Set(flow.map(\.key)) == ["bw_back_extension_floor", "bw_jumping_jack", "bw_leg_raise_lying",
+                                         "bw_pushup", "bw_reverse_lunge", "bw_squat_floor_touch",
+                                         "bw_squat_jump", "bw_squat_pulse"])
+        for eintrag in flow {
+            #expect(KameraTestprofile.flowKatalogKey(name: eintrag.name) == eintrag.key, "\(eintrag.key)")
+        }
+    }
+
     @Test func testprofilErgaenztBekannteUebung() {
         Self.mitSchalter(true) {
             let ergebnis = KameraTestprofile.ergaenzt(Self.uebung(name: "Dips"))

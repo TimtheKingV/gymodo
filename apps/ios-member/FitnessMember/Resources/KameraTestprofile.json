@@ -192,7 +192,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Jumping Jack",
@@ -207,7 +208,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Beinheben – liegend",
@@ -222,7 +224,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Liegestütz",
@@ -237,7 +240,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Ausfallschritt – rückwärts",
@@ -252,7 +256,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Kniebeuge",
@@ -282,7 +287,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Strecksprung",
@@ -297,7 +303,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Squat-Pulse",
@@ -312,7 +319,8 @@
       "senken_s": 1,
       "halten_s": 0,
       "heben_s": 1
-    }
+    },
+    "flow": true
   },
   {
     "name": "Brustdrücken – einarmig",
