@@ -259,10 +259,11 @@ Die fertigen Loops aus `ki-video-serie/loops/` haben schon das Katalogformat (ke
 ```bash
 pnpm catalog:videos <ordner-mit-den-mp4>              # nur Bericht, schreibt nichts
 pnpm catalog:videos <ordner-mit-den-mp4> --ja         # schreibt nach catalog/media/videos/ und setzt `video`
-pnpm catalog:videos <ordner-mit-den-mp4> --auch-zeit  # nötig, wenn die Übung Sekunden zählt
+pnpm catalog:videos <ordner-mit-den-mp4> --auch-zeit        # Bericht, auch Übungen mit Sekunden
+pnpm catalog:videos <ordner-mit-den-mp4> --auch-zeit --ja   # schreibt, auch Übungen mit Sekunden
 ```
 
-Der Dateiname ist `<key>.mp4`. Das Skript prüft 640×640 und keine Tonspur per `ffprobe`. Ohne `--auch-zeit` lehnt es Übungen mit Zeitvorgabe ab (`--auch-zeit` ist beim HIIT-Flow neu dazugekommen, sechs Übungen brauchten es). Danach `pnpm --filter @fitretro/domain test`, denn die Katalog- und Medienprüfung schaut nach den Dateien.
+Der Dateiname ist `<key>.mp4`. Das Skript prüft 640×640 und keine Tonspur per `ffprobe`. Ohne `--auch-zeit` lehnt es Übungen mit Zeitvorgabe ab (`--auch-zeit` ist beim HIIT-Flow neu dazugekommen, sechs Übungen brauchten es). Geschrieben wird nur mit `--ja`, auch zusammen mit `--auch-zeit`. Danach `pnpm --filter @fitretro/domain test`, denn die Katalog- und Medienprüfung schaut nach den Dateien.
 
 Ergebnis HIIT-Flow: 18 neue Videodateien im Katalog (14 neue Übungen plus Plank, Russian Twist, Mountain Climber, Klappmesser), alle 2 bis 8 s, `bw_burpee_slow` dient für beide Burpee-Schritte.
 
@@ -292,7 +293,7 @@ swift test --filter FlowZaehlerAbspielTests
 1. `skelette-rechnen` (Apples Vision, `VNDetectHumanBodyPoseRequest`) legt je Video eine Skelettdatei ab: `data/koerperbild/skelette/<key>.skelett.json`.
 2. Der Test `FlowZaehlerAbspielTests` schickt diese Skelette durch den `FlowZaehler`, so wie die App es in 40 s Arbeitsphase tut: das Video in Schleife, nur ganze Durchläufe, Tempo 1 s senken / 0 halten / 1 s heben. Die Testausgabe enthält je Übung eine Zeile `FlowZaehlerAbspiel <key> gezaehlt … erwartet … erkannt … Skelett …`.
 3. Erwartet wird: Wiederholungen im Loop mal Durchläufe. Jedes der Videos zeigt genau eine Wiederholung; das wird unabhängig vom Zähler bestimmt, aus dem Winkelverlauf des Signals und aus einem Kontaktbogen (3 bis 6 Bilder je Sekunde) Bild für Bild.
-4. **Bestanden**, wenn die Abweichung kleiner als 1 je Durchlauf ist. Die Grenze selbst zählt nicht, sonst ginge „nichts gezählt“ und „doppelt gezählt“ durch, was dem Zweck der Prüfung widerspricht.
+4. **Bestanden**, wenn die Abweichung höchstens `max(1, erwartet / 10)` beträgt: höchstens 1, ab 20 erwarteten Wiederholungen höchstens ein Zehntel. (Die erste Lesart „± 1 je Durchlauf“ und auch „unter 1 je Durchlauf“ ließen bei einer Wiederholung je Loop fast jede Zahl durch, etwa 1 statt 13; geändert am 27.11.2026 bei der Schlussprüfung, Ergebnis der acht bestandenen und der drei durchgefallenen dadurch unverändert.)
 5. Wer besteht, kommt mit Profil, Signal, „beginnt mit“ und Tempo in `flow-zuordnung.json`. Dann erzeugt `python3 tools/kamera-zuordnung/testprofile.py` die Datei `apps/ios-member/FitnessMember/Resources/KameraTestprofile.json` neu, die der Debug-Build liest.
 
 ### 6.3 Ergebnis HIIT-Flow: 8 von 20 Schritten zählen mit Kamera
@@ -323,7 +324,7 @@ Das sind 8 Schritte mit Kamera und 12 auf der Uhr.
 
 Die Kamera-Testprofile (`KameraTestprofile`) werden **nach Übungsnamen** nachgeschlagen, nicht nach Schlüssel (der Bootstrap der App kennt den Katalogschlüssel nicht). Der Name „Ausfallschritt – rückwärts“ gibt es im Katalog viermal, und der erste Treffer in der Datei war `bb_reverse_lunge` (Langhantel, Tempo 3/1/2). Dadurch bekam Flow-Schritt 11 das falsche Tempo und im Simulator das falsche Video und Skelett. Der Fehler fiel erst bei der Durchsicht des Codes auf, nicht bei den Tests.
 
-Die Lösung (Commit `b3954b9a`): Einträge aus `flow-zuordnung.json` tragen in `KameraTestprofile.json` `"flow": true`. Im Flow gewinnt ein Eintrag mit diesem Flag bei gleichem Namen, und der Flow reicht seinen Katalogschlüssel an die Abspielquelle weiter. Das normale Debug-Training bleibt, wie es war (dort gewinnt weiter `bb_reverse_lunge`). Ein App-Test prüft, dass jede Flow-Zuordnung auf ihren eigenen Schlüssel auflöst. Von den acht Zuordnungen hatte nur `bw_reverse_lunge` einen mehrfach vergebenen Namen.
+Die Lösung (Commit `b3954b9a`): Einträge aus `flow-zuordnung.json` tragen in `KameraTestprofile.json` `"flow": true`. Im Flow gewinnt ein Eintrag mit diesem Flag bei gleichem Namen, und der Flow reicht seinen Katalogschlüssel an die Abspielquelle weiter. Im normalen Debug-Training gewinnt bei „Ausfallschritt – rückwärts“ weiter `bb_reverse_lunge`. Unverändert ist das normale Debug-Training aber nicht ganz: `testprofile.py` nimmt die Flow-Einträge unabhängig vom Profil-Filter auf, und das normale Training liest dieselbe Datei. Dadurch bekommen dort auch Liegestütz (`stuetz_boden`), Rückenstrecken und Beinheben (`liegend`) ein Testprofil mit Flow-Tempo 1/0/1, die vorher wegen ihres Bodenprofils keins hatten (seit Task 9; der App-Test `flowUebungenHabenEinTestprofil` prüft den Liegestütz über `eintraege`). Umgekehrt nutzt der Flow seit der Schlussprüfung (27.11.2026) **nur** Einträge mit `"flow": true`: Ein Vorschlagsprofil ohne Prüfung am Video (etwa Dips) gibt im Flow keine Kamera mehr. Keiner der acht Kamera-Schritte des HIIT-Flows verliert dadurch seine Kamera. Ein App-Test prüft, dass jede Flow-Zuordnung auf ihren eigenen Schlüssel auflöst. Von den acht Zuordnungen hatte nur `bw_reverse_lunge` einen mehrfach vergebenen Namen.
 
 **Beim nächsten Mal:** Beim Hinzufügen einer Kamera-Übung zur Flow-Zuordnung prüfen, ob ihr Name im Katalog mehrfach vorkommt (Suche aus Abschnitt 3.1). Wenn ja, dafür sorgen, dass der Test für jede Flow-Zuordnung auf den eigenen Schlüssel auflöst.
 
@@ -359,7 +360,7 @@ pnpm --silent flow:sql tools/flow-import/flows/<flow>.json --studio 00000000-000
 - ist idempotent: Der Flow wird mit `on conflict (studio_id, key) do update` angelegt, seine Schritte werden gelöscht und neu geschrieben, alles in einer Transaktion. Mitglieder-Läufe (`flow_runs`) bleiben dabei bestehen;
 - weigert sich, solange ein Schritt `unsicher: true` hat.
 
-Tests dazu: `pnpm vitest run tools/flow-import` (33 Tests am 27.11.). Ein Test prüft außerdem, dass alle Schlüssel der Flow-Datei im Katalog stehen und dass `flow-zuordnung.json` nur Übungen des Flows nennt.
+Tests dazu: `pnpm vitest run tools/flow-import` (34 Tests am 27.11.). Ein Test prüft außerdem, dass alle Schlüssel der Flow-Datei im Katalog stehen und dass `flow-zuordnung.json` nur Übungen des Flows nennt.
 
 ## 8. Einspielen und Freigaben
 
@@ -367,14 +368,18 @@ Tests dazu: `pnpm vitest run tools/flow-import` (33 Tests am 27.11.). Ein Test p
 
 Vor dem Prod-Teil: lokal alle Tests grün (`pnpm typecheck && pnpm test && pnpm test:integration`, `swift test` im Package, App-Tests), PR geöffnet und Tims Ja zum Push, CI grün.
 
+**Migration 0080 MUSS auf Prod sein, bevor der PR gemergt und die API ausgeliefert wird.** Die neue API fragt in `listFlows` (`packages/domain/src/flows.ts`) die Spalte `flow_steps.exercise_id` ab. Fehlt sie auf Prod, schlägt die Abfrage fehl und `GET /me/flows` liefert für **alle** Mitglieder einen Fehler 500. Die App zeigt dann nur noch eine zwischengespeicherte Flow-Liste; Mitglieder ohne Zwischenspeicher sehen gar keine Flows.
+
+Ob ein Merge nach `master` die API automatisch ausliefert, ist **nicht am Repo belegbar**: Im Repo gibt es keine `vercel.json` und keinen Deploy-Schritt in `.github/workflows/ci.yml` (die CI baut und testet nur); die Git-Anbindung von Vercel ist eine Projekteinstellung außerhalb des Repos. Deshalb so behandeln, als liefere der Merge sofort aus: erst Schritt a, dann Schritt b.
+
 Reihenfolge, **jeweils nur nach Tims Ja:**
 
 | # | Schritt | Befehl oder Weg | Danach prüfen |
 |---|---|---|---|
-| a | Migration `0080_flow_steps_uebung.sql` auf Prod anwenden (Spalte `flow_steps.exercise_id`) | Supabase-Connector, Migration anwenden | Spalte vorhanden; bestehende Flows unverändert |
+| a | Migration `0080_flow_steps_uebung.sql` auf Prod anwenden (Spalte `flow_steps.exercise_id`). **Vor** dem Merge, sonst Fehler 500 bei `GET /me/flows` | Supabase-Connector, Migration anwenden | Spalte vorhanden; bestehende Flows unverändert |
 | b | PR mergen (nach grüner CI), API-Deploy über Vercel | Merge, Vercel-Deploy | `GET /me/flows` liefert `exerciseId` je Schritt (zunächst `null`, weil der Flow noch ohne Verweise liegt) |
-| c | Katalog einspielen: die **14 neuen Übungen** | `pnpm catalog:import --dry-run`, dann `pnpm catalog:import --ja` | Trockenlauf zeigt 14 neue Übungen; danach 274 Übungen im Gymtavo-Katalog |
-| d | Videos einspielen: die **18 neuen Videos** | `pnpm catalog:import --nur-videos --dry-run`, dann mit `--ja` | Videos vorhanden, Zahl stimmt mit dem Trockenlauf |
+| c | Katalog einspielen: die **14 neuen Übungen mit ihren Videos** | `pnpm catalog:import --dry-run`, dann `pnpm catalog:import --ja` | Trockenlauf zeigt 14 neue Übungen und die neuen Videos; danach 274 Übungen im Gymtavo-Katalog |
+| d | (entfällt in der Regel) nur Videos nachziehen | `pnpm catalog:import --nur-videos --dry-run` | Nach c sollte der Trockenlauf keine neuen Videos mehr zeigen |
 | e | Flow neu einspielen | `pnpm --silent flow:sql tools/flow-import/flows/hiit-20-min.json --studio 00000000-0000-4000-8000-000000000001`, SQL über den Supabase-Connector ausführen | per SQL zählen: **20 Schritte, 20 mit `exercise_id`** |
 
 Zu den Zahlen: Im Plan standen anfangs 16 neue Übungen, dann 15 (Burpee/Tap entfällt), nach der Vereinfachung **14**. Gezählt ist am 27.11.2026 der Unterschied der Schlüssel zwischen `master` (260 Übungen) und dem Zweig (274). Der Trockenlauf zeigt die Zahl, die tatsächlich geschrieben würde; stimmt sie nicht mit 14 überein, stoppen und nachsehen.
@@ -382,8 +387,8 @@ Zu den Zahlen: Im Plan standen anfangs 16 neue Übungen, dann 15 (Burpee/Tap ent
 Hinweise:
 
 - `catalog:import` verlangt außerhalb von 127.0.0.1 ein `--ja` und nennt sein Ziel. Es braucht `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` aus der Umgebung. Wie die Prod-Werte im konkreten Fall gesetzt werden, steht hier nicht; das ist Tims Sache.
-- Schritt d fasst nur Videos an. Der Trockenlauf zeigt, welche Videos wirklich neu sind (auch ob ältere Videos mitgehen).
-- Reihenfolge ist wichtig: Erst a und b (die API kennt die neue Spalte), dann c und d (die Übungen und Videos existieren), erst zuletzt e (die Schritte verweisen auf Übungen, die es geben muss; sonst scheitert die Sicherung im SQL).
+- Der volle Import in Schritt c enthält die Videos schon: `importiereKatalog` (`packages/domain/src/katalog-import.ts`) plant alles, auch die Videos; `--nur-videos` engt diesen Plan nur ein (`nurVideos` in `katalog-plan.ts`) und bricht sogar ab, wenn ein Video eine Verknüpfung braucht, die es noch nicht gibt (also bei neuen Übungen). Schritt d ist deshalb nur ein Nachweis per Trockenlauf; der Trockenlauf von c zeigt, welche Videos neu sind.
+- Reihenfolge ist wichtig: Erst a, dann b (die Datenbank hat die Spalte, bevor die API sie abfragt), dann c (die Übungen und Videos existieren), erst zuletzt e (die Schritte verweisen auf Übungen, die es geben muss; sonst scheitert die Sicherung im SQL).
 - Rückweg bei Problemen: der Flow lässt sich mit demselben Befehl neu einspielen (idempotent).
 
 **Offene Frage aus der Arbeit:** Was `catalog:import` mit Übungen macht, die aus der Datei entfernt wurden, wurde nicht gegen Prod geprüft. Im Code (`packages/domain/src/katalog-plan.ts`) steht, dass der Import nie löscht und solche Übungen nur meldet („Nur in der Datenbank, nicht gelöscht“). Das betrifft hier `bw_toe_touch_jackknife` und `bw_swimmer`; sie waren aber nie auf `master` und nach dem Stand der Arbeit nie auf Prod. Vor Schritt c im Trockenlauf nachsehen, ob die Meldung etwas aufführt.
@@ -424,6 +429,6 @@ Bekannte Vorbehalte aus der Prüfung am Mac stehen in Abschnitt 6.7. Bodenübung
 | **Später Umbau auf einfache Übungen.** Erst nach Katalog, 19 Videos und Kamera-Prüfung kam am 27.11. die Entscheidung „eine Bewegung je Schritt“; fünf Schritte wurden getauscht, Videos und Prüfung für zwei Übungen kamen noch einmal. | Katalog, Flow-Datei, Zuordnung, Testprofile, Tests und zwei Dokumente mussten nachgezogen werden (ein ganzer Arbeitsgang, `feat(flows): HIIT-Flow vereinfacht, eine Bewegung je Schritt`). | Prüfliste „einfach genug?“ (3.3) und Katalogsuche (3.1) stehen jetzt **vor** dem Anlegen. Tim sieht die vereinfachte Liste, bevor das erste Video entsteht. |
 | **Namensfehler Ausfallschritt rückwärts.** Vier Übungen heißen gleich, die Testprofile suchen nach Namen; Flow-Schritt 11 hätte das Langhantel-Tempo und -Video bekommen. | Eine eigene Fix-Runde (Abschnitt 6.5); ohne Review wäre es durchgerutscht. | Beim Anlegen und Zuordnen Doppelnamen suchen und auf Schlüssel statt Namen auflösen. |
 | **Neue Übungen fehlten der Katalogkopie der Serie.** Prüfseite und zwei Serien-Tests gehen von der Kopie aus, die nur Wiederholungsübungen kennt. | 2 Tests rot, Namen auf der Prüfseite fehlten; Umweg mit eigenem Namensverzeichnis. | Zusatzliste für die Serien-Tests (`tests/hiit_keys.py` mit `ENTFALLEN`) anlegen und die Prüfseite mit dem Namensverzeichnis aus dem Katalog des Worktrees bauen (5.4). |
-| **Toleranzgrenze der Kamera-Prüfung zu locker.** „± 1 je Durchlauf“ ließ bei einer Wiederholung je Loop sowohl „0 gezählt“ als auch „doppelt gezählt“ durch. | Auslegung geändert (Abweichung unter 1 je Durchlauf), Tim wurde das mitgeteilt. | Die engere Lesart beibehalten. |
+| **Toleranzgrenze der Kamera-Prüfung zu locker.** „± 1 je Durchlauf“ ließ bei einer Wiederholung je Loop sowohl „0 gezählt“ als auch „doppelt gezählt“ durch. | Auslegung zweimal geändert: erst „unter 1 je Durchlauf“, bei der Schlussprüfung dann „höchstens max(1, erwartet / 10)“, weil auch die erste Änderung bei einer Wiederholung je Loop fast alles durchließ. | Die Toleranz an der erwarteten Gesamtzahl festmachen, nicht an den Durchläufen. |
 | **Videoprompt mit Logo-Satz** ließ liegende Figuren zur Kamera drehen. | Mehrere Startbilder und Videos waren umsonst. | `ohne_logo` von Anfang an bei Boden- und Rückenlage. |
 | **Burpee zählt doppelt.** Tim wollte ihn trotz Teilbewegungen behalten; die Kamera-Zählung fällt durch. | Drei Schritte (2, 6, 20) laufen auf der Uhr. | Burpee-artige Übungen von vornherein als Uhr-Schritt planen oder ein anderes Signal als eigene Entscheidung prüfen. |

@@ -173,6 +173,8 @@ Ergebnis: 15 neue Katalogübungen, bis zu 18 neue Videos (27.11.2026: von Tim so
 
 Katalog: `bw_squat_jump` „Strecksprung“ kommt neu hinzu (ohne Video, ohne Plan-Block, ohne Kameraangabe); `bw_toe_touch_jackknife` und `bw_swimmer` entfallen; `bw_lunge_kick`, `bw_leg_drop_pull` und `bw_broad_jump_touch` bleiben als normale Körpergewichtsübungen. Damit 14 für den Flow angelegte Übungen statt 15. Kamera-Stand nach der Prüfung gegen die Videos: 7 Schritte mit Kamera (3, 7, 9, 11, 12, 13, 15), 13 auf der Uhr; Einzelheiten in `docs/flows/hiit-20-min-kamera-bericht.md`.
 
+**Stand 27.11.2026, nach Einspielen der Videos für Klappmesser und Strecksprung:** beide Videos vorhanden (`bw_v_up`, `bw_squat_jump`). Schritt 14 (Strecksprung) zählt mit der Kamera, Schritt 4 (Klappmesser) läuft auf der Uhr (vom Kopfende gefilmt, Hüfte nicht erkannt). Damit 8 Schritte mit Kamera (3, 7, 9, 11, 12, 13, 14, 15), 12 auf der Uhr. Die Spalte „Arbeitsphase heute“ der Tabelle oben ist für die Schritte 4 und 14 damit überholt.
+
 ## 9. Videos
 
 - Erzeugt mit der vorhandenen Serie im Ordner `ki-video-serie`, gleicher Look (Graphit-Figur, schwarzes Shirt mit „G.“, helles Studio), ohne Gerät. Dazu werden die 18 Übungen in `uebungen.json` ergänzt (Szene, Kamera, Bewegung, Prüfpunkte, Ende), Startbild und Video erzeugt, als Loop geschnitten.

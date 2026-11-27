@@ -6,7 +6,7 @@ Stand 27.11.2026, nachgezogen nach „Flow vereinfacht“ (Abschnitt unten). Gep
 
 - Skelette: `skelette-rechnen` (Apples Vision, `VNDetectHumanBodyPoseRequest`) über die Videos aus `catalog/media/videos`, abgelegt in `data/koerperbild/skelette/<key>.skelett.json`.
 - Zähler: `FlowZaehler`, Start bei t = 0 ohne Bilder davor, dann das Video in Schleife, bis 40 s erreicht sind (nur ganze Durchläufe). Profil, Signal und „beginnt mit“ wie in der Tabelle unten, Seite `beide`, Tempo 1 s senken / 0 s halten / 1 s heben.
-- Erwartet: Wiederholungen im Loop × Durchläufe. Bestanden, wenn die Abweichung unter 1 je Durchlauf liegt (siehe „Toleranz“).
+- Erwartet: Wiederholungen im Loop × Durchläufe. Bestanden, wenn die Abweichung höchstens 1 beträgt, ab 20 erwarteten Wiederholungen höchstens ein Zehntel (siehe „Toleranz“).
 - Wiederholungen im Loop: Jedes der geprüften Videos zeigt genau eine Wiederholung. Bestimmt unabhängig vom Zähler aus dem Verlauf des Signalwinkels (Umkehrpunkte, selbst aus den Skelettdateien gerechnet) und aus einem Kontaktbogen je Video (3 bis 4 Bilder je Sekunde), Bild für Bild angesehen.
 - Erkannt: Anteil der Bilder ab Start, in denen der Zähler die Person als erkannt führt (kein Hinweis „Kamera sieht dich gerade nicht“). Skelett: Anteil der Videobilder, in denen Vision überhaupt eine Person fand.
 
@@ -83,7 +83,9 @@ Nach Vorgabe des Plans ist die Erkennung (`Koerperlage`) dafür nicht nachgesch�
 
 ## Toleranz
 
-Die Planvorgabe ist „± 1 je Durchlauf“. Jedes Video zeigt genau eine Wiederholung; mit eingeschlossener Grenze ginge dann sowohl „nichts gezählt“ (Leg Drop & Pull: 0 statt 5) als auch „doppelt gezählt“ (Burpee: 12 statt 6) als bestanden durch. Der Test nimmt deshalb die Grenze selbst aus: Abweichung unter 1 je Durchlauf. Für das Ergebnis macht das keinen Unterschied bei den bestandenen Übungen; sie zählen alle genau (Abweichung 0).
+Die Planvorgabe ist „± 1 je Durchlauf“. Jedes Video zeigt genau eine Wiederholung; mit eingeschlossener Grenze ginge dann sowohl „nichts gezählt“ (Leg Drop & Pull: 0 statt 5) als auch „doppelt gezählt“ (Burpee: 12 statt 6) als bestanden durch. Der Test nahm deshalb zuerst die Grenze selbst aus (Abweichung unter 1 je Durchlauf). Auch das blieb zu locker: bei 13 Durchläufen ging noch 1 statt 13 durch.
+
+Seit der Schlussprüfung am 27.11.2026 gilt: **Abweichung höchstens `max(1, erwartet / 10)`**, also höchstens 1, ab 20 erwarteten Wiederholungen höchstens ein Zehntel (ganzzahlig abgerundet). Ergebnis unverändert: Die acht bestandenen liegen alle innerhalb 1 (17/17, 15/15, 13/13, 14/14, 11/11, 12/13, 17/18, 12/12); beide Burpees (12 statt 6, 13 statt 6) und das Klappmesser (0 statt 15) fallen weiter durch. Ein eigener Test (`testToleranzLaesstNurKleineAbweichungenDurch`) hält die Grenze fest.
 
 ## Wiederholen
 

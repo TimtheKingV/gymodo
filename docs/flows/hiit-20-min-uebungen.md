@@ -15,7 +15,7 @@ Bitte pr체fen: Namen, Schl체ssel und die drei F채lle unten, in denen eine neue �
 | 1 | High Kicks | High Kicks | `bw_high_kicks` | neu | Uhr | Beine wechseln abwechselnd, schnelles Hin und Her |
 | 2 | Burpee | Burpee | `bw_burpee_slow` | neu | Kamera, Versuch | H체fte geht deutlich hoch und runter |
 | 3 | Jumping Jacks | Jumping Jack | `bw_jumping_jack` | neu | Kamera | Arme gehen klar hoch und runter, Blick von vorn |
-| 4 | Klappmesser | Klappmesser | `bw_v_up` | vorhanden | Uhr | Kamera am Video durchgefallen: von vorn gefilmt, die H체fte ist nicht zu sehen |
+| 4 | Klappmesser | Klappmesser | `bw_v_up` | vorhanden | Uhr | Kamera am Video durchgefallen: vom Kopfende gefilmt, die H체fte ist nicht zu sehen |
 | 5 | Mini Scissor Kicks | Mini Scissor Kicks | `bw_scissor_kicks` | neu | Uhr | Kleines Flattern, kein klarer Gelenkwinkel |
 | 6 | Burpee | Burpee | `bw_burpee_slow` | wie Schritt 2 | Kamera, Versuch | H체fte, wie bei Schritt 2 |
 | 7 | Squat-Pulse | Squat-Pulse | `bw_squat_pulse` | neu | Kamera, Versuch | Knie, aber der Hub ist sehr klein |
